@@ -143,7 +143,9 @@ a {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== NAVIGATION ===== */
@@ -415,6 +417,7 @@ a {
     opacity: 0;
     transform: translateY(40px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -484,8 +487,15 @@ a {
 }
 
 @keyframes bounceDown {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(8px); }
+
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(8px);
+  }
 }
 
 .hero-scroll .scroll-line {
@@ -1298,8 +1308,15 @@ a {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===== CART DROPDOWN ===== */
@@ -1368,9 +1385,20 @@ a {
 }
 
 @keyframes cartItemIn {
-  0% { opacity: 0; transform: translateX(20px) scale(0.92); }
-  60% { opacity: 1; transform: translateX(-4px) scale(1.03); }
-  100% { opacity: 1; transform: translateX(0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateX(20px) scale(0.92);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateX(-4px) scale(1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
 .cart-dropdown-item.new-item {
@@ -1378,8 +1406,15 @@ a {
 }
 
 @keyframes cartItemOut {
-  0% { opacity: 1; transform: translateX(0) scale(1); }
-  100% { opacity: 0; transform: translateX(30px) scale(0.9); }
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.9);
+  }
 }
 
 .cart-dropdown-item.removing {
@@ -1479,6 +1514,7 @@ a {
     opacity: 0;
     transform: translateX(100px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -1654,6 +1690,14 @@ a {
   }
 }
 
+@media (max-width: 360px) {
+  .cart-dropdown {
+    width: min(300px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    right: 0;
+  }
+}
+
 @media (max-width: 480px) {
   .navbar-inner {
     padding: 0 16px;
@@ -1707,9 +1751,21 @@ a {
 }
 
 @keyframes stockFlash {
-  0% { background: rgba(212, 175, 55, 0.25); color: var(--gold-dark); transform: scale(1.08); }
-  50% { background: rgba(212, 175, 55, 0.12); transform: scale(1.04); }
-  100% { background: transparent; transform: scale(1); }
+  0% {
+    background: rgba(212, 175, 55, 0.25);
+    color: var(--gold-dark);
+    transform: scale(1.08);
+  }
+
+  50% {
+    background: rgba(212, 175, 55, 0.12);
+    transform: scale(1.04);
+  }
+
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
 }
 
 .stock-indicator.flash {
@@ -1955,6 +2011,7 @@ a {
     opacity: 0;
     transform: translateY(20px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2339,9 +2396,22 @@ a {
 
 /* ===== SHAKE ANIMATION ===== */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 50%, 90% { transform: translateX(-4px); }
-  30%, 70% { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  50%,
+  90% {
+    transform: translateX(-4px);
+  }
+
+  30%,
+  70% {
+    transform: translateX(4px);
+  }
 }
 
 .btn.shake {
@@ -2351,9 +2421,18 @@ a {
 }
 
 @keyframes qtyPulse {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.35); color: var(--gold-dark); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.35);
+    color: var(--gold-dark);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .qty-value.pulse {

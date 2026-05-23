@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,14 @@
   <meta name="description" content="Admin dashboard to view, approve, and manage orders.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
   <meta name="theme-color" content="#0d0d0d">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
   <!-- Skip to Content Link -->
@@ -68,15 +72,20 @@
 
     <!-- Admin Header -->
     <header class="admin-header" aria-labelledby="admin-heading">
-      <h1 id="admin-heading">Admin Dashboard</h1>
-      <p>Manage your artisan collection and customer orders from one place.</p>
+      <div>
+        <h1 id="admin-heading">Admin Dashboard</h1>
+        <p>Manage your artisan collection and customer orders from one place.</p>
+      </div>
+      <button class="btn btn-danger" id="logout-btn" type="button">Logout</button>
     </header>
 
     <!-- Admin Tabs -->
     <div class="admin-tabs-container" role="tablist" aria-label="Admin dashboard tabs">
       <div class="admin-tabs-inner">
-        <button class="admin-tab-btn active" data-tab="orders" role="tab" aria-selected="true" aria-controls="orders-tab">Orders Management</button>
-        <button class="admin-tab-btn" data-tab="catalogue" role="tab" aria-selected="false" aria-controls="catalogue-tab">Catalogue Management</button>
+        <button class="admin-tab-btn active" data-tab="orders" role="tab" aria-selected="true"
+          aria-controls="orders-tab">Orders Management</button>
+        <button class="admin-tab-btn" data-tab="catalogue" role="tab" aria-selected="false"
+          aria-controls="catalogue-tab">Catalogue Management</button>
       </div>
     </div>
 
@@ -259,5 +268,5 @@
     }
   </script>
 </body>
-</html>
+
 </html>

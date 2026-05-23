@@ -293,6 +293,10 @@ function getCartCount() {
   return cart.reduce((sum, item) => sum + item.quantity, 0);
 }
 
+function calculateShipping(subtotal) {
+  return subtotal >= 200 ? 0 : 12.00;
+}
+
 function updateCartCount() {
   const badges = document.querySelectorAll('.cart-count');
   const count = getCartCount();
@@ -393,71 +397,71 @@ function renderProducts() {
   });
 }
 
-let _prevCartIds = null;
-let _cartRemoveTimer = null;
+const renderCartDropdown = (() => {
+  let prevIds = null;
+  let removeTimer = null;
 
-function renderCartDropdown() {
-  const container = document.getElementById('cart-dropdown-items');
-  const template = document.getElementById('cart-item-template');
-  const totalEl = document.getElementById('cart-dropdown-total');
-  if (!container || !template) return;
+  function renderCartContent(container, template, totalEl, currIds) {
+    const currentPrevIds = prevIds || new Set();
+    container.innerHTML = '';
 
-  const prevIds = _prevCartIds || new Set();
-  const currIds = new Set(cart.map(i => i.productId));
+    if (cart.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">Your cart is empty</p>';
+      if (totalEl) totalEl.textContent = '₹0.00';
+      prevIds = new Set();
+      return;
+    }
 
-  // If an item was removed, animate it out before rebuilding
-  const removedIds = [...prevIds].filter(id => !currIds.has(id));
-  if (removedIds.length > 0) {
-    removedIds.forEach(id => {
-      const el = container.querySelector(`[data-product-id="${id}"]`);
-      if (el) el.classList.add('removing');
+    cart.forEach(item => {
+      const product = PRODUCTS.find(p => p.id === item.productId);
+      if (!product) return;
+
+      const isNew = !currentPrevIds.has(item.productId);
+      const el = template.content.cloneNode(true);
+      const itemDiv = el.querySelector('.cart-dropdown-item');
+      itemDiv.dataset.productId = item.productId;
+      if (isNew) itemDiv.classList.add('new-item');
+      el.querySelector('img').src = product.image;
+      el.querySelector('img').alt = product.name;
+      el.querySelector('h5').textContent = product.name;
+      el.querySelector('p').textContent = `Qty: ${item.quantity} × ₹${product.price.toFixed(2)}`;
+      el.querySelector('.cart-dropdown-item-remove').addEventListener('click', () => {
+        removeFromCart(product.id);
+      });
+      container.appendChild(el);
     });
-    clearTimeout(_cartRemoveTimer);
-    _cartRemoveTimer = setTimeout(() => {
-      _prevCartIds = currIds;
-      renderCartContent(container, template, totalEl, currIds);
-    }, 350);
-    return;
+
+    prevIds = currIds;
+
+    if (totalEl) totalEl.textContent = `₹${getCartTotal().toFixed(2)}`;
   }
 
-  _prevCartIds = currIds;
-  renderCartContent(container, template, totalEl, currIds);
-}
+  return function renderCartDropdown() {
+    const container = document.getElementById('cart-dropdown-items');
+    const template = document.getElementById('cart-item-template');
+    const totalEl = document.getElementById('cart-dropdown-total');
+    if (!container || !template) return;
 
-function renderCartContent(container, template, totalEl, currIds) {
-  const prevIds = _prevCartIds || new Set();
-  container.innerHTML = '';
+    const currIds = new Set(cart.map(i => i.productId));
+    const removedIds = [...(prevIds || new Set())].filter(id => !currIds.has(id));
 
-  if (cart.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">Your cart is empty</p>';
-    if (totalEl) totalEl.textContent = '₹0.00';
-    _prevCartIds = new Set();
-    return;
-  }
+    if (removedIds.length > 0) {
+      removedIds.forEach(id => {
+        const el = container.querySelector(`[data-product-id="${id}"]`);
+        if (el) el.classList.add('removing');
+      });
+      clearTimeout(removeTimer);
+      removeTimer = setTimeout(() => {
+        prevIds = currIds;
+        removeTimer = null;
+        renderCartContent(container, template, totalEl, currIds);
+      }, 350);
+      return;
+    }
 
-  cart.forEach(item => {
-    const product = PRODUCTS.find(p => p.id === item.productId);
-    if (!product) return;
-
-    const isNew = !prevIds.has(item.productId);
-    const el = template.content.cloneNode(true);
-    const itemDiv = el.querySelector('.cart-dropdown-item');
-    itemDiv.dataset.productId = item.productId;
-    if (isNew) itemDiv.classList.add('new-item');
-    el.querySelector('img').src = product.image;
-    el.querySelector('img').alt = product.name;
-    el.querySelector('h5').textContent = product.name;
-    el.querySelector('p').textContent = `Qty: ${item.quantity} × ₹${product.price.toFixed(2)}`;
-    el.querySelector('.cart-dropdown-item-remove').addEventListener('click', () => {
-      removeFromCart(product.id);
-    });
-    container.appendChild(el);
-  });
-
-  _prevCartIds = currIds;
-
-  if (totalEl) totalEl.textContent = `₹${getCartTotal().toFixed(2)}`;
-}
+    renderCartContent(container, template, totalEl, currIds);
+  };
+})();
 
 function renderOrderSummary() {
   const container = document.getElementById('order-summary-items');
@@ -472,7 +476,12 @@ function renderOrderSummary() {
   container.innerHTML = '';
 
   if (cart.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">No items selected</p>';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 24px 0;">
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Your cart is empty</p>
+        <a href="catalogue.html" class="btn btn-dark">Browse Catalogue</a>
+      </div>
+    `;
     if (subtotalEl) subtotalEl.textContent = '₹0.00';
     if (shippingEl) shippingEl.textContent = '₹0.00';
     if (totalEl) totalEl.textContent = '₹0.00';
@@ -531,7 +540,7 @@ function renderOrderSummary() {
   });
 
   const subtotal = getCartTotal();
-  const shipping = subtotal >= 200 ? 0 : 12.00;
+  const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
 
   if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
@@ -668,14 +677,16 @@ function submitOrder() {
   }
 
   // Create order object
+  const subtotal = getCartTotal();
+  const shipping = calculateShipping(subtotal);
   const order = {
     id: generateOrderId(),
     date: new Date().toISOString(),
     status: 'pending',
     items: [...cart],
-    total: getCartTotal(),
-    shipping: getCartTotal() >= 200 ? 0 : 12.00,
-    grandTotal: getCartTotal() + (getCartTotal() >= 200 ? 0 : 12.00),
+    total: subtotal,
+    shipping,
+    grandTotal: subtotal + shipping,
     customer: {
       name: sanitizeInput(document.getElementById('full-name').value),
       email: sanitizeInput(document.getElementById('email').value),
@@ -703,7 +714,10 @@ function submitOrder() {
   saveState();
   clearCart();
 
-  window.location.href = `confirmation.html?id=${order.id}`;
+  // Ensure localStorage is updated before redirecting
+  setTimeout(() => {
+    window.location.href = `confirmation.html?id=${order.id}`;
+  }, 100);
 }
 
 // ===== CONFIRMATION PAGE =====
@@ -884,6 +898,14 @@ function initLoginForm() {
 function initAdminPage() {
   if (!requireAuth()) return;
 
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      sessionStorage.removeItem('luxe_admin_auth');
+      window.location.href = 'login.html';
+    });
+  }
+
   const tabBtns = document.querySelectorAll('.admin-tab-btn');
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -905,7 +927,10 @@ function initAdminPage() {
   document.getElementById('btn-add-product')?.addEventListener('click', () => openProductModal());
 }
 
+let currentAdminOrderFilter = 'all';
+
 function renderAdminOrders(filter = 'all') {
+  currentAdminOrderFilter = filter;
   const tbody = document.getElementById('admin-orders-body');
   if (!tbody) return;
 
@@ -925,11 +950,12 @@ function renderAdminOrders(filter = 'all') {
 
   f.forEach(order => {
     const tr = document.createElement('tr');
+    tr.dataset.orderId = order.id;
     const safeOrderId = sanitizeHTML(order.id);
     const safeCustomerName = sanitizeHTML(order.customer.name);
     const safeStatus = sanitizeHTML(order.status);
     const safeTransactionId = sanitizeHTML(order.transactionId);
-    
+
     tr.innerHTML = `
       <td><strong>${safeOrderId}</strong></td>
       <td>${new Date(order.date).toLocaleDateString()}</td>
@@ -948,50 +974,109 @@ function renderAdminOrders(filter = 'all') {
   });
 }
 
-let _prevStock = null;
+function updateAdminOrderStatusView(orderId, status) {
+  const tbody = document.getElementById('admin-orders-body');
+  if (!tbody) return;
 
-function renderAdminCatalogue() {
+  const row = tbody.querySelector(`tr[data-order-id="${orderId}"]`);
+  const statusBadge = row?.querySelector('.status-badge');
+
+  if (!row || !statusBadge) {
+    renderAdminOrders(currentAdminOrderFilter);
+    return;
+  }
+
+  if (currentAdminOrderFilter !== 'all' && currentAdminOrderFilter !== status) {
+    row.remove();
+    if (!tbody.querySelector('tr[data-order-id]')) {
+      tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">No orders found.</td></tr>';
+    }
+    document.getElementById('stat-total').textContent = orders.length;
+    document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
+    document.getElementById('stat-approved').textContent = orders.filter(o => o.status === 'approved').length;
+    return;
+  }
+
+  statusBadge.className = `status-badge ${status}`;
+  statusBadge.textContent = status;
+  row.querySelector('td:nth-child(5)').textContent = `₹${orders.find(o => o.id === orderId)?.grandTotal.toFixed(2) || '0.00'}`;
+  document.getElementById('stat-total').textContent = orders.length;
+  document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
+  document.getElementById('stat-approved').textContent = orders.filter(o => o.status === 'approved').length;
+}
+
+const renderAdminCatalogue = (() => {
+  let prevStock = {};
+
+  return function renderAdminCatalogue() {
+    const tbody = document.getElementById('admin-catalogue-body');
+    if (!tbody) return;
+
+    const currentPrev = prevStock;
+    tbody.innerHTML = '';
+
+    PRODUCTS.forEach(p => {
+      const changed = currentPrev[p.id] !== undefined && currentPrev[p.id] !== p.stock;
+      const tr = document.createElement('tr');
+      tr.dataset.productId = p.id;
+      const safeName = sanitizeHTML(p.name);
+      const safeCategory = sanitizeHTML(p.category);
+      const safeBadge = p.badge ? sanitizeHTML(p.badge) : '—';
+      const safeImage = sanitizeHTML(p.image);
+
+      tr.innerHTML = `
+        <td><img src="${safeImage}" width="40"></td>
+        <td>${safeName}</td>
+        <td>${safeCategory}</td>
+        <td>₹${p.price.toFixed(2)}</td>
+        <td>${safeBadge}</td>
+        <td><span class="stock-indicator ${p.stock <= 3 ? 'low-stock' : ''}${changed ? ' flash' : ''}">${p.stock} units</span></td>
+        <td>${new Date(p.lastUpdated).toLocaleDateString()}</td>
+        <td>
+          <button class="btn btn-dark btn-edit" data-id="${p.id}">Edit</button>
+          <button class="btn btn-danger btn-delete" data-id="${p.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    prevStock = {};
+    PRODUCTS.forEach(p => { prevStock[p.id] = p.stock; });
+
+    tbody.querySelectorAll('.btn-edit').forEach(btn => {
+      btn.addEventListener('click', () => openProductModal(parseInt(btn.dataset.id)));
+    });
+    tbody.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.id)));
+    });
+  };
+})();
+
+function updateAdminCatalogueStock(productId, stock) {
   const tbody = document.getElementById('admin-catalogue-body');
   if (!tbody) return;
 
-  // Snapshot previous stock before rebuilding
-  const prev = _prevStock || {};
-  tbody.innerHTML = '';
+  const row = tbody.querySelector(`tr[data-product-id="${productId}"]`);
+  if (!row) {
+    renderAdminCatalogue();
+    return;
+  }
 
-  PRODUCTS.forEach(p => {
-    const changed = prev[p.id] !== undefined && prev[p.id] !== p.stock;
-    const tr = document.createElement('tr');
-    const safeName = sanitizeHTML(p.name);
-    const safeCategory = sanitizeHTML(p.category);
-    const safeBadge = p.badge ? sanitizeHTML(p.badge) : '—';
-    const safeImage = sanitizeHTML(p.image);
-    
-    tr.innerHTML = `
-      <td><img src="${safeImage}" width="40"></td>
-      <td>${safeName}</td>
-      <td>${safeCategory}</td>
-      <td>₹${p.price.toFixed(2)}</td>
-      <td>${safeBadge}</td>
-      <td><span class="stock-indicator ${p.stock <= 3 ? 'low-stock' : ''}${changed ? ' flash' : ''}">${p.stock} units</span></td>
-      <td>${new Date(p.lastUpdated).toLocaleDateString()}</td>
-      <td>
-        <button class="btn btn-dark btn-edit" data-id="${p.id}">Edit</button>
-        <button class="btn btn-danger btn-delete" data-id="${p.id}">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  const indicator = row.querySelector('.stock-indicator');
+  if (!indicator) {
+    renderAdminCatalogue();
+    return;
+  }
 
-  // Update snapshot for next comparison
-  _prevStock = {};
-  PRODUCTS.forEach(p => { _prevStock[p.id] = p.stock; });
-
-  tbody.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', () => openProductModal(parseInt(btn.dataset.id)));
-  });
-  tbody.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.id)));
-  });
+  const classes = ['stock-indicator', 'flash'];
+  if (stock <= 3) classes.push('low-stock');
+  indicator.className = classes.join(' ');
+  indicator.textContent = `${stock} units`;
+  setTimeout(() => {
+    if (indicator.isConnected) {
+      indicator.classList.remove('flash');
+    }
+  }, 800);
 }
 
 function openProductModal(productId = null) {
@@ -1015,6 +1100,7 @@ function openProductModal(productId = null) {
           <input type="hidden" id="prod-id" value="${product ? product.id : ''}">
           <div class="form-group"><label>Name</label><input type="text" id="prod-name" value="${product ? product.name : ''}" required></div>
           <div class="form-group"><label>Category</label><input type="text" id="prod-category" value="${product ? product.category : ''}" required></div>
+          <div class="form-group"><label>Badge</label><input type="text" id="prod-badge" value="${product ? (product.badge || '') : ''}" placeholder="e.g. Bestseller, New"></div>
           <div class="form-group"><label>Price (₹)</label><input type="number" id="prod-price" step="0.01" value="${product ? product.price : ''}" required></div>
           <div class="form-group"><label>Stock</label><input type="number" id="prod-stock" value="${product ? product.stock : '10'}" required></div>
           <div class="form-group"><label>Image URL</label><input type="url" id="prod-image" value="${product ? product.image : ''}" required></div>
@@ -1037,6 +1123,7 @@ function saveProduct() {
   const id = document.getElementById('prod-id').value;
   const name = sanitizeInput(document.getElementById('prod-name').value);
   const category = sanitizeInput(document.getElementById('prod-category').value);
+  const badge = sanitizeInput(document.getElementById('prod-badge').value) || null;
   const priceVal = document.getElementById('prod-price').value;
   const stockVal = document.getElementById('prod-stock').value;
   const image = sanitizeInput(document.getElementById('prod-image').value);
@@ -1065,6 +1152,7 @@ function saveProduct() {
     id: id ? parseInt(id) : Date.now(),
     name,
     category,
+    badge,
     price,
     stock,
     image,
@@ -1098,19 +1186,31 @@ function deleteProduct(productId) {
 function updateOrderStatus(orderId, status) {
   const o = orders.find(x => x.id === orderId);
   if (!o) return;
-  
+
+  const wasRejected = status === 'rejected' && o.status === 'pending';
+
   // If rejecting, restore stock
-  if (status === 'rejected' && o.status !== 'rejected') {
+  if (wasRejected) {
     o.items.forEach(item => {
       const p = PRODUCTS.find(x => x.id === item.productId);
-      if (p) p.stock += item.quantity;
+      if (p) {
+        p.stock += item.quantity;
+        updateAdminCatalogueStock(p.id, p.stock);
+      }
     });
   }
-  
+
   o.status = status;
   saveState();
-  renderAdminOrders();
-  renderAdminCatalogue();
+
+  if (wasRejected) {
+    updateCartCount();
+    renderCartDropdown();
+    renderOrderSummary();
+  }
+
+  updateAdminOrderStatusView(orderId, status);
+  document.getElementById('order-detail-modal')?.classList.remove('active');
 }
 
 function setupAdminFilters() {
