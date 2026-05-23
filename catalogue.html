@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmed — Chinni Treasure — Little Love</title>
-  <meta name="description" content="Your order has been placed successfully. Your order ID and details are below.">
+  <title>Catalogue — Chinni Treasure — Little Love</title>
+  <meta name="description" content="Explore our full collection of artisan-crafted luxury goods. Find the perfect piece for your collection.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#0d0d0d">
-  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -29,8 +27,8 @@
   <nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="navbar-inner">
       <a href="index.html" class="nav-brand" aria-label="Chinni Treasure - Little Love home page">
-        LUXE
-        <span>Artisan Collection</span>
+        Chinni Treasure
+        <span>Little Love</span>
       </a>
 
       <button class="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
@@ -40,8 +38,7 @@
       </button>
 
       <ul class="nav-links" id="nav-links" role="menubar">
-        <li role="none"><a href="index.html" role="menuitem">Home</a></li>
-        <li role="none"><a href="catalogue.html" role="menuitem">Catalogue</a></li>
+        <li role="none"><a href="catalogue.html" class="active" role="menuitem" aria-current="page">Catalogue</a></li>
         <li role="none"><a href="track.html" role="menuitem">Track</a></li>
         <li role="none"><a href="admin.html" role="menuitem">Admin</a></li>
         <li class="cart-icon" style="position:relative;" role="none">
@@ -64,51 +61,22 @@
   </nav>
 
   <!-- Main Content -->
-  <main id="main-content" role="main" class="confirmation-page" id="confirmation-content">
-    <article class="confirmation-card" aria-labelledby="confirmation-heading">
-      <div class="confirmation-icon" aria-hidden="true">✓</div>
-      <h1 id="confirmation-heading">Order Confirmed!</h1>
-      <p style="color:var(--text-muted);margin-bottom:8px;">Thank you for your purchase.</p>
-      <div class="order-number">
-        Your Order ID
-        <strong id="order-id-display">ORD-XXXX-XXXX</strong>
+  <main id="main-content" role="main">
+    <div style="height: 100px;"></div> <!-- Spacer for fixed navbar -->
+    
+    <!-- Catalogue Section -->
+    <section class="section" id="catalogue" aria-labelledby="catalogue-heading">
+      <div class="section-header fade-in">
+        <div class="section-subtitle">Our Collection</div>
+        <h2 id="catalogue-heading">Full Catalogue</h2>
+        <p>Discover our complete selection of artisan-crafted luxury goods. Each item is carefully selected for its exceptional quality and timeless appeal.</p>
       </div>
-
-      <section class="confirmation-details" aria-labelledby="summary-heading">
-        <h3 id="summary-heading">Order Summary</h3>
-        <p><strong>Name:</strong> <span id="order-name"></span></p>
-        <p><strong>Email:</strong> <span id="order-email"></span></p>
-        <p><strong>Phone:</strong> <span id="order-phone"></span></p>
-        <p><strong>Address:</strong> <span id="order-address"></span></p>
-        <p><strong>Transaction ID:</strong> <span id="order-transaction-id"></span></p>
-        <p><strong>Total Charged:</strong> <span id="order-total"></span></p>
-      </section>
-
-      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;">
-        Your order is now <strong style="color:var(--warning);">pending review</strong>. Our team will verify your payment and confirm your order shortly. You will be notified once your order is approved and shipping begins.
-      </p>
-
-      <div class="confirmation-actions">
-        <a href="index.html" class="btn btn-primary">Continue Shopping</a>
-        <a href="track.html" class="btn btn-secondary">Track Orders</a>
-      </div>
-    </article>
+      <div class="products-grid" id="products-grid" role="list" aria-label="Product list"></div>
+    </section>
   </main>
 
-  <!-- Cart Item Template -->
-  <template id="cart-item-template">
-    <div class="cart-dropdown-item">
-      <img src="" alt="">
-      <div class="cart-dropdown-item-info">
-        <h5></h5>
-        <p></p>
-      </div>
-      <button class="cart-dropdown-item-remove" aria-label="Remove item">✕</button>
-    </div>
-  </template>
-
   <!-- Footer -->
-  <footer class="footer" style="margin-top:auto;" role="contentinfo">
+  <footer class="footer" role="contentinfo">
     <div class="footer-grid">
       <div class="footer-brand">
         <h3>Chinni Treasure</h3>
@@ -144,24 +112,38 @@
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
-  <script>
-    // Render confirmation after page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof renderConfirmation === 'function') {
-        renderConfirmation();
-      }
-    });
+  <!-- Product Card Template -->
+  <template id="product-template">
+    <div class="product-card" role="listitem">
+      <div class="product-card-image">
+        <img src="" alt="">
+        <span class="product-card-badge"></span>
+        <button class="product-card-wishlist" aria-label="Add to wishlist">♡</button>
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-category"></div>
+        <h3></h3>
+        <p class="product-card-description"></p>
+        <div class="product-card-footer">
+          <span class="product-card-price"></span>
+          <button class="btn-add" aria-label="Add to cart">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          console.log('SW registered:', reg.scope);
-        }).catch(err => {
-          console.log('SW registration failed:', err);
-        });
-      });
-    }
-  </script>
+  <!-- Cart Item Template -->
+  <template id="cart-item-template">
+    <div class="cart-dropdown-item">
+      <img src="" alt="">
+      <div class="cart-dropdown-item-info">
+        <h5></h5>
+        <p></p>
+      </div>
+      <button class="cart-dropdown-item-remove" aria-label="Remove item">✕</button>
+    </div>
+  </template>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
