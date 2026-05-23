@@ -973,6 +973,7 @@ function renderAdminCatalogue() {
       <td>₹${p.price.toFixed(2)}</td>
       <td>${safeBadge}</td>
       <td><span class="stock-indicator ${p.stock <= 3 ? 'low-stock' : ''}${changed ? ' flash' : ''}">${p.stock} units</span></td>
+      <td>${new Date(p.lastUpdated).toLocaleDateString()}</td>
       <td>
         <button class="btn btn-dark btn-edit" data-id="${p.id}">Edit</button>
         <button class="btn btn-danger btn-delete" data-id="${p.id}">Delete</button>

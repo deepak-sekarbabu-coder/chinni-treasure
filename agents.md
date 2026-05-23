@@ -54,16 +54,17 @@ When modifying this codebase, agents must adhere to the following:
 2.  **Maintain Architecture:** Preserve the **Vanilla JS** zero-dependency design.
 3.  **UI Consistency:** Use existing CSS variables and typography pairings.
 4.  **Local Dev Safety:** Ensure references to external/missing files (like manifests or service workers) are removed to keep the browser console error-free during local `file://` testing.
-5.  **Navigation Flow:** Do not restore the "Order" link to the top menu unless specifically requested; keep the navigation focused on Catalogue, Track, and Admin.
+5.  **Navigation Flow:** Use the Home, Catalogue, Track, Admin structure. Start Your Order buttons lead to `catalogue.html`.
 6.  **Normalization:** Always normalize inputs (trim whitespace, strip non-numeric characters for comparisons) before processing.
 
 ---
 
 ## 5. File Structure
-- `index.html`: Main collection showcase.
-- `order.html`: Checkout and delivery details (Tailored for India).
-- `track.html`: Order tracking portal.
-- `admin.html`: Dashboard (Orders & Catalogue tabs).
+- `index.html`: Homepage with highlights.
+- `catalogue.html`: Full artisan collection.
+- `order.html`: Checkout details.
+- `track.html`: Tracking portal.
+- `admin.html`: Dashboard with Last Updated column.
 - `login.html`: Administrative login.
 - `js/main.js`: Core logic and state management.
 - `css/style.css`: Unified branding and layout fixes.

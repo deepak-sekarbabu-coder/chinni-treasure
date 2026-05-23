@@ -2,9 +2,15 @@
 
 ## 1. System Architecture
 The application follows a **Static-First Client-Side** architecture. There is no backend server; all logic is executed in the browser, and data is managed via the `localStorage` API.
-
 ### 1.1 Multi-Page Structure
-- **Frontend Pages:** `index.html` (Catalogue), `order.html` (Checkout), `track.html` (Tracking), `confirmation.html` (Success).
+- **Frontend Pages:** 
+    - `index.html` (Homepage).
+    - `catalogue.html` (Full Collection).
+    - `order.html` (Checkout).
+    - `track.html` (Tracking).
+    - `confirmation.html` (Success).
+...
+- **Admin Tables:** Synchronized column headers (8 columns) for precise button alignment.
 - **Admin Pages:** `login.html`, `admin.html` (Dashboard).
 - **Core Engine:** `js/main.js` (Centralized state, strict validations, and rendering).
 - **Style Engine:** `css/style.css` (Unified brand identity).

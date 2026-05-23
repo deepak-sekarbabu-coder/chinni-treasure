@@ -6,7 +6,7 @@ To provide a premium, artisan-crafted luxury goods e-commerce experience that al
 ## 2. Functional Requirements
 
 ### 2.1 Customer Features
-- **Catalogue Browsing:** View a grid of artisan products with high-quality images, descriptions, and dynamic badges (e.g., "New", "Bestseller").
+- **Catalogue Browsing:** View a high-impact homepage with featured products and a dedicated catalogue page (`catalogue.html`) for the full collection.
 - **Dynamic Shopping Cart:**
     - Add items to cart with real-time stock verification.
     - Adjust quantities directly in the cart/checkout.
@@ -42,6 +42,6 @@ To provide a premium, artisan-crafted luxury goods e-commerce experience that al
 ## 4. Non-Functional Requirements
 - **Performance:** Immediate UI feedback (toasts, loading screens).
 - **Usability:** Mobile-responsive design, serif/sans-serif typography pairing.
-- **Navigation:** Streamlined top menu (Catalogue, Track, Admin) with the direct "Order" link removed for better UX flow.
+- **Navigation:** Streamlined top menu (Home, Catalogue, Track, Admin).
 - **Security:** Standard browser security origins (clean console, no CORS errors).
 - **Architecture:** Zero-dependency (Vanilla JS/CSS/HTML).
