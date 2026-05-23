@@ -1,3 +1,16 @@
+// ===== XSS SANITIZATION UTILITY =====
+function sanitizeHTML(str) {
+  if (typeof str !== 'string') return str;
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str.trim().replace(/[<>]/g, '');
+}
+
 // ===== PRODUCT DATA =====
 let PRODUCTS = [
   {
@@ -661,17 +674,17 @@ function submitOrder() {
     shipping: getCartTotal() >= 200 ? 0 : 12.00,
     grandTotal: getCartTotal() + (getCartTotal() >= 200 ? 0 : 12.00),
     customer: {
-      name: document.getElementById('full-name').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      city: document.getElementById('city').value.trim(),
-      state: document.getElementById('state').value.trim(),
-      zip: document.getElementById('zip-code').value.trim(),
-      country: document.getElementById('country').value.trim()
+      name: sanitizeInput(document.getElementById('full-name').value),
+      email: sanitizeInput(document.getElementById('email').value),
+      phone: sanitizeInput(document.getElementById('phone').value),
+      address: sanitizeInput(document.getElementById('address').value),
+      city: sanitizeInput(document.getElementById('city').value),
+      state: sanitizeInput(document.getElementById('state').value),
+      zip: sanitizeInput(document.getElementById('zip-code').value),
+      country: sanitizeInput(document.getElementById('country').value)
     },
-    transactionId: document.getElementById('transaction-id').value.trim(),
-    notes: document.getElementById('notes').value.trim()
+    transactionId: sanitizeInput(document.getElementById('transaction-id').value),
+    notes: sanitizeInput(document.getElementById('notes').value)
   };
 
   // Deduct stock globally
@@ -709,13 +722,14 @@ function renderConfirmation() {
     return;
   }
 
-  document.getElementById('order-id-display').textContent = order.id;
-  document.getElementById('order-email').textContent = order.customer.email;
-  document.getElementById('order-name').textContent = order.customer.name;
-  document.getElementById('order-address').textContent =
-    `${order.customer.address}, ${order.customer.city}, ${order.customer.state} ${order.customer.zip}, ${order.customer.country}`;
-  document.getElementById('order-phone').textContent = order.customer.phone;
-  document.getElementById('order-transaction-id').textContent = order.transactionId;
+  document.getElementById('order-id-display').textContent = sanitizeHTML(order.id);
+  document.getElementById('order-email').textContent = sanitizeHTML(order.customer.email);
+  document.getElementById('order-name').textContent = sanitizeHTML(order.customer.name);
+  document.getElementById('order-address').textContent = sanitizeHTML(
+    `${order.customer.address}, ${order.customer.city}, ${order.customer.state} ${order.customer.zip}, ${order.customer.country}`
+  );
+  document.getElementById('order-phone').textContent = sanitizeHTML(order.customer.phone);
+  document.getElementById('order-transaction-id').textContent = sanitizeHTML(order.transactionId);
   document.getElementById('order-total').textContent = `₹${order.grandTotal.toFixed(2)}`;
 }
 
@@ -784,10 +798,10 @@ function searchOrders() {
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
         <div>
           <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Order ID</span>
-          <h4 style="font-family: var(--font-serif); font-size: 1.1rem; margin-top: 4px;">${order.id}</h4>
+          <h4 style="font-family: var(--font-serif); font-size: 1.1rem; margin-top: 4px;">${sanitizeHTML(order.id)}</h4>
         </div>
-        <span class="status-badge ${order.status}">
-          ${order.status === 'pending' ? '⏳' : order.status === 'approved' ? '✓' : '✕'} ${order.status}
+        <span class="status-badge ${sanitizeHTML(order.status)}">
+          ${order.status === 'pending' ? '⏳' : order.status === 'approved' ? '✓' : '✕'} ${sanitizeHTML(order.status)}
         </span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: end;">
@@ -904,15 +918,20 @@ function renderAdminOrders(filter = 'all') {
 
   f.forEach(order => {
     const tr = document.createElement('tr');
+    const safeOrderId = sanitizeHTML(order.id);
+    const safeCustomerName = sanitizeHTML(order.customer.name);
+    const safeStatus = sanitizeHTML(order.status);
+    const safeTransactionId = sanitizeHTML(order.transactionId);
+    
     tr.innerHTML = `
-      <td><strong>${order.id}</strong></td>
+      <td><strong>${safeOrderId}</strong></td>
       <td>${new Date(order.date).toLocaleDateString()}</td>
-      <td>${order.customer.name}</td>
+      <td>${safeCustomerName}</td>
       <td>${order.items.length} items</td>
       <td>₹${order.grandTotal.toFixed(2)}</td>
-      <td><span class="status-badge ${order.status}">${order.status}</span></td>
-      <td>${order.transactionId}</td>
-      <td><button class="btn btn-dark btn-view" data-id="${order.id}">View</button></td>
+      <td><span class="status-badge ${safeStatus}">${safeStatus}</span></td>
+      <td>${safeTransactionId}</td>
+      <td><button class="btn btn-dark btn-view" data-id="${safeOrderId}">View</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -935,12 +954,17 @@ function renderAdminCatalogue() {
   PRODUCTS.forEach(p => {
     const changed = prev[p.id] !== undefined && prev[p.id] !== p.stock;
     const tr = document.createElement('tr');
+    const safeName = sanitizeHTML(p.name);
+    const safeCategory = sanitizeHTML(p.category);
+    const safeBadge = p.badge ? sanitizeHTML(p.badge) : '—';
+    const safeImage = sanitizeHTML(p.image);
+    
     tr.innerHTML = `
-      <td><img src="${p.image}" width="40"></td>
-      <td>${p.name}</td>
-      <td>${p.category}</td>
+      <td><img src="${safeImage}" width="40"></td>
+      <td>${safeName}</td>
+      <td>${safeCategory}</td>
       <td>₹${p.price.toFixed(2)}</td>
-      <td>${p.badge || '—'}</td>
+      <td>${safeBadge}</td>
       <td><span class="stock-indicator ${p.stock <= 3 ? 'low-stock' : ''}${changed ? ' flash' : ''}">${p.stock} units</span></td>
       <td>
         <button class="btn btn-dark btn-edit" data-id="${p.id}">Edit</button>
@@ -1003,12 +1027,12 @@ function openProductModal(productId = null) {
 
 function saveProduct() {
   const id = document.getElementById('prod-id').value;
-  const name = document.getElementById('prod-name').value.trim();
-  const category = document.getElementById('prod-category').value.trim();
+  const name = sanitizeInput(document.getElementById('prod-name').value);
+  const category = sanitizeInput(document.getElementById('prod-category').value);
   const priceVal = document.getElementById('prod-price').value;
   const stockVal = document.getElementById('prod-stock').value;
-  const image = document.getElementById('prod-image').value.trim();
-  const desc = document.getElementById('prod-desc').value.trim();
+  const image = sanitizeInput(document.getElementById('prod-image').value);
+  const desc = sanitizeInput(document.getElementById('prod-desc').value);
 
   // Basic Validations
   if (!name || !category || !priceVal || !stockVal || !image || !desc) {
@@ -1105,21 +1129,30 @@ function openOrderDetail(orderId) {
 
   const itemsRows = order.items.map(item => {
     const p = PRODUCTS.find(x => x.id === item.productId);
-    return `<tr><td>${p ? p.name : 'Item'}</td><td>${item.quantity}</td><td>₹${order.total.toFixed(2)}</td></tr>`;
+    const itemName = p ? sanitizeHTML(p.name) : 'Item';
+    const itemQuantity = sanitizeHTML(item.quantity.toString());
+    const itemTotal = sanitizeHTML(order.total.toFixed(2));
+    return `<tr><td>${itemName}</td><td>${itemQuantity}</td><td>₹${itemTotal}</td></tr>`;
   }).join('');
+
+  const safeOrderId = sanitizeHTML(order.id);
+  const safeStatus = sanitizeHTML(order.status);
+  const safeCustomerName = sanitizeHTML(order.customer.name);
+  const safeAddress = sanitizeHTML(order.customer.address);
+  const safeCity = sanitizeHTML(order.customer.city);
 
   modal.innerHTML = `
     <div class="modal-content">
-      <div class="modal-header"><h2>Order ${order.id}</h2><button class="modal-close">✕</button></div>
+      <div class="modal-header"><h2>Order ${safeOrderId}</h2><button class="modal-close">✕</button></div>
       <div class="modal-body">
-        <p><strong>Status:</strong> ${order.status}</p>
-        <p><strong>Customer:</strong> ${order.customer.name}</p>
-        <p><strong>Address:</strong> ${order.customer.address}, ${order.customer.city}</p>
+        <p><strong>Status:</strong> ${safeStatus}</p>
+        <p><strong>Customer:</strong> ${safeCustomerName}</p>
+        <p><strong>Address:</strong> ${safeAddress}, ${safeCity}</p>
         <table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${itemsRows}</tbody></table>
         ${isAuthenticated() && order.status === 'pending' ? `
           <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn btn-success" onclick="updateOrderStatus('${order.id}', 'approved')">Approve</button>
-            <button class="btn btn-danger" onclick="updateOrderStatus('${order.id}', 'rejected')">Reject</button>
+            <button class="btn btn-success" onclick="updateOrderStatus('${safeOrderId}', 'approved')">Approve</button>
+            <button class="btn btn-danger" onclick="updateOrderStatus('${safeOrderId}', 'rejected')">Reject</button>
           </div>
         ` : ''}
       </div>
