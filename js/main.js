@@ -1243,8 +1243,7 @@ function openOrderDetail(orderId) {
     const p = PRODUCTS.find(x => x.id === item.productId);
     const itemName = p ? sanitizeHTML(p.name) : 'Item';
     const itemQuantity = sanitizeHTML(item.quantity.toString());
-    const itemTotal = sanitizeHTML(order.total.toFixed(2));
-    return `<tr><td>${itemName}</td><td>${itemQuantity}</td><td>₹${itemTotal}</td></tr>`;
+    return `<tr><td>${itemName}</td><td>${itemQuantity}</td><td>₹${(p ? p.price * item.quantity : 0).toFixed(2)}</td></tr>`;
   }).join('');
 
   const safeOrderId = sanitizeHTML(order.id);
@@ -1263,13 +1262,20 @@ function openOrderDetail(orderId) {
         <table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${itemsRows}</tbody></table>
         ${isAuthenticated() && order.status === 'pending' ? `
           <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn btn-success" onclick="updateOrderStatus('${safeOrderId}', 'approved')">Approve</button>
-            <button class="btn btn-danger" onclick="updateOrderStatus('${safeOrderId}', 'rejected')">Reject</button>
+            <button class="btn btn-success" id="btn-approve-${safeOrderId}">Approve</button>
+            <button class="btn btn-danger" id="btn-reject-${safeOrderId}">Reject</button>
           </div>
         ` : ''}
       </div>
     </div>
   `;
+
+  // Attach event listeners (safe — no inline onclick)
+  const approveBtn = modal.querySelector('#btn-approve-' + CSS.escape(order.id));
+  const rejectBtn = modal.querySelector('#btn-reject-' + CSS.escape(order.id));
+  approveBtn?.addEventListener('click', () => updateOrderStatus(order.id, 'approved'));
+  rejectBtn?.addEventListener('click', () => updateOrderStatus(order.id, 'rejected'));
+
   modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('active'));
   modal.classList.add('active');
 }
