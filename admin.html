@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — Order Management | LUXE Artisan Collection</title>
+  <title>Admin — Order Management | Chinni Treasure — Little Love</title>
   <meta name="description" content="Admin dashboard to view, approve, and manage orders.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,38 +14,41 @@
 </head>
 <body>
 
+  <!-- Skip to Content Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Loading Screen -->
-  <div class="loading-screen" id="loading-screen">
+  <div class="loading-screen" id="loading-screen" role="alert" aria-busy="true" aria-label="Loading page">
     <div class="loading-spinner"></div>
   </div>
 
   <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" role="region" aria-live="polite" aria-label="Notifications"></div>
 
   <!-- Navigation -->
-  <nav class="navbar">
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="navbar-inner">
-      <a href="index.html" class="nav-brand">
+      <a href="index.html" class="nav-brand" aria-label="Chinni Treasure - Little Love home page">
         LUXE
         <span>Artisan Collection</span>
       </a>
 
-      <button class="hamburger" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button class="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
       </button>
 
-      <ul class="nav-links">
-        <li><a href="index.html">Catalogue</a></li>
-        <li><a href="track.html">Track</a></li>
-        <li><a href="admin.html" class="active">Admin</a></li>
-        <li class="cart-icon" style="position:relative;">
-          <a href="order.html" style="position:relative;">
+      <ul class="nav-links" id="nav-links" role="menubar">
+        <li role="none"><a href="index.html" role="menuitem">Catalogue</a></li>
+        <li role="none"><a href="track.html" role="menuitem">Track</a></li>
+        <li role="none"><a href="admin.html" class="active" role="menuitem" aria-current="page">Admin</a></li>
+        <li class="cart-icon" style="position:relative;" role="none">
+          <a href="order.html" style="position:relative;" role="menuitem" aria-label="Shopping cart">
             Cart
-            <span class="cart-count" style="display:none;">0</span>
+            <span class="cart-count" style="display:none;" aria-live="polite">0</span>
           </a>
-          <div class="cart-dropdown">
+          <div class="cart-dropdown" role="region" aria-label="Shopping cart preview">
             <h4>Shopping Cart</h4>
             <div class="cart-dropdown-items" id="cart-dropdown-items"></div>
             <div class="cart-dropdown-total">
@@ -59,40 +62,40 @@
     </div>
   </nav>
 
-  <!-- Admin Page -->
-  <div class="admin-page">
+  <!-- Main Content -->
+  <main id="main-content" role="main" class="admin-page">
 
     <!-- Admin Header -->
-    <div class="admin-header">
-      <h1>Admin Dashboard</h1>
+    <header class="admin-header" aria-labelledby="admin-heading">
+      <h1 id="admin-heading">Admin Dashboard</h1>
       <p>Manage your artisan collection and customer orders from one place.</p>
-    </div>
+    </header>
 
     <!-- Admin Tabs -->
-    <div class="admin-tabs-container">
+    <div class="admin-tabs-container" role="tablist" aria-label="Admin dashboard tabs">
       <div class="admin-tabs-inner">
-        <button class="admin-tab-btn active" data-tab="orders">Orders Management</button>
-        <button class="admin-tab-btn" data-tab="catalogue">Catalogue Management</button>
+        <button class="admin-tab-btn active" data-tab="orders" role="tab" aria-selected="true" aria-controls="orders-tab">Orders Management</button>
+        <button class="admin-tab-btn" data-tab="catalogue" role="tab" aria-selected="false" aria-controls="catalogue-tab">Catalogue Management</button>
       </div>
     </div>
 
     <!-- Orders Tab Content -->
-    <div id="orders-tab" class="admin-tab-content active">
+    <section id="orders-tab" class="admin-tab-content active" role="tabpanel" aria-labelledby="orders-tab">
       <div class="admin-section-header">
         <h2>Order Overview</h2>
       </div>
 
       <!-- Stats Cards -->
-      <div class="admin-stats">
-        <div class="admin-stat-card">
+      <div class="admin-stats" role="list">
+        <div class="admin-stat-card" role="listitem">
           <div class="stat-number" id="stat-total">0</div>
           <div class="stat-label">Total Orders</div>
         </div>
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" role="listitem">
           <div class="stat-number" id="stat-pending">0</div>
           <div class="stat-label">Pending Review</div>
         </div>
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" role="listitem">
           <div class="stat-number" id="stat-approved">0</div>
           <div class="stat-label">Approved</div>
         </div>
@@ -103,13 +106,13 @@
         <div class="admin-chart-card">
           <h3>Orders &amp; Revenue Over Time</h3>
           <div class="admin-chart-wrapper">
-            <canvas id="chart-orders-time"></canvas>
+            <canvas id="chart-orders-time" role="img" aria-label="Orders and revenue chart"></canvas>
           </div>
         </div>
         <div class="admin-chart-card">
           <h3>Sales by Product</h3>
           <div class="admin-chart-wrapper">
-            <canvas id="chart-sales-product"></canvas>
+            <canvas id="chart-sales-product" role="img" aria-label="Sales by product chart"></canvas>
           </div>
         </div>
       </div>
@@ -119,26 +122,26 @@
       </div>
 
       <!-- Filter Buttons -->
-      <div class="admin-filters">
-        <button class="admin-filter-btn active" data-filter="all">All Orders</button>
-        <button class="admin-filter-btn" data-filter="pending">Pending</button>
-        <button class="admin-filter-btn" data-filter="approved">Approved</button>
-        <button class="admin-filter-btn" data-filter="rejected">Rejected</button>
+      <div class="admin-filters" role="group" aria-label="Order filters">
+        <button class="admin-filter-btn active" data-filter="all" aria-pressed="true">All Orders</button>
+        <button class="admin-filter-btn" data-filter="pending" aria-pressed="false">Pending</button>
+        <button class="admin-filter-btn" data-filter="approved" aria-pressed="false">Approved</button>
+        <button class="admin-filter-btn" data-filter="rejected" aria-pressed="false">Rejected</button>
       </div>
 
       <!-- Orders Table -->
       <div class="admin-table-wrapper">
-        <table class="admin-table">
+        <table class="admin-table" aria-label="Orders table">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Status</th>
-              <th>Transaction ID</th>
-              <th>Actions</th>
+              <th scope="col">Order ID</th>
+              <th scope="col">Date</th>
+              <th scope="col">Customer</th>
+              <th scope="col">Items</th>
+              <th scope="col">Total</th>
+              <th scope="col">Status</th>
+              <th scope="col">Transaction ID</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="admin-orders-body">
@@ -153,27 +156,27 @@
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
 
     <!-- Catalogue Tab Content -->
-    <div id="catalogue-tab" class="admin-tab-content">
+    <section id="catalogue-tab" class="admin-tab-content" role="tabpanel" aria-labelledby="catalogue-tab">
       <div class="admin-section-header">
         <h2>Product Catalogue</h2>
         <button class="btn btn-primary" id="btn-add-product">+ Add New Product</button>
       </div>
 
       <div class="admin-table-wrapper">
-        <table class="admin-table">
+        <table class="admin-table" aria-label="Product catalogue table">
           <thead>
             <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Badge</th>
-              <th>Stock</th>
-              <th>Last Updated</th>
-              <th>Actions</th>
+              <th scope="col">Image</th>
+              <th scope="col">Name</th>
+              <th scope="col">Category</th>
+              <th scope="col">Price</th>
+              <th scope="col">Badge</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Last Updated</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="admin-catalogue-body">
@@ -188,9 +191,9 @@
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-  </div>
+  </main>
 
   <!-- Cart Item Template -->
   <template id="cart-item-template">
@@ -205,39 +208,38 @@
   </template>
 
   <!-- Footer -->
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <div class="footer-grid">
       <div class="footer-brand">
-        <h3>LUXE</h3>
+        <h3>Chinni Treasure</h3>
         <p>Curating the finest artisan-crafted luxury goods for discerning customers worldwide.</p>
       </div>
       <div>
         <h4>Quick Links</h4>
-        <ul>
-          <li><a href="index.html">Catalogue</a></li>
-          <li><a href="order.html">Place Order</a></li>
-          <li><a href="track.html">Track Order</a></li>
-          <li><a href="admin.html">Admin Dashboard</a></li>
+        <ul role="list">
+          <li role="listitem"><a href="index.html">Catalogue</a></li>
+          <li role="listitem"><a href="order.html">Place Order</a></li>
+          <li role="listitem"><a href="track.html">Track Order</a></li>
         </ul>
       </div>
       <div>
         <h4>Customer Care</h4>
-        <ul>
-          <li><a href="#">Shipping Info</a></li>
-          <li><a href="#">Returns Policy</a></li>
-          <li><a href="#">Contact Us</a></li>
+        <ul role="list">
+          <li role="listitem"><a href="#">Shipping Info</a></li>
+          <li role="listitem"><a href="#">Returns Policy</a></li>
+          <li role="listitem"><a href="#">Contact Us</a></li>
         </ul>
       </div>
       <div>
         <h4>Contact</h4>
-        <ul>
-          <li><a href="mailto:chinnitreasure@gmail.com">chinnitreasure@gmail.com</a></li>
-          <li><a href="tel:+1234567890">+ 91 9876543210</a></li>
+        <ul role="list">
+          <li role="listitem"><a href="mailto:chinnitreasure@gmail.com">chinnitreasure@gmail.com</a></li>
+          <li role="listitem"><a href="tel:+1234567890">+ 91 9876543210</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>&copy; 2026 LUXE Artisan Collection. All rights reserved.</span>
+      <span>&copy; 2026 Chinni Treasure — Little Love All rights reserved.</span>
       <span>Made with care</span>
     </div>
   </footer>

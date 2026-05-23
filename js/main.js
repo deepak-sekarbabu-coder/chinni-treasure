@@ -145,8 +145,10 @@ function initNavbar() {
 
   // Hamburger toggle
   hamburger?.addEventListener('click', () => {
+    const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
     hamburger.classList.toggle('active');
     navLinks?.classList.toggle('active');
+    hamburger.setAttribute('aria-expanded', !isExpanded);
   });
 
   // Close menu on link click
@@ -154,6 +156,7 @@ function initNavbar() {
     link.addEventListener('click', () => {
       hamburger?.classList.remove('active');
       navLinks?.classList.remove('active');
+      hamburger?.setAttribute('aria-expanded', 'false');
     });
   });
 
@@ -884,8 +887,12 @@ function initAdminPage() {
   const tabBtns = document.querySelectorAll('.admin-tab-btn');
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
+      tabBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       const tab = btn.dataset.tab;
       document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(`${tab}-tab`).classList.add('active');
@@ -1108,8 +1115,12 @@ function updateOrderStatus(orderId, status) {
 function setupAdminFilters() {
   document.querySelectorAll('.admin-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.admin-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.admin-filter-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       renderAdminOrders(btn.dataset.filter);
     });
   });
