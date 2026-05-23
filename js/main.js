@@ -755,6 +755,26 @@ function initTrackPage() {
   const form = document.getElementById('track-form');
   if (!form) return;
 
+  // Radio toggle
+  const radios = document.querySelectorAll('input[name="track-method"]');
+  const orderIdGroup = document.getElementById('track-order-id-group');
+  const phoneGroup = document.getElementById('track-phone-group');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const method = document.querySelector('input[name="track-method"]:checked')?.value;
+      orderIdGroup.style.display = method === 'order-id' ? 'block' : 'none';
+      phoneGroup.style.display = method === 'phone' ? 'block' : 'none';
+      // Update radio label active states
+      document.querySelectorAll('.track-radio').forEach(l => l.classList.remove('active'));
+      radio.closest('.track-radio')?.classList.add('active');
+      // Clear previous results & errors
+      document.getElementById('track-results').style.display = 'none';
+      document.querySelectorAll('.form-error').forEach(e => e.classList.remove('visible'));
+      document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+    });
+  });
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     searchOrders();
@@ -762,50 +782,85 @@ function initTrackPage() {
 }
 
 function searchOrders() {
-  const phone = document.getElementById('track-phone').value.trim();
+  const method = document.querySelector('input[name="track-method"]:checked')?.value || 'order-id';
   const resultsDiv = document.getElementById('track-results');
   const listDiv = document.getElementById('track-orders-list');
-  const errorDiv = document.getElementById('track-phone-error');
-  const inputEl = document.getElementById('track-phone');
 
-  if (!phone) {
-    inputEl.classList.add('error');
-    if (errorDiv) {
-      errorDiv.textContent = 'Please enter your phone number';
-      errorDiv.classList.add('visible');
+  let foundOrders = [];
+
+  if (method === 'order-id') {
+    const orderId = document.getElementById('track-order-id').value.trim();
+    const errorDiv = document.getElementById('track-order-id-error');
+    const inputEl = document.getElementById('track-order-id');
+
+    // Clear errors
+    inputEl.classList.remove('error');
+    if (errorDiv) errorDiv.classList.remove('visible');
+
+    if (!orderId) {
+      inputEl.classList.add('error');
+      if (errorDiv) {
+        errorDiv.textContent = 'Please enter an Order ID';
+        errorDiv.classList.add('visible');
+      }
+      return;
     }
-    return;
-  }
 
-  if (!/^\d{10}$/.test(phone)) {
-    inputEl.classList.add('error');
-    if (errorDiv) {
-      errorDiv.textContent = 'Please enter a valid 10-digit phone number';
-      errorDiv.classList.add('visible');
+    // Look for exact match or partial match
+    foundOrders = orders.filter(order =>
+      order.id.toUpperCase().includes(orderId.toUpperCase())
+    );
+
+  } else {
+    const phone = document.getElementById('track-phone').value.trim();
+    const errorDiv = document.getElementById('track-phone-error');
+    const inputEl = document.getElementById('track-phone');
+
+    inputEl.classList.remove('error');
+    if (errorDiv) errorDiv.classList.remove('visible');
+
+    if (!phone) {
+      inputEl.classList.add('error');
+      if (errorDiv) {
+        errorDiv.textContent = 'Please enter your phone number';
+        errorDiv.classList.add('visible');
+      }
+      return;
     }
-    return;
+
+    if (!/^\d{10}$/.test(phone)) {
+      inputEl.classList.add('error');
+      if (errorDiv) {
+        errorDiv.textContent = 'Please enter a valid 10-digit phone number';
+        errorDiv.classList.add('visible');
+      }
+      return;
+    }
+
+    foundOrders = orders.filter(order => {
+      const cleanOrderPhone = order.customer.phone.replace(/[^\d]/g, '');
+      return cleanOrderPhone === phone;
+    });
   }
-
-  // Clear errors
-  inputEl.classList.remove('error');
-  if (errorDiv) errorDiv.classList.remove('visible');
-
-  const foundOrders = orders.filter(order => {
-    const cleanOrderPhone = order.customer.phone.replace(/[^\d]/g, '');
-    return cleanOrderPhone === phone;
-  });
 
   resultsDiv.style.display = 'block';
   listDiv.innerHTML = '';
 
   if (foundOrders.length === 0) {
-    listDiv.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No orders found for this phone number.</p>';
+    const msg = method === 'order-id'
+      ? 'No orders found matching this Order ID.'
+      : 'No orders found for this phone number.';
+    listDiv.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">${msg}</p>`;
     return;
   }
 
   foundOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   foundOrders.forEach(order => {
+    const safeStatus = sanitizeHTML(order.status);
+    const icon = getStatusIcon(order.status);
+    const label = ORDER_STATUS_LABELS[order.status] || order.status;
+
     const div = document.createElement('div');
     div.className = 'admin-stat-card';
     div.style.textAlign = 'left';
@@ -817,9 +872,7 @@ function searchOrders() {
           <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Order ID</span>
           <h4 style="font-family: var(--font-serif); font-size: 1.1rem; margin-top: 4px;">${sanitizeHTML(order.id)}</h4>
         </div>
-        <span class="status-badge ${sanitizeHTML(order.status)}">
-          ${order.status === 'pending' ? '⏳' : order.status === 'approved' ? '✓' : '✕'} ${sanitizeHTML(order.status)}
-        </span>
+        <span class="status-badge ${safeStatus}">${icon} ${sanitizeHTML(label)}</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: end;">
         <div>
@@ -837,6 +890,41 @@ function searchOrders() {
   });
 
   showToast(`Found ${foundOrders.length} order(s)`, 'success');
+}
+
+// ===== ORDER STATUS FLOW =====
+const ORDER_STATUS_FLOW = ['pending', 'approved', 'packaging', 'shipped', 'delivered'];
+const ORDER_STATUS_LABELS = {
+  pending: 'Pending',
+  approved: 'Approved',
+  packaging: 'Packaging',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  rejected: 'Rejected'
+};
+const ORDER_STATUS_ICONS = {
+  pending: '⏳',
+  approved: '✓',
+  packaging: '📦',
+  shipped: '🚚',
+  delivered: '✅',
+  rejected: '✕'
+};
+
+function getStatusIcon(status) {
+  return ORDER_STATUS_ICONS[status] || '●';
+}
+
+function getNextStatus(currentStatus) {
+  const idx = ORDER_STATUS_FLOW.indexOf(currentStatus);
+  if (idx === -1 || idx >= ORDER_STATUS_FLOW.length - 1) return null;
+  return ORDER_STATUS_FLOW[idx + 1];
+}
+
+function getPreviousStatuses(currentStatus) {
+  const idx = ORDER_STATUS_FLOW.indexOf(currentStatus);
+  if (idx === -1) return [];
+  return ORDER_STATUS_FLOW.slice(0, idx + 1);
 }
 
 // ===== ADMIN AUTH =====
@@ -938,9 +1026,11 @@ function renderAdminOrders(filter = 'all') {
   if (filter !== 'all') f = orders.filter(o => o.status === filter);
   f.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  // Update stats
   document.getElementById('stat-total').textContent = orders.length;
   document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
-  document.getElementById('stat-approved').textContent = orders.filter(o => o.status === 'approved').length;
+  document.getElementById('stat-shipped').textContent = orders.filter(o => o.status === 'shipped').length;
+  document.getElementById('stat-delivered').textContent = orders.filter(o => o.status === 'delivered').length;
 
   tbody.innerHTML = '';
   if (f.length === 0) {
@@ -955,6 +1045,8 @@ function renderAdminOrders(filter = 'all') {
     const safeCustomerName = sanitizeHTML(order.customer.name);
     const safeStatus = sanitizeHTML(order.status);
     const safeTransactionId = sanitizeHTML(order.transactionId);
+    const statusIcon = getStatusIcon(order.status);
+    const statusLabel = ORDER_STATUS_LABELS[order.status] || order.status;
 
     tr.innerHTML = `
       <td><strong>${safeOrderId}</strong></td>
@@ -962,7 +1054,7 @@ function renderAdminOrders(filter = 'all') {
       <td>${safeCustomerName}</td>
       <td>${order.items.length} items</td>
       <td>₹${order.grandTotal.toFixed(2)}</td>
-      <td><span class="status-badge ${safeStatus}">${safeStatus}</span></td>
+      <td><span class="status-badge ${safeStatus}">${statusIcon} ${sanitizeHTML(statusLabel)}</span></td>
       <td>${safeTransactionId}</td>
       <td><button class="btn btn-dark btn-view" data-id="${safeOrderId}">View</button></td>
     `;
@@ -991,18 +1083,20 @@ function updateAdminOrderStatusView(orderId, status) {
     if (!tbody.querySelector('tr[data-order-id]')) {
       tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">No orders found.</td></tr>';
     }
-    document.getElementById('stat-total').textContent = orders.length;
-    document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
-    document.getElementById('stat-approved').textContent = orders.filter(o => o.status === 'approved').length;
+    updateStats();
     return;
   }
 
   statusBadge.className = `status-badge ${status}`;
-  statusBadge.textContent = status;
-  row.querySelector('td:nth-child(5)').textContent = `₹${orders.find(o => o.id === orderId)?.grandTotal.toFixed(2) || '0.00'}`;
+  statusBadge.textContent = `${getStatusIcon(status)} ${ORDER_STATUS_LABELS[status] || status}`;
+  updateStats();
+}
+
+function updateStats() {
   document.getElementById('stat-total').textContent = orders.length;
   document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
-  document.getElementById('stat-approved').textContent = orders.filter(o => o.status === 'approved').length;
+  document.getElementById('stat-shipped').textContent = orders.filter(o => o.status === 'shipped').length;
+  document.getElementById('stat-delivered').textContent = orders.filter(o => o.status === 'delivered').length;
 }
 
 const renderAdminCatalogue = (() => {
@@ -1183,40 +1277,69 @@ function deleteProduct(productId) {
   }
 }
 
-function updateOrderStatus(orderId, status) {
+function advanceOrderStatus(orderId) {
   const o = orders.find(x => x.id === orderId);
   if (!o) return;
 
-  const wasRejected = status === 'rejected' && o.status === 'pending';
-
-  // If rejecting, restore stock
-  if (wasRejected) {
-    o.items.forEach(item => {
-      const p = PRODUCTS.find(x => x.id === item.productId);
-      if (p) {
-        p.stock += item.quantity;
-        updateAdminCatalogueStock(p.id, p.stock);
-      }
-    });
+  const nextStatus = getNextStatus(o.status);
+  if (!nextStatus) {
+    showToast('Order is already at the final status.', 'info');
+    return;
   }
 
-  o.status = status;
+  o.status = nextStatus;
   saveState();
-
-  if (wasRejected) {
-    updateCartCount();
-    renderCartDropdown();
-    renderOrderSummary();
-  }
-
-  updateAdminOrderStatusView(orderId, status);
+  updateAdminOrderStatusView(orderId, nextStatus);
   document.getElementById('order-detail-modal')?.classList.remove('active');
+  showToast(`Order advanced to ${ORDER_STATUS_LABELS[nextStatus]}`, 'success');
+}
+
+function rejectOrder(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o || o.status !== 'pending') return;
+
+  // Restore stock
+  o.items.forEach(item => {
+    const p = PRODUCTS.find(x => x.id === item.productId);
+    if (p) {
+      p.stock += item.quantity;
+      updateAdminCatalogueStock(p.id, p.stock);
+    }
+  });
+
+  o.status = 'rejected';
+  saveState();
+  updateCartCount();
+  renderCartDropdown();
+  renderOrderSummary();
+  updateAdminOrderStatusView(orderId, 'rejected');
+  document.getElementById('order-detail-modal')?.classList.remove('active');
+  showToast('Order rejected — stock restored.', 'error');
 }
 
 function setupAdminFilters() {
-  document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+  const container = document.getElementById('admin-filters');
+  if (!container) return;
+
+  // Build filter buttons: All + each status
+  const filters = ['all', ...ORDER_STATUS_FLOW, 'rejected'];
+  const filterLabels = {
+    all: 'All Orders',
+    pending: 'Pending',
+    approved: 'Approved',
+    packaging: 'Packaging',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    rejected: 'Rejected'
+  };
+
+  container.innerHTML = filters.map(f => `
+    <button class="admin-filter-btn${f === 'all' ? ' active' : ''}" data-filter="${f}" aria-pressed="${f === 'all' ? 'true' : 'false'}">${filterLabels[f]}</button>
+  `).join('');
+
+  container.querySelectorAll('.admin-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.admin-filter-btn').forEach(b => {
+      container.querySelectorAll('.admin-filter-btn').forEach(b => {
         b.classList.remove('active');
         b.setAttribute('aria-pressed', 'false');
       });
@@ -1247,34 +1370,104 @@ function openOrderDetail(orderId) {
   }).join('');
 
   const safeOrderId = sanitizeHTML(order.id);
-  const safeStatus = sanitizeHTML(order.status);
+  const safeStatusLabel = sanitizeHTML(ORDER_STATUS_LABELS[order.status] || order.status);
+  const safeStatusIcon = sanitizeHTML(getStatusIcon(order.status));
   const safeCustomerName = sanitizeHTML(order.customer.name);
   const safeAddress = sanitizeHTML(order.customer.address);
   const safeCity = sanitizeHTML(order.customer.city);
+  const safeStatus = sanitizeHTML(order.status);
+
+  // Build status timeline
+  const completedStatuses = getPreviousStatuses(order.status);
+  const currentStatus = order.status;
+  const isRejected = currentStatus === 'rejected';
+
+  const timelineHtml = isRejected ? `
+    <div class="modal-timeline rejected">
+      <div class="timeline-step rejected">
+        <div class="timeline-dot rejected"></div>
+        <div class="timeline-label">${sanitizeHTML(ORDER_STATUS_LABELS.rejected)}</div>
+      </div>
+    </div>
+  ` : `
+    <div class="modal-timeline">
+      ${ORDER_STATUS_FLOW.map((s, idx) => {
+        const isCompleted = completedStatuses.includes(s);
+        const isCurrent = s === currentStatus;
+        const stepClass = isCurrent ? 'active' : isCompleted ? 'completed' : '';
+        return `
+          <div class="timeline-step ${stepClass}">
+            <div class="timeline-dot"></div>
+            <div class="timeline-label">${sanitizeHTML(ORDER_STATUS_LABELS[s])}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Build action buttons (admin only)
+  const isAdmin = isAuthenticated();
+  const nextStatus = getNextStatus(currentStatus);
+  const showAdvance = isAdmin && !isRejected && nextStatus;
+  const showReject = isAdmin && currentStatus === 'pending';
+
+  const actionsHtml = (showAdvance || showReject) ? `
+    <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap;">
+      ${showAdvance ? `<button class="btn btn-success" id="btn-advance-${safeOrderId}">Advance to ${sanitizeHTML(ORDER_STATUS_LABELS[nextStatus])}</button>` : ''}
+      ${showReject ? `<button class="btn btn-danger" id="btn-reject-${safeOrderId}">Reject Order</button>` : ''}
+    </div>
+  ` : '';
 
   modal.innerHTML = `
     <div class="modal-content">
       <div class="modal-header"><h2>Order ${safeOrderId}</h2><button class="modal-close">✕</button></div>
       <div class="modal-body">
-        <p><strong>Status:</strong> ${safeStatus}</p>
-        <p><strong>Customer:</strong> ${safeCustomerName}</p>
-        <p><strong>Address:</strong> ${safeAddress}, ${safeCity}</p>
-        <table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${itemsRows}</tbody></table>
-        ${isAuthenticated() && order.status === 'pending' ? `
-          <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn btn-success" id="btn-approve-${safeOrderId}">Approve</button>
-            <button class="btn btn-danger" id="btn-reject-${safeOrderId}">Reject</button>
+        <div class="modal-section">
+          <h3><span class="section-icon">📋</span> Order Status</h3>
+          <div class="modal-info-item" style="margin-bottom:16px;">
+            <div class="label">Current Status</div>
+            <div class="value">${safeStatusIcon} ${safeStatusLabel}</div>
           </div>
-        ` : ''}
+          ${timelineHtml}
+        </div>
+
+        <div class="modal-section">
+          <h3><span class="section-icon">👤</span> Customer Details</h3>
+          <div class="modal-info-grid">
+            <div class="modal-info-item">
+              <div class="label">Name</div>
+              <div class="value">${safeCustomerName}</div>
+            </div>
+            <div class="modal-info-item">
+              <div class="label">Address</div>
+              <div class="value">${safeAddress}, ${safeCity}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3><span class="section-icon">🛍️</span> Items</h3>
+          <table class="modal-items-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+            <tbody>${itemsRows}</tbody>
+          </table>
+          <div class="modal-totals">
+            <div class="modal-total-row"><span>Subtotal</span><span>₹${order.total.toFixed(2)}</span></div>
+            <div class="modal-total-row"><span>Shipping</span><span>${order.shipping === 0 ? 'Free' : '₹' + order.shipping.toFixed(2)}</span></div>
+            <div class="modal-total-row grand"><span>Total</span><span>₹${order.grandTotal.toFixed(2)}</span></div>
+          </div>
+        </div>
+
+        ${actionsHtml}
       </div>
     </div>
   `;
 
-  // Attach event listeners (safe — no inline onclick)
-  const approveBtn = modal.querySelector('#btn-approve-' + CSS.escape(order.id));
+  // Attach event listeners
+  const advanceBtn = modal.querySelector('#btn-advance-' + CSS.escape(order.id));
   const rejectBtn = modal.querySelector('#btn-reject-' + CSS.escape(order.id));
-  approveBtn?.addEventListener('click', () => updateOrderStatus(order.id, 'approved'));
-  rejectBtn?.addEventListener('click', () => updateOrderStatus(order.id, 'rejected'));
+  advanceBtn?.addEventListener('click', () => advanceOrderStatus(order.id));
+  rejectBtn?.addEventListener('click', () => rejectOrder(order.id));
 
   modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('active'));
   modal.classList.add('active');

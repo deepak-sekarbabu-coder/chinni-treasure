@@ -103,11 +103,15 @@
         </div>
         <div class="admin-stat-card" role="listitem">
           <div class="stat-number" id="stat-pending">0</div>
-          <div class="stat-label">Pending Review</div>
+          <div class="stat-label">Pending</div>
         </div>
         <div class="admin-stat-card" role="listitem">
-          <div class="stat-number" id="stat-approved">0</div>
-          <div class="stat-label">Approved</div>
+          <div class="stat-number" id="stat-shipped">0</div>
+          <div class="stat-label">Shipped</div>
+        </div>
+        <div class="admin-stat-card" role="listitem">
+          <div class="stat-number" id="stat-delivered">0</div>
+          <div class="stat-label">Delivered</div>
         </div>
       </div>
 
@@ -131,12 +135,8 @@
         <h3>Manage Orders</h3>
       </div>
 
-      <!-- Filter Buttons -->
-      <div class="admin-filters" role="group" aria-label="Order filters">
-        <button class="admin-filter-btn active" data-filter="all" aria-pressed="true">All Orders</button>
-        <button class="admin-filter-btn" data-filter="pending" aria-pressed="false">Pending</button>
-        <button class="admin-filter-btn" data-filter="approved" aria-pressed="false">Approved</button>
-        <button class="admin-filter-btn" data-filter="rejected" aria-pressed="false">Rejected</button>
+      <!-- Filter Buttons - dynamically generated -->
+      <div class="admin-filters" id="admin-filters" role="group" aria-label="Order filters">
       </div>
 
       <!-- Orders Table -->

@@ -65,17 +65,41 @@
   <main id="main-content" role="main" class="order-page">
     <section class="order-hero" aria-labelledby="track-heading">
       <h1 id="track-heading">Track Your Order</h1>
-      <p>Enter your phone number to view your recent orders and their status.</p>
+      <p>Search by your Order ID or Phone Number to view your orders and their status.</p>
     </section>
 
     <section class="section" style="max-width: 600px; margin: 0 auto;">
       <div class="order-form-section fade-in">
         <form id="track-form" novalidate aria-label="Order tracking form">
-          <div class="form-group">
+
+          <!-- Radio Toggle -->
+          <div class="track-toggle" role="radiogroup" aria-label="Search method">
+            <label class="track-radio active">
+              <input type="radio" name="track-method" value="order-id" checked>
+              <span class="track-radio-indicator"></span>
+              <span class="track-radio-label">Order ID</span>
+            </label>
+            <label class="track-radio">
+              <input type="radio" name="track-method" value="phone">
+              <span class="track-radio-indicator"></span>
+              <span class="track-radio-label">Phone Number</span>
+            </label>
+          </div>
+
+          <!-- Order ID Input -->
+          <div class="form-group" id="track-order-id-group">
+            <label for="track-order-id">Order ID</label>
+            <input type="text" id="track-order-id" placeholder="e.g. ORD-..." autocomplete="off">
+            <div class="form-error" id="track-order-id-error" role="alert"></div>
+          </div>
+
+          <!-- Phone Input -->
+          <div class="form-group" id="track-phone-group" style="display:none;">
             <label for="track-phone">Phone Number</label>
-            <input type="tel" id="track-phone" placeholder="e.g. 9876543210" maxlength="10" required autocomplete="tel">
+            <input type="tel" id="track-phone" placeholder="e.g. 9876543210" maxlength="10" autocomplete="tel">
             <div class="form-error" id="track-phone-error" role="alert"></div>
           </div>
+
           <button type="submit" class="btn btn-primary" style="width: 100%;">Search Orders</button>
         </form>
       </div>
