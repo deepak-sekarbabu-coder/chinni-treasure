@@ -168,6 +168,8 @@ chinni-treasure/
 
 ## Deploying to Vercel
 
+> **Important:** The project lives in the `chinni-treasure/` subdirectory. You **must** configure the Root Directory setting in Vercel, or it will fail to detect Next.js (see step 4 below).
+
 ### 1. Push to GitHub
 
 ```bash
@@ -176,42 +178,99 @@ git commit -m "Initial commit"
 git push origin main
 ```
 
-### 2. Connect to Vercel
+### 2. Create a Vercel Project
 
 1. Go to [vercel.com](https://vercel.com) and click **Add New → Project**
 2. Import your GitHub repository
-3. The framework should auto-detect **Next.js**
-4. Under **Environment Variables**, add:
-   - `DATABASE_URL` — Your production PostgreSQL connection string
-   - `JWT_SECRET` — A secure random string
-   - (Vercel Postgres variables are auto-injected if you attach a Postgres database)
+3. **Do not click Deploy yet** — the default settings need to be adjusted
 
-### 3. Attach Vercel Postgres (Optional)
+### 3. Configure the Project
 
-For a managed database:
+In the **Configure Project** screen:
 
-1. In your Vercel project dashboard, go to **Storage → Create Database → Postgres**
-2. Vercel auto-injects the `POSTGRES_*` environment variables
-3. Update your Prisma datasource accordingly (or use our `prisma.config.ts` which handles it)
+| Setting | Value |
+|---|---|
+| **Root Directory** | `chinni-treasure` (click the dropdown and select it) |
+| **Framework Preset** | Next.js (should auto-detect) |
+| **Build Command** | `npm run build` (auto-filled) |
+| **Output Directory** | (leave default) |
+| **Install Command** | (leave default) |
 
-### 4. Run Migrations
+#### Environment Variables
 
-After deploying, run migrations via Vercel CLI:
+Add these under **Environment Variables**:
+
+| Name | Value | Scope |
+|---|---|---|
+| `DATABASE_URL` | Your production PostgreSQL connection string | Production, Preview, Development |
+| `JWT_SECRET` | A secure random string (e.g. `openssl rand -base64 32`) | Production, Preview, Development |
+
+> If you're attaching a Vercel Postgres database, its variables (`POSTGRES_URL`, etc.) are auto-injected under **Environment Variables — Automatically** after step 5.
+
+### 4. Deploy
+
+Click **Deploy**. Vercel will:
+
+1. Clone the repository
+2. Change into the `chinni-treasure/` root directory
+3. Run `npm install` (which triggers `prisma generate` via `postinstall`)
+4. Run `npm run build` (which runs `prisma generate` then `next build`)
+5. Deploy the output
+
+> If the Root Directory is not set, you'll see: `Error: No Next.js version detected. Make sure your package.json has "next" in either "dependencies" or "devDependencies".`
+
+### 5. Attach a Database (Recommended: Vercel Postgres)
+
+1. After deployment, go to your project dashboard → **Storage** → **Connect Store** → **Create New** → **Postgres**
+2. Follow the wizard to create and attach a database
+3. Vercel auto-injects the `POSTGRES_*` env vars into your project
+4. The `prisma.config.ts` already reads these vars — no config changes needed
+5. Re-deploy the project by pushing a new commit (or use **Redeploy** in the Vercel dashboard)
+
+### 6. Run Database Migrations
+
+The empty database needs the schema applied. Run:
 
 ```bash
+# Pull production env vars locally
 vercel env pull .env.production.local
+
+# Apply migrations
 npx prisma migrate deploy
 ```
 
-Or trigger migrations via the Vercel **Post-deploy** hook.
+Or, if you don't have the Vercel CLI installed:
 
-### 5. Seed Production Database (Once)
+1. Go to **Vercel Dashboard → Your Project → Storage → your-database → Quickstart**
+2. Copy the full `DATABASE_URL` from there
+3. Run locally:
+   ```bash
+   DATABASE_URL="paste-the-url-here" npx prisma migrate deploy
+   ```
+
+### 7. Seed the Production Database (Once)
 
 ```bash
+# Using Vercel CLI:
+vercel env pull .env.production.local
 npx prisma db seed
+
+# Or inline:
+DATABASE_URL="your-production-url" npx tsx prisma/seed.ts
 ```
 
-> **Important:** Change the default admin password immediately after first login.
+> **Important:** Change the default admin password (`admin` / `admin123`) immediately after first login.
+
+---
+
+#### Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| `Error: No Next.js version detected` | Root Directory not set | Go to **Settings → General → Root Directory** and set it to `chinni-treasure` |
+| `PrismaClientInitializationError` | Missing `DATABASE_URL` env var | Check env vars are set in Vercel dashboard **Settings → Environment Variables** |
+| `Cannot find module '@prisma/client'` | `prisma generate` didn't run | Verify `"postinstall": "prisma generate"` exists in `package.json` |
+| Build succeeds but pages show 404 | Vercel hasn't detected changes | Trigger a new deployment via **Redeploy** or push a new commit |
 
 ---
 
