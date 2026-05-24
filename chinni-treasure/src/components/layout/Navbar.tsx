@@ -96,6 +96,11 @@ export default function Navbar() {
 
           <div className="navbar-actions">
             <div className="navbar-cart" ref={cartRef}>
+              <div
+                className={`cart-overlay${cartOpen ? " active" : ""}`}
+                onClick={() => setCartOpen(false)}
+                aria-hidden="true"
+              />
               <button
                 onClick={() => setCartOpen(!cartOpen)}
                 className="cart-btn"
