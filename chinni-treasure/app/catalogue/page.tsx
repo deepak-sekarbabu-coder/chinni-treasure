@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import ProductCard from "@/src/components/ui/ProductCard";
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
+import SectionHeader from "@/src/components/ui/SectionHeader";
 
 interface Product {
   id: string;
@@ -59,19 +62,14 @@ export default function CataloguePage() {
   return (
     <div style={{ paddingTop: "72px" }}>
       <section className="section" aria-labelledby="catalogue-heading">
-        <div className="section-header fade-in visible">
-          <div className="section-subtitle">Our Collection</div>
-          <h2 id="catalogue-heading">Full Catalogue</h2>
-          <p>
-            Discover our complete selection of artisan-crafted luxury goods. Each item is carefully
-            selected for its exceptional quality and timeless appeal.
-          </p>
-        </div>
+        <SectionHeader
+          subtitle="Our Collection"
+          title="Full Catalogue"
+          description="Discover our complete selection of artisan-crafted luxury goods. Each item is carefully selected for its exceptional quality and timeless appeal."
+        />
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <div className="loading-spinner" style={{ margin: "0 auto" }}></div>
-          </div>
+          <LoadingSpinner />
         ) : (
           <div className="products-grid" role="list" aria-label="Product list">
             {products.length === 0 ? (
@@ -80,39 +78,12 @@ export default function CataloguePage() {
               </p>
             ) : (
               products.map((product, idx) => (
-                <div
+                <ProductCard
                   key={product.id}
-                  className="product-card fade-in visible"
-                  style={{ transitionDelay: `${idx * 0.05}s` }}
-                  role="listitem"
-                >
-                  <div className="product-card-image">
-                    <img src={product.imageUrl || "/placeholder.svg"} alt={product.name} />
-                    {product.badge && <span className="product-card-badge">{product.badge}</span>}
-                  </div>
-                  <div className="product-card-body">
-                    <div className="product-card-category">{product.category?.name || "General"}</div>
-                    <h3>{product.name}</h3>
-                    <p className="product-card-description">{product.description}</p>
-                    <div className="product-card-footer">
-                      <span className="product-card-price">₹{Number(product.price).toFixed(2)}</span>
-                      {product.stockQuantity <= 0 ? (
-                        <span className="stock-badge empty">Out of Stock</span>
-                      ) : product.stockQuantity <= 3 ? (
-                        <span className="stock-badge low">Only {product.stockQuantity} left</span>
-                      ) : (
-                        <span className="stock-badge in-stock">In Stock</span>
-                      )}
-                      <button
-                        className="btn-add"
-                        disabled={product.stockQuantity <= 0}
-                        onClick={() => handleAdd(product)}
-                      >
-                        {product.stockQuantity <= 0 ? "Sold Out" : "Add to Cart"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  product={product}
+                  onAdd={handleAdd}
+                  transitionDelay={idx * 0.05}
+                />
               ))
             )}
           </div>

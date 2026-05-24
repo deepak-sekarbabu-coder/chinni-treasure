@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import SectionHeader from "@/src/components/ui/SectionHeader";
 import { INDIAN_STATES } from "@/src/lib/constants";
 
 export default function OrderPage() {
@@ -107,13 +108,14 @@ export default function OrderPage() {
   return (
     <div style={{ paddingTop: "72px" }}>
       <section className="section" aria-labelledby="order-heading">
-        <div className="section-header fade-in visible" style={{ marginBottom: "48px" }}>
-          <div className="section-subtitle">Checkout</div>
-          <h2 id="order-heading">Place Your Order</h2>
-          <p>Fill in your delivery details and review your items before placing the order.</p>
-        </div>
+        <SectionHeader
+          subtitle="Checkout"
+          title="Place Your Order"
+          description="Fill in your delivery details and review your items before placing the order."
+          style={{ marginBottom: "48px" }}
+        />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: "48px", alignItems: "start" }}>
+        <div className="order-layout" style={{ display: "grid", gridTemplateColumns: "1fr 400px", alignItems: "start" }}>
           {/* Order Form */}
           <form id="order-form" onSubmit={handleSubmit} aria-label="Order checkout form" style={{ minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -286,7 +288,7 @@ export default function OrderPage() {
           </form>
 
           {/* Cart Summary */}
-          <div style={{ position: "sticky", top: "100px" }}>
+          <div className="order-summary-sidebar" style={{ position: "sticky", top: "100px" }}>
             <div className="admin-stat-card" style={{ textAlign: "left" }}>
               <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "1.2rem", marginBottom: "24px", paddingBottom: "12px", borderBottom: "2px solid var(--cream)" }}>
                 Order Summary

@@ -11,7 +11,7 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const { items, removeItem, getTotal, getCount } = useCart();
   const pathname = usePathname();
-  const cartRef = useRef<HTMLLIElement>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -49,66 +49,8 @@ export default function Navbar() {
           <span>Little Love</span>
         </Link>
 
-        <button
-          className={`hamburger${menuOpen ? " active" : ""}`}
-          aria-label="Toggle menu"
-          aria-expanded={menuOpen}
-          aria-controls="nav-links"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-        </button>
-
-        <ul className={`nav-links${menuOpen ? " active" : ""}`} id="nav-links" role="menubar">
-          <li role="none">
-            <Link
-              href="/"
-              className={isActive("/") && pathname === "/" ? "active" : ""}
-              role="menuitem"
-              aria-current={pathname === "/" ? "page" : undefined}
-              onClick={() => setMenuOpen(false)}
-            >
-              Home
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/catalogue"
-              className={isActive("/catalogue") ? "active" : ""}
-              role="menuitem"
-              onClick={() => setMenuOpen(false)}
-            >
-              Catalogue
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/track"
-              className={isActive("/track") ? "active" : ""}
-              role="menuitem"
-              onClick={() => setMenuOpen(false)}
-            >
-              Track
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/admin"
-              className={isActive("/admin") ? "active" : ""}
-              role="menuitem"
-              onClick={() => setMenuOpen(false)}
-            >
-              Admin
-            </Link>
-          </li>
-          <li
-            className="cart-icon"
-            style={{ position: "relative" }}
-            role="none"
-            ref={cartRef}
-          >
+        <div className="navbar-actions">
+          <div className="navbar-cart" ref={cartRef}>
             <button
               onClick={() => setCartOpen(!cartOpen)}
               className="cart-btn"
@@ -162,10 +104,69 @@ export default function Navbar() {
                 <span>Total:</span>
                 <span id="cart-dropdown-total">₹{total.toFixed(2)}</span>
               </div>
-              <Link href="/order" className="btn btn-dark" style={{ width: "100%" }} onClick={() => setCartOpen(false)}>
-                View Cart &amp; Checkout
+              <Link href="/order" className="btn btn-dark" style={{ width: "100%" }} onClick={() => { setCartOpen(false); setMenuOpen(false); }}>
+                View Cart & Checkout
               </Link>
             </div>
+          </div>
+
+          <button
+            className={`hamburger${menuOpen ? " active" : ""}`}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            aria-controls="nav-links"
+            onClick={() => {
+              setMenuOpen(!menuOpen);
+              if (cartOpen) setCartOpen(false);
+            }}
+          >
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <ul className={`nav-links${menuOpen ? " active" : ""}`} id="nav-links" role="menubar">
+          <li role="none">
+            <Link
+              href="/"
+              className={isActive("/") && pathname === "/" ? "active" : ""}
+              role="menuitem"
+              aria-current={pathname === "/" ? "page" : undefined}
+              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+            >
+              Home
+            </Link>
+          </li>
+          <li role="none">
+            <Link
+              href="/catalogue"
+              className={isActive("/catalogue") ? "active" : ""}
+              role="menuitem"
+              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+            >
+              Catalogue
+            </Link>
+          </li>
+          <li role="none">
+            <Link
+              href="/track"
+              className={isActive("/track") ? "active" : ""}
+              role="menuitem"
+              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+            >
+              Track
+            </Link>
+          </li>
+          <li role="none">
+            <Link
+              href="/admin"
+              className={isActive("/admin") ? "active" : ""}
+              role="menuitem"
+              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+            >
+              Admin
+            </Link>
           </li>
         </ul>
       </div>

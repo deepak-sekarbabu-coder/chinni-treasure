@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
+import StatusBadge from "@/src/components/ui/StatusBadge";
+import AdminStatCard from "@/src/components/ui/AdminStatCard";
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
+import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
 interface Stats {
   totalOrders: number;
   pendingOrders: number;
@@ -78,26 +82,6 @@ const ORDER_STATUS_FILTERS = [
   { key: "delivered", label: "Delivered" },
   { key: "rejected", label: "Rejected" },
 ];
-
-const ORDER_STATUS_FLOW = ["pending", "approved", "packaging", "shipped", "delivered"];
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  packaging: "Packaging",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  rejected: "Rejected",
-};
-
-const STATUS_ICONS: Record<string, string> = {
-  pending: "⏳",
-  approved: "✓",
-  packaging: "📦",
-  shipped: "🚚",
-  delivered: "✅",
-  rejected: "✕",
-};
 
 const BADGE_OPTIONS = [
   { value: "", label: "None" },
@@ -345,11 +329,7 @@ export default function AdminPage() {
     : orders.filter((o) => o.status === statusFilter);
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-        <div className="loading-spinner"></div>
-      </div>
-    );
+    return <LoadingSpinner fullPage />;
   }
 
   if (!authenticated) return null;
@@ -389,14 +369,7 @@ export default function AdminPage() {
               { label: "Delivered", value: stats.deliveredOrders, color: "var(--success)" },
               { label: "Revenue", value: `₹${Number(stats.totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, color: "var(--gold-dark)" },
             ].map((s) => (
-              <div key={s.label} className="admin-stat-card" style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "1.5rem", fontWeight: 700, color: s.color, fontFamily: "var(--font-serif)" }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginTop: "6px" }}>
-                  {s.label}
-                </div>
-              </div>
+              <AdminStatCard key={s.label} {...s} />
             ))}
           </div>
         </section>
@@ -491,9 +464,7 @@ export default function AdminPage() {
                           {order.orderNumber}
                         </h4>
                       </div>
-                      <span className={`status-badge ${order.status}`}>
-                        {STATUS_ICONS[order.status] || "●"} {STATUS_LABELS[order.status] || order.status}
-                      </span>
+                      <StatusBadge status={order.status} />
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <div>
@@ -534,7 +505,7 @@ export default function AdminPage() {
                   {productForm.id ? "Edit Product" : "Add New Product"}
                 </h3>
                 <form onSubmit={handleProductSave}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div className="admin-product-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div className="form-group">
                       <label>Name *</label>
                       <input
@@ -597,7 +568,7 @@ export default function AdminPage() {
                         ))}
                       </select>
                     </div>
-                    <div className="form-group" style={{ gridColumn: "span 2" }}>
+                    <div className="form-group full-width" style={{ gridColumn: "span 2" }}>
                       <label>Description</label>
                       <textarea
                         value={productForm.description}

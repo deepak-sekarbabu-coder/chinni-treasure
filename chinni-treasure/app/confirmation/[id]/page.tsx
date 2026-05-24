@@ -130,7 +130,7 @@ export default function ConfirmationPage() {
           Our team will verify your payment and confirm your order shortly.
         </p>
 
-        <div className="confirmation-actions">
+        <div className="confirmation-actions" style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
           <Link href="/" className="btn btn-primary">
             Continue Shopping
           </Link>

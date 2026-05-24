@@ -52,6 +52,7 @@ export default function AdminLoginPage() {
       }}
     >
       <div
+        className="admin-login-card"
         style={{
           width: "100%",
           maxWidth: "420px",
@@ -125,10 +126,27 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: "100%" }}
+            style={{ width: "100%", minHeight: "52px", position: "relative" }}
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+                <span
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    border: "2px solid rgba(0,0,0,0.2)",
+                    borderTopColor: "var(--black)",
+                    borderRadius: "50%",
+                    animation: "spin 0.6s linear infinite",
+                    display: "inline-block",
+                  }}
+                ></span>
+                Signing in...
+              </span>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
       </div>

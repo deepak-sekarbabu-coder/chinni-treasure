@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import StatusBadge from "@/src/components/ui/StatusBadge";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 
 interface OrderResult {
@@ -162,22 +163,6 @@ export default function TrackPage() {
                 </p>
               ) : (
                 results.map((order) => {
-                  const statusIcon: Record<string, string> = {
-                    pending: "⏳",
-                    approved: "✓",
-                    packaging: "📦",
-                    shipped: "🚚",
-                    delivered: "✅",
-                    rejected: "✕",
-                  };
-                  const statusLabels: Record<string, string> = {
-                    pending: "Pending",
-                    approved: "Approved",
-                    packaging: "Packaging",
-                    shipped: "Shipped",
-                    delivered: "Delivered",
-                    rejected: "Rejected",
-                  };
                   const showTracking =
                     order.status === "shipped" || order.status === "delivered";
 
@@ -221,10 +206,7 @@ export default function TrackPage() {
                             {order.orderNumber}
                           </h4>
                         </div>
-                        <span className={`status-badge ${order.status}`}>
-                          {statusIcon[order.status] || "●"}{" "}
-                          {statusLabels[order.status] || order.status}
-                        </span>
+                        <StatusBadge status={order.status} />
                       </div>
                       <div
                         style={{

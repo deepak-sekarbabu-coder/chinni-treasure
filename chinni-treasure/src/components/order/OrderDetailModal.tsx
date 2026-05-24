@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import StatusBadge from "@/src/components/ui/StatusBadge";
+import {
+  ORDER_STATUS_FLOW,
+  ORDER_STATUS_LABELS,
+} from "@/src/lib/constants";
 
 interface OrderItem {
   id: string;
@@ -29,17 +34,6 @@ interface OrderData {
   stateCode: string;
   postalCode: string;
 }
-
-const ORDER_STATUS_FLOW = ["pending", "approved", "packaging", "shipped", "delivered"];
-
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  packaging: "Packaging",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  rejected: "Rejected",
-};
 
 interface Props {
   order: OrderData;
@@ -91,9 +85,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             <div className="modal-info-item" style={{ marginBottom: "16px" }}>
               <div className="label">Current Status</div>
               <div className="value">
-                <span className={`status-badge ${order.status}`}>
-                  {ORDER_STATUS_LABELS[order.status] || order.status}
-                </span>
+                <StatusBadge status={order.status} />
               </div>
             </div>
             <div className="modal-timeline">
