@@ -82,12 +82,20 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             <h3>
               <span className="section-icon">📋</span> Order Status
             </h3>
-            <div className="modal-info-item" style={{ marginBottom: "16px" }}>
+            <div className="modal-info-item" style={{ marginBottom: "12px" }}>
               <div className="label">Current Status</div>
               <div className="value">
                 <StatusBadge status={order.status} />
               </div>
             </div>
+            {order.transactionId && (
+              <div className="modal-info-item" style={{ marginBottom: "16px" }}>
+                <div className="label">Transaction ID</div>
+                <div className="value" style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.5px", color: "var(--gold-dark)" }}>
+                  {order.transactionId}
+                </div>
+              </div>
+            )}
             <div className="modal-timeline">
               {isRejected ? (
                 <div className="timeline-step rejected">
