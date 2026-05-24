@@ -1,3 +1,9 @@
+@media (min-width: 769px) {
+  .hero-actions .btn.btn-primary {
+    margin-top: -10px;
+  }
+}
+
 /* ===== CSS RESET & BASE ===== */
 *,
 *::before,
@@ -1252,6 +1258,7 @@ a {
   max-width: 700px;
   z-index: 1;
   padding-top: 80px;
+  padding-bottom: 100px;
 }
 
 .hero-badge {
@@ -2127,6 +2134,13 @@ a {
 
 /* ===== RESPONSIVE ===== */
 
+/* ── 1024px+ Desktop ── */
+@media (min-width: 1024px) {
+  .hero-scroll span {
+    padding-top: 40px;
+  }
+}
+
 /* ── 1440px+ Wide Desktop ── */
 @media (min-width: 1440px) {
 
@@ -2136,6 +2150,10 @@ a {
   .footer-grid,
   .footer-bottom {
     max-width: 1280px;
+  }
+
+  .hero-scroll span {
+    padding-top: 60px;
   }
 }
 
@@ -2423,6 +2441,7 @@ a {
 
   .hero-content {
     padding-top: 60px;
+    padding-bottom: 80px;
   }
 
   .hero-content h1 {
@@ -2780,6 +2799,7 @@ a {
 
   .hero-content {
     padding-top: 50px;
+    padding-bottom: 60px;
   }
 
   .hero-content h1 {

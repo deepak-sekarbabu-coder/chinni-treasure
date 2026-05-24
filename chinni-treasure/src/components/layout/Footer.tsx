@@ -33,7 +33,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>&copy; {new Date().getFullYear()} Chinni Treasure &mdash; Little Love All rights reserved.</span>
+        <span>&copy; {new Date().getFullYear()} Chinni Treasure &mdash; Little Love 🖤 All rights reserved.</span>
         <span>Made with care</span>
       </div>
     </footer>

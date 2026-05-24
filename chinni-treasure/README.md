@@ -1,4 +1,4 @@
-# Chinni Treasure — Little Love
+# Chinni Treasure — Little Love 🖤
 
 > A high-end, artisan-crafted luxury goods e-commerce platform built with Next.js 16, Prisma, and PostgreSQL.
 
