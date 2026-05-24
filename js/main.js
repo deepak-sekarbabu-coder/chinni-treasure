@@ -294,7 +294,7 @@ function getCartCount() {
 }
 
 function calculateShipping(subtotal) {
-  return subtotal >= 200 ? 0 : 12.00;
+  return 0;
 }
 
 function updateCartCount() {
@@ -860,6 +860,7 @@ function searchOrders() {
     const safeStatus = sanitizeHTML(order.status);
     const icon = getStatusIcon(order.status);
     const label = ORDER_STATUS_LABELS[order.status] || order.status;
+    const showTracking = (order.status === 'shipped' || order.status === 'delivered') && order.trackingId;
 
     const div = document.createElement('div');
     div.className = 'admin-stat-card';
@@ -883,6 +884,11 @@ function searchOrders() {
           <span style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; color: var(--gold-dark);">₹${order.grandTotal.toFixed(2)}</span>
         </div>
       </div>
+      ${showTracking ? `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+        <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">ðŸšš Courier Tracking ID</span>
+        <p style="font-family:monospace;font-size:0.95rem;font-weight:600;margin-top:4px;letter-spacing:1px;color:var(--gold-light, #c9a96e);">${sanitizeHTML(order.trackingId)}</p>
+      </div>` : ''}
     `;
 
     div.addEventListener('click', () => openOrderDetail(order.id));
@@ -1287,11 +1293,90 @@ function advanceOrderStatus(orderId) {
     return;
   }
 
+  // If advancing to 'shipped', require a tracking ID first
+  if (nextStatus === 'shipped') {
+    showTrackingIdModal(orderId);
+    return;
+  }
+
   o.status = nextStatus;
   saveState();
   updateAdminOrderStatusView(orderId, nextStatus);
   document.getElementById('order-detail-modal')?.classList.remove('active');
   showToast(`Order advanced to ${ORDER_STATUS_LABELS[nextStatus]}`, 'success');
+}
+
+function showTrackingIdModal(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+
+  let modal = document.getElementById('tracking-id-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'tracking-id-modal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:460px;">
+      <div class="modal-header">
+        <h2>ðŸšš Add Tracking ID</h2>
+        <button class="modal-close" id="tracking-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:20px;">Enter the courier tracking ID before marking this order as Shipped. This will be visible to the customer.</p>
+        <div class="form-group">
+          <label for="tracking-id-input">Tracking ID <span class="required">*</span></label>
+          <input type="text" id="tracking-id-input" placeholder="e.g. DTDC1234567890" value="${sanitizeHTML(o.trackingId || '')}" autocomplete="off">
+          <div class="form-error" id="tracking-id-input-error"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+          <button class="btn btn-success" id="btn-confirm-ship" style="flex:1;">Confirm & Mark Shipped</button>
+          <button class="btn btn-dark" id="btn-cancel-ship" style="flex:1;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+
+  const input = modal.querySelector('#tracking-id-input');
+  const errorEl = modal.querySelector('#tracking-id-input-error');
+
+  modal.querySelector('#tracking-modal-close').addEventListener('click', () => modal.classList.remove('active'));
+  modal.querySelector('#btn-cancel-ship').addEventListener('click', () => modal.classList.remove('active'));
+
+  modal.querySelector('#btn-confirm-ship').addEventListener('click', () => {
+    const trackingId = input.value.trim();
+    if (!trackingId) {
+      input.classList.add('error');
+      errorEl.textContent = 'Tracking ID is required to mark as Shipped';
+      errorEl.classList.add('visible');
+      input.focus();
+      return;
+    }
+    input.classList.remove('error');
+    errorEl.classList.remove('visible');
+
+    o.trackingId = sanitizeInput(trackingId);
+    o.status = 'shipped';
+    saveState();
+    modal.classList.remove('active');
+    updateAdminOrderStatusView(orderId, 'shipped');
+    document.getElementById('order-detail-modal')?.classList.remove('active');
+    showToast(`Order marked as Shipped. Tracking ID: ${o.trackingId}`, 'success');
+  });
+
+  // Allow Enter key to confirm
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      modal.querySelector('#btn-confirm-ship').click();
+    }
+  });
+
+  setTimeout(() => input.focus(), 100);
 }
 
 function rejectOrder(orderId) {
@@ -1405,8 +1490,9 @@ function openOrderDetail(orderId) {
     </div>
   `;
 
-  // Build action buttons (admin only)
-  const isAdmin = isAuthenticated();
+  // Build action buttons (admin page only - not on tracking page)
+  const isOnAdminPage = document.getElementById('admin-orders-body') !== null;
+  const isAdmin = isAuthenticated() && isOnAdminPage;
   const nextStatus = getNextStatus(currentStatus);
   const showAdvance = isAdmin && !isRejected && nextStatus;
   const showReject = isAdmin && currentStatus === 'pending';
@@ -1415,6 +1501,21 @@ function openOrderDetail(orderId) {
     <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap;">
       ${showAdvance ? `<button class="btn btn-success" id="btn-advance-${safeOrderId}">Advance to ${sanitizeHTML(ORDER_STATUS_LABELS[nextStatus])}</button>` : ''}
       ${showReject ? `<button class="btn btn-danger" id="btn-reject-${safeOrderId}">Reject Order</button>` : ''}
+    </div>
+  ` : '';
+
+  // Tracking ID section (shown for shipped/delivered orders)
+  const showTracking = (order.status === 'shipped' || order.status === 'delivered') && order.trackingId;
+  const trackingHtml = showTracking ? `
+    <div class="modal-section">
+      <h3><span class="section-icon">ðŸ”</span> Tracking Information</h3>
+      <div class="modal-info-item">
+        <div class="label">Courier Tracking ID</div>
+        <div class="value" style="display:flex;align-items:center;gap:10px;">
+          <span id="tracking-id-value" style="font-family:var(--font-mono,monospace);background:var(--bg-elevated,rgba(255,255,255,0.05));padding:6px 12px;border-radius:6px;letter-spacing:1px;font-size:0.95rem;">${sanitizeHTML(order.trackingId)}</span>
+          <button class="btn btn-dark" id="btn-copy-tracking" style="font-size:0.75rem;padding:4px 10px;" title="Copy tracking ID">Copy</button>
+        </div>
+      </div>
     </div>
   ` : '';
 
@@ -1430,6 +1531,8 @@ function openOrderDetail(orderId) {
           </div>
           ${timelineHtml}
         </div>
+
+        ${trackingHtml}
 
         <div class="modal-section">
           <h3><span class="section-icon">👤</span> Customer Details</h3>
@@ -1470,5 +1573,26 @@ function openOrderDetail(orderId) {
   rejectBtn?.addEventListener('click', () => rejectOrder(order.id));
 
   modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('active'));
+
+  // Copy tracking ID
+  const copyBtn = modal.querySelector('#btn-copy-tracking');
+  if (copyBtn && order.trackingId) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(order.trackingId).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      }).catch(() => {
+        const el = modal.querySelector('#tracking-id-value');
+        if (el) {
+          const range = document.createRange();
+          range.selectNode(el);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        }
+      });
+    });
+  }
+
   modal.classList.add('active');
 }
+
