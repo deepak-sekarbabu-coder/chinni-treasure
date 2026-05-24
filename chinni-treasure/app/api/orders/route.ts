@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const items = body["items"] as Array<{ id: string; quantity: number }> | undefined;
 
     // Validate required fields
-    if (!items?.length || !customerName || !customerEmail || !customerPhone || !addressLine1 || !city || !stateCode || !postalCode) {
+    if (!items?.length || !customerName || !customerEmail || !customerPhone || !addressLine1 || !city || !stateCode || !postalCode || !transactionId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         subtotal,
         shippingCost,
         totalAmount,
-        transactionId: transactionId || null,
+        transactionId: transactionId,
         customerNotes: customerNotes || null,
         items: {
           create: orderItems,
