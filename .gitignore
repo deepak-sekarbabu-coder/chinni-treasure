@@ -1,4 +1,16 @@
 ```
+# Test files
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+
+# Build artifacts
+dist/
+build/
+*.bundle.js
+*.min.js
+*.map
+
 # Dependencies
 node_modules/
 
@@ -7,23 +19,22 @@ node_modules/
 .env.local
 .env.*
 
-# Logs and temp files
-*.log
-*.tmp
-
 # Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-venv/
-.venv/
-.env
-.env.local
-.env.*
+# Logs
+*.log
+
+# Coverage
+coverage/
+.nyc_output/
+.vitest/
+
+# Temporary files
+*.tmp
+.DS_Store
+Thumbs.db
 ```
