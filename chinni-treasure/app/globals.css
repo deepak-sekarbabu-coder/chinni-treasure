@@ -828,6 +828,12 @@ a {
   justify-content: space-between;
 }
 
+.navbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .nav-brand {
   font-family: var(--font-serif);
   font-size: 1.3rem;
@@ -1159,6 +1165,7 @@ a {
   position: relative;
   max-width: 700px;
   z-index: 1;
+  padding-top: 80px;
 }
 
 .hero-badge {
@@ -2302,6 +2309,10 @@ a {
     min-height: 90vh;
   }
 
+  .hero-content {
+    padding-top: 60px;
+  }
+
   .hero-content h1 {
     font-size: clamp(2rem, 6vw, 3rem);
   }
@@ -2653,6 +2664,10 @@ a {
 
   .hero {
     min-height: 80vh;
+  }
+
+  .hero-content {
+    padding-top: 50px;
   }
 
   .hero-content h1 {
