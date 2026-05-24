@@ -1,4 +1,4 @@
-// ===== XSS SANITIZATION UTILITY =====
+﻿// ===== XSS SANITIZATION UTILITY =====
 function sanitizeHTML(str) {
   if (typeof str !== 'string') return str;
   const div = document.createElement('div');
@@ -886,7 +886,7 @@ function searchOrders() {
       </div>
       ${showTracking ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
-        <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">ðŸšš Courier Tracking ID</span>
+        <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">🚚 Courier Tracking ID</span>
         <p style="font-family:monospace;font-size:0.95rem;font-weight:600;margin-top:4px;letter-spacing:1px;color:var(--gold-light, #c9a96e);">${sanitizeHTML(order.trackingId)}</p>
       </div>` : ''}
     `;
@@ -1321,7 +1321,7 @@ function showTrackingIdModal(orderId) {
   modal.innerHTML = `
     <div class="modal-content" style="max-width:460px;">
       <div class="modal-header">
-        <h2>ðŸšš Add Tracking ID</h2>
+        <h2>🚚 Add Tracking ID</h2>
         <button class="modal-close" id="tracking-modal-close">✕</button>
       </div>
       <div class="modal-body">
@@ -1477,16 +1477,16 @@ function openOrderDetail(orderId) {
   ` : `
     <div class="modal-timeline">
       ${ORDER_STATUS_FLOW.map((s, idx) => {
-        const isCompleted = completedStatuses.includes(s);
-        const isCurrent = s === currentStatus;
-        const stepClass = isCurrent ? 'active' : isCompleted ? 'completed' : '';
-        return `
+    const isCompleted = completedStatuses.includes(s);
+    const isCurrent = s === currentStatus;
+    const stepClass = isCurrent ? 'active' : isCompleted ? 'completed' : '';
+    return `
           <div class="timeline-step ${stepClass}">
             <div class="timeline-dot"></div>
             <div class="timeline-label">${sanitizeHTML(ORDER_STATUS_LABELS[s])}</div>
           </div>
         `;
-      }).join('')}
+  }).join('')}
     </div>
   `;
 
@@ -1508,7 +1508,7 @@ function openOrderDetail(orderId) {
   const showTracking = (order.status === 'shipped' || order.status === 'delivered') && order.trackingId;
   const trackingHtml = showTracking ? `
     <div class="modal-section">
-      <h3><span class="section-icon">ðŸ”</span> Tracking Information</h3>
+      <h3>🚚 Tracking Information</h3>
       <div class="modal-info-item">
         <div class="label">Courier Tracking ID</div>
         <div class="value" style="display:flex;align-items:center;gap:10px;">
@@ -1595,4 +1595,5 @@ function openOrderDetail(orderId) {
 
   modal.classList.add('active');
 }
+
 
