@@ -7,6 +7,7 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import ProductCard from "@/src/components/ui/ProductCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
+import useScrollReveal from "@/src/lib/useScrollReveal";
 
 interface Product {
   id: string;
@@ -24,6 +25,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const { addItem } = useCart();
   const { showToast } = useToast();
+
+  const { ref: productsRef, visible: productsVisible } = useScrollReveal();
+  const { ref: featuresRef, visible: featuresVisible } = useScrollReveal();
+  const { ref: ctaRef, visible: ctaVisible } = useScrollReveal();
 
   useEffect(() => {
     fetchProducts();
@@ -90,52 +95,69 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="section" aria-labelledby="catalogue-heading">
-        <SectionHeader
-          subtitle="Our Collection"
-          title="Featured Products"
-          description="Each item is carefully selected for its exceptional quality and timeless appeal."
-        />
+      <section
+        className="section"
+        aria-labelledby="catalogue-heading"
+        ref={productsRef as React.RefObject<HTMLElement>}
+      >
+        <div className={productsVisible ? "fade-in visible" : "fade-in"}>
+          <SectionHeader
+            subtitle="Our Collection"
+            title="Featured Products"
+            description="Each item is carefully selected for its exceptional quality and timeless appeal."
+          />
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="products-grid" role="list" aria-label="Product list">
-            {products.map((product, idx) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAdd={handleAdd}
-                transitionDelay={idx * 0.1}
-              />
-            ))}
-          </div>
-        )}
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <div className="products-grid" role="list" aria-label="Product list">
+              {products.map((product, idx) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAdd={handleAdd}
+                  transitionDelay={idx * 0.1}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Features */}
-      <section className="features" aria-labelledby="features-heading">
-        <div className="features-grid" role="list">
-          {[
-            { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-            { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 3-5 business days." },
-            { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
-            { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
-          ].map((f, i) => (
-            <div key={i} className="feature-item fade-in visible" role="listitem">
-              <div className="feature-icon" aria-hidden="true">
-                {f.icon}
+      <section
+        className="features"
+        aria-labelledby="features-heading"
+        ref={featuresRef as React.RefObject<HTMLElement>}
+      >
+        <div className={featuresVisible ? "fade-in visible" : "fade-in"}>
+          <div className="features-grid" role="list">
+            {[
+              { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
+              { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 3-5 business days." },
+              { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
+              { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
+            ].map((f, i) => (
+              <div key={i} className="feature-item fade-in visible" role="listitem">
+                <div className="feature-icon" aria-hidden="true">
+                  {f.icon}
+                </div>
+                <h4>{f.title}</h4>
+                <p>{f.desc}</p>
               </div>
-              <h4>{f.title}</h4>
-              <p>{f.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="section" style={{ textAlign: "center" }} aria-labelledby="cta-heading">
-        <div className="fade-in visible">
+      <section
+        className="section"
+        style={{ textAlign: "center" }}
+        aria-labelledby="cta-heading"
+        ref={ctaRef as React.RefObject<HTMLElement>}
+      >
+        <div className={ctaVisible ? "fade-in visible" : "fade-in"}>
           <div className="section-subtitle">Get Started</div>
           <h2
             id="cta-heading"

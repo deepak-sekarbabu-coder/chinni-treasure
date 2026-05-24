@@ -28,6 +28,11 @@
   --font-sans: "Montserrat", -apple-system, sans-serif;
 
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.15);
@@ -129,10 +134,16 @@ a {
   letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
   border: none;
   position: relative;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.97) !important;
 }
 
 .btn-primary {
@@ -246,6 +257,7 @@ a {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
   background: var(--white);
+  animation: pulseGlow 1.5s ease-in-out 1;
 }
 
 .form-group textarea {
@@ -258,6 +270,7 @@ a {
 .form-group select.error {
   border-color: var(--error);
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  animation: shake 0.4s ease;
 }
 
 .form-error {
@@ -269,6 +282,7 @@ a {
 
 .form-error.visible {
   display: block;
+  animation: revealDown 0.25s var(--ease-out) both;
 }
 
 /* ===== STATUS BADGE ===== */
@@ -378,6 +392,64 @@ a {
   border-left-color: var(--gold);
 }
 
+/* ===== MOTION KEYFRAMES ===== */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pressIn {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Entrance stagger variants */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -411,11 +483,62 @@ a {
   }
 }
 
-@keyframes spin {
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.1); }
+}
+
+/* Utility animation classes */
+.animate-reveal-up {
+  animation: revealUp 0.5s var(--ease-out) both;
+}
+
+.animate-reveal-down {
+  animation: revealDown 0.3s var(--ease-out) both;
+}
+
+.animate-reveal-scale {
+  animation: revealScale 0.35s var(--ease-out) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s var(--ease-out) both;
+}
+
+.animate-press {
+  animation: pressIn 0.3s ease;
+}
+
+/* Stagger delays */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
 
 @keyframes modalIn {
   from {
@@ -479,7 +602,7 @@ a {
   padding: 24px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .modal-overlay.active {
@@ -528,7 +651,13 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.modal-close:active {
+  transform: scale(0.92);
 }
 
 .modal-close:hover {
@@ -763,12 +892,18 @@ a {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast);
   border-radius: 2px;
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.cart-btn:active {
+  transform: scale(0.97);
 }
 
 .cart-btn:hover {
@@ -1240,8 +1375,14 @@ a {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
   border-radius: 2px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.btn-add:active {
+  transform: scale(0.96);
 }
 
 .btn-add:hover:not(:disabled) {
@@ -1609,13 +1750,20 @@ a {
 
   .nav-links.active {
     display: flex;
+    animation: revealScale 0.3s var(--ease-out) both;
   }
 
   .nav-links li a {
     font-size: 0.9rem;
     padding: 16px 32px;
     min-height: 48px;
+    animation: revealDown 0.3s var(--ease-out) both;
   }
+
+  .nav-links li:nth-child(1) a { animation-delay: 0.05s; }
+  .nav-links li:nth-child(2) a { animation-delay: 0.1s; }
+  .nav-links li:nth-child(3) a { animation-delay: 0.15s; }
+  .nav-links li:nth-child(4) a { animation-delay: 0.2s; }
 
   .navbar-cart .cart-btn {
     padding: 10px 16px;
@@ -2280,6 +2428,32 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Keep functional motion alive: spinner, loading, focus, scroll indicator */
+  .loading-spinner {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .scroll-line {
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .btn:active {
+    transform: none !important;
+  }
+
+  .cart-btn:active,
+  .btn-add:active,
+  .modal-close:active {
+    transform: none !important;
+  }
+
+  /* Keep focus outlines fully visible */
+  *:focus-visible {
+    outline-width: 3px !important;
   }
 }
 
