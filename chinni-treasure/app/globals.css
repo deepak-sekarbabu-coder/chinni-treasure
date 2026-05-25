@@ -449,6 +449,12 @@ a {
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Entrance stagger variants */
 @keyframes slideInLeft {
   from {
