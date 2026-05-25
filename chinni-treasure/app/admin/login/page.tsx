@@ -32,10 +32,10 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Invalid credentials");
       }
 
-      router.push("/admin");
+      router.refresh();
+      router.replace("/admin");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
       setLoading(false);
     }
   }
