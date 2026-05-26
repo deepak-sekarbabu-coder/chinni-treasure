@@ -577,6 +577,92 @@ a {
   animation: pressIn 0.3s ease;
 }
 
+/* ===== PRODUCT MANAGEMENT ANIMATIONS ===== */
+.product-form-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s var(--ease-out), opacity 0.3s var(--ease-out), margin 0.3s var(--ease-out);
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+}
+
+.product-form-wrapper.open {
+  max-height: 800px;
+  opacity: 1;
+  margin-bottom: 24px;
+}
+
+.product-form-wrapper.closing {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+}
+
+.product-form-inner {
+  animation: revealUp 0.35s var(--ease-out) both;
+}
+
+.product-table-row {
+  animation: fadeIn 0.35s var(--ease-out) both;
+  transition: background var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.product-table-row:hover {
+  background: rgba(212, 175, 55, 0.03);
+}
+
+.product-table-row.removing {
+  opacity: 0;
+  transform: translateX(-20px);
+  pointer-events: none;
+}
+
+.product-action-btn {
+  position: relative;
+  transition: all var(--transition-fast) !important;
+}
+
+.product-action-btn .btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.product-action-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.product-add-btn {
+  transition: all var(--transition) !important;
+}
+
+.product-add-btn.cancel {
+  background: transparent !important;
+  color: var(--error) !important;
+  border: 1px solid var(--error) !important;
+}
+
+.product-add-btn.cancel:hover {
+  background: var(--error) !important;
+  color: var(--white) !important;
+}
+
+.product-image-transition {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.product-image-transition.loading {
+  opacity: 0.3;
+  transform: scale(0.95);
+}
+
 /* Stagger delays */
 .delay-1 {
   animation-delay: 0.05s;

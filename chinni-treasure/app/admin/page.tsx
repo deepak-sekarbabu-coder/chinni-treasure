@@ -108,6 +108,9 @@ export default function AdminPage() {
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
+  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const [productFormClosing, setProductFormClosing] = useState(false);
   const [productForm, setProductForm] = useState({
     id: "",
     name: "",
@@ -281,6 +284,7 @@ export default function AdminPage() {
     const url = isEdit ? `/api/products/${productForm.id}` : "/api/products";
     const method = isEdit ? "PUT" : "POST";
 
+    setProductLoading(true);
     try {
       const res = await fetch(url, {
         method,
@@ -300,14 +304,18 @@ export default function AdminPage() {
         await fetchProducts();
         resetProductForm();
         setShowProductForm(false);
+        setProductFormClosing(false);
       }
     } catch (err) {
       console.error("Failed to save product:", err);
+    } finally {
+      setProductLoading(false);
     }
   }
 
   async function handleProductDelete(id: string) {
     if (!confirm("Are you sure you want to delete this product?")) return;
+    setLoadingProductId(id);
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -315,6 +323,22 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to delete product:", err);
+    } finally {
+      setLoadingProductId(null);
+    }
+  }
+
+  function toggleProductForm() {
+    if (showProductForm) {
+      setProductFormClosing(true);
+      setTimeout(() => {
+        setShowProductForm(false);
+        setProductFormClosing(false);
+        resetProductForm();
+      }, 300);
+    } else {
+      resetProductForm();
+      setShowProductForm(true);
     }
   }
 
@@ -507,98 +531,109 @@ export default function AdminPage() {
           <>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "24px" }}>
               <button
-                className="btn btn-primary"
-                onClick={() => { resetProductForm(); setShowProductForm(!showProductForm); }}
+                className={`btn ${showProductForm ? "btn-secondary product-add-btn cancel" : "btn-primary product-add-btn"}`}
+                onClick={toggleProductForm}
               >
-                {showProductForm ? "Cancel" : "+ Add Product"}
+                {showProductForm ? "✕ Cancel" : "+ Add Product"}
               </button>
             </div>
 
             {/* Product Form */}
-            {showProductForm && (
-              <div className="admin-stat-card" style={{ textAlign: "left", marginBottom: "24px" }}>
-                <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "20px" }}>
-                  {productForm.id ? "Edit Product" : "Add New Product"}
-                </h3>
-                <form onSubmit={handleProductSave}>
-                  <div className="admin-product-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                    <div className="form-group">
-                      <label>Name *</label>
-                      <input
-                        type="text"
-                        value={productForm.name}
-                        onChange={(e) => setProductForm((p) => ({ ...p, name: e.target.value }))}
-                        required
-                        style={{ background: "var(--cream-light)" }}
-                      />
+            <div className={`product-form-wrapper ${showProductForm ? "open" : ""} ${productFormClosing ? "closing" : ""}`}>
+              <div className="product-form-inner">
+                <div className="admin-stat-card" style={{ textAlign: "left" }}>
+                  <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "20px" }}>
+                    {productForm.id ? "Edit Product" : "Add New Product"}
+                  </h3>
+                  <form onSubmit={handleProductSave}>
+                    <div className="admin-product-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                      <div className="form-group">
+                        <label>Name *</label>
+                        <input
+                          type="text"
+                          value={productForm.name}
+                          onChange={(e) => setProductForm((p) => ({ ...p, name: e.target.value }))}
+                          required
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>SKU</label>
+                        <input
+                          type="text"
+                          value={productForm.sku}
+                          onChange={(e) => setProductForm((p) => ({ ...p, sku: e.target.value }))}
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Price *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={productForm.price}
+                          onChange={(e) => setProductForm((p) => ({ ...p, price: e.target.value }))}
+                          required
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Stock Quantity</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={productForm.stockQuantity}
+                          onChange={(e) => setProductForm((p) => ({ ...p, stockQuantity: e.target.value }))}
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Image URL</label>
+                        <input
+                          type="url"
+                          value={productForm.imageUrl}
+                          onChange={(e) => setProductForm((p) => ({ ...p, imageUrl: e.target.value }))}
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Badge</label>
+                        <select
+                          value={productForm.badge}
+                          onChange={(e) => setProductForm((p) => ({ ...p, badge: e.target.value }))}
+                          style={{ background: "var(--cream-light)" }}
+                        >
+                          {BADGE_OPTIONS.map((b) => (
+                            <option key={b.value} value={b.value}>{b.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group full-width" style={{ gridColumn: "span 2" }}>
+                        <label>Description</label>
+                        <textarea
+                          value={productForm.description}
+                          onChange={(e) => setProductForm((p) => ({ ...p, description: e.target.value }))}
+                          style={{ background: "var(--cream-light)" }}
+                        />
+                      </div>
                     </div>
-                    <div className="form-group">
-                      <label>SKU</label>
-                      <input
-                        type="text"
-                        value={productForm.sku}
-                        onChange={(e) => setProductForm((p) => ({ ...p, sku: e.target.value }))}
-                        style={{ background: "var(--cream-light)" }}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Price *</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={productForm.price}
-                        onChange={(e) => setProductForm((p) => ({ ...p, price: e.target.value }))}
-                        required
-                        style={{ background: "var(--cream-light)" }}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Stock Quantity</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={productForm.stockQuantity}
-                        onChange={(e) => setProductForm((p) => ({ ...p, stockQuantity: e.target.value }))}
-                        style={{ background: "var(--cream-light)" }}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Image URL</label>
-                      <input
-                        type="url"
-                        value={productForm.imageUrl}
-                        onChange={(e) => setProductForm((p) => ({ ...p, imageUrl: e.target.value }))}
-                        style={{ background: "var(--cream-light)" }}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Badge</label>
-                      <select
-                        value={productForm.badge}
-                        onChange={(e) => setProductForm((p) => ({ ...p, badge: e.target.value }))}
-                        style={{ background: "var(--cream-light)" }}
-                      >
-                        {BADGE_OPTIONS.map((b) => (
-                          <option key={b.value} value={b.value}>{b.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-group full-width" style={{ gridColumn: "span 2" }}>
-                      <label>Description</label>
-                      <textarea
-                        value={productForm.description}
-                        onChange={(e) => setProductForm((p) => ({ ...p, description: e.target.value }))}
-                        style={{ background: "var(--cream-light)" }}
-                      />
-                    </div>
-                  </div>
-                  <button type="submit" className="btn btn-dark" style={{ marginTop: "16px" }}>
-                    {productForm.id ? "Update Product" : "Create Product"}
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      className={`btn btn-dark product-action-btn ${productLoading ? "loading" : ""}`}
+                      style={{ marginTop: "16px" }}
+                      disabled={productLoading}
+                    >
+                      {productLoading && <span className="btn-spinner"></span>}
+                      {productLoading
+                        ? (productForm.id ? "Updating..." : "Creating...")
+                        : (productForm.id ? "Update Product" : "Create Product")
+                      }
+                    </button>
+                  </form>
+                </div>
               </div>
-            )}
+            </div>
 
             {/* Products Table */}
             <div style={{ overflowX: "auto" }}>
@@ -615,42 +650,68 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p) => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <td style={{ padding: "10px 16px" }}>
-                        {p.imageUrl ? (
-                          <img src={p.imageUrl} alt={p.name} style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }} />
-                        ) : (
-                          <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />
-                        )}
-                      </td>
-                      <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
-                      <td style={{ padding: "10px 16px", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.sku || "—"}</td>
-                      <td style={{ padding: "10px 16px", color: "var(--gold-dark)", fontWeight: 600 }}>₹{Number(p.price).toFixed(2)}</td>
-                      <td style={{ padding: "10px 16px" }}>
-                        <span className={`stock-badge ${p.stockQuantity <= 0 ? "empty" : p.stockQuantity <= 3 ? "low" : "in-stock"}`}>
-                          {p.stockQuantity}
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 16px" }}>
-                        {p.badge ? (
-                          <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
-                        ) : (
-                          <span style={{ color: "var(--text-muted)" }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "10px 16px" }}>
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <button className="btn btn-secondary" style={{ padding: "4px 12px", fontSize: "0.65rem" }} onClick={() => editProduct(p)}>
-                            Edit
-                          </button>
-                          <button className="btn btn-danger" style={{ padding: "4px 12px", fontSize: "0.65rem" }} onClick={() => handleProductDelete(p.id)}>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {products.map((p, idx) => {
+                    const isDeleting = loadingProductId === p.id;
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`product-table-row ${isDeleting ? "removing" : ""}`}
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                          animationDelay: `${idx * 0.04}s`,
+                        }}
+                      >
+                        <td style={{ padding: "10px 16px" }}>
+                          {p.imageUrl ? (
+                            <img
+                              src={p.imageUrl}
+                              alt={p.name}
+                              className={`product-image-transition ${isDeleting ? "loading" : ""}`}
+                              style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }}
+                            />
+                          ) : (
+                            <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />
+                          )}
+                        </td>
+                        <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
+                        <td style={{ padding: "10px 16px", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.sku || "—"}</td>
+                        <td style={{ padding: "10px 16px", color: "var(--gold-dark)", fontWeight: 600 }}>₹{Number(p.price).toFixed(2)}</td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <span className={`stock-badge ${p.stockQuantity <= 0 ? "empty" : p.stockQuantity <= 3 ? "low" : "in-stock"}`}>
+                            {p.stockQuantity}
+                          </span>
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          {p.badge ? (
+                            <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
+                          ) : (
+                            <span style={{ color: "var(--text-muted)" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              className="btn btn-secondary product-action-btn"
+                              style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                              onClick={() => editProduct(p)}
+                              disabled={isDeleting}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className={`btn btn-danger product-action-btn ${isDeleting ? "loading" : ""}`}
+                              style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                              onClick={() => handleProductDelete(p.id)}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting && <span className="btn-spinner"></span>}
+                              {isDeleting ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
