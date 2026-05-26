@@ -343,6 +343,7 @@ export default function AdminPage() {
   }
 
   function editProduct(product: Product) {
+    setProductFormClosing(false);
     setProductForm({
       id: product.id,
       name: product.name,
@@ -666,7 +667,6 @@ export default function AdminPage() {
                             <img
                               src={p.imageUrl}
                               alt={p.name}
-                              className={`product-image-transition ${isDeleting ? "loading" : ""}`}
                               style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }}
                             />
                           ) : (

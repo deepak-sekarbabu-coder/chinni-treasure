@@ -654,14 +654,7 @@ a {
   color: var(--white) !important;
 }
 
-.product-image-transition {
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
 
-.product-image-transition.loading {
-  opacity: 0.3;
-  transform: scale(0.95);
-}
 
 /* Stagger delays */
 .delay-1 {
