@@ -182,7 +182,7 @@ a {
 .btn-primary:hover {
   background-position: 100% 0%;
   transform: translateY(-2px);
-  box-shadow: 0 4px 28px rgba(212, 175, 55, 0.25);
+  box-shadow: var(--shadow-gold);
 }
 
 /* ── Secondary — outlined gold, refined fill transition ── */
@@ -190,12 +190,6 @@ a {
   background: transparent;
   color: var(--gold);
   border: 2px solid var(--gold);
-  transition:
-    background 0.35s var(--ease-out),
-    color 0.3s var(--ease-out),
-    transform 0.2s var(--ease-out),
-    box-shadow 0.35s var(--ease-out),
-    border-color 0.3s var(--ease-out);
 }
 
 .btn-secondary:hover {
@@ -205,22 +199,19 @@ a {
   box-shadow: var(--shadow-gold);
 }
 
-/* ── Dark — deep black with gold accent, subtle shimmer ── */
+/* ── Dark — deep black with gold accent ── */
 .btn-dark {
-  background: linear-gradient(135deg, var(--black) 0%, var(--near-black) 100%);
+  background: var(--near-black);
   color: var(--gold);
   border: 1px solid rgba(212, 175, 55, 0.25);
-  background-size: 150% 100%;
-  background-position: 0% 0%;
-  will-change: background-position, border-color;
 }
 
 .btn-dark:hover {
-  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  background: var(--gold);
   color: var(--black);
   border-color: var(--gold);
   transform: translateY(-2px);
-  box-shadow: 0 4px 28px rgba(212, 175, 55, 0.2);
+  box-shadow: var(--shadow-gold);
 }
 
 /* ── Danger — refined red outline with smooth fill ── */
@@ -228,11 +219,6 @@ a {
   background: transparent;
   color: var(--error);
   border: 1px solid var(--error);
-  transition:
-    background 0.35s var(--ease-out),
-    color 0.3s var(--ease-out),
-    transform 0.2s var(--ease-out),
-    box-shadow 0.3s var(--ease-out);
 }
 
 .btn-danger:hover {
@@ -247,11 +233,6 @@ a {
   background: transparent;
   color: var(--success);
   border: 1px solid var(--success);
-  transition:
-    background 0.35s var(--ease-out),
-    color 0.3s var(--ease-out),
-    transform 0.2s var(--ease-out),
-    box-shadow 0.3s var(--ease-out);
 }
 
 .btn-success:hover {
