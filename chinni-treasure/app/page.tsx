@@ -30,11 +30,7 @@ export default function HomePage() {
   const { ref: featuresRef, visible: featuresVisible } = useScrollReveal();
   const { ref: ctaRef, visible: ctaVisible } = useScrollReveal();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  async function fetchProducts() {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products");
       if (res.ok) {
@@ -46,7 +42,11 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
 
   const handleAdd = useCallback(
     (p: Product) => {
@@ -54,13 +54,21 @@ export default function HomePage() {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      addItem({
+      const addResult = addItem({
         id: p.id,
         name: p.name,
         price: Number(p.price),
         image: p.imageUrl,
         stock: p.stockQuantity,
       });
+      if (addResult === "max_reached") {
+        showToast(`Maximum available quantity reached for ${p.name} (${p.stockQuantity})`, "info");
+        return;
+      }
+      if (addResult === "out_of_stock") {
+        showToast(`${p.name} is out of stock`, "error");
+        return;
+      }
       showToast(`${p.name} added to cart`, "success");
     },
     [addItem, showToast],
@@ -72,20 +80,53 @@ export default function HomePage() {
       <section className="hero" aria-labelledby="hero-heading">
         <div className="hero-pattern"></div>
         <div className="hero-content">
-          <div className="hero-badge">Curated Collection</div>
           <h1 id="hero-heading">
-            Where <span className="highlight">Craftsmanship</span>
+            Own the Art of
             <br />
-            Meets Elegance
+            <span className="highlight">Timeless Luxury</span>
+            <br />
+            for Everyday Elegance
           </h1>
           <p>
-            Discover our handpicked selection of artisan-crafted luxury goods. Each piece tells a
-            story of unparalleled quality and timeless design.
+            Discover museum-worthy pieces handcrafted by skilled artisans. Premium materials,
+            graceful design, and a buying experience made to feel as exceptional as the products.
           </p>
+          <div className="hero-trust" aria-label="brand highlights">
+            <span>Handcrafted Originals</span>
+            <span>Limited Batch Drops</span>
+            <span>Concierge Support</span>
+          </div>
           <div className="hero-actions">
             <Link href="/catalogue" className="btn btn-primary">
               Explore Collection
             </Link>
+            <Link href="/track" className="btn btn-secondary">
+              Track Your Order
+            </Link>
+          </div>
+        </div>
+        <div className="hero-story" aria-hidden="true">
+          <div className="hero-story-card">
+            <div className="hero-story-label">Signature Edit</div>
+            <h3>Designed to Be Gifted and Kept Forever</h3>
+            <p>
+              Every piece in our signature selection is curated for heirloom quality, modern
+              styling, and meaningful moments.
+            </p>
+            <div className="hero-story-stats">
+              <div>
+                <strong>4.9/5</strong>
+                <span>Customer Delight</span>
+              </div>
+              <div>
+                <strong>3-5 Days</strong>
+                <span>Express Delivery</span>
+              </div>
+              <div>
+                <strong>100%</strong>
+                <span>Craft Verified</span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="hero-scroll" aria-hidden="true">

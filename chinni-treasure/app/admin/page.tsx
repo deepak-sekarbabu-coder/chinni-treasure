@@ -141,6 +141,11 @@ export default function AdminPage() {
     open: false,
   });
   const [trackingId, setTrackingId] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; productId: string; productName: string }>({
+    open: false,
+    productId: "",
+    productName: "",
+  });
 
   useEffect(() => {
     checkAuth();
@@ -340,14 +345,27 @@ export default function AdminPage() {
     }
   }
 
-  async function handleProductDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-    setLoadingProductId(id);
+  function requestProductDelete(product: Product) {
+    setDeleteConfirm({
+      open: true,
+      productId: product.id,
+      productName: product.name,
+    });
+  }
+
+  function closeDeleteConfirm() {
+    setDeleteConfirm({ open: false, productId: "", productName: "" });
+  }
+
+  async function handleProductDeleteConfirmed() {
+    if (!deleteConfirm.productId) return;
+    setLoadingProductId(deleteConfirm.productId);
     try {
-      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${deleteConfirm.productId}`, { method: "DELETE" });
       if (res.ok) {
         await fetchProducts();
         showToast("Product deleted successfully", "success");
+        closeDeleteConfirm();
       }
     } catch (err) {
       console.error("Failed to delete product:", err);
@@ -829,7 +847,7 @@ export default function AdminPage() {
                               <button
                                 className={`btn btn-danger product-action-btn ${isDeleting ? "loading" : ""}`}
                                 style={{ padding: "4px 12px", fontSize: "0.65rem" }}
-                                onClick={() => handleProductDelete(p.id)}
+                                onClick={() => requestProductDelete(p)}
                                 disabled={isDeleting}
                               >
                                 {isDeleting && <span className="btn-spinner"></span>}
@@ -889,6 +907,52 @@ export default function AdminPage() {
                 </button>
                 <button className="btn btn-secondary" onClick={() => setTrackingModal({ orderId: "", open: false })}>
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Delete Confirmation Modal */}
+      {deleteConfirm.open && (
+        <div className="modal-overlay active" onClick={closeDeleteConfirm}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
+            <div className="modal-header">
+              <h2>Confirm Delete</h2>
+              <button className="modal-close" onClick={closeDeleteConfirm}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: "10px", color: "var(--text-muted)" }}>
+                This action will permanently remove the product from your catalogue.
+              </p>
+              <div
+                style={{
+                  background: "var(--cream-light)",
+                  border: "1px solid rgba(231, 76, 60, 0.25)",
+                  borderRadius: "6px",
+                  padding: "14px 16px",
+                  marginBottom: "18px",
+                }}
+              >
+                <p style={{ fontSize: "0.7rem", letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "6px" }}>
+                  Product
+                </p>
+                <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.05rem", color: "var(--near-black)" }}>
+                  {deleteConfirm.productName}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+                <button
+                  className={`btn btn-danger ${loadingProductId === deleteConfirm.productId ? "loading" : ""}`}
+                  onClick={handleProductDeleteConfirmed}
+                  disabled={loadingProductId === deleteConfirm.productId}
+                >
+                  {loadingProductId === deleteConfirm.productId && <span className="btn-spinner"></span>}
+                  {loadingProductId === deleteConfirm.productId ? "Deleting..." : "Yes, Delete Product"}
+                </button>
+                <button className="btn btn-secondary" onClick={closeDeleteConfirm}>
+                  Keep Product
                 </button>
               </div>
             </div>

@@ -26,9 +26,9 @@ interface CartContextType {
     price: number;
     image: string;
     stock: number;
-  }) => void;
+  }) => "added" | "max_reached" | "out_of_stock";
   removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, delta: number) => void;
+  updateQuantity: (productId: string, delta: number) => "updated" | "max_reached" | "removed" | "unchanged";
   clearCart: () => void;
   getTotal: () => number;
   getCount: () => number;
@@ -70,11 +70,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (product: { id: string; name: string; price: number; image: string; stock: number }) => {
+      if (product.stock <= 0) return "out_of_stock" as const;
+      let result: "added" | "max_reached" = "added";
       setItems((prev) => {
         const existing = prev.find((i) => i.productId === product.id);
         if (existing) {
-          // Check stock limit
           if (existing.quantity >= product.stock) {
+            result = "max_reached";
             return prev;
           }
           return prev.map((i) =>
@@ -93,6 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           },
         ];
       });
+      return result;
     },
     [],
   );
@@ -103,17 +106,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = useCallback(
     (productId: string, delta: number) => {
+      let result: "updated" | "max_reached" | "removed" | "unchanged" = "unchanged";
       setItems((prev) =>
         prev
           .map((i) => {
             if (i.productId !== productId) return i;
             const newQty = i.quantity + delta;
-            if (newQty <= 0) return null;
-            if (newQty > i.stock) return i;
+            if (newQty <= 0) {
+              result = "removed";
+              return null;
+            }
+            if (newQty > i.stock) {
+              result = "max_reached";
+              return i;
+            }
+            result = "updated";
             return { ...i, quantity: newQty };
           })
           .filter(Boolean) as CartItemDisplay[],
       );
+      return result;
     },
     [],
   );

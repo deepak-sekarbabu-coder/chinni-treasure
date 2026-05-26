@@ -47,13 +47,21 @@ export default function CataloguePage() {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      addItem({
+      const addResult = addItem({
         id: p.id,
         name: p.name,
         price: Number(p.price),
         image: p.imageUrl,
         stock: p.stockQuantity,
       });
+      if (addResult === "max_reached") {
+        showToast(`Maximum available quantity reached for ${p.name} (${p.stockQuantity})`, "info");
+        return;
+      }
+      if (addResult === "out_of_stock") {
+        showToast(`${p.name} is out of stock`, "error");
+        return;
+      }
       showToast(`${p.name} added to cart`, "success");
     },
     [addItem, showToast],
@@ -61,6 +69,16 @@ export default function CataloguePage() {
 
   return (
     <div style={{ paddingTop: "72px" }}>
+      <section className="catalogue-hero">
+        <div className="catalogue-hero-inner">
+          <p className="catalogue-kicker">Luxury Marketplace</p>
+          <h1>Curated for Taste. Crafted for Legacy.</h1>
+          <p>
+            Explore our complete collection of artisan-crafted pieces designed to elevate everyday
+            spaces and meaningful gifting.
+          </p>
+        </div>
+      </section>
       <section className="section" aria-labelledby="catalogue-heading">
         <SectionHeader
           subtitle="Our Collection"

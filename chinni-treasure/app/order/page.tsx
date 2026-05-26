@@ -446,6 +446,16 @@ export default function OrderPage() {
                                 className="btn-secondary qty-btn"
                                 onClick={() => updateQuantity(item.productId, 1)}
                                 disabled={item.quantity >= item.stock}
+                                title={
+                                  item.quantity >= item.stock
+                                    ? `Maximum available quantity reached (${item.stock} in stock)`
+                                    : "Increase quantity"
+                                }
+                                aria-label={
+                                  item.quantity >= item.stock
+                                    ? `Maximum quantity reached for ${item.name}`
+                                    : `Increase quantity for ${item.name}`
+                                }
                               >
                                 +
                               </button>
@@ -457,6 +467,18 @@ export default function OrderPage() {
                                 ✕
                               </button>
                             </div>
+                            {item.quantity >= item.stock && (
+                              <p
+                                style={{
+                                  marginTop: "6px",
+                                  fontSize: "0.7rem",
+                                  color: "var(--warning)",
+                                  letterSpacing: "0.2px",
+                                }}
+                              >
+                                Max available quantity reached ({item.stock} in stock)
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
