@@ -49,7 +49,7 @@ async function main() {
       price: 129.0,
       stockQuantity: 8,
       imageUrl:
-        "https://images.unsplash.com/photo-1520903920243-00d4153b3ee6?w=600&h=700&fit=crop",
+        "https://copilot.microsoft.com/th/id/BCO.3992779c-884a-4f83-afcb-b4b45a3217e6.png",
       description:
         "Luxurious 100% mulberry silk scarf with hand-rolled edges. A timeless addition to any wardrobe.",
       badge: "new" as const,

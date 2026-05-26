@@ -45,54 +45,56 @@ export default function Navbar() {
     >
       <div className="navbar-inner">
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
-          Chinni Treasure
-          <span><span className="brand-heart">❤️</span> Little Love <span className="brand-heart">❤️</span></span>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "0.9rem" }}><span className="brand-heart">❤</span> Little Love <span className="brand-heart">❤</span></div>
+            <div style={{ fontWeight: "bold" }}>Chinni Treasure</div>
+          </div>
         </Link>
 
         <div className="navbar-group">
           <ul className={`nav-links${menuOpen ? " active" : ""}`} id="nav-links" role="menubar">
-          <li role="none">
-            <Link
-              href="/"
-              className={isActive("/") && pathname === "/" ? "active" : ""}
-              role="menuitem"
-              aria-current={pathname === "/" ? "page" : undefined}
-              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
-            >
-              Home
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/catalogue"
-              className={isActive("/catalogue") ? "active" : ""}
-              role="menuitem"
-              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
-            >
-              Catalogue
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/track"
-              className={isActive("/track") ? "active" : ""}
-              role="menuitem"
-              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
-            >
-              Track
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              href="/admin"
-              className={isActive("/admin") ? "active" : ""}
-              role="menuitem"
-              onClick={() => { setMenuOpen(false); setCartOpen(false); }}
-            >
-              Admin
-            </Link>
-          </li>
-        </ul>
+            <li role="none">
+              <Link
+                href="/"
+                className={isActive("/") && pathname === "/" ? "active" : ""}
+                role="menuitem"
+                aria-current={pathname === "/" ? "page" : undefined}
+                onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+              >
+                Home
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                href="/catalogue"
+                className={isActive("/catalogue") ? "active" : ""}
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+              >
+                Catalogue
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                href="/track"
+                className={isActive("/track") ? "active" : ""}
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+              >
+                Track
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                href="/admin"
+                className={isActive("/admin") ? "active" : ""}
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+              >
+                Admin
+              </Link>
+            </li>
+          </ul>
 
           <div className="navbar-actions">
             <div className="navbar-cart" ref={cartRef}>
@@ -107,9 +109,9 @@ export default function Navbar() {
                 aria-label={`Shopping cart with ${count} items`}
               >
                 <svg className="cart-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="9" cy="21" r="1"/>
-                  <circle cx="20" cy="21" r="1"/>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                 </svg>
                 <span className="cart-label">Cart</span>
                 {count > 0 && (

@@ -5,7 +5,12 @@ export default function Footer() {
     <footer className="footer" role="contentinfo">
       <div className="footer-grid">
         <div className="footer-brand">
-          <h3>Chinni Treasure</h3>
+          <div style={{ textAlign: "center" }}>
+            <div className="little-love-text">
+              <span className="brand-heart">❤</span> Little Love <span className="brand-heart">❤</span>
+            </div>
+            <h3>Chinni Treasure</h3>
+          </div>
           <p>Curating the finest artisan-crafted luxury goods for discerning customers worldwide.</p>
         </div>
         <div>
@@ -33,7 +38,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>&copy; {new Date().getFullYear()} Chinni Treasure &mdash; <span className="brand-heart">❤️</span> Little Love <span className="brand-heart">❤</span> All rights reserved.</span>
+        <span>&copy; {new Date().getFullYear()} Chinni Treasure &mdash; <span className="brand-heart">❤</span> Little Love <span className="brand-heart">❤</span> All rights reserved.</span>
         <span>Made with care</span>
       </div>
     </footer>

@@ -918,8 +918,10 @@ a {
   font-weight: 400;
 }
 
-.brand-heart {
-  color: #b91c1c; /* Premium deep red color */
+.brand-heart,
+.nav-brand span.brand-heart {
+  color: #b91c1c;
+  /* Premium deep red color */
   font-family: inherit;
   font-weight: bold;
   display: inline-block;
@@ -1208,6 +1210,17 @@ a {
   font-size: 0.85rem;
   color: var(--text-muted);
   line-height: 1.7;
+}
+
+/* Make Little Love text in footer visible */
+.footer .little-love-text {
+  color: var(--gold-light);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  display: inline-block;
 }
 
 .footer h4 {

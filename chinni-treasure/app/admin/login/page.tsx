@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
             Admin Login
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
-            Chinni Treasure — ❤️ Little Love ❤️
+            Chinni Treasure — <span className="brand-heart">❤</span> Little Love <span className="brand-heart">❤</span>
           </p>
         </div>
 
