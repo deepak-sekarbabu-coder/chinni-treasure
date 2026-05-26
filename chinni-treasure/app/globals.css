@@ -140,80 +140,125 @@ a {
   letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    box-shadow 0.35s var(--ease-out),
+    border-color 0.3s var(--ease-out);
   border: none;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
 }
 
 .btn:active {
   transform: scale(0.97) !important;
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: grayscale(0.15);
+}
+
+/* ── Primary — rich gold gradient with shimmer on hover ── */
 .btn-primary {
-  background: var(--gold);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
   color: var(--black);
+  background-size: 150% 100%;
+  background-position: 30% 0%;
+  will-change: background-position;
 }
 
 .btn-primary:hover {
-  background: var(--gold-light);
+  background-position: 100% 0%;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-gold);
+  box-shadow: 0 4px 28px rgba(212, 175, 55, 0.25);
 }
 
+/* ── Secondary — outlined gold, refined fill transition ── */
 .btn-secondary {
   background: transparent;
   color: var(--gold);
   border: 2px solid var(--gold);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    box-shadow 0.35s var(--ease-out),
+    border-color 0.3s var(--ease-out);
 }
 
 .btn-secondary:hover {
   background: var(--gold);
   color: var(--black);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
 }
 
+/* ── Dark — deep black with gold accent, subtle shimmer ── */
 .btn-dark {
-  background: var(--black);
+  background: linear-gradient(135deg, var(--black) 0%, var(--near-black) 100%);
   color: var(--gold);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  background-size: 150% 100%;
+  background-position: 0% 0%;
+  will-change: background-position, border-color;
 }
 
 .btn-dark:hover {
-  background: var(--gold);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
   color: var(--black);
   border-color: var(--gold);
   transform: translateY(-2px);
+  box-shadow: 0 4px 28px rgba(212, 175, 55, 0.2);
 }
 
+/* ── Danger — refined red outline with smooth fill ── */
 .btn-danger {
   background: transparent;
   color: var(--error);
   border: 1px solid var(--error);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
 }
 
 .btn-danger:hover {
   background: var(--error);
   color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(231, 76, 60, 0.2);
 }
 
+/* ── Success — refined green outline with smooth fill ── */
 .btn-success {
   background: transparent;
   color: var(--success);
   border: 1px solid var(--success);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
 }
 
 .btn-success:hover {
   background: var(--success);
   color: var(--white);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(46, 204, 113, 0.2);
 }
 
 /* ===== FORM ELEMENTS ===== */
@@ -1108,17 +1153,22 @@ a {
 }
 
 .cart-btn {
-  background: none;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.25);
   color: var(--text-light);
   cursor: pointer;
   font: inherit;
   padding: 10px 20px;
   font-size: 0.72rem;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 500;
-  transition: all var(--transition-fast);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    border-color 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
   border-radius: 2px;
   position: relative;
   display: inline-flex;
@@ -1128,6 +1178,11 @@ a {
   user-select: none;
 }
 
+.cart-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
+}
+
 .cart-btn:active {
   transform: scale(0.97);
 }
@@ -1135,7 +1190,8 @@ a {
 .cart-btn:hover {
   color: var(--gold);
   border-color: var(--gold);
-  background: rgba(212, 175, 55, 0.06);
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.1);
 }
 
 .cart-icon-svg {
@@ -1650,17 +1706,30 @@ a {
 .btn-add {
   background: var(--black);
   color: var(--gold);
-  border: none;
+  border: 1px solid rgba(212, 175, 55, 0.25);
   padding: 10px 20px;
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    background 0.35s var(--ease-out),
+    color 0.3s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    border-color 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
   border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+.btn-add:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
 }
 
 .btn-add:active {
@@ -1668,13 +1737,18 @@ a {
 }
 
 .btn-add:hover:not(:disabled) {
-  background: var(--gold);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
   color: var(--black);
+  border-color: var(--gold-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.2);
 }
 
 .btn-add:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  transform: none !important;
+  filter: grayscale(0.2);
 }
 
 /* ===== FEATURES ===== */
