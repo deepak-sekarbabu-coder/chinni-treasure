@@ -6,6 +6,7 @@ import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import AdminStatCard from "@/src/components/ui/AdminStatCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
+import { useToast } from "@/src/components/ui/ToastProvider";
 import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
 interface Stats {
   totalOrders: number;
@@ -94,6 +95,7 @@ const BADGE_OPTIONS = [
 
 export default function AdminPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -105,11 +107,15 @@ export default function AdminPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<"orders" | "catalogue">("orders");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [chartsLoading, setChartsLoading] = useState(false);
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
   const [productLoading, setProductLoading] = useState(false);
   const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [productFormClosing, setProductFormClosing] = useState(false);
   const [productForm, setProductForm] = useState({
     id: "",
@@ -157,6 +163,7 @@ export default function AdminPage() {
   }
 
   async function fetchStats() {
+    setChartsLoading(true);
     try {
       const res = await fetch("/api/stats");
       if (res.ok) {
@@ -167,10 +174,13 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch stats:", err);
+    } finally {
+      setChartsLoading(false);
     }
   }
 
   async function fetchOrders(currentSelectedId?: string) {
+    setOrdersLoading(true);
     try {
       const res = await fetch("/api/orders");
       if (res.ok) {
@@ -185,10 +195,13 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch orders:", err);
+    } finally {
+      setOrdersLoading(false);
     }
   }
 
   async function fetchProducts() {
+    setProductsLoading(true);
     try {
       const res = await fetch("/api/products");
       if (res.ok) {
@@ -197,6 +210,8 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch products:", err);
+    } finally {
+      setProductsLoading(false);
     }
   }
 
@@ -216,6 +231,7 @@ export default function AdminPage() {
       return;
     }
 
+    setAdvancingOrderId(orderId);
     setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
@@ -230,11 +246,13 @@ export default function AdminPage() {
       console.error("Failed to update status:", err);
     } finally {
       setIsTransitioning(false);
+      setAdvancingOrderId(null);
     }
   }, [orders]);
 
   async function handleSubmitTracking() {
     if (!trackingId.trim()) return;
+    setAdvancingOrderId(trackingModal.orderId);
     setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${trackingModal.orderId}/status`, {
@@ -246,15 +264,18 @@ export default function AdminPage() {
         await Promise.all([fetchOrders(trackingModal.orderId), fetchStats()]);
         setTrackingModal({ orderId: "", open: false });
         setTrackingId("");
+        showToast("Order marked as shipped successfully", "success");
       }
     } catch (err) {
       console.error("Failed to ship order:", err);
     } finally {
       setIsTransitioning(false);
+      setAdvancingOrderId(null);
     }
   }
 
   const handleReject = useCallback(async (orderId: string) => {
+    setAdvancingOrderId(orderId);
     setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
@@ -270,6 +291,7 @@ export default function AdminPage() {
       console.error("Failed to reject order:", err);
     } finally {
       setIsTransitioning(false);
+      setAdvancingOrderId(null);
     }
   }, []);
 
@@ -305,9 +327,14 @@ export default function AdminPage() {
         resetProductForm();
         setShowProductForm(false);
         setProductFormClosing(false);
+        showToast(
+          isEdit ? `Product "${productForm.name}" updated successfully` : `Product "${productForm.name}" created successfully`,
+          "success"
+        );
       }
     } catch (err) {
       console.error("Failed to save product:", err);
+      showToast("Failed to save product", "error");
     } finally {
       setProductLoading(false);
     }
@@ -320,9 +347,11 @@ export default function AdminPage() {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchProducts();
+        showToast("Product deleted successfully", "success");
       }
     } catch (err) {
       console.error("Failed to delete product:", err);
+      showToast("Failed to delete product", "error");
     } finally {
       setLoadingProductId(null);
     }
@@ -409,40 +438,77 @@ export default function AdminPage() {
               { label: "Shipped", value: stats.shippedOrders, color: "#9b59b6" },
               { label: "Delivered", value: stats.deliveredOrders, color: "var(--success)" },
               { label: "Revenue", value: `₹${Number(stats.totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, color: "var(--gold-dark)" },
-            ].map((s) => (
-              <AdminStatCard key={s.label} {...s} />
+            ].map((s, idx) => (
+              <div
+                key={s.label}
+                style={{
+                  animation: `fadeIn 0.4s var(--ease-out) both`,
+                  animationDelay: `${idx * 0.08}s`,
+                }}
+              >
+                <AdminStatCard {...s} />
+              </div>
             ))}
           </div>
         </section>
       )}
 
       {/* Charts Section (placeholder for Chart.js - will render a simple table instead) */}
-      {chartData.length > 0 && (
+      {(chartsLoading || chartData.length > 0) && (
         <section className="section" style={{ paddingTop: "24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-            <div className="admin-stat-card" style={{ textAlign: "left" }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Orders (Last 30 Days)</h3>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
-                {chartData.map((d) => (
-                  <div key={d.date} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <span>{d.date}</span>
-                    <span>{d.orders} orders</span>
-                  </div>
-                ))}
+          {chartsLoading ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+              {/* Skeleton: Orders Chart */}
+              <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
+                <div className="skeleton-text" style={{ width: "180px", height: "18px", marginBottom: "20px" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[130, 120, 100, 115, 125, 110, 95, 105].map((w, idx) => (
+                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="skeleton-text" style={{ width: `${w}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${[60, 55, 70, 50, 65, 58, 62, 48][idx]}px`, height: "12px" }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Skeleton: Top Products */}
+              <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
+                <div className="skeleton-text" style={{ width: "140px", height: "18px", marginBottom: "20px" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[110, 130, 95, 120, 140, 100, 115, 125].map((w, idx) => (
+                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="skeleton-text" style={{ width: `${w}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${[45, 55, 50, 60, 40, 48, 52, 58][idx]}px`, height: "12px" }} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="admin-stat-card" style={{ textAlign: "left" }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Top Products</h3>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
-                {productSales.slice(0, 10).map((p, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <span>{p.productName}</span>
-                    <span>{p.quantity} sold</span>
-                  </div>
-                ))}
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+              <div className="admin-stat-card" style={{ textAlign: "left" }}>
+                <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Orders (Last 30 Days)</h3>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
+                  {chartData.map((d) => (
+                    <div key={d.date} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <span>{d.date}</span>
+                      <span>{d.orders} orders</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="admin-stat-card" style={{ textAlign: "left" }}>
+                <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Top Products</h3>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
+                  {productSales.slice(0, 10).map((p, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <span>{p.productName}</span>
+                      <span>{p.quantity} sold</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
       )}
 
@@ -480,22 +546,51 @@ export default function AdminPage() {
 
             {/* Orders List */}
             <div id="orders-list">
-              {filteredOrders.length === 0 ? (
+              {ordersLoading ? (
+                Array.from({ length: 6 }).map((_, idx) => (
+                  <div
+                    key={`order-skeleton-${idx}`}
+                    className="admin-stat-card order-card order-card-skeleton"
+                    style={{
+                      textAlign: "left",
+                      marginBottom: "16px",
+                      animationDelay: `${idx * 0.06}s`,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
+                      <div style={{ flex: 1 }}>
+                        <div className="skeleton-text" style={{ width: "60px", height: "10px", marginBottom: "8px" }} />
+                        <div className="skeleton-text" style={{ width: "140px", height: "16px" }} />
+                      </div>
+                      <div className="skeleton-block" style={{ width: "80px", height: "26px", borderRadius: "2px" }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+                      <div>
+                        <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "6px" }} />
+                        <div className="skeleton-text" style={{ width: "90px", height: "12px" }} />
+                      </div>
+                      <div className="skeleton-text" style={{ width: "80px", height: "18px" }} />
+                    </div>
+                  </div>
+                ))
+              ) : filteredOrders.length === 0 ? (
                 <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px" }}>
                   No orders found.
                 </p>
               ) : (
-                filteredOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="admin-stat-card"
-                    style={{
-                      textAlign: "left",
-                      marginBottom: "16px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => setSelectedOrder(order)}
-                  >
+                filteredOrders.map((order) => {
+                    const isAdvancing = advancingOrderId === order.id;
+                    return (
+                    <div
+                      key={order.id}
+                      className={`admin-stat-card order-card ${isAdvancing ? "order-card-advancing" : ""} ${selectedOrder?.id === order.id ? "order-card-selected" : ""}`}
+                      style={{
+                        textAlign: "left",
+                        marginBottom: "16px",
+                        cursor: isAdvancing ? "default" : "pointer",
+                      }}
+                      onClick={() => !isAdvancing && setSelectedOrder(order)}
+                    >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
                       <div>
                         <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>
@@ -521,8 +616,9 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                );
+              })
+            )}
             </div>
           </>
         )}
@@ -651,67 +747,100 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p, idx) => {
-                    const isDeleting = loadingProductId === p.id;
-                    return (
-                      <tr
-                        key={p.id}
-                        className={`product-table-row ${isDeleting ? "removing" : ""}`}
-                        style={{
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                          animationDelay: `${idx * 0.04}s`,
-                        }}
+                  {productsLoading ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={`skeleton-${idx}`} className="product-table-skeleton"
+                        style={{ animationDelay: `${idx * 0.06}s` }}
                       >
                         <td style={{ padding: "10px 16px" }}>
-                          {p.imageUrl ? (
-                            <img
-                              src={p.imageUrl}
-                              alt={p.name}
-                              style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }}
-                            />
-                          ) : (
-                            <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />
-                          )}
-                        </td>
-                        <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
-                        <td style={{ padding: "10px 16px", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.sku || "—"}</td>
-                        <td style={{ padding: "10px 16px", color: "var(--gold-dark)", fontWeight: 600 }}>₹{Number(p.price).toFixed(2)}</td>
-                        <td style={{ padding: "10px 16px" }}>
-                          <span className={`stock-badge ${p.stockQuantity <= 0 ? "empty" : p.stockQuantity <= 3 ? "low" : "in-stock"}`}>
-                            {p.stockQuantity}
-                          </span>
+                          <div className="skeleton-block" style={{ width: "40px", height: "50px", borderRadius: "4px" }} />
                         </td>
                         <td style={{ padding: "10px 16px" }}>
-                          {p.badge ? (
-                            <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
-                          ) : (
-                            <span style={{ color: "var(--text-muted)" }}>—</span>
-                          )}
+                          <div className="skeleton-text skeleton-text-name" />
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div className="skeleton-text skeleton-text-sku" />
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div className="skeleton-text skeleton-text-price" />
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div className="skeleton-text skeleton-text-stock" />
+                        </td>
+                        <td style={{ padding: "10px 16px" }}>
+                          <div className="skeleton-text skeleton-text-badge" />
                         </td>
                         <td style={{ padding: "10px 16px" }}>
                           <div style={{ display: "flex", gap: "8px" }}>
-                            <button
-                              className="btn btn-secondary product-action-btn"
-                              style={{ padding: "4px 12px", fontSize: "0.65rem" }}
-                              onClick={() => editProduct(p)}
-                              disabled={isDeleting}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className={`btn btn-danger product-action-btn ${isDeleting ? "loading" : ""}`}
-                              style={{ padding: "4px 12px", fontSize: "0.65rem" }}
-                              onClick={() => handleProductDelete(p.id)}
-                              disabled={isDeleting}
-                            >
-                              {isDeleting && <span className="btn-spinner"></span>}
-                              {isDeleting ? "Deleting..." : "Delete"}
-                            </button>
+                            <div className="skeleton-block" style={{ width: "50px", height: "28px", borderRadius: "2px" }} />
+                            <div className="skeleton-block" style={{ width: "60px", height: "28px", borderRadius: "2px" }} />
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    products.map((p, idx) => {
+                      const isDeleting = loadingProductId === p.id;
+                      return (
+                        <tr
+                          key={p.id}
+                          className={`product-table-row ${isDeleting ? "removing" : ""}`}
+                          style={{
+                            borderBottom: "1px solid rgba(255,255,255,0.05)",
+                            animationDelay: `${idx * 0.04}s`,
+                          }}
+                        >
+                          <td style={{ padding: "10px 16px" }}>
+                            {p.imageUrl ? (
+                              <img
+                                src={p.imageUrl}
+                                alt={p.name}
+                                style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }}
+                              />
+                            ) : (
+                              <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />
+                            )}
+                          </td>
+                          <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
+                          <td style={{ padding: "10px 16px", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.sku || "—"}</td>
+                          <td style={{ padding: "10px 16px", color: "var(--gold-dark)", fontWeight: 600 }}>₹{Number(p.price).toFixed(2)}</td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <span className={`stock-badge ${p.stockQuantity <= 0 ? "empty" : p.stockQuantity <= 3 ? "low" : "in-stock"}`}>
+                              {p.stockQuantity}
+                            </span>
+                          </td>
+                          <td style={{ padding: "10px 16px" }}>
+                            {p.badge ? (
+                              <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
+                            ) : (
+                              <span style={{ color: "var(--text-muted)" }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "10px 16px" }}>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                className="btn btn-secondary product-action-btn"
+                                style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                                onClick={() => editProduct(p)}
+                                disabled={isDeleting}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className={`btn btn-danger product-action-btn ${isDeleting ? "loading" : ""}`}
+                                style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                                onClick={() => handleProductDelete(p.id)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting && <span className="btn-spinner"></span>}
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

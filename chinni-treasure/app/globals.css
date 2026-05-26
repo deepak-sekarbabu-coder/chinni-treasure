@@ -602,6 +602,71 @@ a {
   animation: revealUp 0.35s var(--ease-out) both;
 }
 
+/* ===== SHIMMER SKELETON LOADING ===== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.product-table-skeleton {
+  animation: fadeIn 0.3s var(--ease-out) both;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.product-table-skeleton td {
+  padding: 10px 16px;
+  vertical-align: middle;
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--cream-light) 25%,
+    #e8e3d8 50%,
+    var(--cream-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-text {
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--cream-light) 25%,
+    #e8e3d8 50%,
+    var(--cream-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-text-name {
+  width: 140px;
+}
+
+.skeleton-text-sku {
+  width: 80px;
+}
+
+.skeleton-text-price {
+  width: 60px;
+}
+
+.skeleton-text-stock {
+  width: 40px;
+}
+
+.skeleton-text-badge {
+  width: 60px;
+}
+
 .product-table-row {
   animation: fadeIn 0.35s var(--ease-out) both;
   transition: background var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
@@ -2087,10 +2152,85 @@ a {
   padding: 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--cream);
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition-fast);
 }
 
 .admin-stat-card:hover {
   box-shadow: var(--shadow-md);
+}
+
+/* ===== ORDER CARD STATES ===== */
+@keyframes orderPulse {
+  0%, 100% {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    border-color: var(--gold-light);
+    box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.08);
+  }
+}
+
+@keyframes orderAdvanceShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.order-card {
+  transition:
+    transform 0.25s var(--ease-out),
+    box-shadow 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out),
+    opacity 0.25s var(--ease-out);
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+}
+
+.order-card-selected {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-gold);
+}
+
+.order-card-advancing {
+  animation: orderPulse 1.2s ease-in-out infinite;
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.85;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-card-advancing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: orderAdvanceShimmer 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Order card skeleton loading */
+.order-card-skeleton {
+  animation: fadeIn 0.3s var(--ease-out) both;
+  pointer-events: none;
+}
+
+/* Chart skeleton loading */
+.chart-skeleton {
+  animation: fadeIn 0.3s var(--ease-out) both;
+  pointer-events: none;
 }
 
 /* ===== CONFIRMATION PAGE ===== */
