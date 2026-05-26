@@ -46,8 +46,8 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.9rem" }}><span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span> <span className="brand-heart">❤</span></div>
             <div style={{ fontWeight: "bold" }}>Chinni Treasure</div>
+            <div style={{ fontSize: "0.9rem" }}><span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span> <span className="brand-heart">❤</span></div>
           </div>
         </Link>
 

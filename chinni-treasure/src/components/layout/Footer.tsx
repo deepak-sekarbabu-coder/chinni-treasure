@@ -6,10 +6,10 @@ export default function Footer() {
       <div className="footer-grid">
         <div className="footer-brand">
           <div style={{ textAlign: "center" }}>
+            <h3>Chinni Treasure</h3>
             <div className="little-love-text">
               <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span> <span className="brand-heart">❤</span>
             </div>
-            <h3>Chinni Treasure</h3>
           </div>
           <p>Curating the finest artisan-crafted luxury goods for discerning customers worldwide.</p>
         </div>
