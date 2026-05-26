@@ -46,7 +46,7 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
           Chinni Treasure
-          <span>Little Love 🖤</span>
+          <span><span className="brand-heart">❤️</span> Little Love <span className="brand-heart">❤️</span></span>
         </Link>
 
         <div className="navbar-group">

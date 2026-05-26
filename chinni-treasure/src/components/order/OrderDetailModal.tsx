@@ -41,9 +41,10 @@ interface Props {
   showActions?: boolean;
   onAdvance?: (id: string) => void;
   onReject?: (id: string) => void;
+  isTransitioning?: boolean;
 }
 
-export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject }: Props) {
+export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning }: Props) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -71,9 +72,13 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
   return (
     <div className="modal-overlay active" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className={`modal-loading-overlay ${isTransitioning ? "active" : ""}`}>
+          <div className="modal-loading-spinner"></div>
+          <div className="modal-loading-text">Updating Order Status...</div>
+        </div>
         <div className="modal-header">
           <h2>Order {order.orderNumber}</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" onClick={onClose} disabled={isTransitioning}>
             ✕
           </button>
         </div>
@@ -199,17 +204,24 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
           </div>
 
           {showActions && (
-            <div style={{ marginTop: "24px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ marginTop: "24px", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
               {nextStatus && (
                 <button
                   className="btn btn-success"
                   onClick={() => onAdvance?.(order.id)}
+                  disabled={isTransitioning}
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
+                  {isTransitioning && <span className="spinner-inline"></span>}
                   Advance to {ORDER_STATUS_LABELS[nextStatus]}
                 </button>
               )}
               {order.status === "pending" && (
-                <button className="btn btn-danger" onClick={() => onReject?.(order.id)}>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => onReject?.(order.id)}
+                  disabled={isTransitioning}
+                >
                   Reject Order
                 </button>
               )}

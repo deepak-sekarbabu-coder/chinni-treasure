@@ -19,7 +19,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Chinni Treasure — Little Love 🖤",
+  title: "Chinni Treasure — ❤️ Little Love ❤️",
   description:
     "Discover our curated collection of artisan-crafted luxury goods. Enjoy free shipping on all orders.",
 };

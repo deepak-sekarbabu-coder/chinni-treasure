@@ -36,7 +36,7 @@ export async function GET() {
       shippedOrders: orders.filter((o: { status: string }) => o.status === "shipped").length,
       deliveredOrders: orders.filter((o: { status: string }) => o.status === "delivered").length,
       rejectedOrders: orders.filter((o: { status: string }) => o.status === "rejected").length,
-      totalRevenue: totalRevenue._sum.totalAmount ?? 0,
+      totalRevenue: Number(totalRevenue._sum.totalAmount ?? 0),
     };
 
     // Chart data: last 30 days

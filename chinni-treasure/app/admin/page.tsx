@@ -104,6 +104,7 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<"orders" | "catalogue">("orders");
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
@@ -166,12 +167,18 @@ export default function AdminPage() {
     }
   }
 
-  async function fetchOrders() {
+  async function fetchOrders(currentSelectedId?: string) {
     try {
       const res = await fetch("/api/orders");
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
+        if (currentSelectedId) {
+          const updated = data.find((o: Order) => o.id === currentSelectedId);
+          if (updated) {
+            setSelectedOrder(updated);
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to fetch orders:", err);
@@ -206,6 +213,7 @@ export default function AdminPage() {
       return;
     }
 
+    setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
@@ -213,15 +221,18 @@ export default function AdminPage() {
         body: JSON.stringify({ status: nextStatus }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(), fetchStats()]);
+        await Promise.all([fetchOrders(orderId), fetchStats()]);
       }
     } catch (err) {
       console.error("Failed to update status:", err);
+    } finally {
+      setIsTransitioning(false);
     }
   }, [orders]);
 
   async function handleSubmitTracking() {
     if (!trackingId.trim()) return;
+    setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${trackingModal.orderId}/status`, {
         method: "PATCH",
@@ -229,16 +240,19 @@ export default function AdminPage() {
         body: JSON.stringify({ status: "shipped", trackingId: trackingId.trim() }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(), fetchStats()]);
+        await Promise.all([fetchOrders(trackingModal.orderId), fetchStats()]);
         setTrackingModal({ orderId: "", open: false });
         setTrackingId("");
       }
     } catch (err) {
       console.error("Failed to ship order:", err);
+    } finally {
+      setIsTransitioning(false);
     }
   }
 
   const handleReject = useCallback(async (orderId: string) => {
+    setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
@@ -246,11 +260,13 @@ export default function AdminPage() {
         body: JSON.stringify({ status: "rejected" }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(), fetchStats()]);
+        await Promise.all([fetchOrders(orderId), fetchStats()]);
         setSelectedOrder(null);
       }
     } catch (err) {
       console.error("Failed to reject order:", err);
+    } finally {
+      setIsTransitioning(false);
     }
   }, []);
 
@@ -650,6 +666,7 @@ export default function AdminPage() {
           showActions
           onAdvance={handleAdvance}
           onReject={handleReject}
+          isTransitioning={isTransitioning}
         />
       )}
 
