@@ -157,7 +157,6 @@ chinni-treasure/
 │   │   └── utils.ts              # Utility functions (sanitize, order numbers)
 │   └── types/
 │       └── index.ts              # Shared TypeScript types
-├── middleware.ts                 # Next.js middleware (admin route auth)
 ├── next.config.ts                # Next.js configuration
 ├── vercel.json                   # Vercel deployment config
 ├── .env.example                  # Environment variable template

@@ -119,7 +119,6 @@ chinni-treasure/
 │   ├── components/               # Cart Context, Navbar, Footer, Modal, Toast components
 │   ├── lib/                      # Auth helpers, DB connections, formatting utilities
 │   └── types/                    # Shared TypeScript interfaces
-├── middleware.ts                 # Route protection middleware
 └── package.json                  # Scripts & dependencies
 ```
 
