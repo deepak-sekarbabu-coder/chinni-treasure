@@ -53,7 +53,9 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background: var(--cream);
+  background:
+    radial-gradient(circle at 50% -8%, rgba(16, 16, 16, 0.95) 0%, rgba(16, 16, 16, 0.68) 24%, rgba(16, 16, 16, 0) 52%),
+    linear-gradient(180deg, #f7f3ec 0%, #f3ede3 100%);
   color: var(--near-black);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -1086,13 +1088,11 @@ a {
 .brand-logo-wrap {
   width: 58px;
   height: 58px;
-  border-radius: 10px;
-  background: rgba(245, 240, 232, 0.94);
-  border: 1px solid rgba(212, 175, 55, 0.38);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 10px 20px rgba(0, 0, 0, 0.24);
-  padding: 4px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;

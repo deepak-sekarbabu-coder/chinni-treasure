@@ -47,7 +47,7 @@ export default function Navbar() {
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
           <div className="brand-logo-wrap">
             <img
-              src="/images/branding/chinni-logo.png"
+              src="/images/branding/logo.png"
               alt="Chinni Treasure Little Love logo"
               className="brand-logo-image"
             />
