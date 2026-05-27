@@ -17,7 +17,11 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    return NextResponse.json(order, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch order:", error);
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });

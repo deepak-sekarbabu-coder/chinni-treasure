@@ -1,3 +1,4 @@
+import Image from "next/image";
 import StockBadge from "./StockBadge";
 
 interface ProductData {
@@ -29,9 +30,12 @@ export default function ProductCard({
       role="listitem"
     >
       <div className="product-card-image">
-        <img
+        <Image
           src={product.imageUrl || "/placeholder.svg"}
           alt={product.name}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="product-card-img"
         />
         {product.badge && (
           <span className="product-card-badge">{product.badge}</span>

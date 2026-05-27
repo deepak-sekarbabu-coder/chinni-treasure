@@ -2,8 +2,22 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getSession } from "@/src/lib/auth";
 
-type OrderStatus = "pending" | "approved" | "packaging" | "shipped" | "delivered" | "rejected";
+// ---- In-memory cache (per-instance, lost on cold start) ----
+const cache = new Map<string, { data: unknown; expiry: number }>();
+const CACHE_TTL = 30_000; // 30 seconds
 
+function getCached(key: string): unknown | null {
+  const entry = cache.get(key);
+  if (entry && entry.expiry > Date.now()) return entry.data;
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: unknown): void {
+  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
+// ---- Auth ----
 async function checkAuth() {
   const session = await getSession();
   if (!session) return null;
@@ -17,38 +31,65 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const [orders, totalRevenue] = await Promise.all([
-      prisma.order.findMany({
-        select: { status: true, totalAmount: true, createdAt: true },
-      }),
-      prisma.order.aggregate({ _sum: { totalAmount: true } }),
-    ]) as [
-      Array<{ status: OrderStatus; totalAmount: unknown; createdAt: Date }>,
-      { _sum: { totalAmount: unknown | null } },
-    ];
+  const cached = getCached("stats");
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: { "Cache-Control": "private, max-age=30" },
+    });
+  }
 
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // Lighter: use count queries per status instead of fetching all orders
+    const [
+      totalOrders,
+      pendingOrders,
+      approvedOrders,
+      packagingOrders,
+      shippedOrders,
+      deliveredOrders,
+      rejectedOrders,
+      totalRevenue,
+      recentOrders,
+      orderItems,
+    ] = await Promise.all([
+      prisma.order.count(),
+      prisma.order.count({ where: { status: "pending" } }),
+      prisma.order.count({ where: { status: "approved" } }),
+      prisma.order.count({ where: { status: "packaging" } }),
+      prisma.order.count({ where: { status: "shipped" } }),
+      prisma.order.count({ where: { status: "delivered" } }),
+      prisma.order.count({ where: { status: "rejected" } }),
+      prisma.order.aggregate({ _sum: { totalAmount: true } }),
+      // Only fetch last 30 days for chart data
+      prisma.order.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { totalAmount: true, createdAt: true },
+      }),
+      // Product sales from sold items
+      prisma.orderItem.findMany({
+        select: { productName: true, quantity: true, unitPrice: true },
+      }),
+    ]);
+
+    // ---- Stats ----
     const stats = {
-      totalOrders: orders.length,
-      pendingOrders: orders.filter((o: { status: string }) => o.status === "pending").length,
-      approvedOrders: orders.filter((o: { status: string }) => o.status === "approved").length,
-      packagingOrders: orders.filter((o: { status: string }) => o.status === "packaging").length,
-      shippedOrders: orders.filter((o: { status: string }) => o.status === "shipped").length,
-      deliveredOrders: orders.filter((o: { status: string }) => o.status === "delivered").length,
-      rejectedOrders: orders.filter((o: { status: string }) => o.status === "rejected").length,
+      totalOrders,
+      pendingOrders,
+      approvedOrders,
+      packagingOrders,
+      shippedOrders,
+      deliveredOrders,
+      rejectedOrders,
       totalRevenue: Number(totalRevenue._sum.totalAmount ?? 0),
     };
 
-    // Chart data: last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentOrders = orders.filter((o: { createdAt: Date }) => new Date(o.createdAt) >= thirtyDaysAgo);
+    // ---- Chart data: last 30 days ----
     const chartDataMap: Record<string, { orders: number; revenue: number }> = {};
 
-    for (let i = 0; i < 30; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
       const key = d.toISOString().split("T")[0];
       chartDataMap[key] = { orders: 0, revenue: 0 };
     }
@@ -62,28 +103,35 @@ export async function GET() {
     }
 
     const chartData = Object.entries(chartDataMap)
-      .sort((a: [string, unknown], b: [string, unknown]) => a[0].localeCompare(b[0]))
-      .map(([date, data]: [string, { orders: number; revenue: number }]) => ({ date, ...data }));
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({ date, ...data }));
 
-    // Product sales data
-    const orderItems = await prisma.orderItem.findMany({
-      select: { productName: true, quantity: true, unitPrice: true },
-    });
-
+    // ---- Product sales ----
     const productSalesMap: Record<string, { quantity: number; revenue: number }> = {};
     for (const item of orderItems) {
-      if (!productSalesMap[item.productName]) {
-        productSalesMap[item.productName] = { quantity: 0, revenue: 0 };
+      const prev = productSalesMap[item.productName];
+      if (prev) {
+        prev.quantity += item.quantity;
+        prev.revenue += Number(item.unitPrice) * item.quantity;
+      } else {
+        productSalesMap[item.productName] = {
+          quantity: item.quantity,
+          revenue: Number(item.unitPrice) * item.quantity,
+        };
       }
-      productSalesMap[item.productName].quantity += item.quantity;
-      productSalesMap[item.productName].revenue += Number(item.unitPrice) * item.quantity;
     }
 
     const productSalesData = Object.entries(productSalesMap)
-      .map(([productName, data]: [string, { quantity: number; revenue: number }]) => ({ productName, ...data }))
-      .sort((a: { revenue: number }, b: { revenue: number }) => b.revenue - a.revenue);
+      .map(([productName, data]) => ({ productName, ...data }))
+      .sort((a, b) => b.revenue - a.revenue);
 
-    return NextResponse.json({ stats, chartData, productSalesData });
+    const payload = { stats, chartData, productSalesData };
+
+    setCache("stats", payload);
+
+    return NextResponse.json(payload, {
+      headers: { "Cache-Control": "private, max-age=30" },
+    });
   } catch (error) {
     console.error("Failed to fetch stats:", error);
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });

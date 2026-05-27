@@ -1,12 +1,40 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 
+// ---- In-memory cache ----
+const cache = new Map<string, { data: unknown; expiry: number }>();
+const CACHE_TTL = 15_000; // 15 seconds — short TTL since order status can change
+
+function getCached(key: string): unknown | null {
+  const entry = cache.get(key);
+  if (entry && entry.expiry > Date.now()) return entry.data;
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: unknown): void {
+  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
 // GET /api/track?orderId=xxx or /api/track?phone=xxx
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get("orderId");
     const phone = searchParams.get("phone");
+
+    // Use query params as cache key for repeat lookups
+    const cacheKey = orderId ? `track:${orderId}` : phone ? `track:${phone.replace(/\D/g, "")}` : null;
+    if (cacheKey) {
+      const cached = getCached(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: {
+            "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30",
+          },
+        });
+      }
+    }
 
     if (!orderId && !phone) {
       return NextResponse.json({ error: "Provide orderId or phone parameter" }, { status: 400 });
@@ -56,7 +84,15 @@ export async function GET(request: Request) {
       })),
     }));
 
-    return NextResponse.json(results);
+    if (cacheKey) {
+      setCache(cacheKey, results);
+    }
+
+    return NextResponse.json(results, {
+      headers: {
+        "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30",
+      },
+    });
   } catch (error) {
     console.error("Failed to search orders:", error);
     return NextResponse.json({ error: "Failed to search orders" }, { status: 500 });

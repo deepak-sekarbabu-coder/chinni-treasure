@@ -3,6 +3,21 @@ import { prisma } from "@/src/lib/prisma";
 import { getSession } from "@/src/lib/auth";
 import { generateOrderNumber } from "@/src/lib/utils";
 
+// ---- In-memory cache ----
+const cache = new Map<string, { data: unknown; expiry: number }>();
+const CACHE_TTL = 30_000; // 30 seconds
+
+function getCached(key: string): unknown | null {
+  const entry = cache.get(key);
+  if (entry && entry.expiry > Date.now()) return entry.data;
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: unknown): void {
+  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
 async function checkAuth() {
   const session = await getSession();
   if (!session) return null;
@@ -16,6 +31,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const cached = getCached("orders");
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: { "Cache-Control": "private, max-age=30" },
+    });
+  }
+
   try {
     const orders = await prisma.order.findMany({
       include: {
@@ -23,7 +45,12 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(orders);
+
+    setCache("orders", orders);
+
+    return NextResponse.json(orders, {
+      headers: { "Cache-Control": "private, max-age=30" },
+    });
   } catch (error) {
     console.error("Failed to fetch orders:", error);
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });

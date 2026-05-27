@@ -1,72 +1,80 @@
-"use client";
-
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { prisma } from "@/src/lib/prisma";
 import Link from "next/link";
 
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-  countryCode: string;
-  status: string;
-  trackingId?: string;
-  subtotal: number;
-  shippingCost: number;
-  totalAmount: number;
-  transactionId?: string;
-  customerNotes?: string;
-  createdAt: string;
-  items: {
-    id: string;
-    productName: string;
-    unitPrice: number;
-    quantity: number;
-  }[];
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-export default function ConfirmationPage() {
-  const params = useParams();
-  const orderId = params.id as string;
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+export default async function ConfirmationPage({ params }: Props) {
+  const { id } = await params;
 
-  useEffect(() => {
-    if (!orderId) {
-      setLoading(false);
-      return;
-    }
-    async function fetchOrder() {
-      try {
-        const res = await fetch(`/api/orders/${orderId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setOrder(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch order:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrder();
-  }, [orderId]);
+  let order: {
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    stateCode: string;
+    postalCode: string;
+    countryCode: string;
+    status: string;
+    trackingId: string | null;
+    subtotal: number;
+    shippingCost: number;
+    totalAmount: number;
+    transactionId: string | null;
+    customerNotes: string | null;
+    createdAt: string;
+    items: {
+      id: string;
+      productName: string;
+      unitPrice: number;
+      quantity: number;
+    }[];
+  } | null = null;
 
-  if (loading) {
-    return (
-      <div className="confirmation-page">
-        <div className="loading-spinner" style={{ margin: "0 auto" }}></div>
-      </div>
-    );
+  try {
+    const data = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          select: { id: true, productName: true, unitPrice: true, quantity: true },
+        },
+      },
+    });
+
+    if (data) {
+      order = {
+        orderNumber: data.orderNumber,
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        city: data.city,
+        stateCode: data.stateCode,
+        postalCode: data.postalCode,
+        countryCode: data.countryCode,
+        status: data.status,
+        trackingId: data.trackingId,
+        subtotal: Number(data.subtotal),
+        shippingCost: Number(data.shippingCost),
+        totalAmount: Number(data.totalAmount),
+        transactionId: data.transactionId,
+        customerNotes: data.customerNotes,
+        createdAt: data.createdAt.toISOString(),
+        items: data.items.map((i) => ({
+          id: i.id,
+          productName: i.productName,
+          unitPrice: Number(i.unitPrice),
+          quantity: i.quantity,
+        })),
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch order:", err);
   }
 
   if (!order) {
@@ -121,7 +129,7 @@ export default function ConfirmationPage() {
             </p>
           )}
           <p>
-            <strong>Total Charged:</strong> ₹{Number(order.totalAmount).toFixed(2)}
+            <strong>Total Charged:</strong> ₹{order.totalAmount.toFixed(2)}
           </p>
         </section>
 
