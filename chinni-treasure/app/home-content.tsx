@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
-import ProductCard from "@/src/components/ui/ProductCard";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
-import SectionHeader from "@/src/components/ui/SectionHeader";
 import useScrollReveal from "@/src/lib/useScrollReveal";
 
 export interface Product {
@@ -20,40 +17,11 @@ export interface Product {
   badge: string | null;
 }
 
-interface Props {
-  initialProducts: Product[];
-}
-
-export default function HomeContent({ initialProducts }: Props) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [loading, setLoading] = useState(initialProducts.length === 0);
+export default function HomeContent() {
   const { addItem } = useCart();
   const { showToast } = useToast();
 
-  const { ref: productsRef, visible: productsVisible } = useScrollReveal();
   const { ref: featuresRef, visible: featuresVisible } = useScrollReveal();
-  const { ref: ctaRef, visible: ctaVisible } = useScrollReveal();
-
-  const fetchProducts = useCallback(async () => {
-    try {
-      const res = await fetch("/api/products");
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch products:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Only fetch if we don't have server-provided data
-    if (initialProducts.length === 0) {
-      void fetchProducts();
-    }
-  }, [fetchProducts, initialProducts.length]);
 
   const handleAdd = useCallback(
     (p: Product) => {
@@ -142,36 +110,6 @@ export default function HomeContent({ initialProducts }: Props) {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section
-        className="section"
-        aria-labelledby="catalogue-heading"
-        ref={productsRef as React.RefObject<HTMLElement>}
-      >
-        <div className={productsVisible ? "fade-in visible" : "fade-in"}>
-          <SectionHeader
-            subtitle="Our Collection"
-            title="Featured Products"
-            description="Each item is carefully selected for its exceptional quality and timeless appeal."
-          />
-
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="products-grid" role="list" aria-label="Product list">
-              {products.map((product, idx) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAdd={handleAdd}
-                  transitionDelay={idx * 0.1}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* Features */}
       <section
         className="features"
@@ -198,40 +136,6 @@ export default function HomeContent({ initialProducts }: Props) {
         </div>
       </section>
 
-      {/* CTA */}
-      <section
-        className="section"
-        style={{ textAlign: "center" }}
-        aria-labelledby="cta-heading"
-        ref={ctaRef as React.RefObject<HTMLElement>}
-      >
-        <div className={ctaVisible ? "fade-in visible" : "fade-in"}>
-          <div className="section-subtitle">Get Started</div>
-          <h2
-            id="cta-heading"
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "clamp(1.5rem, 3vw, 2.5rem)",
-              marginBottom: "16px",
-            }}
-          >
-            Ready to Place Your Order?
-          </h2>
-          <p
-            style={{
-              color: "var(--text-muted)",
-              maxWidth: "500px",
-              margin: "0 auto 32px",
-            }}
-          >
-            Select your items, add them to cart, and proceed to checkout. We&apos;ll take care of the
-            rest.
-          </p>
-          <Link href="/catalogue" className="btn btn-dark">
-            Start Your Order
-          </Link>
-        </div>
-      </section>
     </>
   );
 }

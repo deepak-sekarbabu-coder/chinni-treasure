@@ -1,37 +1,5 @@
-import { prisma } from "@/src/lib/prisma";
 import HomeContent from "./home-content";
 
 export default async function HomePage() {
-  let products: Array<{
-    id: string;
-    name: string;
-    price: number;
-    imageUrl: string;
-    description: string;
-    category: { name: string } | null;
-    stockQuantity: number;
-    badge: string | null;
-  }> = [];
-
-  try {
-    const data = await prisma.product.findMany({
-      where: { isActive: true },
-      include: { category: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-    });
-    products = data.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price),
-      imageUrl: p.imageUrl ?? "",
-      description: p.description ?? "",
-      category: p.category,
-      stockQuantity: p.stockQuantity,
-      badge: p.badge,
-    }));
-  } catch (err) {
-    console.error("Failed to fetch products:", err);
-  }
-
-  return <HomeContent initialProducts={products} />;
+  return <HomeContent />;
 }
