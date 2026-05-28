@@ -18,7 +18,7 @@ interface CheckoutProgressProps {
 export default function CheckoutProgress({ currentStep }: CheckoutProgressProps) {
   return (
     <div className="checkout-progress" role="navigation" aria-label="Checkout progress">
-      <div className="checkout-progress-bar">
+      <div className={`checkout-progress-bar step-${currentStep}`}>
         {STEPS.map((step, index) => {
           const isCompleted = currentStep > step.number;
           const isCurrent = currentStep === step.number;

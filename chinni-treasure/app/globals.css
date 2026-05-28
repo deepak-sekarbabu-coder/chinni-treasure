@@ -1917,11 +1917,36 @@ a {
 }
 
 .checkout-progress-bar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 12px;
+  position: relative;
+}
+
+.checkout-progress-bar::before,
+.checkout-progress-bar::after {
+  content: "";
+  position: absolute;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  top: 18px;
+  height: 2px;
+  background: #e0d8cc;
+}
+
+.checkout-progress-bar::after {
+  right: auto;
+  width: 0;
+  background: var(--success);
+  transition: width var(--transition);
+}
+
+.checkout-progress-bar.step-2::after {
+  width: calc(100% / 3);
+}
+
+.checkout-progress-bar.step-3::after {
+  width: calc(100% * 2 / 3);
 }
 
 .checkout-step {
@@ -1935,8 +1960,11 @@ a {
 .checkout-step-indicator {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 100%;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .checkout-step-circle {
@@ -1972,12 +2000,7 @@ a {
 }
 
 .checkout-step-connector {
-  flex: 1;
-  height: 2px;
-  background: #e0d8cc;
-  margin: 0 4px;
-  align-self: center;
-  transition: background var(--transition);
+  display: none;
 }
 
 .checkout-step.completed .checkout-step-connector {
@@ -2040,14 +2063,21 @@ a {
 }
 
 .order-legend {
+  display: block;
+  float: left;
   font-family: var(--font-serif);
   font-size: 1.2rem;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
+  margin: 0 0 24px;
+  padding: 0 0 12px;
   border-bottom: 2px solid var(--gold);
   width: 100%;
+  max-width: 100%;
   color: var(--near-black);
   letter-spacing: 0.02em;
+}
+
+.order-legend + * {
+  clear: both;
 }
 
 /* Order Summary Sidebar */
@@ -3483,6 +3513,11 @@ a {
     width: 28px;
     height: 28px;
     font-size: 0.7rem;
+  }
+
+  .checkout-progress-bar::before,
+  .checkout-progress-bar::after {
+    top: 14px;
   }
 
   .checkout-step-label {
