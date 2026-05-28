@@ -1942,11 +1942,11 @@ a {
 }
 
 .checkout-progress-bar.step-2::after {
-  width: calc(100% / 3);
+  width: 33.333333%;
 }
 
 .checkout-progress-bar.step-3::after {
-  width: calc(100% * 2 / 3);
+  width: 66.666667%;
 }
 
 .checkout-step {
@@ -2715,9 +2715,9 @@ a {
   }
 
   .sticky-checkout-bar-inner {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     max-width: 1200px;
     margin: 0 auto;
@@ -2748,10 +2748,15 @@ a {
   }
 
   .sticky-checkout-btn {
-    flex: 1;
-    max-width: 220px;
-    padding: 14px 24px;
+    width: min(100%, 260px);
+    max-width: none;
+    justify-self: end;
+    min-width: 0;
+    padding: 14px 18px;
     font-size: 0.7rem;
+    letter-spacing: 1.2px;
+    line-height: 1.2;
+    text-align: center;
     white-space: nowrap;
   }
 
@@ -3305,9 +3310,11 @@ a {
   }
 
   .sticky-checkout-btn {
-    padding: 12px 18px;
+    width: 100%;
+    padding: 12px 14px;
     font-size: 0.65rem;
-    max-width: 180px;
+    letter-spacing: 0.9px;
+    max-width: none;
   }
 
   .order-submit-btn {
@@ -3493,14 +3500,25 @@ a {
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
+  .sticky-checkout-bar-inner {
+    grid-template-columns: minmax(58px, max-content) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .sticky-checkout-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.8px;
+  }
+
   .sticky-checkout-price {
     font-size: 0.95rem;
   }
 
   .sticky-checkout-btn {
-    padding: 10px 14px;
-    font-size: 0.6rem;
-    max-width: 160px;
+    padding: 10px 8px;
+    font-size: 0.58rem;
+    letter-spacing: 0.6px;
+    max-width: none;
   }
 
   .order-submit-btn {
