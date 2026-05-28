@@ -144,7 +144,7 @@ export default function OrderPage() {
 
   return (
     <div style={{ paddingTop: "72px" }}>
-      <section className="section" aria-labelledby="order-heading">
+      <section className="section order-checkout-section" aria-labelledby="order-heading">
         <SectionHeader
           subtitle="Checkout"
           title="Place Your Order"
