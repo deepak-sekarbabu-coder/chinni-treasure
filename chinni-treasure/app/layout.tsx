@@ -32,6 +32,20 @@ export const metadata: Metadata = {
   title: "Chinni Treasure — ❤️ Little Love ❤️",
   description:
     "Discover our curated collection of artisan-crafted luxury goods. Enjoy free shipping on all orders.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+  },
+  themeColor: "#c9a227",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Chinni Treasure",
+  },
 };
 
 export default function RootLayout({

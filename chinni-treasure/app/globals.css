@@ -1475,6 +1475,30 @@ a {
   color: var(--gold);
 }
 
+.contact-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.contact-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.contact-icon path,
+.contact-icon rect,
+.contact-icon circle {
+  vector-effect: non-scaling-stroke;
+}
+
 .footer-bottom {
   max-width: 1200px;
   margin: 0 auto;
@@ -3946,6 +3970,11 @@ a {
 .catalogue-hero p {
   max-width: 690px;
   color: rgba(245, 240, 232, 0.88);
+}
+
+.catalogue-section .section-header p {
+  color: #383838;
+  font-weight: 500;
 }
 
 @media (max-width: 1024px) {

@@ -84,7 +84,7 @@ export default function CatalogueContent({ initialProducts }: Props) {
           </p>
         </div>
       </section>
-      <section className="section" aria-labelledby="catalogue-heading">
+      <section className="section catalogue-section" aria-labelledby="catalogue-heading">
         <SectionHeader
           subtitle="Our Collection"
           title="Full Catalogue"
