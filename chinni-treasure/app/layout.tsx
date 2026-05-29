@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Albert_Sans, Pinyon_Script } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/src/components/layout/Navbar";
@@ -40,12 +40,15 @@ export const metadata: Metadata = {
     ],
     apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
   },
-  themeColor: "#c9a227",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Chinni Treasure",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c9a227",
 };
 
 export default function RootLayout({

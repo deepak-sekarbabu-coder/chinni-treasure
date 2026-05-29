@@ -3972,8 +3972,14 @@ a {
   color: rgba(245, 240, 232, 0.88);
 }
 
+.catalogue-section {
+  background: linear-gradient(180deg, #f7f3ec 0%, #f3ede3 100%);
+  box-shadow: 0 0 0 100vmax #f7f3ec;
+  clip-path: inset(0 -100vmax);
+}
+
 .catalogue-section .section-header p {
-  color: #383838;
+  color: #424242;
   font-weight: 500;
 }
 

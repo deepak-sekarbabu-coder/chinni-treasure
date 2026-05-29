@@ -66,7 +66,6 @@ export default function Footer() {
           <ul role="list">
             <li role="listitem"><a href="#">Shipping Info</a></li>
             <li role="listitem"><a href="#">Returns Policy</a></li>
-            <li role="listitem"><a href="#">Contact Us</a></li>
           </ul>
         </div>
         <div>
