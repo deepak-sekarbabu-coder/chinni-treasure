@@ -227,7 +227,7 @@ export default function AdminPage() {
     const currentIdx = ORDER_STATUS_FLOW.indexOf(order.status);
     if (currentIdx < 0 || currentIdx >= ORDER_STATUS_FLOW.length - 1) return;
 
-    const nextStatus = ORDER_STATUS_FLOW[currentIdx + 1];
+    const nextStatus = ORDER_STATUS_FLOW.find((_, i) => i === currentIdx + 1);
 
     // If next is shipped, ask for tracking ID
     if (nextStatus === "shipped") {
@@ -464,7 +464,7 @@ export default function AdminPage() {
                   animationDelay: `${idx * 0.08}s`,
                 }}
               >
-                <AdminStatCard {...s} />
+                <AdminStatCard label={s.label} value={s.value} color={s.color} />
               </div>
             ))}
           </div>
@@ -480,10 +480,19 @@ export default function AdminPage() {
               <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
                 <div className="skeleton-text" style={{ width: "180px", height: "18px", marginBottom: "20px" }} />
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[130, 120, 100, 115, 125, 110, 95, 105].map((w, idx) => (
+                  {[
+                    { left: 130, right: 60 },
+                    { left: 120, right: 55 },
+                    { left: 100, right: 70 },
+                    { left: 115, right: 50 },
+                    { left: 125, right: 65 },
+                    { left: 110, right: 58 },
+                    { left: 95, right: 62 },
+                    { left: 105, right: 48 },
+                  ].map((item, idx) => (
                     <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div className="skeleton-text" style={{ width: `${w}px`, height: "12px" }} />
-                      <div className="skeleton-text" style={{ width: `${[60, 55, 70, 50, 65, 58, 62, 48][idx]}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
                     </div>
                   ))}
                 </div>
@@ -492,10 +501,19 @@ export default function AdminPage() {
               <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
                 <div className="skeleton-text" style={{ width: "140px", height: "18px", marginBottom: "20px" }} />
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[110, 130, 95, 120, 140, 100, 115, 125].map((w, idx) => (
+                  {[
+                    { left: 110, right: 45 },
+                    { left: 130, right: 55 },
+                    { left: 95, right: 50 },
+                    { left: 120, right: 60 },
+                    { left: 140, right: 40 },
+                    { left: 100, right: 48 },
+                    { left: 115, right: 52 },
+                    { left: 125, right: 58 },
+                  ].map((item, idx) => (
                     <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div className="skeleton-text" style={{ width: `${w}px`, height: "12px" }} />
-                      <div className="skeleton-text" style={{ width: `${[45, 55, 50, 60, 40, 48, 52, 58][idx]}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
+                      <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
                     </div>
                   ))}
                 </div>

@@ -9,9 +9,11 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [bounceKey, setBounceKey] = useState(0);
   const { items, removeItem, getTotal, getCount } = useCart();
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
+  const prevCount = useRef(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -31,6 +33,13 @@ export default function Navbar() {
 
   const count = getCount();
   const total = getTotal();
+
+  useEffect(() => {
+    if (count > 0 && count !== prevCount.current) {
+      setBounceKey((k) => k + 1);
+    }
+    prevCount.current = count;
+  }, [count]);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -125,7 +134,7 @@ export default function Navbar() {
                 </svg>
                 <span className="cart-label">Cart</span>
                 {count > 0 && (
-                  <span className="cart-count" aria-live="polite">
+                  <span className="cart-count" aria-live="polite" style={{ animation: bounceKey ? 'countBounce 0.4s cubic-bezier(0.22, 1, 0.36, 1)' : undefined }}>
                     {count}
                   </span>
                 )}
