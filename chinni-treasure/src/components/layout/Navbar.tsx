@@ -117,6 +117,7 @@ export default function Navbar() {
                 Admin
               </Link>
             </li>
+
           </ul>
 
           <div className="navbar-actions">

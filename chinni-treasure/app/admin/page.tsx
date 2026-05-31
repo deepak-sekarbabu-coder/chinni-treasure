@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import StatusBadge from "@/src/components/ui/StatusBadge";
@@ -447,10 +448,14 @@ export default function AdminPage() {
             <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "1.8rem", color: "var(--cream)" }}>
               Dashboard
             </h1>
+          </div>                          <div style={{ display: "flex", gap: "10px" }}>
+            <Link href="/docs" className="btn btn-secondary" style={{ padding: "10px 24px", textDecoration: "none" }}>
+              API Docs
+            </Link>
+            <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: "10px 24px" }}>
+              Logout
+            </button>
           </div>
-          <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: "10px 24px" }}>
-            Logout
-          </button>
         </div>
       </div>
 

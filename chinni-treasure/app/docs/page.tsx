@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import SwaggerUI from "swagger-ui-react";
 
-// Swagger UI ships as ESM; this approach avoids the CSS import issue
+// Swagger UI ships as ESM; dynamic import avoids the CSS import bundling issue
 export default function ApiDocsPage() {
   const [mounted, setMounted] = useState(false);
 
@@ -14,24 +14,24 @@ export default function ApiDocsPage() {
 
   if (!mounted) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          fontFamily: "var(--font-sans, sans-serif)",
-          color: "#666",
-        }}
-      >
-        Loading API documentation…
+      <div className="docs-loading">
+        <div className="docs-loading-spinner" />
+        <p>Loading API documentation…</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px" }}>
-      <SwaggerUI url="/api/docs" />
+    <div className="docs-page">
+      <div className="docs-header">
+        <h1 className="docs-title">API Documentation</h1>
+        <p className="docs-subtitle">
+          Explore the Chinni Treasure REST API — try endpoints, view schemas, and see responses.
+        </p>
+      </div>
+      <div className="docs-content">
+        <SwaggerUI url="/api/docs" docExpansion="list" defaultModelsExpandDepth={1} filter={true} tryItOutEnabled={false} />
+      </div>
     </div>
   );
 }
