@@ -50,14 +50,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("luxe_cart");
-      setItems(raw ? JSON.parse(raw) : []);
-    } catch {
-      setItems([]);
-    } finally {
-      setHasLoadedCart(true);
-    }
+    const loadSavedCart = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem("luxe_cart");
+        setItems(raw ? JSON.parse(raw) : []);
+      } catch {
+        setItems([]);
+      } finally {
+        setHasLoadedCart(true);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(loadSavedCart);
   }, []);
 
   // Persist on change

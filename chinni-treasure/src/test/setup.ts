@@ -1,6 +1,36 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Global mocks for Next.js modules
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock('next/image', () => ({
+  default: () => null,
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: () => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  }),
+}));
+
+vi.mock('isomorphic-dompurify', () => ({
+  default: {
+    sanitize: (input: string) => input.replace(/<[^>]*>/g, '').trim(),
+  },
+}));
+
+// Clean up mocks between tests
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
