@@ -10,12 +10,13 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 ### Technical Stack
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
-- **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/)
+- **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
 - **Styling:** Raw CSS with custom CSS variables (no TailwindCSS)
-- **State Management:** React Context + `localStorage` (`luxe_cart`) for persistent guest shopping carts
+- **State Management:** React Context + `localStorage` (`luxe_cart`) for persistent guest shopping carts; server-side cookie cart with Zod validation for SSR access
 - **Authentication:** JWT-based admin authorization stored in secure `HttpOnly` cookies (`session`)
 - **Charts:** Chart.js v4 for administrative analytics
-- **Fonts:** Playfair Display (serif) and Montserrat (sans-serif) integrated via `next/font`
+- **Validation:** Zod schemas for checkout, cart, and input sanitization
+- **Fonts:** Cormorant Garamond (serif), Albert Sans (sans-serif), and Pinyon Script (script) via `next/font`
 
 ---
 
@@ -48,18 +49,28 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 ## 3. Architecture & Codebase Design
 
-### Database Schema (Prisma Models)
+### Database Schema (Prisma Models + Enums)
+
+**Enums:**
+- `OrderStatus`: `pending` | `approved` | `packaging` | `shipped` | `delivered` | `rejected`
+- `ProductBadge`: `bestseller` | `new` | `premium` | `limited` | `luxury`
+- `AdminRole`: `admin` | `super_admin`
+
+**Models:**
 1. **Category:** Supports active filtering, description, and display sorting order.
-2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (e.g., Bestseller, Luxury), and Active state.
-3. **Order:** Stores detailed customer details, state code, tracking ID, totals, transaction references, and notes.
+2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, and Category relation.
+3. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
 4. **OrderItem:** Connects orders with products, recording historical unit prices.
 5. **OrderStatusHistory:** Logs every transition of order status for traceability.
-6. **Admin:** Tracks user credentials, email, hashed passwords, and permission roles.
+6. **Admin:** Tracks user credentials, email, hashed passwords, and role (admin/super_admin).
 
 ### Core Logic & State Management
 - **Cart Context:** Managed via `CartProvider.tsx` (`src/components/cart/`). It reads/writes to `localStorage` key `luxe_cart` on the client, and restricts quantities to active product stock levels.
-- **Inventory Sync:** Stock is deducted server-side when an order is finalized, and seamlessly restored to the inventory pool if the administrator sets the status to `rejected`.
-- **Security Middleware:** Next.js middleware (`middleware.ts`) protects all `/admin` routes (except `/admin/login`) by verifying the secure JWT cookie.
+- **Server Cart Cookie:** `cart-cookie.ts` (`src/lib/`) provides server-side cart access via Zod-validated cookies, enabling SSR cart hydration.
+- **Inventory Sync:** Stock is deducted server-side within a **serializable transaction** when an order is finalized, and seamlessly restored to the inventory pool if the administrator sets the status to `rejected`. A `stock_quantity >= 0` database constraint prevents overselling.
+- **Optimistic Concurrency:** Orders have a `version` field that is checked before status updates — if another request modified the order first, the update is rejected with a 409 status.
+- **Rate Limiting:** Login attempts are rate-limited (5 tries per minute per IP) using an in-memory store.
+- **Security Middleware:** `proxy.ts` acts as Next.js middleware (matcher: `/admin/:path*`), protecting all `/admin` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
 
 ---
 
@@ -70,8 +81,9 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
 1. **Design Integrity (Raw CSS):** 
    - Never introduce TailwindCSS or style frameworks.
    - Use CSS custom properties in `app/globals.css` to respect the curated color palette and typography pairs:
-     - Serif Font (`--font-serif`): Playfair Display for headings, brand voice, and prices.
-     - Sans Font (`--font-sans`): Montserrat for labels, body, inputs, and admin layout.
+     - Serif Font (`--font-serif`): Cormorant Garamond for headings, brand voice, and prices.
+     - Sans Font (`--font-sans`): Albert Sans for labels, body, inputs, and admin layout.
+     - Script Font (`--font-script`): Pinyon Script for decorative brand taglines.
      - Color Tokens: Gold Accent (`--gold`), Dark Canvas (`--black`), Warm Page Background (`--cream`).
 
 2. **Access & Security:**
@@ -84,8 +96,8 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
    - Respect user motions via `prefers-reduced-motion` and support `prefers-contrast`.
 
 4. **Input & Validation Strictness:**
-   - Always sanitize HTML and inputs utilizing helper utilities to prevent XSS.
-   - Enforce rigorous validation schemas (e.g., Zod) on checkout requests:
+   - Always sanitize HTML and inputs utilizing `src/lib/sanitize.ts` (isomorphic-dompurify) to prevent XSS.
+   - Enforce rigorous validation schemas (Zod) on checkout requests and cart operations:
      - 6-digit postal code format checking.
      - 10-digit phone number parsing (trim spaces and validate format).
      - Non-negative prices and quantities.
@@ -100,26 +112,48 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
 
 ```
 chinni-treasure/
-├── app/                          # Next.js App Router pages
+├── app/                          # Next.js App Router pages & API
 │   ├── admin/
 │   │   ├── login/page.tsx        # Admin login page
 │   │   └── page.tsx              # Admin dashboard (orders, stats, catalogue CRUD)
-│   ├── api/                      # Server-side API handlers (auth, orders, products, track)
-│   ├── catalogue/page.tsx        # Product catalog / browsing
-│   ├── confirmation/[id]/page.tsx # Order confirmation after purchase
-│   ├── order/page.tsx            # Checkout page with delivery form
-│   ├── track/page.tsx            # Order tracking portal
-│   ├── globals.css               # Main styling & luxury design system variables
-│   ├── layout.tsx                # Root layout, layout components
-│   └── page.tsx                  # Landing homepage
+│   ├── api/                      # Server-side API handlers
+│   │   ├── auth/                 # Login / logout / session
+│   │   ├── docs/                 # OpenAPI spec JSON
+│   │   ├── orders/               # Order CRUD + status management with pagination
+│   │   ├── products/             # Product CRUD
+│   │   ├── stats/                # Dashboard statistics with caching
+│   │   └── track/                # Order tracking with caching
+│   ├── catalogue/                # Product catalogue (SSR + client interactive)
+│   ├── confirmation/[id]/        # Order confirmation page
+│   ├── docs/                     # Swagger UI API docs viewer
+│   ├── order/                    # Multi-step checkout
+│   ├── track/                    # Order tracking portal
+│   ├── globals.css               # ~2800 lines of design system + responsive styles
+│   ├── layout.tsx                # Root layout (fonts, providers, nav, footer)
+│   ├── home-content.tsx          # Client homepage hero & features
+│   ├── catalogue-content.tsx     # Client catalogue with cart interactions
+│   └── page.tsx                  # Homepage server component
 ├── prisma/
-│   ├── schema.prisma             # Database schema (6 models + enums)
-│   └── seed.ts                   # Database seeder (sample admin & catalog items)
+│   ├── schema.prisma             # Database schema (6 models + 3 enums)
+│   ├── seed.ts                   # Database seeder (6 products, 4 categories, admin)
+│   └── migrations/               # Migration history
+├── scripts/
+│   └── export-to-excel.ts        # Excel export utility
 ├── src/
-│   ├── components/               # Cart Context, Navbar, Footer, Modal, Toast components
-│   ├── lib/                      # Auth helpers, DB connections, formatting utilities
+│   ├── components/
+│   │   ├── cart/CartProvider.tsx  # Cart context + localStorage
+│   │   ├── layout/               # Navbar.tsx, Footer.tsx
+│   │   ├── order/                # CheckoutProgress.tsx, OrderDetailModal.tsx
+│   │   └── ui/                   # ProductCard, StockBadge, StatusBadge, SectionHeader,
+│   │                                AdminStatCard, LoadingSpinner, ToastProvider
+│   ├── lib/                      # auth, prisma, constants, utils, cart-cookie,
+│   │                                rate-limiter, sanitize, useScrollReveal, openapi-spec
+│   ├── test/                     # Vitest setup, mocks, utilities
 │   └── types/                    # Shared TypeScript interfaces
-└── package.json                  # Scripts & dependencies
+├── proxy.ts                      # Next.js middleware (JWT admin protection)
+├── prisma.config.ts              # Prisma defineConfig
+├── vitest.config.ts              # Vitest test configuration
+└── package.json
 ```
 
 ---
@@ -130,9 +164,16 @@ Use the following commands during development and maintenance:
 
 | Command | Action |
 |---|---|
-| `npm run dev` | Starts the local Next.js development server with Turbopack |
-| `npm run build` | Validates TypeScript, generates Prisma client, and compiles Next.js for production |
-| `npm run setup` | Performs complete DB setup (generates Prisma client, pushes schema, and seeds data) |
-| `npm run lint` | Runs ESLint analysis across the project |
-| `npm run typecheck` | Validates type safety (`tsc --noEmit`) |
-| `npx prisma studio` | Opens the Prisma GUI client to view local database state |
+| `npm run dev` | Start the Next.js development server with Turbopack |
+| `npm run build` | Generate Prisma client, validate TypeScript, build for production |
+| `npm start` | Start the production server |
+| `npm run lint` | Run ESLint across the project |
+| `npm run typecheck` | Validate type safety (`tsc --noEmit`) |
+| `npm test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run setup` | Full local DB setup: generate client + push schema + seed |
+| `npm run prisma:generate` | Generate the Prisma client |
+| `npm run prisma:push` | Push the Prisma schema to the database |
+| `npm run prisma:seed` | Seed the database |
+| `npx prisma studio` | Open Prisma GUI client to view local database state |

@@ -4,13 +4,15 @@
 
 ## Tech Stack
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
-- **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
+- **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
 - **Styling:** Raw CSS with CSS Variables (no Tailwind)
-- **Authentication:** JWT-based admin auth (stored in httpOnly cookies)
-- **State Management:** React Context + `localStorage` for cart persistence
-- **Charts:** Chart.js (admin dashboard analytics)
-- **Fonts:** Playfair Display (serif) + Montserrat (sans-serif) via `next/font`
+- **Authentication:** JWT-based admin auth (stored in httpOnly `session` cookie)
+- **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
+- **Charts:** Chart.js v4 (admin dashboard analytics)
+- **Validation:** Zod schemas for checkout, cart, and input sanitization
+- **Export:** ExcelJS for admin data export
+- **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
 
 ---
 
@@ -37,6 +39,8 @@ cd chinni-treasure
 ```bash
 npm install
 ```
+
+This automatically runs `prisma generate` via the `postinstall` script.
 
 ### 3. Set Up the Database
 
@@ -67,27 +71,37 @@ JWT_SECRET=your-secure-random-secret-key
 
 > **Note:** The `.env` file includes example Vercel Postgres variables for production deployment. For local development, only `DATABASE_URL` and `JWT_SECRET` are needed. Vercel auto-injects the `POSTGRES_*` variables when you attach a Postgres database.
 
-### 5. Run Database Migrations
+### 5. Run Database Setup
+
+Use the convenient setup script to apply the schema and seed the database:
+
+```bash
+npm run setup
+```
+
+This will:
+- Generate the Prisma client
+- Push the schema to your PostgreSQL database
+- Seed the database with sample data
+
+If you prefer step-by-step:
 
 ```bash
 npx prisma migrate dev --name init
 ```
 
-This will:
-- Apply the schema migrations to your PostgreSQL database
-- Generate the Prisma client
-
-### 6. Seed the Database
+### 6. Seed the Database (if not done via setup)
 
 Populate the database with sample products and an admin user:
 
 ```bash
-npx prisma db seed
+npm run prisma:seed
 ```
 
 The seed script creates:
-- **9 artisan products** (golden Ganesha, silk sarees, brass lamps, etc.) with pricing and stock
-- **1 admin user** — username: `admin`, password: `admin123`
+- **4 categories** (Accessories, Apparel, Watches, Home)
+- **6 artisan products** (Leather Wallet, Silk Scarf, Handcrafted Timepiece, Crystal Perfume Bottle, Italian Leather Belt, Cashmere Throw Blanket) with pricing and stock
+- **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
 
 ### 7. Start the Development Server
 
@@ -108,6 +122,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint across the project |
 | `npm run typecheck` | Run TypeScript type checking (`tsc --noEmit`) |
+| `npm test` | Run tests in watch mode (Vitest) |
+| `npm run test:run` | Run tests once (Vitest) |
+| `npm run test:coverage` | Run tests with coverage report |
 | `npm run prisma:generate` | Generate the Prisma client |
 | `npm run prisma:push` | Push the Prisma schema to the database |
 | `npm run prisma:seed` | Seed the database with sample data |
@@ -126,40 +143,68 @@ chinni-treasure/
 │   │   └── page.tsx              # Admin dashboard (orders, stats, catalogue CRUD)
 │   ├── api/                      # API route handlers
 │   │   ├── auth/                 # Login / logout / session
-│   │   ├── orders/               # Order CRUD & status management
+│   │   ├── docs/                 # OpenAPI spec endpoint
+│   │   ├── orders/               # Order CRUD & status management (with pagination)
 │   │   ├── products/             # Product CRUD
-│   │   ├── stats/                # Dashboard statistics
-│   │   └── track/                # Order tracking
-│   ├── catalogue/page.tsx        # Product catalogue / browsing
-│   ├── confirmation/[id]/page.tsx # Order confirmation after purchase
-│   ├── order/page.tsx            # Checkout page with delivery form
+│   │   ├── stats/                # Dashboard statistics (with caching)
+│   │   └── track/                # Order tracking (with caching)
+│   ├── catalogue/                # Product catalogue (SSR + client interactive)
+│   │   ├── page.tsx              # Server component fetching products
+│   │   └── catalogue-content.tsx # Client component with cart interactions
+│   ├── confirmation/[id]/        # Order confirmation after purchase (SSR)
+│   ├── docs/page.tsx             # Swagger UI API documentation viewer
+│   ├── home-content.tsx          # Client component for homepage hero + features
+│   ├── order/page.tsx            # Multi-step checkout with delivery form
 │   ├── track/page.tsx            # Order tracking portal
-│   ├── globals.css               # Global styles and design system
-│   ├── layout.tsx                # Root layout (Navbar, Footer, Providers)
-│   └── page.tsx                  # Homepage
+│   ├── globals.css               # Global styles and design system (~2800 lines)
+│   ├── layout.tsx                # Root layout (Navbar, Footer, Providers, fonts)
+│   └── page.tsx                  # Homepage (server component)
 ├── prisma/
-│   ├── schema.prisma             # Database schema (6 models)
-│   └── seed.ts                   # Database seeder
+│   ├── schema.prisma             # Database schema (7 models + 3 enums)
+│   ├── seed.ts                   # Database seeder (6 products + 4 categories + admin)
+│   └── migrations/               # Database migration history
+├── scripts/
+│   └── export-to-excel.ts        # Excel export utility
 ├── src/
 │   ├── components/
 │   │   ├── cart/CartProvider.tsx  # Cart context + localStorage persistence
 │   │   ├── layout/
-│   │   │   ├── Footer.tsx        # Site footer
-│   │   │   └── Navbar.tsx        # Responsive navbar with cart dropdown
+│   │   │   ├── Footer.tsx        # Site footer with 4-column grid
+│   │   │   └── Navbar.tsx        # Fixed navbar with cart dropdown and mobile menu
 │   │   ├── order/
-│   │   │   └── OrderDetailModal.tsx # Order detail modal (admin)
+│   │   │   ├── CheckoutProgress.tsx # Multi-step progress indicator
+│   │   │   └── OrderDetailModal.tsx # Order detail modal (admin + customer)
 │   │   └── ui/
-│   │       └── ToastProvider.tsx  # Toast notification system
+│   │       ├── AdminStatCard.tsx  # Dashboard stat display card
+│   │       ├── LoadingSpinner.tsx # Loading indicator (full-page or inline)
+│   │       ├── ProductCard.tsx    # Product grid card with add-to-cart
+│   │       ├── SectionHeader.tsx  # Section heading component
+│   │       ├── StatusBadge.tsx    # Order status badge (color-coded)
+│   │       ├── StockBadge.tsx     # Stock level badge (in-stock/low/empty)
+│   │       ├── ToastProvider.tsx  # Toast notification system
+│   │       └── __tests__/        # Component unit tests
 │   ├── lib/
-│   │   ├── auth.ts               # JWT auth helpers (verify, getSession)
-│   │   ├── constants.ts          # Site constants (states, categories, etc.)
-│   │   ├── prisma.ts             # Prisma client singleton
-│   │   └── utils.ts              # Utility functions (sanitize, order numbers)
+│   │   ├── auth.ts               # JWT auth helpers (sign, verify, session cookies)
+│   │   ├── cart-cookie.ts        # Server-side cart cookie management with Zod
+│   │   ├── constants.ts          # Site constants (states, status flow, labels)
+│   │   ├── openapi-spec.ts       # OpenAPI 3.0 specification document
+│   │   ├── prisma.ts             # Prisma client singleton (global caching)
+│   │   ├── rate-limiter.ts       # In-memory rate limiter (login attempts)
+│   │   ├── sanitize.ts           # XSS sanitization via DOMPurify (isomorphic)
+│   │   ├── useScrollReveal.ts    # IntersectionObserver scroll reveal hook
+│   │   └── utils.ts              # Order number generation utility
+│   ├── test/                     # Test setup and utilities
+│   │   ├── mocks/                # Mock implementations
+│   │   ├── setup.ts              # Vitest global setup
+│   │   └── utils/                # Test helper utilities
 │   └── types/
-│       └── index.ts              # Shared TypeScript types
-├── next.config.ts                # Next.js configuration
+│       └── index.ts              # Shared TypeScript interfaces
+├── proxy.ts                      # Next.js middleware (JWT admin route protection)
+├── prisma.config.ts              # Prisma configuration (defineConfig)
+├── next.config.ts                # Next.js configuration (image domains, etc.)
 ├── vercel.json                   # Vercel deployment config
 ├── .env.example                  # Environment variable template
+├── vitest.config.ts              # Vitest test runner configuration
 └── package.json
 ```
 
@@ -277,6 +322,7 @@ DATABASE_URL="your-production-url" npx tsx prisma/seed.ts
 
 - **Username:** `admin`
 - **Password:** `admin123`
+- **Role:** `super_admin`
 
 > Change these in production! The password is hashed with bcrypt in the database.
 
@@ -292,6 +338,8 @@ rejected (stock restored)
 
 - **Tracking ID** is required when advancing to *Shipped*
 - Stock is deducted on order placement and restored if rejected
+- **Optimistic concurrency control** via a `version` field prevents conflicting status updates
+- Order creation uses **serializable transaction isolation** for inventory integrity
 
 ---
 
@@ -299,19 +347,58 @@ rejected (stock restored)
 
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
-| POST | `/api/auth/login` | Admin login | No |
+| POST | `/api/auth/login` | Admin login (rate-limited) | No |
 | POST | `/api/auth/logout` | Admin logout | No |
 | GET | `/api/auth/me` | Get current admin session | Yes |
-| GET | `/api/products` | List all products | No |
+| GET | `/api/products` | List active products (cached) | No |
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
-| DELETE | `/api/products/[id]` | Delete product | Yes |
-| POST | `/api/orders` | Place new order | No |
-| GET | `/api/orders` | List orders (admin) | Yes |
-| GET | `/api/orders/[id]` | Get order details (admin) | Yes |
-| PUT | `/api/orders/[id]/status` | Update order status | Yes |
-| GET | `/api/track` | Track order by ID or phone | No |
-| GET | `/api/stats` | Dashboard statistics | Yes |
+| DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
+| POST | `/api/orders` | Place new order (serializable transaction) | No |
+| GET | `/api/orders` | List orders with pagination (admin) | Yes |
+| GET | `/api/orders/[id]` | Get order with items & status history | No |
+| PATCH | `/api/orders/[id]/status` | Update order status (with versioning) | Yes |
+| GET | `/api/track` | Track order by order number or phone (cached) | No |
+| GET | `/api/stats` | Dashboard statistics (cached) | Yes |
+| GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
+
+---
+
+
+## Middleware (Admin Route Protection)
+
+The file `proxy.ts` acts as Next.js middleware, protecting all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
+
+---
+
+## Testing
+
+The project uses **Vitest** with ~99% test coverage across components and lib modules.
+
+```bash
+npm test              # Watch mode
+npm run test:run      # Single run
+npm run test:coverage # With coverage report
+```
+
+Tests live alongside their modules in `__tests__/` directories or in `src/test/` for shared test utilities.
+
+---
+
+## Key Libraries
+
+| Library | Purpose |
+|---|---|
+| `@prisma/adapter-pg` + `pg` | PostgreSQL database adapter |
+| `bcryptjs` | Password hashing |
+| `jsonwebtoken` | JWT signing and verification |
+| `jose` | JWT verification in middleware |
+| `zod` | Runtime validation (cart, checkout) |
+| `isomorphic-dompurify` | Server-side XSS sanitization |
+| `chart.js` | Admin dashboard charts |
+| `swagger-ui-react` | API documentation UI |
+| `exceljs` | Data export to Excel |
+| `sharp` | Image processing |
 
 ---
 

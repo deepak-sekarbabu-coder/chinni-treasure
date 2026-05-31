@@ -80,9 +80,9 @@ palette is the visual equivalent: precious, grounded, light.
 | `--near-black` | #1a1a1a | Body text, card bg on dark |
 | `--cream` | #f5f0e8 | Default page background |
 | `--cream-light` | #faf7f2 | Input fields, card bg on light |
-| `--font-serif` | Playfair Display | Headings, brand voice, prices |
-| `--font-sans` | Montserrat | Body, labels, buttons, admin UI |
-| `--gold-dark` variant | — | Use serif for prices, stat values |
+| `--font-serif` | Cormorant Garamond | Headings, brand voice, prices |
+| `--font-sans` | Albert Sans | Body, labels, buttons, admin UI |
+| `--font-script` | Pinyon Script | Decorative brand taglines, accents |
 | `--text-muted` | #707070 | Secondary labels, metadata |
 
 **Spacing** follows the 1-4-9 rhythm: 4px micro, 16px component gap, 36px+
@@ -90,6 +90,14 @@ section break. No in-between values.
 
 **Breakpoints**: 320px / 480px / 640px / 768px / 1024px / 1440px. Content
 pressure drives layout change, not device classes.
+
+## Font Usage
+
+| Context | Font | Weight |
+|---|---|---|
+| Headings (h1-h3), brand voice, prices | Cormorant Garamond (serif) | 400–700 |
+| Body text, labels, buttons, admin UI | Albert Sans (sans-serif) | 400–700 |
+| Decorative taglines, hero accents | Pinyon Script (script) | 400 |
 
 ## Component Rules
 
