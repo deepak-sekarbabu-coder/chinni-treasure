@@ -1,9 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
 import Link from "next/link";
-import { useCart } from "@/src/components/cart/CartProvider";
-import { useToast } from "@/src/components/ui/ToastProvider";
 import useScrollReveal from "@/src/lib/useScrollReveal";
 
 export interface Product {
@@ -18,36 +15,7 @@ export interface Product {
 }
 
 export default function HomeContent() {
-  const { addItem } = useCart();
-  const { showToast } = useToast();
-
   const { ref: featuresRef, visible: featuresVisible } = useScrollReveal();
-
-  const handleAdd = useCallback(
-    (p: Product) => {
-      if (p.stockQuantity <= 0) {
-        showToast(`${p.name} is out of stock`, "error");
-        return;
-      }
-      const addResult = addItem({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        image: p.imageUrl,
-        stock: p.stockQuantity,
-      });
-      if (addResult === "max_reached") {
-        showToast(`Maximum available quantity reached for ${p.name} (${p.stockQuantity})`, "info");
-        return;
-      }
-      if (addResult === "out_of_stock") {
-        showToast(`${p.name} is out of stock`, "error");
-        return;
-      }
-      showToast(`${p.name} added to cart`, "success");
-    },
-    [addItem, showToast],
-  );
 
   return (
     <>

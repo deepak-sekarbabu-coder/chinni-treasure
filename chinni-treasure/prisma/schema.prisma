@@ -84,6 +84,7 @@ model Order {
   transactionId String?             @map("transaction_id") @db.VarChar(100)
   customerNotes String?             @map("customer_notes")
   adminNotes    String?             @map("admin_notes")
+  version       Int                 @default(0)
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
   items         OrderItem[]

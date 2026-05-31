@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import SectionHeader from "@/src/components/ui/SectionHeader";
@@ -33,7 +34,6 @@ export default function OrderPage() {
   const [summaryOpen, setSummaryOpen] = useState(true);
 
   const total = getTotal();
-  const shipping = 0; // Free shipping
 
   function validateStep(step: number): boolean {
     const errs: Record<string, string> = {};
@@ -419,9 +419,11 @@ export default function OrderPage() {
                     <div className="order-summary-items">
                       {items.map((item) => (
                         <div key={item.productId} className="order-summary-item">
-                          <img
+                          <Image
                             src={item.image || "/placeholder.svg"}
                             alt={item.name}
+                            width={60}
+                            height={70}
                             className="order-summary-item-img"
                           />
                           <div className="order-summary-item-info">

@@ -21,17 +21,13 @@ async function exportToExcel() {
   // Define styles
   const headerStyle = {
     font: { bold: true, size: 11, color: { argb: 'FFFFFFFF' } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } },
-    alignment: { horizontal: 'center', vertical: 'middle' },
-    border: { top: { style: 'thin', color: { argb: 'FFD0D0D0' } }, left: { style: 'thin', color: { argb: 'FFD0D0D0' } }, bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } }, right: { style: 'thin', color: { argb: 'FFD0D0D0' } } }
-  };
-
-  const cellStyle = {
-    border: { top: { style: 'thin', color: { argb: 'FFD0D0D0' } }, left: { style: 'thin', color: { argb: 'FFD0D0D0' } }, bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } }, right: { style: 'thin', color: { argb: 'FFD0D0D0' } } }
+    fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF1F4E78' } },
+    alignment: { horizontal: 'center' as const, vertical: 'middle' as const },
+    border: { top: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, left: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, bottom: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, right: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } } }
   };
 
   // Helper function to create a sheet with styled headers
-  function createSheet<T>(workbook: Excel.Workbook, name: string, data: T[], columns: { header: string; key: keyof T; width: number; format?: (value: any) => any }[]) {
+  function createSheet<T>(workbook: Excel.Workbook, name: string, data: T[], columns: { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown }[]) {
     const sheet = workbook.addWorksheet(name, { state: 'visible' });
 
     // Add headers
@@ -43,7 +39,7 @@ async function exportToExcel() {
     // Add data rows
     data.forEach((row) => {
       const rowData = columns.map((c) => {
-        const value = (row as any)[c.key];
+        const value = row[c.key];
         return c.format ? c.format(value) : value;
       });
       sheet.addRow(rowData);
@@ -71,9 +67,9 @@ async function exportToExcel() {
     { header: 'Slug', key: 'slug', width: 20 },
     { header: 'Description', key: 'description', width: 40 },
     { header: 'Display Order', key: 'displayOrder', width: 15 },
-    { header: 'Is Active', key: 'isActive', width: 12, format: (v: boolean) => v ? 'Yes' : 'No' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 2. Export Products
@@ -85,15 +81,15 @@ async function exportToExcel() {
     { header: 'SKU', key: 'sku', width: 15 },
     { header: 'Name', key: 'name', width: 40 },
     { header: 'Category ID', key: 'categoryId', width: 10 },
-    { header: 'Category Name', key: 'category', width: 25, format: (v: any) => v?.name ?? '' },
+    { header: 'Category Name', key: 'category', width: 25, format: (v: unknown) => (v as { name?: string } | null)?.name ?? '' },
     { header: 'Description', key: 'description', width: 50 },
-    { header: 'Price', key: 'price', width: 12, format: (v: any) => v.toString() },
+    { header: 'Price', key: 'price', width: 12, format: (v: unknown) => String(v) },
     { header: 'Stock Quantity', key: 'stockQuantity', width: 18 },
     { header: 'Image URL', key: 'imageUrl', width: 50 },
     { header: 'Badge', key: 'badge', width: 15 },
-    { header: 'Is Active', key: 'isActive', width: 12, format: (v: boolean) => v ? 'Yes' : 'No' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 3. Export Orders
@@ -114,14 +110,14 @@ async function exportToExcel() {
     { header: 'Country Code', key: 'countryCode', width: 12 },
     { header: 'Status', key: 'status', width: 15 },
     { header: 'Tracking ID', key: 'trackingId', width: 20 },
-    { header: 'Subtotal', key: 'subtotal', width: 12, format: (v: any) => v.toString() },
-    { header: 'Shipping Cost', key: 'shippingCost', width: 15, format: (v: any) => v.toString() },
-    { header: 'Total Amount', key: 'totalAmount', width: 15, format: (v: any) => v.toString() },
+    { header: 'Subtotal', key: 'subtotal', width: 12, format: (v: unknown) => String(v) },
+    { header: 'Shipping Cost', key: 'shippingCost', width: 15, format: (v: unknown) => String(v) },
+    { header: 'Total Amount', key: 'totalAmount', width: 15, format: (v: unknown) => String(v) },
     { header: 'Transaction ID', key: 'transactionId', width: 30 },
     { header: 'Customer Notes', key: 'customerNotes', width: 40 },
     { header: 'Admin Notes', key: 'adminNotes', width: 40 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 4. Export Order Items
@@ -131,12 +127,12 @@ async function exportToExcel() {
   createSheet(workbook, 'Order Items', orderItems, [
     { header: 'ID', key: 'id', width: 36 },
     { header: 'Order ID', key: 'orderId', width: 36 },
-    { header: 'Order Number', key: 'order', width: 20, format: (v: any) => v?.orderNumber ?? '' },
+    { header: 'Order Number', key: 'order', width: 20, format: (v: unknown) => (v as { orderNumber?: string } | null)?.orderNumber ?? '' },
     { header: 'Product ID', key: 'productId', width: 36 },
     { header: 'Product Name', key: 'productName', width: 40 },
-    { header: 'Unit Price', key: 'unitPrice', width: 12, format: (v: any) => v.toString() },
+    { header: 'Unit Price', key: 'unitPrice', width: 12, format: (v: unknown) => String(v) },
     { header: 'Quantity', key: 'quantity', width: 10 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 5. Export Order Status History
@@ -147,10 +143,10 @@ async function exportToExcel() {
   createSheet(workbook, 'Order Status History', statusHistory, [
     { header: 'ID', key: 'id', width: 36 },
     { header: 'Order ID', key: 'orderId', width: 36 },
-    { header: 'Order Number', key: 'order', width: 20, format: (v: any) => v?.orderNumber ?? '' },
+    { header: 'Order Number', key: 'order', width: 20, format: (v: unknown) => (v as { orderNumber?: string } | null)?.orderNumber ?? '' },
     { header: 'Status', key: 'status', width: 15 },
     { header: 'Notes', key: 'notes', width: 50 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 6. Export Admins
@@ -162,10 +158,10 @@ async function exportToExcel() {
     { header: 'Username', key: 'username', width: 20 },
     { header: 'Email', key: 'email', width: 35 },
     { header: 'Role', key: 'role', width: 15 },
-    { header: 'Is Active', key: 'isActive', width: 12, format: (v: boolean) => v ? 'Yes' : 'No' },
-    { header: 'Last Login At', key: 'lastLoginAt', width: 20, format: (v: Date | null) => v ? v.toLocaleString() : 'Never' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: Date) => v.toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: Date) => v.toLocaleString() },
+    { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Last Login At', key: 'lastLoginAt', width: 20, format: (v: unknown) => v ? (v as Date).toLocaleString() : 'Never' },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // Add a "Lookup" sheet with ID mappings for easy reference

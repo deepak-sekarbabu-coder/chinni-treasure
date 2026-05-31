@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/components/cart/CartProvider";
 
@@ -11,6 +12,7 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
   const { items, removeItem, getTotal, getCount } = useCart();
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
@@ -55,9 +57,11 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
           <div className="brand-logo-wrap">
-            <img
+            <Image
               src="/images/branding/logo.png"
               alt="Chinni Treasure Little Love logo"
+              width={58}
+              height={58}
               className="brand-logo-image"
             />
           </div>
@@ -125,7 +129,7 @@ export default function Navbar() {
               <button
                 onClick={() => setCartOpen(!cartOpen)}
                 className="cart-btn"
-                aria-label={`Shopping cart with ${count} items`}
+                aria-label="Shopping cart"
               >
                 <svg className="cart-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="9" cy="21" r="1" />
@@ -133,7 +137,7 @@ export default function Navbar() {
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                 </svg>
                 <span className="cart-label">Cart</span>
-                {count > 0 && (
+                {mounted && count > 0 && (
                   <span className="cart-count" aria-live="polite" style={{ animation: bounceKey ? 'countBounce 0.4s cubic-bezier(0.22, 1, 0.36, 1)' : undefined }}>
                     {count}
                   </span>
@@ -153,7 +157,7 @@ export default function Navbar() {
                   ) : (
                     items.map((item) => (
                       <div key={item.productId} className="cart-dropdown-item">
-                        <img src={item.image || "/placeholder.svg"} alt={item.name} />
+                        <Image src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} />
                         <div className="cart-dropdown-item-info">
                           <h5>{item.name}</h5>
                           <p>

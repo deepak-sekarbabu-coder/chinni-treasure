@@ -8,8 +8,6 @@ async function checkAuth() {
   return session as { id: string; username: string; role: string };
 }
 
-const ORDER_STATUS_FLOW = ["pending", "approved", "packaging", "shipped", "delivered"];
-
 // PATCH /api/orders/[id]/status — Update order status (admin only)
 export async function PATCH(
   request: Request,
@@ -23,25 +21,60 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, trackingId, notes } = body;
+    const { status, trackingId, notes, expectedVersion } = body;
 
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: { select: { id: true, productId: true, quantity: true } } },
     });
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // If rejecting, restore stock
+    // Fetch version separately for optimistic locking
+    const versionRow = await prisma.order.findUnique({
+      where: { id },
+      select: { version: true },
+    });
+
+    // Optimistic locking: verify version matches
+    if (expectedVersion !== undefined && (!versionRow || versionRow.version !== expectedVersion)) {
+      return NextResponse.json(
+        { error: "Order was modified by another request. Please refresh and try again." },
+        { status: 409 },
+      );
+    }
+
+    // If rejecting, restore stock (inside transaction)
     if (status === "rejected" && order.status !== "rejected") {
-      for (const item of order.items) {
-        await prisma.product.update({
-          where: { id: item.productId! },
-          data: { stockQuantity: { increment: item.quantity } },
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId! },
+            data: { stockQuantity: { increment: item.quantity } },
+          });
+        }
+        await tx.order.update({
+          where: { id },
+          data: {
+            status,
+            version: { increment: 1 },
+            ...(trackingId && { trackingId }),
+            statusHistory: {
+              create: {
+                status,
+                notes: notes || `Status changed to ${status}`,
+              },
+            },
+          },
         });
-      }
+      });
+      const updated = await prisma.order.findUnique({
+        where: { id },
+        include: { items: true, statusHistory: true },
+      });
+      return NextResponse.json(updated);
     }
 
     // If advancing to shipped, trackingId is required
@@ -49,16 +82,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Tracking ID is required when marking as shipped" }, { status: 400 });
     }
 
-    const updatedData: Record<string, unknown> = {
-      status,
-      ...(trackingId && { trackingId }),
-    };
-
-    // If rejected, keep the previous status for history context
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: {
-        ...updatedData,
+        status,
+        version: { increment: 1 },
+        ...(trackingId && { trackingId }),
         statusHistory: {
           create: {
             status,

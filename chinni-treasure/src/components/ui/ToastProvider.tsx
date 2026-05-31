@@ -6,6 +6,7 @@ interface Toast {
   id: string;
   message: string;
   type: "success" | "error" | "info";
+  removing?: boolean;
 }
 
 interface ToastContextType {
@@ -23,7 +24,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     setTimeout(() => {
       setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, removing: true } : (t as Toast & { removing?: boolean }))),
+        prev.map((t) => (t.id === id ? { ...t, removing: true } : t)),
       );
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -42,8 +43,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             className={`toast ${t.type}`}
             style={{
-              opacity: (t as any).removing ? "0" : "1",
-              transform: (t as any).removing ? "translateX(100px)" : "translateX(0)",
+              opacity: t.removing ? "0" : "1",
+              transform: t.removing ? "translateX(100px)" : "translateX(0)",
               transition: "opacity 0.3s ease, transform 0.3s ease",
             }}
           >

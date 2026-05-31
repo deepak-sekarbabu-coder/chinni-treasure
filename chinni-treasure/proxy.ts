@@ -1,20 +1,30 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-export function proxy(request: NextRequest) {
-  const token = request.cookies.get("session")?.value;
-  const path = request.nextUrl.pathname;
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "dev-secret",
+);
 
-  // Protect admin routes (except login)
-  if (path.startsWith("/admin") && !path.startsWith("/admin/login")) {
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/admin")) {
+    const token = request.cookies.get("session")?.value;
+
     if (!token) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-  }
 
-  // Redirect logged-in users away from login page
-  if (path === "/admin/login" && token) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    try {
+      await jwtVerify(token, JWT_SECRET);
+    } catch {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
   }
 
   return NextResponse.next();

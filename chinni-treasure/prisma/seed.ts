@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, ProductBadge } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -29,7 +29,16 @@ async function main() {
   }
 
   // Create 6 default products (same as current app)
-  const products = [
+  const productData: {
+    sku: string;
+    name: string;
+    categorySlug: string;
+    price: number;
+    stockQuantity: number;
+    imageUrl: string;
+    description: string;
+    badge: ProductBadge | null;
+  }[] = [
     {
       sku: "LUX-WAL-001",
       name: "Artisan Leather Wallet",
@@ -40,7 +49,7 @@ async function main() {
         "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&h=700&fit=crop",
       description:
         "Hand-stitched Italian full-grain leather wallet with RFID protection. Ages beautifully over time.",
-      badge: "bestseller" as const,
+      badge: "bestseller",
     },
     {
       sku: "LUX-SCF-001",
@@ -52,7 +61,7 @@ async function main() {
         "https://copilot.microsoft.com/th/id/BCO.3992779c-884a-4f83-afcb-b4b45a3217e6.png",
       description:
         "Luxurious 100% mulberry silk scarf with hand-rolled edges. A timeless addition to any wardrobe.",
-      badge: "new" as const,
+      badge: "new",
     },
     {
       sku: "LUX-WAT-001",
@@ -64,7 +73,7 @@ async function main() {
         "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=700&fit=crop",
       description:
         "Swiss quartz movement encased in polished stainless steel with sapphire crystal glass.",
-      badge: "premium" as const,
+      badge: "premium",
     },
     {
       sku: "LUX-PER-001",
@@ -76,7 +85,7 @@ async function main() {
         "https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&h=700&fit=crop",
       description:
         "Hand-blown crystal bottle with 24k gold-plated accents. Each piece is uniquely crafted.",
-      badge: "limited" as const,
+      badge: "limited",
     },
     {
       sku: "LUX-BLT-001",
@@ -100,30 +109,30 @@ async function main() {
         "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?w=600&h=700&fit=crop",
       description:
         "Pure Mongolian cashmere throw in a heritage twill weave. Exceptionally soft and warm.",
-      badge: "luxury" as const,
+      badge: "luxury",
     },
   ];
 
-  for (const p of products) {
+  for (const p of productData) {
     await prisma.product.upsert({
-      where: { sku: p.sku! },
+      where: { sku: p.sku },
       update: {
         name: p.name,
         price: p.price,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
         description: p.description,
-        badge: p.badge as any,
+        badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
       },
       create: {
-        sku: p.sku!,
+        sku: p.sku,
         name: p.name,
         price: p.price,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
         description: p.description,
-        badge: p.badge as any,
+        badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
       },
     });
@@ -144,7 +153,7 @@ async function main() {
 
   console.log("Seed completed successfully!");
   console.log(`  - ${categories.length} categories created`);
-  console.log(`  - ${products.length} products created`);
+  console.log(`  - ${productData.length} products created`);
   console.log(`  - Admin user created (admin / admin123)`);
 }
 

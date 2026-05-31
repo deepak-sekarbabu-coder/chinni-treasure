@@ -36,16 +36,6 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-function loadCart(): CartItemDisplay[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem("luxe_cart");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
 function saveCart(items: CartItemDisplay[]) {
   if (typeof window === "undefined") return;
   try {
@@ -57,16 +47,24 @@ function saveCart(items: CartItemDisplay[]) {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItemDisplay[]>([]);
+  const [hasLoadedCart, setHasLoadedCart] = useState(false);
 
-  // Hydrate from localStorage on mount
   useEffect(() => {
-    setItems(loadCart());
+    try {
+      const raw = localStorage.getItem("luxe_cart");
+      setItems(raw ? JSON.parse(raw) : []);
+    } catch {
+      setItems([]);
+    } finally {
+      setHasLoadedCart(true);
+    }
   }, []);
 
   // Persist on change
   useEffect(() => {
+    if (!hasLoadedCart) return;
     saveCart(items);
-  }, [items]);
+  }, [hasLoadedCart, items]);
 
   const addItem = useCallback(
     (product: { id: string; name: string; price: number; image: string; stock: number }) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import StatusBadge from "@/src/components/ui/StatusBadge";
@@ -45,6 +46,7 @@ interface Order {
   customerEmail: string;
   customerPhone: string;
   status: string;
+  version: number;
   trackingId?: string;
   totalAmount: number;
   subtotal: number;
@@ -110,6 +112,9 @@ export default function AdminPage() {
   const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [chartsLoading, setChartsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
@@ -128,13 +133,6 @@ export default function AdminPage() {
     badge: "",
     categoryId: "",
   });
-  const [categories] = useState<{ id: number; name: string }[]>([
-    { id: 1, name: "Accessories" },
-    { id: 2, name: "Apparel" },
-    { id: 3, name: "Watches" },
-    { id: 4, name: "Home" },
-  ]);
-
   // Tracking modal
   const [trackingModal, setTrackingModal] = useState<{ orderId: string; open: boolean }>({
     orderId: "",
@@ -148,24 +146,24 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (!res.ok) {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) {
+          router.push("/admin/login");
+          return;
+        }
+        setAuthenticated(true);
+        await Promise.all([fetchStats(), fetchOrders(undefined, 1), fetchProducts()]);
+      } catch {
         router.push("/admin/login");
-        return;
+      } finally {
+        setLoading(false);
       }
-      setAuthenticated(true);
-      await Promise.all([fetchStats(), fetchOrders(), fetchProducts()]);
-    } catch {
-      router.push("/admin/login");
-    } finally {
-      setLoading(false);
     }
-  }
+    checkAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   async function fetchStats() {
     setChartsLoading(true);
@@ -184,15 +182,24 @@ export default function AdminPage() {
     }
   }
 
-  async function fetchOrders(currentSelectedId?: string) {
+  async function fetchOrders(currentSelectedId?: string, pageNum?: number, statusParam?: string) {
     setOrdersLoading(true);
     try {
-      const res = await fetch("/api/orders");
+      const page = pageNum ?? currentPage;
+      const status = statusParam ?? statusFilter;
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(ITEMS_PER_PAGE));
+      if (status !== "all") params.set("status", status);
+
+      const res = await fetch(`/api/orders?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setOrders(data);
+        setOrders(data.orders);
+        setTotalPages(data.totalPages);
+        setCurrentPage(data.page);
         if (currentSelectedId) {
-          const updated = data.find((o: Order) => o.id === currentSelectedId);
+          const updated = data.orders.find((o: Order) => o.id === currentSelectedId);
           if (updated) {
             setSelectedOrder(updated);
           }
@@ -242,10 +249,10 @@ export default function AdminPage() {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status: nextStatus, expectedVersion: order.version }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(orderId), fetchStats()]);
+        await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
       }
     } catch (err) {
       console.error("Failed to update status:", err);
@@ -253,20 +260,23 @@ export default function AdminPage() {
       setIsTransitioning(false);
       setAdvancingOrderId(null);
     }
-  }, [orders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orders, currentPage]);
 
   async function handleSubmitTracking() {
     if (!trackingId.trim()) return;
+    const order = orders.find((o) => o.id === trackingModal.orderId);
+    if (!order) return;
     setAdvancingOrderId(trackingModal.orderId);
     setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${trackingModal.orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "shipped", trackingId: trackingId.trim() }),
+        body: JSON.stringify({ status: "shipped", trackingId: trackingId.trim(), expectedVersion: order.version }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(trackingModal.orderId), fetchStats()]);
+        await Promise.all([fetchOrders(trackingModal.orderId, currentPage), fetchStats()]);
         setTrackingModal({ orderId: "", open: false });
         setTrackingId("");
         showToast("Order marked as shipped successfully", "success");
@@ -280,16 +290,18 @@ export default function AdminPage() {
   }
 
   const handleReject = useCallback(async (orderId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
     setAdvancingOrderId(orderId);
     setIsTransitioning(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected" }),
+        body: JSON.stringify({ status: "rejected", expectedVersion: order.version }),
       });
       if (res.ok) {
-        await Promise.all([fetchOrders(orderId), fetchStats()]);
+        await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
         setSelectedOrder(null);
       }
     } catch (err) {
@@ -298,7 +310,8 @@ export default function AdminPage() {
       setIsTransitioning(false);
       setAdvancingOrderId(null);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, currentPage]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -411,10 +424,6 @@ export default function AdminPage() {
       stockQuantity: "", imageUrl: "", badge: "", categoryId: "",
     });
   }
-
-  const filteredOrders = statusFilter === "all"
-    ? orders
-    : orders.filter((o) => o.status === statusFilter);
 
   if (loading) {
     return <LoadingSpinner fullPage />;
@@ -573,7 +582,7 @@ export default function AdminPage() {
                   key={f.key}
                   className={`btn ${statusFilter === f.key ? "btn-primary" : "btn-secondary"}`}
                   style={{ padding: "8px 16px", fontSize: "0.65rem" }}
-                  onClick={() => setStatusFilter(f.key)}
+                  onClick={() => { setStatusFilter(f.key); setCurrentPage(1); fetchOrders(undefined, 1, f.key); }}
                 >
                   {f.label}
                 </button>
@@ -609,12 +618,12 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))
-              ) : filteredOrders.length === 0 ? (
+              ) : orders.length === 0 ? (
                 <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px" }}>
                   No orders found.
                 </p>
               ) : (
-                filteredOrders.map((order) => {
+                orders.map((order) => {
                     const isAdvancing = advancingOrderId === order.id;
                     return (
                     <div
@@ -656,6 +665,31 @@ export default function AdminPage() {
               })
             )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "24px" }}>
+                <button
+                  className="btn btn-secondary"
+                  disabled={currentPage <= 1}
+                  onClick={() => fetchOrders(undefined, currentPage - 1)}
+                  style={{ padding: "8px 16px" }}
+                >
+                  ← Prev
+                </button>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => fetchOrders(undefined, currentPage + 1)}
+                  style={{ padding: "8px 16px" }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
         )}
 
@@ -828,10 +862,12 @@ export default function AdminPage() {
                         >
                           <td style={{ padding: "10px 16px" }}>
                             {p.imageUrl ? (
-                              <img
+                              <Image
                                 src={p.imageUrl}
                                 alt={p.name}
-                                style={{ width: "40px", height: "50px", objectFit: "cover", borderRadius: "4px" }}
+                                width={40}
+                                height={50}
+                                style={{ objectFit: "cover", borderRadius: "4px" }}
                               />
                             ) : (
                               <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />

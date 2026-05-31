@@ -1,9 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { verifyPassword, signToken, createSessionCookie } from "@/src/lib/auth";
+import { checkRateLimit } from "@/src/lib/rate-limiter";
 
 export async function POST(request: Request) {
   try {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const { allowed } = checkRateLimit(`login:${ip}`);
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": "60" } },
+      );
+    }
+
     const { username, password } = await request.json();
     if (!username || !password) {
       return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
