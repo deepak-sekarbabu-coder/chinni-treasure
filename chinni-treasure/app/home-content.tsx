@@ -24,11 +24,11 @@ export default function HomeContent() {
         <div className="hero-pattern"></div>
         <div className="hero-content">
           <h1 id="hero-heading">
-            Own the Art of
+            "Own The Art Of
             <br />
             <span className="highlight">Timeless Luxury</span>
             <br />
-            for Everyday Elegance
+            For Everyday Elegance."
           </h1>
           <p>
             Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you’ll love.
