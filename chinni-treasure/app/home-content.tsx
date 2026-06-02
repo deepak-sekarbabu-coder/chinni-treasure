@@ -31,8 +31,7 @@ export default function HomeContent() {
             for Everyday Elegance
           </h1>
           <p>
-            Discover museum-worthy pieces handcrafted by skilled artisans. Premium materials,
-            graceful design, and a buying experience made to feel as exceptional as the products.
+            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you’ll love.
           </p>
           <div className="hero-trust" aria-label="brand highlights">
             <span>Handcrafted Originals</span>
@@ -50,11 +49,10 @@ export default function HomeContent() {
         </div>
         <div className="hero-story" aria-hidden="true">
           <div className="hero-story-card">
-            <div className="hero-story-label">Signature Edit</div>
-            <h3>Designed to Be Gifted and Kept Forever</h3>
+            <div className="hero-story-label"><h2>Signature Edit</h2></div>
+            <h3>Designed To Be Gifted And Kept Forever</h3>
             <p>
-              Every piece in our signature selection is curated for heirloom quality, modern
-              styling, and meaningful moments.
+              Designed for today, crafted to last generations. Every piece in our signature collection is chosen to elevate your everyday moments
             </p>
             <div className="hero-story-stats">
               <div>
@@ -62,12 +60,12 @@ export default function HomeContent() {
                 <span>Customer Delight</span>
               </div>
               <div>
-                <strong>3-5 Days</strong>
-                <span>Express Delivery</span>
+                <strong>5 -10 Days</strong>
+                <span>Delivery</span>
               </div>
               <div>
                 <strong>100%</strong>
-                <span>Craft Verified</span>
+                <span>Free Shipping on all Orders</span>
               </div>
             </div>
           </div>
@@ -88,7 +86,7 @@ export default function HomeContent() {
           <div className="features-grid" role="list">
             {[
               { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-              { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 3-5 business days." },
+              { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
               { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
               { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
             ].map((f, i) => (

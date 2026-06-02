@@ -56,7 +56,9 @@ export default function Footer() {
               <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span> <span className="brand-heart">❤</span>
             </div>
           </div>
-          <p>Curating the finest artisan-crafted luxury goods for discerning customers worldwide.</p>
+          <div style={{ textAlign: "center" }}>
+            <p>Curating the finest artisan-crafted luxury goods for discerning customers worldwide.</p>
+          </div>
         </div>
         <div>
           <h4>Quick Links</h4>
