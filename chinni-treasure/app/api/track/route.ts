@@ -50,8 +50,11 @@ export async function GET(request: Request) {
       });
     } else {
       const cleanPhone = phone!.replace(/\D/g, "");
+      if (cleanPhone.length !== 10) {
+        return NextResponse.json({ error: "Phone must be exactly 10 digits" }, { status: 400 });
+      }
       orders = await prisma.order.findMany({
-        where: { customerPhone: { contains: cleanPhone } },
+        where: { customerPhone: cleanPhone },
         include: { items: true },
         orderBy: { createdAt: "desc" },
       });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getSession } from "@/src/lib/auth";
+import { sanitize } from "@/src/lib/sanitize";
 
 async function checkAuth() {
   const session = await getSession();
@@ -45,9 +46,9 @@ export async function POST(request: Request) {
     const product = await prisma.product.create({
       data: {
         sku: sku || undefined,
-        name,
+        name: sanitize(name),
         categoryId: categoryId || null,
-        description: description || null,
+        description: description ? sanitize(description) : null,
         price: parseFloat(price),
         stockQuantity: stockQuantity ?? 0,
         imageUrl: imageUrl || null,

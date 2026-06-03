@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getSession } from "@/src/lib/auth";
+import { sanitize } from "@/src/lib/sanitize";
 
 async function checkAuth() {
   const session = await getSession();
@@ -27,9 +28,9 @@ export async function PUT(
       where: { id },
       data: {
         ...(sku !== undefined && { sku }),
-        ...(name !== undefined && { name }),
+        ...(name !== undefined && { name: sanitize(name) }),
         ...(categoryId !== undefined && { categoryId: categoryId || null }),
-        ...(description !== undefined && { description: description || null }),
+        ...(description !== undefined && { description: description ? sanitize(description) : null }),
         ...(price !== undefined && { price: parseFloat(price) }),
         ...(stockQuantity !== undefined && { stockQuantity }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),

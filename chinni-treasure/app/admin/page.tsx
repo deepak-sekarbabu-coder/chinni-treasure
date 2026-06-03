@@ -178,6 +178,7 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch stats:", err);
+      showToast("Failed to load stats", "error");
     } finally {
       setChartsLoading(false);
     }
@@ -208,6 +209,7 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch orders:", err);
+      showToast("Failed to load orders", "error");
     } finally {
       setOrdersLoading(false);
     }
@@ -223,6 +225,7 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch products:", err);
+      showToast("Failed to load products", "error");
     } finally {
       setProductsLoading(false);
     }
@@ -254,9 +257,13 @@ export default function AdminPage() {
       });
       if (res.ok) {
         await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to update status", "error");
       }
     } catch (err) {
       console.error("Failed to update status:", err);
+      showToast("Failed to update status", "error");
     } finally {
       setIsTransitioning(false);
       setAdvancingOrderId(null);
@@ -281,9 +288,13 @@ export default function AdminPage() {
         setTrackingModal({ orderId: "", open: false });
         setTrackingId("");
         showToast("Order marked as shipped successfully", "success");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to ship order", "error");
       }
     } catch (err) {
       console.error("Failed to ship order:", err);
+      showToast("Failed to ship order", "error");
     } finally {
       setIsTransitioning(false);
       setAdvancingOrderId(null);
@@ -304,9 +315,13 @@ export default function AdminPage() {
       if (res.ok) {
         await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
         setSelectedOrder(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to reject order", "error");
       }
     } catch (err) {
       console.error("Failed to reject order:", err);
+      showToast("Failed to reject order", "error");
     } finally {
       setIsTransitioning(false);
       setAdvancingOrderId(null);
