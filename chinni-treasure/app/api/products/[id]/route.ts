@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
+import { z } from "zod"
+import { ProductBadge } from "@prisma/client"
+
+const UpdateProductSchema = z.object({
+  name: z.string().min(1).optional(),
+  price: z.coerce.number().positive("Price must be a positive number").optional(),
+  sku: z.string().optional().nullable(),
+  categoryId: z.coerce.number().int().positive().optional().nullable(),
+  description: z.string().optional().nullable(),
+  stockQuantity: z.coerce.number().int().min(0).optional(),
+  imageUrl: z.string().optional().nullable(),
+  badge: z.nativeEnum(ProductBadge).optional().nullable(),
+  isActive: z.boolean().optional(),
+});
 
 // PUT /api/products/[id] — Update a product (admin only)
 export async function PUT(
@@ -16,21 +30,31 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { sku, name, categoryId, description, price, stockQuantity, imageUrl, badge, isActive } = body;
+
+    const parsed = UpdateProductSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
+    }
+    const { sku, name, categoryId, description, price, stockQuantity, imageUrl, badge, isActive } = parsed.data;
+
+    // Build update data imperatively to avoid Prisma's complex conditional spread types
+    const data: Record<string, unknown> = {};
+    if (sku !== undefined) data.sku = sku;
+    if (name !== undefined) data.name = sanitize(name);
+    if (categoryId !== undefined) data.categoryId = categoryId ?? null;
+    if (description !== undefined) data.description = description ? sanitize(description) : null;
+    if (price !== undefined) data.price = price;
+    if (stockQuantity !== undefined) data.stockQuantity = stockQuantity;
+    if (imageUrl !== undefined) data.imageUrl = imageUrl || null;
+    if (badge !== undefined) data.badge = badge || null;
+    if (isActive !== undefined) data.isActive = isActive;
 
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        ...(sku !== undefined && { sku }),
-        ...(name !== undefined && { name: sanitize(name) }),
-        ...(categoryId !== undefined && { categoryId: categoryId || null }),
-        ...(description !== undefined && { description: description ? sanitize(description) : null }),
-        ...(price !== undefined && { price: parseFloat(price) }),
-        ...(stockQuantity !== undefined && { stockQuantity }),
-        ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
-        ...(badge !== undefined && { badge: badge || null }),
-        ...(isActive !== undefined && { isActive }),
-      },
+      data: data as Parameters<typeof prisma.product.update>[0]["data"],
       include: { category: { select: { name: true } } },
     });
 

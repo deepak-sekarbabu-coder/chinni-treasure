@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
+import { z } from "zod";
+
+const ORDER_STATUS_VALUES = ["pending", "approved", "packaging", "shipped", "delivered", "rejected"] as const;
+const OrderStatusSchema = z.enum(ORDER_STATUS_VALUES);
 
 // PATCH /api/orders/[id]/status — Update order status (admin only)
 export async function PATCH(
@@ -15,7 +19,16 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, trackingId, notes, expectedVersion } = body;
+    const { status: rawStatus, trackingId, notes, expectedVersion } = body;
+
+    const statusParsed = OrderStatusSchema.safeParse(rawStatus);
+    if (!statusParsed.success) {
+      return NextResponse.json(
+        { error: "Invalid status value. Must be one of: " + ORDER_STATUS_VALUES.join(", ") },
+        { status: 400 },
+      );
+    }
+    const status = statusParsed.data;
 
     const order = await prisma.order.findUnique({
       where: { id },

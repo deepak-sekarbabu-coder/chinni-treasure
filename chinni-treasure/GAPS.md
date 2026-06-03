@@ -105,29 +105,17 @@ Every endpoint casts `request.json()` to `Record<string, unknown>` and extracts 
 
 **Remaining:** Add a Zod-validated session schema to verify JWT payload shape.
 
-### 3.3 Order Status Type Not Validated Server-Side
+### ~~3.3 Order Status Type Not Validated Server-Side~~ ✅ FIXED
 
-**File:** `app/api/orders/[id]/status/route.ts:24`
+Validated against a Zod enum schema (`OrderStatusSchema`) before passing to Prisma. Returns 400 with descriptive error for invalid values.
 
-The `status` from the request body is passed directly to Prisma's `data.status` without validating it's a valid `OrderStatus` enum value. A non-enum string causes a Prisma runtime error.
+### ~~3.4 Product Price Can Produce NaN~~ ✅ FIXED
 
-**Fix:** Validate `status` against the `OrderStatus` enum values with Zod.
+Both create and update endpoints now use Zod schemas (`CreateProductSchema` / `UpdateProductSchema`) with `z.coerce.number().positive()` to validate price. Returns 400 with descriptive error for invalid values.
 
-### 3.4 Product Price Can Produce NaN
+### ~~3.5 Track API — Response Casts Ignore Actual DB Types~~ ✅ FIXED
 
-**Files:** `app/api/products/route.ts:51`, `app/api/products/[id]/route.ts:33`
-
-`parseFloat(price)` where `price` could be `null`, `undefined`, `"abc"`, or an object — all produce `NaN`.
-
-**Fix:** Validate `price` is a positive finite number with Zod before parsing.
-
-### 3.5 Track API — Response Casts Ignore Actual DB Types
-
-**File:** `app/api/track/route.ts:60-85`
-
-Every field is manually cast with `as string`, `as number`, etc. If the database schema changes (e.g., a column is renamed), there is zero type safety.
-
-**Fix:** Use Prisma-generated types instead of manual casts.
+Replaced `Array<Record<string, unknown>>` with Prisma-generated `(Order & { items: OrderItem[] })[]`. All manual `as string`/`as number` casts removed — fields are now accessed with full type safety.
 
 ---
 
@@ -441,7 +429,7 @@ The `.env` file contains a real Neon PostgreSQL connection string with an `npg_`
 | Priority | Count | Key Items |
 |---|---|---|
 | **Critical** | 2 | Hardcoded JWT secret (1.2), Orders API auth bypass (2.6) |
-| **High** | 8 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1), no Zod validation on orders (8.1), delete product error handling (2.7), NaN price (3.4), unsafe casts (3.1) |
-| **Medium** | 12 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), login page inline styles (9.2), status enum validation (3.3), track API casts (3.5), commit credentials risk (12.6), lazy tab fetching (6.2), test setup mocks (11.2) |
+| **High** | 5 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1), no Zod validation on orders (8.1) |
+| **Medium** | 9 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), login page inline styles (9.2), commit credentials risk (12.6), lazy tab fetching (6.2) |
 | **Low** | ~10 | Unused dependencies (10), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
-| **Fixed** | 15 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), shared checkAuth (3.2/9.1), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3) |
+| **Fixed** | 18 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3) |

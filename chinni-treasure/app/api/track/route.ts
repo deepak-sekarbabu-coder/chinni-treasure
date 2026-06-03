@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import type { Order, OrderItem } from "@prisma/client";
 
 // ---- In-memory cache ----
 const cache = new Map<string, { data: unknown; expiry: number }>();
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Provide orderId or phone parameter" }, { status: 400 });
     }
 
-    let orders: Array<Record<string, unknown>> = [];
+    let orders: (Order & { items: OrderItem[] })[] = [];
 
     if (orderId) {
       orders = await prisma.order.findMany({
@@ -61,28 +62,28 @@ export async function GET(request: Request) {
     }
 
     const results = orders.map((o) => ({
-      id: o.id as string,
-      orderNumber: o.orderNumber as string,
-      customerName: o.customerName as string,
-      customerEmail: o.customerEmail as string,
-      customerPhone: o.customerPhone as string,
-      status: o.status as string,
-      trackingId: (o.trackingId as string) || null,
+      id: o.id,
+      orderNumber: o.orderNumber,
+      customerName: o.customerName,
+      customerEmail: o.customerEmail,
+      customerPhone: o.customerPhone,
+      status: o.status,
+      trackingId: o.trackingId || null,
       totalAmount: Number(o.totalAmount),
       subtotal: Number(o.subtotal),
       shippingCost: Number(o.shippingCost),
-      createdAt: new Date(o.createdAt as string),
-      transactionId: (o.transactionId as string) || null,
-      customerNotes: (o.customerNotes as string) || null,
-      addressLine1: o.addressLine1 as string,
-      city: o.city as string,
-      stateCode: o.stateCode as string,
-      postalCode: o.postalCode as string,
-      itemCount: ((o.items as Array<{ quantity: number }>) || []).reduce((sum, i) => sum + i.quantity, 0),
-      items: ((o.items as Array<{ id: string; productName: string; unitPrice: number; quantity: number }>) || []).map((i) => ({
+      createdAt: o.createdAt,
+      transactionId: o.transactionId || null,
+      customerNotes: o.customerNotes || null,
+      addressLine1: o.addressLine1,
+      city: o.city,
+      stateCode: o.stateCode,
+      postalCode: o.postalCode,
+      itemCount: (o.items || []).reduce((sum, i) => sum + i.quantity, 0),
+      items: (o.items || []).map((i) => ({
         id: i.id,
         productName: i.productName,
-        unitPrice: i.unitPrice,
+        unitPrice: Number(i.unitPrice),
         quantity: i.quantity,
       })),
     }));

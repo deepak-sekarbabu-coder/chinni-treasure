@@ -2,6 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
+import { z } from "zod";
+import { ProductBadge } from "@prisma/client";
+
+const CreateProductSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  price: z.coerce.number().positive("Price must be a positive number"),
+  sku: z.string().optional(),
+  categoryId: z.coerce.number().int().positive().optional().nullable(),
+  description: z.string().optional(),
+  stockQuantity: z.coerce.number().int().min(0).optional(),
+  imageUrl: z.string().optional(),
+  badge: z.nativeEnum(ProductBadge).optional().nullable(),
+});
 
 // GET /api/products — List products (optionally paginated)
 export async function GET(request: Request) {
@@ -47,11 +60,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { sku, name, categoryId, description, price, stockQuantity, imageUrl, badge } = body;
 
-    if (!name || price === undefined) {
-      return NextResponse.json({ error: "Name and price are required" }, { status: 400 });
+    const parsed = CreateProductSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
     }
+    const { name, price, sku, categoryId, description, stockQuantity, imageUrl, badge } = parsed.data;
 
     const product = await prisma.product.create({
       data: {
@@ -59,10 +76,10 @@ export async function POST(request: Request) {
         name: sanitize(name),
         categoryId: categoryId || null,
         description: description ? sanitize(description) : null,
-        price: parseFloat(price),
+        price,
         stockQuantity: stockQuantity ?? 0,
         imageUrl: imageUrl || null,
-        badge: badge || null,
+        ...(badge !== undefined && { badge: badge || null }),
       },
       include: { category: { select: { name: true } } },
     });
