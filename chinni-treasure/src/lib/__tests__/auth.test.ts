@@ -14,31 +14,31 @@ const origJwtSecret = process.env.JWT_SECRET;
 describe("signToken and verifyToken", () => {
   const payload = { id: "test-id", username: "admin", role: "admin" };
 
-  it("signToken returns a string", () => {
-    const token = signToken(payload);
+  it("signToken returns a string", async () => {
+    const token = await signToken(payload);
     expect(typeof token).toBe("string");
     expect(token.split(".")).toHaveLength(3);
   });
 
-  it("verifyToken returns payload for a valid token", () => {
-    const token = signToken(payload);
-    const decoded = verifyToken(token);
+  it("verifyToken returns payload for a valid token", async () => {
+    const token = await signToken(payload);
+    const decoded = await verifyToken(token);
     expect(decoded).not.toBeNull();
     expect(decoded?.id).toBe("test-id");
     expect(decoded?.username).toBe("admin");
     expect(decoded?.role).toBe("admin");
   });
 
-  it("verifyToken returns null for a tampered token", () => {
-    const token = signToken(payload);
+  it("verifyToken returns null for a tampered token", async () => {
+    const token = await signToken(payload);
     const [header, body] = token.split(".");
     const tampered = `${header}.${body}.invalidsig`;
-    const decoded = verifyToken(tampered);
+    const decoded = await verifyToken(tampered);
     expect(decoded).toBeNull();
   });
 
-  it("verifyToken returns null for garbage input", () => {
-    const decoded = verifyToken("not-a-jwt-token");
+  it("verifyToken returns null for garbage input", async () => {
+    const decoded = await verifyToken("not-a-jwt-token");
     expect(decoded).toBeNull();
   });
 });
@@ -61,7 +61,7 @@ describe("getSession", () => {
 
   it("returns decoded payload when valid session cookie exists", async () => {
     const payload = { id: "admin-id", username: "admin", role: "super_admin" };
-    const token = signToken(payload);
+    const token = await signToken(payload);
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ name: "session", value: token }),

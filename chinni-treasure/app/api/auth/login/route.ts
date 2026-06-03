@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       data: { lastLoginAt: new Date() },
     });
 
-    const token = signToken({ id: admin.id, username: admin.username, role: admin.role });
+    const token = await signToken({ id: admin.id, username: admin.username, role: admin.role });
     const cookie = createSessionCookie(token);
 
     const response = NextResponse.json({
