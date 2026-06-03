@@ -248,13 +248,11 @@ AGENTS.md says "Interactive Analytics powered by Chart.js." But `app/admin/page.
 
 **Fix:** Implement Chart.js charts or remove the dependency and update docs.
 
-### 7.2 Excel Export Script Exists but Not Exposed
+### ~~7.2 Excel Export Script Exists but Not Exposed~~ ✅ FIXED
 
-**File:** `scripts/export-to-excel.ts` (dead code)
+**Files:** `app/api/export/route.ts`, `app/admin/page.tsx`
 
-No UI button, no API route. The feature is invisible to users.
-
-**Fix:** Add a download button in admin dashboard or remove.
+A new `GET /api/export` endpoint (admin-only) generates the full workbook in-memory using `exceljs` and returns it as a downloadable `.xlsx` file. An "Export Excel" button in the admin dashboard header triggers the download with a toast notification. The original `scripts/export-to-excel.ts` is kept as a legacy CLI fallback.
 
 ### ~~7.3 Product Badge Not Displayed on Catalogue~~ ✅ FIXED
 
@@ -272,12 +270,10 @@ Now validated by `CreateOrderSchema` which enforces email format, 10-digit phone
 
 ### 8.2 Track API — Partial Input Validation
 
-**File:** `app/api/track/route.ts:45-58`
+**File:** `app/api/track/route.ts`
 
 - ✅ Phone is now validated to exactly 10 digits
-- ❌ `orderId` has no length validation before being passed to database queries
-
-**Fix:** Validate max length and format for orderId before querying.
+- ✅ `orderId` validated to max 36 chars and alphanumeric+hyphens format before querying
 
 ### ~~8.3 Product Update Endpoint Lacks Sanitization~~ ✅ FIXED
 
@@ -291,14 +287,13 @@ Both PUT and POST product handlers now apply `sanitize()` to `name` and `descrip
 
 `checkAuth` is now a single function exported from `src/lib/auth.ts` and imported by all route files.
 
-### ~~9.2 Inline Styles Everywhere in Admin Dashboard~~ PARTIALLY FIXED
+### ~~9.2 Inline Styles Everywhere in Admin Dashboard~~ ✅ FIXED
 
-Many CSS utility classes have been added to `globals.css` (flex, gap, text, margin, button variants, etc.) and the admin page now uses them extensively. However, some inline styles remain for:
-- Animation delays (`animationDelay: \`${idx * 0.08}s\``)
-- Admin login page (still all inline)
-- Specific one-off tweaks
+**Files:** `app/globals.css`, `app/admin/login/page.tsx`, `app/admin/page.tsx`
 
-**Remaining:** Move remaining inline styles to CSS classes, especially in admin login page.
+The admin login page has been fully converted from inline styles to CSS classes (`login-page`, `login-card`, `login-heading`, `login-subtitle`, `login-label`, `login-input-dark`, `login-error`, `btn-spinner-inline`). Modal `maxWidth` values and badge font-size in the admin page are now CSS classes (`modal-content-sm`, `modal-content-md`, `badge-tiny`).
+
+**Remaining:** Dynamic animation delays (`animationDelay: \`${idx * multiplier}s\``) remain inline by necessity — they derive from index-based calculations. Skeleton placeholder dimensions (width/height in px) remain inline as they are one-off tweaks per context.
 
 ### ~~9.3 `editProduct` Hardcodes `categoryId` to `"1"`~~ ✅ FIXED
 
@@ -401,9 +396,9 @@ The `remaining` count is returned but never exposed via a response header like `
 
 CORS headers configured centrally in `next.config.ts` for `/api/track` (GET) and `/api/orders` (POST). Uses `process.env.ALLOWED_ORIGIN` with `*` fallback for development. Includes preflight caching (`Access-Control-Max-Age: 86400`).
 
-### 12.3 No CSRF Protection
+### ~~12.3 No CSRF Protection~~ ✅ FIXED
 
-All state-changing endpoints lack CSRF tokens. `SameSite=Lax` on the session cookie provides partial protection but is not sufficient for all scenarios.
+Implemented Origin/Referer header validation via `src/lib/csrf.ts` (`validateCsrfOrigin()`). Applied to all state-changing API routes: login, logout, orders (POST), products (POST/PUT/DELETE), and order status (PATCH). Rejects requests without a valid same-origin `Origin` or `Referer` header. In development, localhost origins are allowed.
 
 ### 12.4 Order Number Generation Could Collide
 
@@ -431,6 +426,6 @@ The `.env` file contains a real Neon PostgreSQL connection string with an `npg_`
 |---|---|---|
 | **Critical** | 2 | Hardcoded JWT secret (1.2), Orders API auth bypass (2.6) |
 | **High** | 4 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1) |
-| **Medium** | 9 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), login page inline styles (9.2), commit credentials risk (12.6), lazy tab fetching (6.2) |
-| **Low** | ~10 | Unused dependencies (10), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
-| **Fixed** | 20 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), unsafe as casts (3.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3), order Zod validation (8.1) |
+| **Medium** | 7 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), lazy tab fetching (6.2) |
+| **Low** | ~10 | Unused dependencies (10), commit credentials risk (12.6), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
+| **Fixed** | 23 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), unsafe as casts (3.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), Excel export (7.2), product badges (7.3), categoryId bug (9.3), product sanitization (8.3), order Zod validation (8.1), login page inline styles (9.2), track orderId validation (8.2) |

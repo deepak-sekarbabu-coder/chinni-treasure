@@ -2,8 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { verifyPassword, signToken, createSessionCookie } from "@/src/lib/auth";
 import { checkRateLimit } from "@/src/lib/rate-limiter";
+import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { z } from "zod";
+
+const LoginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
 export async function POST(request: Request) {
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
+
   try {
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -18,10 +28,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, password } = await request.json();
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+    const body = await request.json();
+    const parsed = LoginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
     }
+    const { username, password } = parsed.data;
 
     const admin = await prisma.admin.findUnique({ where: { username } });
     if (!admin || !admin.isActive) {

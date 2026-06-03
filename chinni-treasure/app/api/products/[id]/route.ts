@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
+import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod"
 import { ProductBadge } from "@prisma/client"
 
@@ -22,6 +23,9 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
+
   const admin = await checkAuth();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,9 +71,12 @@ export async function PUT(
 
 // DELETE /api/products/[id] — Delete a product (admin only)
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
+
   const admin = await checkAuth();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

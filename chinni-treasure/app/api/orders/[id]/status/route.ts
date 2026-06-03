@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
+import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod";
 
 const ORDER_STATUS_VALUES = ["pending", "approved", "packaging", "shipped", "delivered", "rejected"] as const;
 const OrderStatusSchema = z.enum(ORDER_STATUS_VALUES);
+
+const UpdateOrderStatusSchema = z.object({
+  status: OrderStatusSchema,
+  trackingId: z.string().optional(),
+  notes: z.string().optional(),
+  expectedVersion: z.number().int().optional(),
+});
 
 // PATCH /api/orders/[id]/status — Update order status (admin only)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
+
   const admin = await checkAuth();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,16 +30,14 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status: rawStatus, trackingId, notes, expectedVersion } = body;
-
-    const statusParsed = OrderStatusSchema.safeParse(rawStatus);
-    if (!statusParsed.success) {
+    const parsed = UpdateOrderStatusSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid status value. Must be one of: " + ORDER_STATUS_VALUES.join(", ") },
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
         { status: 400 },
       );
     }
-    const status = statusParsed.data;
+    const { status, trackingId, notes, expectedVersion } = parsed.data;
 
     const order = await prisma.order.findUnique({
       where: { id },

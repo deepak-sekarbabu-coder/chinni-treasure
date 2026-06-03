@@ -9,7 +9,11 @@ export function createNextRequest(
   const { method = "GET", body, headers } = options ?? {};
   const init: RequestInit & { headers: Record<string, string> } = {
     method,
-    headers: { ...headers },
+    headers: {
+      Host: "localhost:3000",
+      Origin: "http://localhost:3000",
+      ...headers,
+    },
   };
   if (body !== undefined) {
     init.body = JSON.stringify(body);

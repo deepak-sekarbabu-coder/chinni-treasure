@@ -4,6 +4,36 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { checkAuth } from "@/src/lib/auth";
 import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
+import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { z } from "zod";
+import { INDIAN_STATES } from "@/src/lib/constants";
+
+const CreateOrderSchema = z.object({
+  customerName: z.string().min(1, "Customer name is required"),
+  customerEmail: z.string().email("Invalid email address"),
+  customerPhone: z.string().regex(/^\d{10}$/, "Phone must be exactly 10 digits"),
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  stateCode: z
+    .string()
+    .length(2, "State code must be 2 characters")
+    .refine(
+      (code) => INDIAN_STATES.some((s) => s.code === code),
+      "Invalid state code",
+    ),
+  postalCode: z.string().regex(/^\d{6}$/, "Postal code must be 6 digits"),
+  transactionId: z.string().min(1, "Transaction ID is required"),
+  customerNotes: z.string().optional(),
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1, "Product ID is required"),
+        quantity: z.number().int().positive("Quantity must be a positive integer"),
+      }),
+    )
+    .min(1, "At least one item is required"),
+});
 
 // GET /api/orders — List paginated orders (admin only)
 export async function GET(request: Request) {
@@ -47,29 +77,36 @@ export async function GET(request: Request) {
 
 // POST /api/orders — Place a new order
 export async function POST(request: Request) {
-  try {
-    const body = await request.json() as Record<string, unknown>;
-    const customerName = body["customerName"] as string | undefined;
-    const customerEmail = body["customerEmail"] as string | undefined;
-    const customerPhone = body["customerPhone"] as string | undefined;
-    const addressLine1 = body["addressLine1"] as string | undefined;
-    const addressLine2 = body["addressLine2"] as string | undefined;
-    const city = body["city"] as string | undefined;
-    const stateCode = body["stateCode"] as string | undefined;
-    const postalCode = body["postalCode"] as string | undefined;
-    const transactionId = body["transactionId"] as string | undefined;
-    const customerNotes = body["customerNotes"] as string | undefined;
-    const items = body["items"] as Array<{ id: string; quantity: number }> | undefined;
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
 
-    // Validate required fields
-    if (!items?.length || !customerName || !customerEmail || !customerPhone || !addressLine1 || !city || !stateCode || !postalCode || !transactionId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  try {
+    const body = await request.json();
+    const parsed = CreateOrderSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
     }
+    const {
+      customerName,
+      customerEmail,
+      customerPhone,
+      addressLine1,
+      addressLine2,
+      city,
+      stateCode,
+      postalCode,
+      transactionId,
+      customerNotes,
+      items,
+    } = parsed.data;
 
     const order = await prisma.$transaction(
       async (tx) => {
         // Re-read products inside the transaction for fresh data
-        const productIds = items.map((i: { id: string }) => i.id);
+        const productIds = items.map((i) => i.id);
         const products = await tx.product.findMany({
           where: { id: { in: productIds }, isActive: true },
         });
@@ -114,12 +151,12 @@ export async function POST(request: Request) {
             orderNumber: generateOrderNumber(),
             customerName: sanitize(customerName),
             customerEmail: sanitize(customerEmail),
-            customerPhone: customerPhone.replace(/\D/g, ""),
+            customerPhone,
             addressLine1: sanitize(addressLine1),
             addressLine2: addressLine2 ? sanitize(addressLine2) : null,
             city: sanitize(city),
             stateCode,
-            postalCode: postalCode.replace(/\D/g, ""),
+            postalCode,
             countryCode: "IN",
             subtotal,
             shippingCost,

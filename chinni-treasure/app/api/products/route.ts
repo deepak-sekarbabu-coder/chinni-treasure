@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
+import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod";
 import { ProductBadge } from "@prisma/client";
 
@@ -53,6 +54,9 @@ export async function GET(request: Request) {
 
 // POST /api/products — Create a new product (admin only)
 export async function POST(request: Request) {
+  const csrfError = validateCsrfOrigin(request);
+  if (csrfError) return csrfError;
+
   const admin = await checkAuth();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
