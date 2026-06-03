@@ -154,22 +154,18 @@ The entire page is `"use client"` with no server component wrapper, missing SSR 
 
 ## 5. Accessibility Issues
 
-### 5.1 Modals Lack Focus Trapping
+### ~~5.1 Modals Lack Focus Trapping~~ ✅ FIXED
 
-**Files:** `src/components/order/OrderDetailModal.tsx`, `app/admin/page.tsx` (tracking + delete modals)
+**Files:** `src/components/order/OrderDetailModal.tsx`, `app/admin/page.tsx` (tracking + delete modals), `src/lib/useFocusTrap.ts`
 
 **Fixed:**
 - ✅ `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on all modals
 - ✅ Escape key handler on all modals
 - ✅ Close button with `modal-close` class
 - ✅ Body scroll lock while modal is open
-
-**Still missing:**
-- No focus trapping — tab can escape behind the modal
-- Focus is not returned to the trigger element on close
-- No `ref` management for initial focus
-
-**Fix:** Implement focus trap with `useRef` + keyboard event handler, or use a headless modal library.
+- ✅ Focus trapping via `useFocusTrap()` hook — Tab/Shift+Tab cycles within modal
+- ✅ Focus returned to trigger element on close
+- ✅ Auto-focus first focusable element on open
 
 ### ~~5.2 Admin Dashboard Tabs Lack ARIA Roles~~ ✅ FIXED
 
@@ -426,6 +422,6 @@ The `.env` file contains a real Neon PostgreSQL connection string with an `npg_`
 |---|---|---|
 | **Critical** | 2 | Hardcoded JWT secret (1.2), Orders API auth bypass (2.6) |
 | **High** | 4 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1) |
-| **Medium** | 7 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), lazy tab fetching (6.2) |
+| **Medium** | 6 | no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), lazy tab fetching (6.2) |
 | **Low** | ~10 | Unused dependencies (10), commit credentials risk (12.6), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
-| **Fixed** | 23 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), unsafe as casts (3.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), Excel export (7.2), product badges (7.3), categoryId bug (9.3), product sanitization (8.3), order Zod validation (8.1), login page inline styles (9.2), track orderId validation (8.2) |
+| **Fixed** | 24 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), unsafe as casts (3.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), modal focus trapping (5.1), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), Excel export (7.2), product badges (7.3), categoryId bug (9.3), product sanitization (8.3), order Zod validation (8.1), login page inline styles (9.2), track orderId validation (8.2) |

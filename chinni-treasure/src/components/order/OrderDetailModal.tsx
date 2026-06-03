@@ -6,6 +6,7 @@ import {
   ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
 } from "@/src/lib/constants";
+import { useFocusTrap } from "@/src/lib/useFocusTrap";
 
 interface OrderItem {
   id: string;
@@ -45,6 +46,8 @@ interface Props {
 }
 
 export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning }: Props) {
+  const trapRef = useFocusTrap(true);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -70,7 +73,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
     : null;
 
   return (
-    <div className="modal-overlay active" onClick={onClose}>
+    <div className="modal-overlay active" ref={trapRef} onClick={onClose}>
       <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="order-detail-modal-title" onClick={(e) => e.stopPropagation()}>
         <div className={`modal-loading-overlay ${isTransitioning ? "active" : ""}`}>
           <div className="modal-loading-spinner"></div>

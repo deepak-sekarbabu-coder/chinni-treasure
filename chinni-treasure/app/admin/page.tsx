@@ -10,6 +10,7 @@ import AdminStatCard from "@/src/components/ui/AdminStatCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
+import { useFocusTrap } from "@/src/lib/useFocusTrap";
 interface Stats {
   totalOrders: number;
   pendingOrders: number;
@@ -149,6 +150,9 @@ export default function AdminPage() {
     productId: "",
     productName: "",
   });
+
+  const trackingTrapRef = useFocusTrap(trackingModal.open);
+  const deleteTrapRef = useFocusTrap(deleteConfirm.open);
 
   useEffect(() => {
     async function checkAuth() {
@@ -990,7 +994,7 @@ export default function AdminPage() {
 
       {/* Tracking ID Modal */}
       {trackingModal.open && (
-        <div className="modal-overlay active" onClick={() => setTrackingModal({ orderId: "", open: false })} onKeyDown={(e) => { if (e.key === "Escape") setTrackingModal({ orderId: "", open: false }); }}>
+        <div className="modal-overlay active" ref={trackingTrapRef} onClick={() => setTrackingModal({ orderId: "", open: false })} onKeyDown={(e) => { if (e.key === "Escape") setTrackingModal({ orderId: "", open: false }); }}>
           <div className="modal-content modal-content-sm" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 id="tracking-modal-title">Enter Tracking ID</h2>
@@ -1027,7 +1031,7 @@ export default function AdminPage() {
 
       {/* Product Delete Confirmation Modal */}
       {deleteConfirm.open && (
-        <div className="modal-overlay active" onClick={closeDeleteConfirm} onKeyDown={(e) => { if (e.key === "Escape") closeDeleteConfirm(); }}>
+        <div className="modal-overlay active" ref={deleteTrapRef} onClick={closeDeleteConfirm} onKeyDown={(e) => { if (e.key === "Escape") closeDeleteConfirm(); }}>
           <div className="modal-content modal-content-md" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 id="delete-modal-title">Confirm Delete</h2>
