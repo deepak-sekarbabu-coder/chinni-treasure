@@ -44,6 +44,9 @@ export async function GET(request: Request) {
     let orders: (Order & { items: OrderItem[] })[] = [];
 
     if (orderId) {
+      if (orderId.length > 36 || !/^[a-zA-Z0-9-]+$/.test(orderId)) {
+        return NextResponse.json({ error: "Invalid order ID format" }, { status: 400 });
+      }
       orders = await prisma.order.findMany({
         where: { orderNumber: { contains: orderId, mode: "insensitive" } },
         include: { items: true },

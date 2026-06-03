@@ -41,46 +41,20 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--black)",
-        padding: "24px",
-      }}
-    >
-      <div
-        className="admin-login-card"
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          background: "var(--near-black)",
-          border: "1px solid rgba(212, 175, 55, 0.15)",
-          borderRadius: "8px",
-          padding: "48px 36px",
-        }}
-      >
-        <div style={{ textAlign: "center", marginBottom: "36px" }}>
-          <h1
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "1.6rem",
-              color: "var(--gold)",
-              marginBottom: "8px",
-            }}
-          >
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-card-title">
+          <h1 className="login-heading">
             Admin Login
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+          <p className="login-subtitle">
             Chinni Treasure — <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span> <span className="brand-heart">❤</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} aria-label="Admin login form">
           <div className="form-group">
-            <label htmlFor="username" style={{ color: "var(--cream)" }}>
+            <label htmlFor="username" className="login-label">
               Username
             </label>
             <input
@@ -89,12 +63,12 @@ export default function AdminLoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter username"
-              style={{ background: "var(--dark-gray)", borderColor: "var(--charcoal)", color: "var(--cream)" }}
+              className="login-input-dark"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password" style={{ color: "var(--cream)" }}>
+            <label htmlFor="password" className="login-label">
               Password
             </label>
             <input
@@ -103,45 +77,24 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
-              style={{ background: "var(--dark-gray)", borderColor: "var(--charcoal)", color: "var(--cream)" }}
+              className="login-input-dark"
             />
           </div>
 
           {error && (
-            <div
-              style={{
-                padding: "12px 16px",
-                background: "rgba(231, 76, 60, 0.1)",
-                color: "var(--error)",
-                borderRadius: "4px",
-                fontSize: "0.85rem",
-                marginBottom: "16px",
-                textAlign: "center",
-              }}
-            >
+            <div className="login-error" aria-live="assertive">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: "100%", minHeight: "52px", position: "relative" }}
+            className="btn btn-primary btn-full btn-tall"
             disabled={loading}
           >
             {loading ? (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
-                <span
-                  style={{
-                    width: "18px",
-                    height: "18px",
-                    border: "2px solid rgba(0,0,0,0.2)",
-                    borderTopColor: "var(--black)",
-                    borderRadius: "50%",
-                    animation: "spin 0.6s linear infinite",
-                    display: "inline-block",
-                  }}
-                ></span>
+              <span className="flex items-center gap-8">
+                <span className="btn-spinner-inline"></span>
                 Signing in...
               </span>
             ) : (

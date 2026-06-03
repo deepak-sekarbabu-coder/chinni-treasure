@@ -344,6 +344,32 @@ export default function AdminPage() {
     router.push("/admin/login");
   }
 
+  async function handleExport() {
+    try {
+      const res = await fetch("/api/export");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to export data", "error");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="?(.+?)"?$/);
+      a.download = match ? match[1] : `chinni-treasure-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Export downloaded successfully", "success");
+    } catch (err) {
+      console.error("Export failed:", err);
+      showToast("Failed to export data", "error");
+    }
+  }
+
   async function handleProductSave(e: React.FormEvent) {
     e.preventDefault();
     const isEdit = !!productForm.id;
@@ -478,6 +504,9 @@ export default function AdminPage() {
             <Link href="/docs" className="btn btn-secondary btn-link btn-lg">
               API Docs
             </Link>
+            <button className="btn btn-secondary btn-lg" onClick={handleExport}>
+              Export Excel
+            </button>
             <button className="btn btn-secondary btn-lg" onClick={handleLogout}>
               Logout
             </button>
@@ -889,7 +918,7 @@ export default function AdminPage() {
                           </td>
                           <td>
                             {p.badge ? (
-                              <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
+                              <span className="status-badge pending badge-tiny">{p.badge}</span>
                             ) : (
                               <span className="text-muted">—</span>
                             )}
@@ -962,7 +991,7 @@ export default function AdminPage() {
       {/* Tracking ID Modal */}
       {trackingModal.open && (
         <div className="modal-overlay active" onClick={() => setTrackingModal({ orderId: "", open: false })} onKeyDown={(e) => { if (e.key === "Escape") setTrackingModal({ orderId: "", open: false }); }}>
-          <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "480px" }}>
+          <div className="modal-content modal-content-sm" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 id="tracking-modal-title">Enter Tracking ID</h2>
               <button className="modal-close" onClick={() => setTrackingModal({ orderId: "", open: false })}>✕</button>
@@ -999,7 +1028,7 @@ export default function AdminPage() {
       {/* Product Delete Confirmation Modal */}
       {deleteConfirm.open && (
         <div className="modal-overlay active" onClick={closeDeleteConfirm} onKeyDown={(e) => { if (e.key === "Escape") closeDeleteConfirm(); }}>
-          <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
+          <div className="modal-content modal-content-md" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 id="delete-modal-title">Confirm Delete</h2>
               <button className="modal-close" onClick={closeDeleteConfirm}>✕</button>

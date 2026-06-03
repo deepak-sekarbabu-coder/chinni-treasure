@@ -763,6 +763,16 @@ a {
   vertical-align: middle;
 }
 
+.btn-spinner-inline {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: var(--black);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
 .product-action-btn.loading {
   pointer-events: none;
   opacity: 0.7;
@@ -2544,12 +2554,78 @@ a {
 .mt-16 { margin-top: 16px; }
 .mt-24 { margin-top: 24px; }
 .p-40 { padding: 40px; }
+.mb-36 { margin-bottom: 36px; }
+.mb-40 { margin-bottom: 40px; }
 
 /* Buttons */
 .btn-lg { padding: 10px 24px; }
 .btn-sm { padding: 8px 16px; font-size: 0.65rem; }
 .btn-xs { padding: 4px 12px; font-size: 0.65rem; }
 .btn-link { text-decoration: none; }
+.btn-full { width: 100%; }
+.btn-tall { min-height: 52px; }
+
+/* Modal widths */
+.modal-content-sm { max-width: 480px; }
+.modal-content-md { max-width: 520px; }
+
+.badge-tiny { font-size: 0.6rem; }
+
+/* Login page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--near-black);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 8px;
+  padding: 48px 36px;
+}
+
+.login-card-title {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.login-heading {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.login-label {
+  color: var(--cream);
+}
+
+.login-input-dark {
+  background: var(--dark-gray);
+  border-color: var(--charcoal);
+  color: var(--cream);
+}
+
+.login-error {
+  padding: 12px 16px;
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--error);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
 
 /* Filters */
 .filters-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
