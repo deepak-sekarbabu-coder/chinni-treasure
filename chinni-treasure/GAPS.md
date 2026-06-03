@@ -91,13 +91,18 @@ The `GET /api/orders/[id]` endpoint has **no auth check** and no rate limiting. 
 
 ## 3. Type Safety Issues
 
-### 3.1 All API Routes Use Unsafe `as` Casts on Request Bodies
+### ~~3.1 All API Routes Use Unsafe `as` Casts on Request Bodies~~ ✅ FIXED
 
-**Files:** All route.ts files under `app/api/`
+**Files:** `app/api/orders/route.ts`, `app/api/auth/login/route.ts`, `app/api/orders/[id]/status/route.ts`
 
-Every endpoint casts `request.json()` to `Record<string, unknown>` and extracts fields with `as string`. A malformed body with wrong types (e.g., `customerName: 123`) silently passes truthiness checks.
+Every endpoint now validates request bodies with Zod schemas before access:
+- `app/api/orders/route.ts`: `CreateOrderSchema` validates customer fields (email, phone, PIN, state code, items)
+- `app/api/auth/login/route.ts`: `LoginSchema` validates username and password
+- `app/api/products/route.ts` + `app/api/products/[id]/route.ts`: Already had Zod schemas
+- `app/api/orders/[id]/status/route.ts`: `UpdateOrderStatusSchema` validates status, trackingId, notes, expectedVersion
+- Routes with no request body (GET/DELETE only) are unaffected.
 
-**Fix:** Use Zod schemas (already in dependencies) to validate request bodies. This would catch type mismatches at the boundary.
+**Remaining:** `app/api/orders/route.ts:51` still casts `searchParams.get("status") as OrderStatus` in the GET handler — query params remain unchecked at the boundary.
 
 ### ~~3.2 `checkAuth` Duplicated and Weakly Typed~~ ✅ FIXED (DRY)
 
@@ -259,13 +264,11 @@ No UI button, no API route. The feature is invisible to users.
 
 ## 8. Missing Validation & Sanitization
 
-### 8.1 No Zod Validation on Order Request Body
+### ~~8.1 No Zod Validation on Order Request Body~~ ✅ FIXED
 
-**File:** `app/api/orders/route.ts:55-73`
+**File:** `app/api/orders/route.ts`
 
-Fields are extracted via unsafe casts with only truthiness checks. No schema validation for email format, phone digits, PIN code format, valid state code, item UUIDs, positive prices/quantities.
-
-**Fix:** Define and use a Zod schema for order creation payload (Zod is already in dependencies).
+Now validated by `CreateOrderSchema` which enforces email format, 10-digit phone, 6-digit PIN, valid Indian state code, positive item quantities, and required fields.
 
 ### 8.2 Track API — Partial Input Validation
 
@@ -394,11 +397,9 @@ The `remaining` count is returned but never exposed via a response header like `
 
 `sharp` is listed as a `devDependency` but Next.js relies on it for production image optimization. It should be in `dependencies`.
 
-### 12.2 No CORS Headers on Public API Routes
+### ~~12.2 CORS Headers on Public API Routes~~ ✅ FIXED
 
-**Files:** `app/api/track/route.ts`, `app/api/orders/route.ts` (public POST)
-
-No `Access-Control-Allow-Origin` headers. Requests from different origins could be blocked.
+CORS headers configured centrally in `next.config.ts` for `/api/track` (GET) and `/api/orders` (POST). Uses `process.env.ALLOWED_ORIGIN` with `*` fallback for development. Includes preflight caching (`Access-Control-Max-Age: 86400`).
 
 ### 12.3 No CSRF Protection
 
@@ -429,7 +430,7 @@ The `.env` file contains a real Neon PostgreSQL connection string with an `npg_`
 | Priority | Count | Key Items |
 |---|---|---|
 | **Critical** | 2 | Hardcoded JWT secret (1.2), Orders API auth bypass (2.6) |
-| **High** | 5 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1), no Zod validation on orders (8.1) |
+| **High** | 4 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1) |
 | **Medium** | 9 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), login page inline styles (9.2), commit credentials risk (12.6), lazy tab fetching (6.2) |
 | **Low** | ~10 | Unused dependencies (10), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
-| **Fixed** | 18 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3) |
+| **Fixed** | 20 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), delete product errors (2.7), shared checkAuth (3.2/9.1), unsafe as casts (3.1), status enum validation (3.3), NaN price (3.4), track API casts (3.5), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3), order Zod validation (8.1) |
