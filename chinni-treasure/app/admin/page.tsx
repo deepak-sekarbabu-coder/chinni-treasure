@@ -71,6 +71,7 @@ interface Product {
   stockQuantity: number;
   badge: string | null;
   category: { name: string } | null;
+  categoryId: number | null;
   sku: string | null;
   isActive: boolean;
   createdAt: string;
@@ -432,7 +433,7 @@ export default function AdminPage() {
       stockQuantity: product.stockQuantity.toString(),
       imageUrl: product.imageUrl || "",
       badge: product.badge || "",
-      categoryId: product.category?.name ? "1" : "",
+      categoryId: product.categoryId ? product.categoryId.toString() : "",
     });
     setShowProductForm(true);
   }
