@@ -365,6 +365,9 @@ export default function AdminPage() {
           isEdit ? `Product "${productForm.name}" updated successfully` : `Product "${productForm.name}" created successfully`,
           "success"
         );
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to save product", "error");
       }
     } catch (err) {
       console.error("Failed to save product:", err);
@@ -954,10 +957,10 @@ export default function AdminPage() {
 
       {/* Tracking ID Modal */}
       {trackingModal.open && (
-        <div className="modal-overlay active" onClick={() => setTrackingModal({ orderId: "", open: false })}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "480px" }}>
+        <div className="modal-overlay active" onClick={() => setTrackingModal({ orderId: "", open: false })} onKeyDown={(e) => { if (e.key === "Escape") setTrackingModal({ orderId: "", open: false }); }}>
+          <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "480px" }}>
             <div className="modal-header">
-              <h2>Enter Tracking ID</h2>
+              <h2 id="tracking-modal-title">Enter Tracking ID</h2>
               <button className="modal-close" onClick={() => setTrackingModal({ orderId: "", open: false })}>✕</button>
             </div>
             <div className="modal-body">
@@ -973,6 +976,7 @@ export default function AdminPage() {
                   onChange={(e) => setTrackingId(e.target.value)}
                   placeholder="e.g. TRACK-123456"
                   style={{ background: "var(--cream-light)" }}
+                  autoFocus
                 />
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
@@ -990,10 +994,10 @@ export default function AdminPage() {
 
       {/* Product Delete Confirmation Modal */}
       {deleteConfirm.open && (
-        <div className="modal-overlay active" onClick={closeDeleteConfirm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
+        <div className="modal-overlay active" onClick={closeDeleteConfirm} onKeyDown={(e) => { if (e.key === "Escape") closeDeleteConfirm(); }}>
+          <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
             <div className="modal-header">
-              <h2>Confirm Delete</h2>
+              <h2 id="delete-modal-title">Confirm Delete</h2>
               <button className="modal-close" onClick={closeDeleteConfirm}>✕</button>
             </div>
             <div className="modal-body">
@@ -1025,7 +1029,7 @@ export default function AdminPage() {
                   {loadingProductId === deleteConfirm.productId && <span className="btn-spinner"></span>}
                   {loadingProductId === deleteConfirm.productId ? "Deleting..." : "Yes, Delete Product"}
                 </button>
-                <button className="btn btn-secondary" onClick={closeDeleteConfirm}>
+                <button className="btn btn-secondary" onClick={closeDeleteConfirm} autoFocus>
                   Keep Product
                 </button>
               </div>

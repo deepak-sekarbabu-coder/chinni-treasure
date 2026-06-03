@@ -71,13 +71,13 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
 
   return (
     <div className="modal-overlay active" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="order-detail-modal-title" onClick={(e) => e.stopPropagation()}>
         <div className={`modal-loading-overlay ${isTransitioning ? "active" : ""}`}>
           <div className="modal-loading-spinner"></div>
           <div className="modal-loading-text">Updating Order Status...</div>
         </div>
         <div className="modal-header">
-          <h2>Order {order.orderNumber}</h2>
+          <h2 id="order-detail-modal-title">Order {order.orderNumber}</h2>
           <button className="modal-close" onClick={onClose} disabled={isTransitioning}>
             ✕
           </button>
