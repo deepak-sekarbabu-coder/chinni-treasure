@@ -1,22 +1,22 @@
 # Chinni Treasure — Gaps Analysis
 
 > Generated from codebase review of `chinni-treasure/` at `C:\Projects\website\chinni-treasure`
+>
+> Last updated: June 3, 2026
 
 ---
 
 ## 1. Critical Security Vulnerabilities
 
-### 1.1 Dual JWT Libraries — Divergent Signing May Break Auth
+### ~~1.1 Dual JWT Libraries — Divergent Signing May Break Auth~~ ✅ FIXED
 
-**Files:** `package.json` (jsonwebtoken v9.0.3 + jose v6.2.3), `src/lib/auth.ts` (uses jsonwebtoken), `proxy.ts` (uses jose)
+`jsonwebtoken` has been removed from `package.json`. `src/lib/auth.ts` now implements JWT natively using the Web Crypto API (`crypto.subtle`). `proxy.ts` uses `jose`. Both use HMAC-SHA256 with the same `JWT_SECRET`.
 
-`src/lib/auth.ts` signs tokens with `jsonwebtoken` using a raw string secret, while `proxy.ts` verifies with `jose` using `TextEncoder.encode()`. If `JWT_SECRET` contains non-ASCII or special characters, the derived HMAC keys will differ, causing tokens signed by the API to be rejected by the middleware, or vice versa. This is a **production-breaking bug** that could manifest inconsistently.
-
-**Fix:** Pick one library. Remove `jsonwebtoken` + `@types/jsonwebtoken`. Rewrite `src/lib/auth.ts` to use `jose` (which works in both Edge and Node.js runtimes).
+**Remaining concern:** Two separate JWT implementations (`crypto.subtle` in `auth.ts` vs `jose` in `proxy.ts`) could diverge if one is updated without the other. Consider consolidating to a single library.
 
 ### 1.2 Hardcoded Fallback JWT Secret
 
-**Files:** `proxy.ts:6`, `src/lib/auth.ts:5`
+**Files:** `proxy.ts:5`, `src/lib/auth.ts:29`
 
 ```ts
 process.env.JWT_SECRET || "dev-secret"
@@ -26,25 +26,18 @@ If `JWT_SECRET` is unset in production (misconfiguration), both systems silently
 
 **Fix:** Throw on missing secret in production. Remove hardcoded fallback.
 
-### 1.3 No Input Sanitization on Product Create/Update (XSS)
+### ~~1.3 No Input Sanitization on Product Create/Update (XSS)~~ ✅ FIXED
 
-**Files:** `app/api/products/route.ts:38-58`, `app/api/products/[id]/route.ts:23-46`
+`sanitize()` from `src/lib/sanitize.ts` is now applied to `name` and `description` in:
+- `app/api/products/route.ts` (POST create)
+- `app/api/products/[id]/route.ts` (PUT update)
+- `app/api/orders/route.ts` (POST — customer fields)
 
-Product `name` and `description` are stored and rendered **without sanitization**. The `sanitize()` utility exists (`src/lib/sanitize.ts`) but is never called on product fields. These values render in the catalogue page and admin dashboard — an admin could inject HTML/script tags.
+### ~~1.4 Track API Phone Search Uses `contains` (Data Leak)~~ ✅ FIXED
 
-**Fix:** Apply `sanitize()` to all text fields in product create/update endpoints.
+**File:** `app/api/track/route.ts:52`
 
-### 1.4 Track API Phone Search Uses `contains` (Data Leak)
-
-**File:** `app/api/track/route.ts:52-57`
-
-```ts
-where: { customerPhone: { contains: cleanPhone } },
-```
-
-Using `contains` (LIKE) for phone matching enables prefix/suffix brute-force probing. An attacker could enumerate partial phone numbers and leak customer order data.
-
-**Fix:** Use exact match (`equals`) instead of `contains`. Validate input is exactly 10 digits.
+Phone search now uses exact match: `customerPhone: cleanPhone`. Phone input is validated to exactly 10 digits. Order number search still uses `contains` on `orderNumber`, which is acceptable for order lookup.
 
 ### 1.5 Rate Limiter Is Per-Instance (Ineffective in Serverless)
 
@@ -58,43 +51,27 @@ The rate limiter uses an in-memory `Map`. On Vercel or multi-instance deployment
 
 ## 2. Missing / Incomplete Error Handling
 
-### 2.1 Admin Dashboard — Silent Failures on All Fetches
+### ~~2.1 Admin Dashboard — Silent Failures on All Fetches~~ ✅ FIXED
 
-**File:** `app/admin/page.tsx:179-183, 209-213, 224-228`
+`fetchStats()`, `fetchOrders()`, and `fetchProducts()` now show toast notifications on failure via `showToast("Failed to load stats", "error")` etc.
 
-The catch blocks in `fetchStats()`, `fetchOrders()`, and `fetchProducts()` only `console.error`. Users see no toast, no error state, and no retry button. The dashboard appears broken with no feedback.
+### ~~2.2 Admin Dashboard — No Response Handling for Status Update 409/400~~ ✅ FIXED
 
-**Fix:** Show an error toast and a dedicated error UI with a Retry button on failure.
+Non-ok responses from status update API now parse `res.json()` and call `showToast(data.error, "error")`.
 
-### 2.2 Admin Dashboard — No Response Handling for Status Update 409/400
+### ~~2.3 Admin Dashboard — `handleSaveProduct` Ignores API Errors~~ ✅ FIXED
 
-**File:** `app/admin/page.tsx:249-263, 273-290, 298-313`
+`handleProductSave` now has an `else` branch that shows `showToast(data.error || "Failed to save product", "error")`.
 
-When `fetch('/api/orders/${orderId}/status', ...)` returns `!res.ok` (e.g., 409 version conflict), the catch block does not run. The user sees no feedback.
+### ~~2.4 Checkout — Unhandled Non-JSON Response~~ ✅ FIXED
 
-**Fix:** Read `res.json()` in the non-ok path and call `showToast(data.error, "error")`.
-
-### 2.3 Admin Dashboard — `handleSaveProduct` Ignores API Errors
-
-**File:** `app/admin/page.tsx:344-353`
-
-If product creation/update returns 400 or 500, there is no `else` branch. The form stays open with no error message.
-
-**Fix:** Add an `else` branch that displays the server error.
-
-### 2.4 Checkout — Unhandled Non-JSON Response
-
-**File:** `app/order/page.tsx:116-118`
-
-If `res.json()` fails (e.g., 502 HTML response), an unhandled error is thrown.
-
-**Fix:** Wrap `res.json()` in try-catch with a generic fallback message.
+`app/order/page.tsx` now wraps the fetch in try-catch with `err instanceof Error ? err.message : "Something went wrong"`.
 
 ### 2.5 Admin Dashboard — Charts Section Hidden When Empty
 
-**File:** `app/admin/page.tsx:463-486, 489`
+**File:** `app/admin/page.tsx:463-486`
 
-Stats section only renders when `stats` is non-null. Charts section hides when `chartData` is empty. If there are no orders or stats fail to load, sections disappear silently.
+Charts section only renders when `chartData.length > 0` or `chartsLoading`. If stats fail to load or there are no orders, sections disappear silently.
 
 **Fix:** Always show sections (with "No data" placeholder) even when empty or errored.
 
@@ -105,6 +82,10 @@ Stats section only renders when `stats` is non-null. Charts section hides when `
 The `GET /api/orders/[id]` endpoint has **no auth check** and no rate limiting. Anyone with a valid UUID can fetch any order's full details (name, address, phone, items, notes).
 
 **Fix:** Add auth or a token-based access check for individual order lookup.
+
+### ~~2.7 Product Delete — No Error Handling for Non-OK Responses~~ ✅ FIXED
+
+`handleProductDeleteConfirmed()` now has an `else` branch that parses the error response and shows `showToast(data.error || "Failed to delete product", "error")`.
 
 ---
 
@@ -118,13 +99,11 @@ Every endpoint casts `request.json()` to `Record<string, unknown>` and extracts 
 
 **Fix:** Use Zod schemas (already in dependencies) to validate request bodies. This would catch type mismatches at the boundary.
 
-### 3.2 `checkAuth` Duplicated and Weakly Typed
+### ~~3.2 `checkAuth` Duplicated and Weakly Typed~~ ✅ FIXED (DRY)
 
-**Files:** `app/api/orders/route.ts:8-12`, `app/api/orders/[id]/status/route.ts:5-9`, `app/api/products/route.ts:5-9`, `app/api/products/[id]/route.ts:5-9`, `app/api/stats/route.ts:21-25`
+`checkAuth` is now exported from `src/lib/auth.ts` and imported in all route files. However, the return type still uses `session as unknown as AdminSession` — an unchecked cast.
 
-The same 5-line `checkAuth()` function is copy-pasted into every route file. The return type `as { id: string; username: string; role: string }` is unchecked — TypeScript trusts the cast even if the JWT payload changes.
-
-**Fix:** Export a shared `checkAuth` from `src/lib/auth.ts` with a proper Zod-validated session schema.
+**Remaining:** Add a Zod-validated session schema to verify JWT payload shape.
 
 ### 3.3 Order Status Type Not Validated Server-Side
 
@@ -164,7 +143,7 @@ The cart starts as `[]` and hydrates asynchronously after mount. SSR always sees
 
 ### 4.2 Server Cart Cookie Exists but Is Never Used
 
-**File:** `src/lib/cart-cookie.ts` (entire file — 40 lines of dead code)
+**File:** `src/lib/cart-cookie.ts` (entire file — dead code)
 
 AGENTS.md documents: "Server Cart Cookie enabling SSR cart hydration." The file defines `getCartFromCookies()`, `serializeCartCookie()`, and `getCartCookieOptions()` — but **nothing in the codebase calls these functions**. Not on order placement, not on page load, not in the layout.
 
@@ -182,38 +161,47 @@ The entire page is `"use client"` with no server component wrapper, missing SSR 
 
 ## 5. Accessibility Issues
 
-### 5.1 Modals Lack Focus Trapping and ARIA Attributes
+### 5.1 Modals Lack Focus Trapping
 
-**Files:** `app/admin/page.tsx:941-1020`, `app/track/page.tsx:284-286`
+**Files:** `src/components/order/OrderDetailModal.tsx`, `app/admin/page.tsx` (tracking + delete modals)
 
+**Fixed:**
+- ✅ `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on all modals
+- ✅ Escape key handler on all modals
+- ✅ Close button with `modal-close` class
+- ✅ Body scroll lock while modal is open
+
+**Still missing:**
 - No focus trapping — tab can escape behind the modal
-- No `aria-modal`, `role="dialog"`, or `aria-labelledby`
-- No Escape key handler on modal overlays
 - Focus is not returned to the trigger element on close
+- No `ref` management for initial focus
 
-### 5.2 Admin Dashboard Tabs Lack ARIA Roles
+**Fix:** Implement focus trap with `useRef` + keyboard event handler, or use a headless modal library.
 
-**File:** `app/admin/page.tsx:568-577`
+### ~~5.2 Admin Dashboard Tabs Lack ARIA Roles~~ ✅ FIXED
 
-Tab buttons lack `role="tablist"`, `role="tab"`, and `aria-selected` attributes.
+Tabs now have `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`, and `aria-labelledby`.
 
-### 5.3 Toasts Are Not Dismissible
+### ~~5.3 Toasts Are Not Dismissible~~ ✅ FIXED
 
-**File:** `src/components/ui/ToastProvider.tsx:41-54`
+Toasts now have:
+- ✅ Close button (`toast-close`) with `aria-label="Dismiss notification"`
+- ✅ `role="alert"` and `tabIndex={0}`
+- ✅ Max 5 visible (oldest auto-removed)
+- ✅ Auto-dismiss after 5 seconds
+- ✅ Animated exit transition
 
-Toasts have `aria-live="polite"` but no close button, no focusability, and no upper limit on visible count. Users cannot read them at their own pace.
+### ~~5.4 Animations Ignore `prefers-reduced-motion`~~ ✅ FIXED
 
-### 5.4 Animations Ignore `prefers-reduced-motion`
-
-**File:** `app/admin/page.tsx:477-479` (and likely other places)
-
-`@media (prefers-reduced-motion: no-preference)` is not respected anywhere despite being required in AGENTS.md.
+Comprehensive `@media (prefers-reduced-motion: reduce)` rules in `globals.css` disable all animations/transitions, with exceptions for functional motion (spinner, scroll indicator, focus outlines).
 
 ### 5.5 Admin Login Error Not Announced to Screen Readers
 
 **File:** `app/admin/login/page.tsx:110-124`
 
 When an error appears, focus is not moved to it. No `aria-live` region on the error container.
+
+**Fix:** Add `aria-live="assertive"` to the error container and move focus to it.
 
 ---
 
@@ -239,21 +227,21 @@ Stats, orders, and products are fetched simultaneously on every page load, even 
 
 **Fix:** Lazy-fetch data based on active tab.
 
-### 6.3 Product Catalogue Has No Pagination
+### 6.3 Product Catalogue Has No Customer-Facing Pagination
 
 **File:** `app/catalogue-content.tsx:97-111`
 
-All products render in a flat grid with no pagination, search, or filter. Breaks down with 100+ products.
+All products render in a flat grid with no pagination, search, or filter. Breaks down with 100+ products. Note: Admin API and UI now have pagination for both orders and products.
 
-**Fix:** Add pagination, search, and category filtering.
+**Fix:** Add pagination, search, and category filtering to the customer-facing catalogue.
 
 ### 6.4 Non-Memoized Callbacks in Admin Dashboard
 
 **File:** `app/admin/page.tsx:169-228`
 
-Functions like `fetchStats`, `fetchOrders`, `handleProductSave`, etc. are recreated on every render.
+`fetchStats`, `fetchOrders`, `fetchProducts` are recreated on every render. `handleAdvance` and `handleReject` are properly memoized with `useCallback`.
 
-**Fix:** Wrap with `useCallback` where passed as props.
+**Fix:** Wrap remaining functions with `useCallback` where passed as props.
 
 ---
 
@@ -269,19 +257,15 @@ AGENTS.md says "Interactive Analytics powered by Chart.js." But `app/admin/page.
 
 ### 7.2 Excel Export Script Exists but Not Exposed
 
-**File:** `scripts/export-to-excel.ts` (224 lines of dead code)
+**File:** `scripts/export-to-excel.ts` (dead code)
 
 No UI button, no API route. The feature is invisible to users.
 
 **Fix:** Add a download button in admin dashboard or remove.
 
-### 7.3 Product Badge Not Displayed on Catalogue
+### ~~7.3 Product Badge Not Displayed on Catalogue~~ ✅ FIXED
 
-**File:** `app/admin/page.tsx:90-97` (badge options exist) vs `app/catalogue-content.tsx` (no badge rendering)
-
-Admin can set a `ProductBadge` (bestseller, new, premium, limited, luxury), but badges are never rendered on the client-facing catalogue page.
-
-**Fix:** Verify `ProductCard` renders the badge and add visual badge UI.
+`ProductCard` now renders badges with `<span className="product-card-badge">{product.badge}</span>` and corresponding CSS styles.
 
 ---
 
@@ -295,51 +279,39 @@ Fields are extracted via unsafe casts with only truthiness checks. No schema val
 
 **Fix:** Define and use a Zod schema for order creation payload (Zod is already in dependencies).
 
-### 8.2 No Input Length Limits on Track API
+### 8.2 Track API — Partial Input Validation
 
 **File:** `app/api/track/route.ts:45-58`
 
-`orderId` and `phone` have no length validation before being passed to database queries.
+- ✅ Phone is now validated to exactly 10 digits
+- ❌ `orderId` has no length validation before being passed to database queries
 
-**Fix:** Validate max length and format before querying.
+**Fix:** Validate max length and format for orderId before querying.
 
-### 8.3 Product Update Endpoint Lacks Sanitization
+### ~~8.3 Product Update Endpoint Lacks Sanitization~~ ✅ FIXED
 
-**File:** `app/api/products/[id]/route.ts:23-46`
-
-Same XSS vector as product creation — name and description are stored raw.
-
-**Fix:** Apply `sanitize()` to `name` and `description` in both PUT and POST handlers.
+Both PUT and POST product handlers now apply `sanitize()` to `name` and `description`.
 
 ---
 
 ## 9. Code Quality Issues
 
-### 9.1 Duplicate `checkAuth` in Every Route File
+### ~~9.1 Duplicate `checkAuth` in Every Route File~~ ✅ FIXED
 
-5 files each define the same 5-line function. Violates DRY.
+`checkAuth` is now a single function exported from `src/lib/auth.ts` and imported by all route files.
 
-**Fix:** Export from `src/lib/auth.ts`.
+### ~~9.2 Inline Styles Everywhere in Admin Dashboard~~ PARTIALLY FIXED
 
-### 9.2 Inline Styles Everywhere in Admin Dashboard
+Many CSS utility classes have been added to `globals.css` (flex, gap, text, margin, button variants, etc.) and the admin page now uses them extensively. However, some inline styles remain for:
+- Animation delays (`animationDelay: \`${idx * 0.08}s\``)
+- Admin login page (still all inline)
+- Specific one-off tweaks
 
-**File:** `app/admin/page.tsx` (all 1023 lines)
+**Remaining:** Move remaining inline styles to CSS classes, especially in admin login page.
 
-Nearly every element uses `style={...}` instead of CSS classes. This bloats bundle size, prevents caching, and makes responsive behavior harder.
+### ~~9.3 `editProduct` Hardcodes `categoryId` to `"1"`~~ ✅ FIXED
 
-**Fix:** Move styles to CSS classes in `globals.css`.
-
-### 9.3 `editProduct` Hardcodes `categoryId` to `"1"`
-
-**File:** `app/admin/page.tsx:417`
-
-```ts
-categoryId: product.category?.name ? "1" : "",
-```
-
-Editing a product always resets its category to the first one, regardless of its actual category.
-
-**Fix:** Use `product.categoryId` instead of hardcoding (requires adding `categoryId` to the `Product` interface).
+Now correctly uses `product.categoryId ? product.categoryId.toString() : ""`.
 
 ### 9.4 Race Condition in Optimistic Locking (TOCTOU)
 
@@ -353,7 +325,7 @@ The version is read in a separate query from the update. Between reading the ver
 
 **File:** `app/api/orders/[id]/status/route.ts:85-99`
 
-`ORDER_STATUS_FLOW` exists in `src/lib/constants.ts` but is **never checked server-side**. An admin could skip from pending to shipped, reverse from delivered to packaging, or re-reject a rejected order.
+`ORDER_STATUS_FLOW` exists in `src/lib/constants.ts` and is imported in the admin dashboard (for UI), but is **never checked server-side**. An admin could skip from pending to shipped, reverse from delivered to packaging, or re-reject a rejected order.
 
 **Fix:** Validate the transition against `ORDER_STATUS_FLOW` before applying.
 
@@ -383,7 +355,7 @@ The `remaining` count is returned but never exposed via a response header like `
 
 | Dependency | Status | Why |
 |---|---|---|
-| `jsonwebtoken` + `@types/jsonwebtoken` | **Unnecessary** | `jose` already handles both middleware and API JWT needs |
+| ~~`jsonwebtoken` + `@types/jsonwebtoken`~~ | ✅ **Removed** | Replaced by native `crypto.subtle` |
 | `chart.js` | **Unused** | Dashboard uses tables, not charts |
 | `exceljs` | **Unused in production** | Script exists but no API/UI invokes it |
 | `@types/pg` | **Unnecessary** | Prisma abstracts the `pg` driver |
@@ -393,34 +365,36 @@ The `remaining` count is returned but never exposed via a response header like `
 
 ## 11. Missing Tests
 
-### 11.1 Incomplete Test Setup Mocks
+### 11.1 Test Coverage Assessment
+
+**Tests now exist for:**
+- ✅ Auth: `auth.test.ts`, `auth-fallback.test.ts`, `auth.login.test.ts`, `auth.logout.test.ts`, `auth.me.test.ts`
+- ✅ Orders: `orders.test.ts`, `orders.id.test.ts`, `orders.status.test.ts`
+- ✅ Products: `products.test.ts`, `products.id.test.ts`
+- ✅ Stats: `stats.test.ts`
+- ✅ Track: `track.test.ts`
+- ✅ Cart: `CartProvider.test.tsx`, `cart-cookie.test.ts`
+- ✅ Sanitization: `sanitize.test.ts`
+- ✅ Rate limiting: `rate-limiter.test.ts`
+- ✅ UI Components: `ToastProvider`, `StatusBadge`, `StockBadge`, `ProductCard`, `AdminStatCard`, `LoadingSpinner`, `SectionHeader`, `CheckoutProgress`, `OrderDetailModal`
+- ✅ Lib utilities: `constants.test.ts`, `utils.test.ts`, `openapi-spec.test.ts`, `prisma.test.ts`, `prisma-production.test.ts`, `useScrollReveal.test.tsx`
+
+### 11.2 Incomplete Test Setup Mocks
 
 **File:** `src/test/setup.ts`
 
+- ✅ Prisma mock now exists (`src/test/mocks/prisma.ts`)
 - `next/headers` mock's `cookies()` is synchronous but Next.js 16 returns a Promise
-- No mock for `@prisma/client` — server logic tests cannot run without a database
-- No mocks for `useToast` context
 - `next/image` mock returns `null` without forwarding props
+- No mocks for `useToast` context (handled per-test)
 
-### 11.2 No Tests for Critical Business Logic
+### 11.3 Missing Test Scenarios
 
-Based on the test directory structure, the project has **no tests** for:
-- Cart operations (add, remove, update, stock limit enforcement)
-- Checkout validation (Zod schemas, field validation rules)
-- Order status transitions (valid/invalid flows)
-- Optimistic locking (version conflict scenarios)
-- Rate limiting logic
-- Auth token verification
-- Sanitization utility
-- Product badge display logic
-
-### 11.3 Missing Component Tests
-
-No tests exist for key interaction patterns in:
-- `ProductCard` — out-of-stock, low-stock, add-to-cart click
-- `ToastProvider` — show, auto-dismiss, multiple toasts, max visible
-- `CartProvider` — localStorage read/write, stock enforcement
-- `OrderDetailModal` — action buttons, status timeline
+- Cart stock limit enforcement edge cases
+- Optimistic locking version conflict scenarios
+- Order status transition validation (valid/invalid flows)
+- Rate limiting logic under concurrent requests
+- Auth token expiration handling
 
 ---
 
@@ -452,13 +426,13 @@ If the function does not handle uniqueness collisions (e.g., high concurrency), 
 
 **File:** `postcss.config.mjs`
 
-An empty PostCSS config implies no plugins are configured. If no PostCSS plugins are needed, the file and `postcss.config.mjs` could be removed.
+An empty PostCSS config implies no plugins are configured. If no PostCSS plugins are needed, the file could be removed.
 
 ### 12.6 `.env` Contains Production Database Credentials
 
 **File:** `.env`
 
-The `.env` file — which is likely committed to git — contains a real Neon PostgreSQL connection string with an `npg_` prefix and a password. This should never be committed.
+The `.env` file contains a real Neon PostgreSQL connection string with an `npg_` prefix and a password. This should never be committed.
 
 ---
 
@@ -466,7 +440,8 @@ The `.env` file — which is likely committed to git — contains a real Neon Po
 
 | Priority | Count | Key Items |
 |---|---|---|
-| **Critical** | 4 | Dual JWT divergence (1.1), hardcoded secret (1.2), XSS in products API (1.3), track API phone leak (1.4) |
-| **High** | 8 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), hardcoded categoryId bug (9.3), unused cart cookie (4.2), silent dashboard failures (2.1-2.3), Chart.js not used (7.1) |
-| **Medium** | 12 | Missing Zod validation (8.1), modal a11y (5.1), no pagination (6.3), duplicate checkAuth (9.1), per-instance rate limiter (1.5), missing test coverage (11), commit credentials risk (12.6) |
-| **Low** | ~15 | Inline styles (9.2), unused dependencies (10), no CSRF (12.3), non-memoized callbacks (6.4), animation reduced motion (5.4) |
+| **Critical** | 2 | Hardcoded JWT secret (1.2), Orders API auth bypass (2.6) |
+| **High** | 8 | TOCTOU race in optimistic locking (9.4), no status transition validation (9.5), unused cart cookie (4.2), Chart.js not used (7.1), no Zod validation on orders (8.1), delete product error handling (2.7), NaN price (3.4), unsafe casts (3.1) |
+| **Medium** | 12 | Modal focus trapping (5.1), no customer pagination (6.3), per-instance rate limiter (1.5), stats API perf (6.1), admin login a11y (5.5), JWT implementation split (1.1 note), login page inline styles (9.2), status enum validation (3.3), track API casts (3.5), commit credentials risk (12.6), lazy tab fetching (6.2), test setup mocks (11.2) |
+| **Low** | ~10 | Unused dependencies (10), no CSRF (12.3), non-memoized callbacks (6.4), empty PostCSS (12.5), sharp in devDeps (12.1), eslint-disable comments (9.7), rate limiter remaining (9.8), CORS headers (12.2), order number collision (12.4) |
+| **Fixed** | 15 | Dual JWT (1.1), XSS sanitization (1.3), phone data leak (1.4), silent dashboard failures (2.1-2.4), shared checkAuth (3.2/9.1), ARIA tabs (5.2), dismissible toasts (5.3), reduced motion (5.4), product badges (7.3), categoryId bug (9.3), product sanitization (8.3) |

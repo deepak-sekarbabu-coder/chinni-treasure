@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import useScrollReveal from "@/src/lib/useScrollReveal";
 
 export interface Product {
   id: string;
@@ -15,8 +12,6 @@ export interface Product {
 }
 
 export default function HomeContent() {
-  const { ref: featuresRef, visible: featuresVisible } = useScrollReveal();
-
   return (
     <>
       {/* Hero Section */}
@@ -24,11 +19,11 @@ export default function HomeContent() {
         <div className="hero-pattern"></div>
         <div className="hero-content">
           <h1 id="hero-heading">
-            "Own The Art Of
+            &ldquo;Own The Art Of
             <br />
             <span className="highlight">Timeless Luxury</span>
             <br />
-            For Everyday Elegance."
+            For Everyday Elegance.&rdquo;
           </h1>
           <p>
             Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you’ll love.
@@ -80,25 +75,22 @@ export default function HomeContent() {
       <section
         className="features"
         aria-labelledby="features-heading"
-        ref={featuresRef as React.RefObject<HTMLElement>}
       >
-        <div className={featuresVisible ? "fade-in visible" : "fade-in"}>
-          <div className="features-grid" role="list">
-            {[
-              { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-              { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
-              { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
-              { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
-            ].map((f, i) => (
-              <div key={i} className="feature-item fade-in visible" role="listitem">
-                <div className="feature-icon" aria-hidden="true">
-                  {f.icon}
-                </div>
-                <h4>{f.title}</h4>
-                <p>{f.desc}</p>
+        <div className="features-grid" role="list">
+          {[
+            { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
+            { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
+            { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
+            { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
+          ].map((f, i) => (
+            <div key={i} className="feature-item" role="listitem">
+              <div className="feature-icon" aria-hidden="true">
+                {f.icon}
               </div>
-            ))}
-          </div>
+              <h4>{f.title}</h4>
+              <p>{f.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 

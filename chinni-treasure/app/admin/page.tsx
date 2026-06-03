@@ -409,6 +409,9 @@ export default function AdminPage() {
         await fetchProducts();
         showToast("Product deleted successfully", "success");
         closeDeleteConfirm();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Failed to delete product", "error");
       }
     } catch (err) {
       console.error("Failed to delete product:", err);
@@ -566,7 +569,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <section className="section section-top-md">
-        <div role="tablist" className="flex gap-8 mb-32">
+        <div role="tablist" className="admin-tab-buttons flex gap-8 mb-32">
           {(["orders", "catalogue"] as const).map((tab) => (
             <button
               key={tab}
