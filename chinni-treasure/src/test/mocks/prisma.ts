@@ -11,6 +11,7 @@ export function createMockPrisma() {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     order: {
       findMany: vi.fn(),

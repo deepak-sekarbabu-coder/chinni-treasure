@@ -32,10 +32,10 @@ export default function CatalogueContent({ initialProducts }: Props) {
     if (initialProducts.length > 0) return;
     async function fetchProducts() {
       try {
-        const res = await fetch("/api/products");
+        const res = await fetch("/api/products?limit=200");
         if (res.ok) {
           const data = await res.json();
-          setProducts(data);
+          setProducts(data.products ?? data);
         }
       } catch (err) {
         console.error("Failed to fetch products:", err);

@@ -116,7 +116,10 @@ export default function AdminPage() {
   const [chartsLoading, setChartsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [productPage, setProductPage] = useState(1);
+  const [productTotalPages, setProductTotalPages] = useState(1);
   const ITEMS_PER_PAGE = 10;
+  const PRODUCTS_PER_PAGE = 12;
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
@@ -216,13 +219,19 @@ export default function AdminPage() {
     }
   }
 
-  async function fetchProducts() {
+  async function fetchProducts(pageNum?: number) {
     setProductsLoading(true);
     try {
-      const res = await fetch("/api/products");
+      const page = pageNum ?? productPage;
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(PRODUCTS_PER_PAGE));
+      const res = await fetch(`/api/products?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        setProducts(data.products);
+        setProductTotalPages(data.totalPages);
+        setProductPage(data.page);
       }
     } catch (err) {
       console.error("Failed to fetch products:", err);
@@ -358,7 +367,8 @@ export default function AdminPage() {
         }),
       });
       if (res.ok) {
-        await fetchProducts();
+        setProductPage(1);
+        await fetchProducts(1);
         resetProductForm();
         setShowProductForm(false);
         setProductFormClosing(false);
@@ -907,6 +917,29 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Product Pagination */}
+            {productTotalPages > 1 && (
+              <div className="pagination-bar">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={productPage <= 1}
+                  onClick={() => fetchProducts(productPage - 1)}
+                >
+                  ← Prev
+                </button>
+                <span className="pagination-text">
+                  Page {productPage} of {productTotalPages}
+                </span>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={productPage >= productTotalPages}
+                  onClick={() => fetchProducts(productPage + 1)}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>
