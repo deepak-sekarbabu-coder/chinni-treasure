@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSession } from "@/src/lib/auth";
+import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
-
-async function checkAuth() {
-  const session = await getSession();
-  if (!session) return null;
-  return session as { id: string; username: string; role: string };
-}
 
 // PUT /api/products/[id] — Update a product (admin only)
 export async function PUT(

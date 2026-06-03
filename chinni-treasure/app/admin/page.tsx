@@ -452,26 +452,20 @@ export default function AdminPage() {
   if (!authenticated) return null;
 
   return (
-    <div style={{ paddingTop: "80px" }}>
+    <div className="admin-page-root">
       {/* Admin Header */}
-      <div
-        style={{
-          background: "var(--black)",
-          borderBottom: "1px solid rgba(212, 175, 55, 0.1)",
-          padding: "32px 0",
-        }}
-      >
-        <div className="section" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="admin-top-header">
+        <div className="section admin-header-row">
           <div>
-            <div className="section-subtitle" style={{ color: "var(--gold)" }}>Administrator Portal</div>
-            <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "1.8rem", color: "var(--cream)" }}>
+            <div className="section-subtitle text-gold">Administrator Portal</div>
+            <h1 className="admin-heading">
               Dashboard
             </h1>
-          </div>                          <div style={{ display: "flex", gap: "10px" }}>
-            <Link href="/docs" className="btn btn-secondary" style={{ padding: "10px 24px", textDecoration: "none" }}>
+          </div>                          <div className="admin-header-actions">
+            <Link href="/docs" className="btn btn-secondary btn-link btn-lg">
               API Docs
             </Link>
-            <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: "10px 24px" }}>
+            <button className="btn btn-secondary btn-lg" onClick={handleLogout}>
               Logout
             </button>
           </div>
@@ -480,8 +474,8 @@ export default function AdminPage() {
 
       {/* Stats Cards */}
       {stats && (
-        <section className="section" style={{ paddingTop: "32px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
+        <section className="section section-top-lg">
+          <div className="stats-grid">
             {[
               { label: "Total Orders", value: stats.totalOrders, color: "var(--gold)" },
               { label: "Pending", value: stats.pendingOrders, color: "var(--warning)" },
@@ -506,34 +500,13 @@ export default function AdminPage() {
 
       {/* Charts Section (placeholder for Chart.js - will render a simple table instead) */}
       {(chartsLoading || chartData.length > 0) && (
-        <section className="section" style={{ paddingTop: "24px" }}>
+        <section className="section section-top-md">
           {chartsLoading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+            <div className="charts-grid">
               {/* Skeleton: Orders Chart */}
-              <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
+              <div className="admin-stat-card chart-skeleton text-left">
                 <div className="skeleton-text" style={{ width: "180px", height: "18px", marginBottom: "20px" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[
-                    { left: 130, right: 60 },
-                    { left: 120, right: 55 },
-                    { left: 100, right: 70 },
-                    { left: 115, right: 50 },
-                    { left: 125, right: 65 },
-                    { left: 110, right: 58 },
-                    { left: 95, right: 62 },
-                    { left: 105, right: 48 },
-                  ].map((item, idx) => (
-                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
-                      <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Skeleton: Top Products */}
-              <div className="admin-stat-card chart-skeleton" style={{ textAlign: "left" }}>
-                <div className="skeleton-text" style={{ width: "140px", height: "18px", marginBottom: "20px" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div className="flex flex-col gap-12">
                   {[
                     { left: 110, right: 45 },
                     { left: 130, right: 55 },
@@ -544,7 +517,7 @@ export default function AdminPage() {
                     { left: 115, right: 52 },
                     { left: 125, right: 58 },
                   ].map((item, idx) => (
-                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={idx} className="skeleton-row">
                       <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
                       <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
                     </div>
@@ -553,23 +526,23 @@ export default function AdminPage() {
               </div>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-              <div className="admin-stat-card" style={{ textAlign: "left" }}>
-                <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Orders (Last 30 Days)</h3>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
+            <div className="charts-grid">
+              <div className="admin-stat-card text-left">
+                <h3 className="font-serif mb-16">Orders (Last 30 Days)</h3>
+                <div className="chart-scroll">
                   {chartData.map((d) => (
-                    <div key={d.date} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div key={d.date} className="chart-row">
                       <span>{d.date}</span>
                       <span>{d.orders} orders</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="admin-stat-card" style={{ textAlign: "left" }}>
-                <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "16px" }}>Top Products</h3>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxHeight: "200px", overflowY: "auto" }}>
+              <div className="admin-stat-card text-left">
+                <h3 className="font-serif mb-16">Top Products</h3>
+                <div className="chart-scroll">
                   {productSales.slice(0, 10).map((p, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div key={i} className="chart-row">
                       <span>{p.productName}</span>
                       <span>{p.quantity} sold</span>
                     </div>
@@ -582,8 +555,8 @@ export default function AdminPage() {
       )}
 
       {/* Tabs */}
-      <section className="section" style={{ paddingTop: "24px" }}>
-        <div role="tablist" style={{ display: "flex", gap: "8px", marginBottom: "32px" }}>
+      <section className="section section-top-md">
+        <div role="tablist" className="flex gap-8 mb-32">
           {(["orders", "catalogue"] as const).map((tab) => (
             <button
               key={tab}
@@ -591,8 +564,7 @@ export default function AdminPage() {
               role="tab"
               aria-selected={activeTab === tab}
               aria-controls={`panel-${tab}`}
-              className={`btn ${activeTab === tab ? "btn-primary" : "btn-secondary"}`}
-              style={{ padding: "10px 24px", textTransform: "capitalize" }}
+              className={`btn capitalize ${activeTab === tab ? "btn-primary" : "btn-secondary"} btn-lg`}
               onClick={() => setActiveTab(tab)}
             >
               {tab === "orders" ? "📋 Orders" : "📦 Catalogue"}
@@ -604,12 +576,11 @@ export default function AdminPage() {
         {activeTab === "orders" && (
           <div id="panel-orders" role="tabpanel" aria-labelledby="tab-orders">
             {/* Status Filters */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "24px" }}>
+            <div className="filters-bar">
               {ORDER_STATUS_FILTERS.map((f) => (
                 <button
                   key={f.key}
-                  className={`btn ${statusFilter === f.key ? "btn-primary" : "btn-secondary"}`}
-                  style={{ padding: "8px 16px", fontSize: "0.65rem" }}
+                  className={`btn btn-sm ${statusFilter === f.key ? "btn-primary" : "btn-secondary"}`}
                   onClick={() => { setStatusFilter(f.key); setCurrentPage(1); fetchOrders(undefined, 1, f.key); }}
                 >
                   {f.label}
@@ -623,21 +594,20 @@ export default function AdminPage() {
                 Array.from({ length: 6 }).map((_, idx) => (
                   <div
                     key={`order-skeleton-${idx}`}
-                    className="admin-stat-card order-card order-card-skeleton"
+                    className="admin-stat-card order-card order-card-skeleton text-left"
                     style={{
-                      textAlign: "left",
                       marginBottom: "16px",
                       animationDelay: `${idx * 0.06}s`,
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
-                      <div style={{ flex: 1 }}>
+                    <div className="order-card-header">
+                      <div className="skeleton-grow">
                         <div className="skeleton-text" style={{ width: "60px", height: "10px", marginBottom: "8px" }} />
                         <div className="skeleton-text" style={{ width: "140px", height: "16px" }} />
                       </div>
                       <div className="skeleton-block" style={{ width: "80px", height: "26px", borderRadius: "2px" }} />
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+                    <div className="flex justify-between items-end">
                       <div>
                         <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "6px" }} />
                         <div className="skeleton-text" style={{ width: "90px", height: "12px" }} />
@@ -647,7 +617,7 @@ export default function AdminPage() {
                   </div>
                 ))
               ) : orders.length === 0 ? (
-                <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px" }}>
+                <p className="empty-state">
                   No orders found.
                 </p>
               ) : (
@@ -656,34 +626,33 @@ export default function AdminPage() {
                     return (
                     <div
                       key={order.id}
-                      className={`admin-stat-card order-card ${isAdvancing ? "order-card-advancing" : ""} ${selectedOrder?.id === order.id ? "order-card-selected" : ""}`}
+                      className={`admin-stat-card order-card text-left ${isAdvancing ? "order-card-advancing" : ""} ${selectedOrder?.id === order.id ? "order-card-selected" : ""}`}
                       style={{
-                        textAlign: "left",
                         marginBottom: "16px",
                         cursor: isAdvancing ? "default" : "pointer",
                       }}
                       onClick={() => !isAdvancing && setSelectedOrder(order)}
                     >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
+                    <div className="order-card-header">
                       <div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>
+                        <div className="order-card-label">
                           Order ID
                         </div>
-                        <h4 style={{ fontFamily: "var(--font-serif)", fontSize: "1rem", marginTop: "4px" }}>
+                        <h4 className="order-card-number">
                           {order.orderNumber}
                         </h4>
                       </div>
                       <StatusBadge status={order.status} />
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div className="flex justify-between">
                       <div>
-                        <p style={{ fontSize: "0.85rem" }}>{order.customerName}</p>
-                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                        <p className="order-card-name">{order.customerName}</p>
+                        <p className="order-card-date">
                           {new Date(order.createdAt).toLocaleDateString("en-IN")}
                         </p>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <span style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", fontWeight: 600, color: "var(--gold-dark)" }}>
+                      <div className="text-right">
+                        <span className="order-card-price">
                           ₹{Number(order.totalAmount).toFixed(2)}
                         </span>
                       </div>
@@ -696,23 +665,21 @@ export default function AdminPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "24px" }}>
+              <div className="pagination-bar">
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-sm"
                   disabled={currentPage <= 1}
                   onClick={() => fetchOrders(undefined, currentPage - 1)}
-                  style={{ padding: "8px 16px" }}
                 >
                   ← Prev
                 </button>
-                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                <span className="pagination-text">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-sm"
                   disabled={currentPage >= totalPages}
                   onClick={() => fetchOrders(undefined, currentPage + 1)}
-                  style={{ padding: "8px 16px" }}
                 >
                   Next →
                 </button>
@@ -724,7 +691,7 @@ export default function AdminPage() {
         {/* Catalogue Tab */}
         {activeTab === "catalogue" && (
           <div id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue">
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "24px" }}>
+            <div className="product-form-actions">
               <button
                 className={`btn ${showProductForm ? "btn-secondary product-add-btn cancel" : "btn-primary product-add-btn"}`}
                 onClick={toggleProductForm}
@@ -736,12 +703,12 @@ export default function AdminPage() {
             {/* Product Form */}
             <div className={`product-form-wrapper ${showProductForm ? "open" : ""} ${productFormClosing ? "closing" : ""}`}>
               <div className="product-form-inner">
-                <div className="admin-stat-card" style={{ textAlign: "left" }}>
-                  <h3 style={{ fontFamily: "var(--font-serif)", marginBottom: "20px" }}>
+                <div className="admin-stat-card text-left">
+                  <h3 className="font-serif mb-20">
                     {productForm.id ? "Edit Product" : "Add New Product"}
                   </h3>
                   <form onSubmit={handleProductSave}>
-                    <div className="admin-product-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                    <div className="admin-product-form-grid">
                       <div className="form-group">
                         <label>Name *</label>
                         <input
@@ -749,7 +716,7 @@ export default function AdminPage() {
                           value={productForm.name}
                           onChange={(e) => setProductForm((p) => ({ ...p, name: e.target.value }))}
                           required
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                       <div className="form-group">
@@ -758,7 +725,7 @@ export default function AdminPage() {
                           type="text"
                           value={productForm.sku}
                           onChange={(e) => setProductForm((p) => ({ ...p, sku: e.target.value }))}
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                       <div className="form-group">
@@ -770,7 +737,7 @@ export default function AdminPage() {
                           value={productForm.price}
                           onChange={(e) => setProductForm((p) => ({ ...p, price: e.target.value }))}
                           required
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                       <div className="form-group">
@@ -780,7 +747,7 @@ export default function AdminPage() {
                           min="0"
                           value={productForm.stockQuantity}
                           onChange={(e) => setProductForm((p) => ({ ...p, stockQuantity: e.target.value }))}
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                       <div className="form-group">
@@ -789,7 +756,7 @@ export default function AdminPage() {
                           type="url"
                           value={productForm.imageUrl}
                           onChange={(e) => setProductForm((p) => ({ ...p, imageUrl: e.target.value }))}
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                       <div className="form-group">
@@ -797,26 +764,25 @@ export default function AdminPage() {
                         <select
                           value={productForm.badge}
                           onChange={(e) => setProductForm((p) => ({ ...p, badge: e.target.value }))}
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         >
                           {BADGE_OPTIONS.map((b) => (
                             <option key={b.value} value={b.value}>{b.label}</option>
                           ))}
                         </select>
                       </div>
-                      <div className="form-group full-width" style={{ gridColumn: "span 2" }}>
+                      <div className="form-group full-width">
                         <label>Description</label>
                         <textarea
                           value={productForm.description}
                           onChange={(e) => setProductForm((p) => ({ ...p, description: e.target.value }))}
-                          style={{ background: "var(--cream-light)" }}
+                          className="input-cream"
                         />
                       </div>
                     </div>
                     <button
                       type="submit"
-                      className={`btn btn-dark product-action-btn ${productLoading ? "loading" : ""}`}
-                      style={{ marginTop: "16px" }}
+                      className={`btn btn-dark product-action-btn mt-16 ${productLoading ? "loading" : ""}`}
                       disabled={productLoading}
                     >
                       {productLoading && <span className="btn-spinner"></span>}
@@ -831,17 +797,17 @@ export default function AdminPage() {
             </div>
 
             {/* Products Table */}
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+            <div className="admin-product-table-wrap">
+              <table className="admin-table">
                 <thead>
-                  <tr style={{ borderBottom: "2px solid var(--gold)", textAlign: "left" }}>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Image</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Name</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>SKU</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Price</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Stock</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Badge</th>
-                    <th style={{ padding: "12px 16px", letterSpacing: "1px", fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)" }}>Actions</th>
+                  <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>SKU</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Badge</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -850,26 +816,26 @@ export default function AdminPage() {
                       <tr key={`skeleton-${idx}`} className="product-table-skeleton"
                         style={{ animationDelay: `${idx * 0.06}s` }}
                       >
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-block" style={{ width: "40px", height: "50px", borderRadius: "4px" }} />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-text skeleton-text-name" />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-text skeleton-text-sku" />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-text skeleton-text-price" />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-text skeleton-text-stock" />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
+                        <td>
                           <div className="skeleton-text skeleton-text-badge" />
                         </td>
-                        <td style={{ padding: "10px 16px" }}>
-                          <div style={{ display: "flex", gap: "8px" }}>
+                        <td>
+                          <div className="table-actions">
                             <div className="skeleton-block" style={{ width: "50px", height: "28px", borderRadius: "2px" }} />
                             <div className="skeleton-block" style={{ width: "60px", height: "28px", borderRadius: "2px" }} />
                           </div>
@@ -884,51 +850,48 @@ export default function AdminPage() {
                           key={p.id}
                           className={`product-table-row ${isDeleting ? "removing" : ""}`}
                           style={{
-                            borderBottom: "1px solid rgba(255,255,255,0.05)",
                             animationDelay: `${idx * 0.04}s`,
                           }}
                         >
-                          <td style={{ padding: "10px 16px" }}>
+                          <td>
                             {p.imageUrl ? (
                               <Image
                                 src={p.imageUrl}
                                 alt={p.name}
                                 width={40}
                                 height={50}
-                                style={{ objectFit: "cover", borderRadius: "4px" }}
+                                className="product-img"
                               />
                             ) : (
-                              <div style={{ width: "40px", height: "50px", background: "var(--dark-gray)", borderRadius: "4px" }} />
+                              <div className="product-img-placeholder" />
                             )}
                           </td>
-                          <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
-                          <td style={{ padding: "10px 16px", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.sku || "—"}</td>
-                          <td style={{ padding: "10px 16px", color: "var(--gold-dark)", fontWeight: 600 }}>₹{Number(p.price).toFixed(2)}</td>
-                          <td style={{ padding: "10px 16px" }}>
+                          <td className="fw-500">{p.name}</td>
+                          <td className="font-mono text-xs text-muted">{p.sku || "—"}</td>
+                          <td className="text-gold-dark fw-600">₹{Number(p.price).toFixed(2)}</td>
+                          <td>
                             <span className={`stock-badge ${p.stockQuantity <= 0 ? "empty" : p.stockQuantity <= 3 ? "low" : "in-stock"}`}>
                               {p.stockQuantity}
                             </span>
                           </td>
-                          <td style={{ padding: "10px 16px" }}>
+                          <td>
                             {p.badge ? (
                               <span className="status-badge pending" style={{ fontSize: "0.6rem" }}>{p.badge}</span>
                             ) : (
-                              <span style={{ color: "var(--text-muted)" }}>—</span>
+                              <span className="text-muted">—</span>
                             )}
                           </td>
-                          <td style={{ padding: "10px 16px" }}>
-                            <div style={{ display: "flex", gap: "8px" }}>
+                          <td>
+                            <div className="table-actions">
                               <button
-                                className="btn btn-secondary product-action-btn"
-                                style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                                className="btn btn-secondary product-action-btn btn-xs"
                                 onClick={() => editProduct(p)}
                                 disabled={isDeleting}
                               >
                                 Edit
                               </button>
                               <button
-                                className={`btn btn-danger product-action-btn ${isDeleting ? "loading" : ""}`}
-                                style={{ padding: "4px 12px", fontSize: "0.65rem" }}
+                                className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`}
                                 onClick={() => requestProductDelete(p)}
                                 disabled={isDeleting}
                               >
@@ -969,7 +932,7 @@ export default function AdminPage() {
               <button className="modal-close" onClick={() => setTrackingModal({ orderId: "", open: false })}>✕</button>
             </div>
             <div className="modal-body">
-              <p style={{ marginBottom: "16px", color: "var(--text-muted)" }}>
+              <p className="delete-warning mb-16">
                 Please provide the courier tracking ID to mark this order as shipped.
               </p>
               <div className="form-group">
@@ -980,11 +943,11 @@ export default function AdminPage() {
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value)}
                   placeholder="e.g. TRACK-123456"
-                  style={{ background: "var(--cream-light)" }}
+                  className="input-cream"
                   autoFocus
                 />
               </div>
-              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+              <div className="modal-actions">
                 <button className="btn btn-success" onClick={handleSubmitTracking} disabled={!trackingId.trim()}>
                   Mark as Shipped
                 </button>
@@ -1006,26 +969,18 @@ export default function AdminPage() {
               <button className="modal-close" onClick={closeDeleteConfirm}>✕</button>
             </div>
             <div className="modal-body">
-              <p style={{ marginBottom: "10px", color: "var(--text-muted)" }}>
+              <p className="delete-warning mb-10">
                 This action will permanently remove the product from your catalogue.
               </p>
-              <div
-                style={{
-                  background: "var(--cream-light)",
-                  border: "1px solid rgba(231, 76, 60, 0.25)",
-                  borderRadius: "6px",
-                  padding: "14px 16px",
-                  marginBottom: "18px",
-                }}
-              >
-                <p style={{ fontSize: "0.7rem", letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "6px" }}>
+              <div className="delete-box">
+                <p className="delete-label">
                   Product
                 </p>
-                <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.05rem", color: "var(--near-black)" }}>
+                <p className="delete-name">
                   {deleteConfirm.productName}
                 </p>
               </div>
-              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+              <div className="modal-actions">
                 <button
                   className={`btn btn-danger ${loadingProductId === deleteConfirm.productId ? "loading" : ""}`}
                   onClick={handleProductDeleteConfirmed}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSession } from "@/src/lib/auth";
+import { checkAuth } from "@/src/lib/auth";
 
 // ---- In-memory cache (per-instance, lost on cold start) ----
 const cache = new Map<string, { data: unknown; expiry: number }>();
@@ -15,13 +15,6 @@ function getCached(key: string): unknown | null {
 
 function setCache(key: string, data: unknown): void {
   cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
-}
-
-// ---- Auth ----
-async function checkAuth() {
-  const session = await getSession();
-  if (!session) return null;
-  return session as { id: string; username: string; role: string };
 }
 
 // GET /api/stats — Dashboard statistics (admin only)

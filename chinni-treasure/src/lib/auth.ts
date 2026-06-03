@@ -92,3 +92,15 @@ export function createSessionCookie(token: string): string {
 export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
 }
+
+interface AdminSession {
+  id: string;
+  username: string;
+  role: string;
+}
+
+export async function checkAuth(): Promise<AdminSession | null> {
+  const session = await getSession();
+  if (!session) return null;
+  return session as unknown as AdminSession;
+}
