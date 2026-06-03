@@ -42,11 +42,11 @@ describe("ToastProvider", () => {
     expect(screen.getByText("Error!")).toBeInTheDocument();
     expect(screen.getByText("Info!")).toBeInTheDocument();
     expect(screen.getByText("✓")).toBeInTheDocument();
-    expect(screen.getByText("✕")).toBeInTheDocument();
+    expect(screen.getAllByText("✕")).toHaveLength(4);
     expect(screen.getByText("●")).toBeInTheDocument();
   });
 
-  it("auto-dismisses toast after 3 seconds plus animation time", () => {
+  it("auto-dismisses toast after 5 seconds plus animation time", () => {
     const { result } = renderToasts();
 
     act(() => {
@@ -56,7 +56,7 @@ describe("ToastProvider", () => {
     expect(screen.getByText("Test notification")).toBeInTheDocument();
 
     act(() => {
-      vi.advanceTimersByTime(3300);
+      vi.advanceTimersByTime(5300);
     });
 
     expect(screen.queryByText("Test notification")).not.toBeInTheDocument();

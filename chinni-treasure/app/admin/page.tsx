@@ -582,10 +582,14 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <section className="section" style={{ paddingTop: "24px" }}>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "32px" }}>
+        <div role="tablist" style={{ display: "flex", gap: "8px", marginBottom: "32px" }}>
           {(["orders", "catalogue"] as const).map((tab) => (
             <button
               key={tab}
+              id={`tab-${tab}`}
+              role="tab"
+              aria-selected={activeTab === tab}
+              aria-controls={`panel-${tab}`}
               className={`btn ${activeTab === tab ? "btn-primary" : "btn-secondary"}`}
               style={{ padding: "10px 24px", textTransform: "capitalize" }}
               onClick={() => setActiveTab(tab)}
@@ -597,7 +601,7 @@ export default function AdminPage() {
 
         {/* Orders Tab */}
         {activeTab === "orders" && (
-          <>
+          <div id="panel-orders" role="tabpanel" aria-labelledby="tab-orders">
             {/* Status Filters */}
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "24px" }}>
               {ORDER_STATUS_FILTERS.map((f) => (
@@ -713,12 +717,12 @@ export default function AdminPage() {
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* Catalogue Tab */}
         {activeTab === "catalogue" && (
-          <>
+          <div id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue">
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "24px" }}>
               <button
                 className={`btn ${showProductForm ? "btn-secondary product-add-btn cancel" : "btn-primary product-add-btn"}`}
@@ -939,7 +943,7 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
-          </>
+          </div>
         )}
       </section>
 
