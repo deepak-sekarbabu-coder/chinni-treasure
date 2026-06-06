@@ -1496,7 +1496,7 @@ a {
 .footer {
   background: var(--black);
   padding: 60px 24px 32px;
-  margin-top: 80px;
+  margin-top: 0;
 }
 
 .footer-grid {
@@ -1902,7 +1902,7 @@ a {
 /* ===== FEATURES ===== */
 .features {
   background: var(--white);
-  padding: 80px 24px;
+  padding: 80px 24px 40px;
 }
 
 .features-grid {
@@ -4137,13 +4137,15 @@ a {
 .hero {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  grid-template-columns: minmax(0, 720px) minmax(280px, 420px);
+  justify-content: center;
   align-items: center;
-  gap: 40px;
+  gap: clamp(32px, 5vw, 96px);
   padding: 108px 24px 90px;
 }
 
 .hero-content {
+  width: 100%;
   max-width: 720px;
 }
 
