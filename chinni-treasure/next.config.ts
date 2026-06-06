@@ -7,7 +7,7 @@ const CORS_HEADERS = [
   },
   {
     key: "Access-Control-Allow-Methods",
-    value: "GET, POST, OPTIONS",
+    value: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   },
   {
     key: "Access-Control-Allow-Headers",
@@ -32,11 +32,7 @@ const nextConfig: NextConfig = {
   headers() {
     return [
       {
-        source: "/api/track",
-        headers: CORS_HEADERS,
-      },
-      {
-        source: "/api/orders",
+        source: "/api/:path*",
         headers: CORS_HEADERS,
       },
     ];
