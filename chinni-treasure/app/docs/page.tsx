@@ -88,6 +88,89 @@ function renderSchema(schema?: Schema, required: readonly string[] = []) {
   );
 }
 
+function EndpointCard({ path, method, operation }: { path: string; method: string; operation: Operation }) {
+  const requestContent = Object.entries(operation.requestBody?.content ?? {});
+  const parameters = operation.parameters ?? [];
+  const responses = Object.entries(operation.responses ?? {});
+
+  return (
+    <article className={`docs-operation docs-operation-${method}`}>
+      <header className="docs-operation-header">
+        <span className="docs-method">{methodLabels[method as keyof typeof methodLabels]}</span>
+        <code>{path}</code>
+      </header>
+
+      <div className="docs-operation-body">
+        <div>
+          <p className="docs-operation-tag">{operation.tags?.join(", ")}</p>
+          <h2>{operation.summary}</h2>
+          {operation.description ? <p>{operation.description}</p> : null}
+          {operation.operationId ? <code className="docs-operation-id">{operation.operationId}</code> : null}
+          {operation.security?.length ? <span className="docs-auth">Admin session required</span> : null}
+        </div>
+
+        <ParametersSection parameters={parameters} />
+        <RequestBodySection requestContent={requestContent} required={operation.requestBody?.required} />
+        <ResponsesSection responses={responses} />
+      </div>
+    </article>
+  );
+}
+
+function ParametersSection({ parameters }: { parameters: NonNullable<Operation["parameters"]> }) {
+  if (!parameters.length) return null;
+  return (
+    <section className="docs-detail">
+      <h3>Parameters</h3>
+      <div className="docs-table">
+        {parameters.map((parameter) => (
+          <div className="docs-table-row" key={`${parameter.in}-${parameter.name}`}>
+            <strong>{parameter.name}</strong>
+            <span>{parameter.in}</span>
+            <span>{schemaLabel(parameter.schema)}</span>
+            <span>{parameter.required ? "Required" : "Optional"}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RequestBodySection({ requestContent, required }: { requestContent: [string, { schema?: Schema; example?: unknown }][]; required?: boolean }) {
+  if (!requestContent.length) return null;
+  return (
+    <section className="docs-detail">
+      <h3>Request Body{required ? " *" : ""}</h3>
+      {requestContent.map(([contentType, content]) => (
+        <div className="docs-payload" key={contentType}>
+          <code>{contentType}</code>
+          {renderSchema(content.schema, content.schema?.required)}
+          {content.example ? (
+            <pre>{JSON.stringify(content.example, null, 2)}</pre>
+          ) : null}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function ResponsesSection({ responses }: { responses: [string, { description?: string }][] }) {
+  if (!responses.length) return null;
+  return (
+    <section className="docs-detail">
+      <h3>Responses</h3>
+      <div className="docs-responses">
+        {responses.map(([status, response]) => (
+          <div className="docs-response" key={status}>
+            <span>{status}</span>
+            <p>{response.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function ApiDocsPage() {
   const operations = Object.entries(openApiSpec.paths).flatMap(([path, pathConfig]) =>
     httpMethods.flatMap((method) => {
@@ -115,75 +198,9 @@ export default function ApiDocsPage() {
         </section>
 
         <section className="docs-operations" aria-label="API endpoints">
-          {operations.map(({ path, method, operation }) => {
-            const requestContent = Object.entries(operation.requestBody?.content ?? {});
-            const parameters = operation.parameters ?? [];
-            const responses = Object.entries(operation.responses ?? {});
-
-            return (
-              <article className={`docs-operation docs-operation-${method}`} key={`${method}-${path}`}>
-                <header className="docs-operation-header">
-                  <span className="docs-method">{methodLabels[method]}</span>
-                  <code>{path}</code>
-                </header>
-
-                <div className="docs-operation-body">
-                  <div>
-                    <p className="docs-operation-tag">{operation.tags?.join(", ")}</p>
-                    <h2>{operation.summary}</h2>
-                    {operation.description ? <p>{operation.description}</p> : null}
-                    {operation.operationId ? <code className="docs-operation-id">{operation.operationId}</code> : null}
-                    {operation.security?.length ? <span className="docs-auth">Admin session required</span> : null}
-                  </div>
-
-                  {parameters.length ? (
-                    <section className="docs-detail">
-                      <h3>Parameters</h3>
-                      <div className="docs-table">
-                        {parameters.map((parameter) => (
-                          <div className="docs-table-row" key={`${parameter.in}-${parameter.name}`}>
-                            <strong>{parameter.name}</strong>
-                            <span>{parameter.in}</span>
-                            <span>{schemaLabel(parameter.schema)}</span>
-                            <span>{parameter.required ? "Required" : "Optional"}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
-
-                  {requestContent.length ? (
-                    <section className="docs-detail">
-                      <h3>Request Body{operation.requestBody?.required ? " *" : ""}</h3>
-                      {requestContent.map(([contentType, content]) => (
-                        <div className="docs-payload" key={contentType}>
-                          <code>{contentType}</code>
-                          {renderSchema(content.schema, content.schema?.required)}
-                          {content.example ? (
-                            <pre>{JSON.stringify(content.example, null, 2)}</pre>
-                          ) : null}
-                        </div>
-                      ))}
-                    </section>
-                  ) : null}
-
-                  {responses.length ? (
-                    <section className="docs-detail">
-                      <h3>Responses</h3>
-                      <div className="docs-responses">
-                        {responses.map(([status, response]) => (
-                          <div className="docs-response" key={status}>
-                            <span>{status}</span>
-                            <p>{response.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })}
+          {operations.map(({ path, method, operation }) => (
+            <EndpointCard key={`${method}-${path}`} path={path} method={method} operation={operation} />
+          ))}
         </section>
       </div>
     </main>

@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 const ORDER_STATUS_VALUES = ["pending", "approved", "packaging", "shipped", "delivered", "rejected"] as const;
 const OrderStatusSchema = z.enum(ORDER_STATUS_VALUES);
@@ -13,6 +14,49 @@ const UpdateOrderStatusSchema = z.object({
   notes: z.string().optional(),
   expectedVersion: z.number().int().optional(),
 });
+
+type OrderStatusValue = "pending" | "approved" | "packaging" | "shipped" | "delivered" | "rejected";
+
+function statusUpdateData(status: string, trackingId?: string, notes?: string): Prisma.OrderUpdateInput {
+  return {
+    status: status as OrderStatusValue,
+    version: { increment: 1 },
+    ...(trackingId && { trackingId }),
+    statusHistory: {
+      create: { status: status as OrderStatusValue, notes: notes || `Status changed to ${status}` },
+    },
+  };
+}
+
+async function rejectWithStockRestore(orderId: string, status: string, trackingId: string | undefined, notes: string | undefined, items: { id: string; productId: string | null; quantity: number }[]) {
+  await prisma.$transaction(async (tx) => {
+    for (const item of items) {
+      await tx.product.update({
+        where: { id: item.productId! },
+        data: { stockQuantity: { increment: item.quantity } },
+      });
+    }
+    await tx.order.update({
+      where: { id: orderId },
+      data: statusUpdateData(status, trackingId, notes),
+    });
+  });
+}
+
+async function verifyVersion(orderId: string, expectedVersion?: number): Promise<NextResponse | null> {
+  if (expectedVersion === undefined) return null;
+  const versionRow = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { version: true },
+  });
+  if (!versionRow || versionRow.version !== expectedVersion) {
+    return NextResponse.json(
+      { error: "Order was modified by another request. Please refresh and try again." },
+      { status: 409 },
+    );
+  }
+  return null;
+}
 
 // PATCH /api/orders/[id]/status — Update order status (admin only)
 export async function PATCH(
@@ -43,78 +87,31 @@ export async function PATCH(
       where: { id },
       include: { items: { select: { id: true, productId: true, quantity: true } } },
     });
-
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Fetch version separately for optimistic locking
-    const versionRow = await prisma.order.findUnique({
-      where: { id },
-      select: { version: true },
-    });
+    const versionError = await verifyVersion(id, expectedVersion);
+    if (versionError) return versionError;
 
-    // Optimistic locking: verify version matches
-    if (expectedVersion !== undefined && (!versionRow || versionRow.version !== expectedVersion)) {
-      return NextResponse.json(
-        { error: "Order was modified by another request. Please refresh and try again." },
-        { status: 409 },
-      );
-    }
-
-    // If rejecting, restore stock (inside transaction)
-    if (status === "rejected" && order.status !== "rejected") {
-      await prisma.$transaction(async (tx) => {
-        for (const item of order.items) {
-          await tx.product.update({
-            where: { id: item.productId! },
-            data: { stockQuantity: { increment: item.quantity } },
-          });
-        }
-        await tx.order.update({
-          where: { id },
-          data: {
-            status,
-            version: { increment: 1 },
-            ...(trackingId && { trackingId }),
-            statusHistory: {
-              create: {
-                status,
-                notes: notes || `Status changed to ${status}`,
-              },
-            },
-          },
-        });
-      });
-      const updated = await prisma.order.findUnique({
-        where: { id },
-        include: { items: true, statusHistory: true },
-      });
-      return NextResponse.json(updated);
-    }
-
-    // If advancing to shipped, trackingId is required
     if (status === "shipped" && !trackingId) {
       return NextResponse.json({ error: "Tracking ID is required when marking as shipped" }, { status: 400 });
     }
 
-    const updatedOrder = await prisma.order.update({
+    if (status === "rejected" && order.status !== "rejected") {
+      await rejectWithStockRestore(id, status, trackingId, notes, order.items);
+    } else {
+      await prisma.order.update({
+        where: { id },
+        data: statusUpdateData(status, trackingId, notes),
+      });
+    }
+
+    const updated = await prisma.order.findUnique({
       where: { id },
-      data: {
-        status,
-        version: { increment: 1 },
-        ...(trackingId && { trackingId }),
-        statusHistory: {
-          create: {
-            status,
-            notes: notes || `Status changed to ${status}`,
-          },
-        },
-      },
       include: { items: true, statusHistory: true },
     });
-
-    return NextResponse.json(updatedOrder);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to update order status:", error);
     return NextResponse.json({ error: "Failed to update order status" }, { status: 500 });

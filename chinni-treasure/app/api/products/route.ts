@@ -52,6 +52,30 @@ export async function GET(request: Request) {
   }
 }
 
+type CreateProductInput = {
+  name: string;
+  price: number;
+  sku?: string;
+  categoryId?: number | null;
+  description?: string;
+  stockQuantity?: number;
+  imageUrl?: string;
+  badge?: ProductBadge | null;
+};
+
+function buildCreateData(input: CreateProductInput) {
+  return {
+    sku: input.sku || undefined,
+    name: sanitize(input.name),
+    categoryId: input.categoryId || null,
+    description: input.description ? sanitize(input.description) : null,
+    price: input.price,
+    stockQuantity: input.stockQuantity ?? 0,
+    imageUrl: input.imageUrl || null,
+    ...(input.badge !== undefined && { badge: input.badge ?? null }),
+  };
+}
+
 // POST /api/products — Create a new product (admin only)
 export async function POST(request: Request) {
   const csrfError = validateCsrfOrigin(request);
@@ -64,7 +88,6 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-
     const parsed = CreateProductSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -72,19 +95,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { name, price, sku, categoryId, description, stockQuantity, imageUrl, badge } = parsed.data;
 
     const product = await prisma.product.create({
-      data: {
-        sku: sku || undefined,
-        name: sanitize(name),
-        categoryId: categoryId || null,
-        description: description ? sanitize(description) : null,
-        price,
-        stockQuantity: stockQuantity ?? 0,
-        imageUrl: imageUrl || null,
-        ...(badge !== undefined && { badge: badge || null }),
-      },
+      data: buildCreateData(parsed.data),
       include: { category: { select: { name: true } } },
     });
 

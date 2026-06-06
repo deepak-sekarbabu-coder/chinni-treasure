@@ -18,6 +18,28 @@ const UpdateProductSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
+  sku: (v) => v,
+  name: (v) => sanitize(v as string),
+  categoryId: (v) => v ?? null,
+  description: (v) => (v ? sanitize(v as string) : null),
+  price: (v) => v,
+  stockQuantity: (v) => v,
+  imageUrl: (v) => v || null,
+  badge: (v) => v || null,
+  isActive: (v) => v,
+};
+
+function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknown> {
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (value !== undefined) {
+      data[key] = FIELD_MAPPERS[key] ? FIELD_MAPPERS[key](value) : value;
+    }
+  }
+  return data;
+}
+
 // PUT /api/products/[id] — Update a product (admin only)
 export async function PUT(
   request: Request,
@@ -34,7 +56,6 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-
     const parsed = UpdateProductSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -42,23 +63,10 @@ export async function PUT(
         { status: 400 },
       );
     }
-    const { sku, name, categoryId, description, price, stockQuantity, imageUrl, badge, isActive } = parsed.data;
-
-    // Build update data imperatively to avoid Prisma's complex conditional spread types
-    const data: Record<string, unknown> = {};
-    if (sku !== undefined) data.sku = sku;
-    if (name !== undefined) data.name = sanitize(name);
-    if (categoryId !== undefined) data.categoryId = categoryId ?? null;
-    if (description !== undefined) data.description = description ? sanitize(description) : null;
-    if (price !== undefined) data.price = price;
-    if (stockQuantity !== undefined) data.stockQuantity = stockQuantity;
-    if (imageUrl !== undefined) data.imageUrl = imageUrl || null;
-    if (badge !== undefined) data.badge = badge || null;
-    if (isActive !== undefined) data.isActive = isActive;
 
     const product = await prisma.product.update({
       where: { id },
-      data: data as Parameters<typeof prisma.product.update>[0]["data"],
+      data: buildUpdateData(parsed.data as Record<string, unknown>) as Parameters<typeof prisma.product.update>[0]["data"],
       include: { category: { select: { name: true } } },
     });
 
