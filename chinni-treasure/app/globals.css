@@ -2511,6 +2511,20 @@ a {
 .admin-header-actions { display: flex; gap: 10px; }
 .admin-heading { font-family: var(--font-serif); font-size: 1.8rem; color: var(--cream); margin: 0; }
 
+/* Admin responsive */
+@media (max-width: 768px) {
+  .admin-header-row { flex-direction: column; gap: 16px; align-items: stretch; }
+  .admin-header-actions { flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  .admin-header-actions .btn-lg { flex: 1; min-width: 0; text-align: center; }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .admin-top-header { padding: 20px 0; }
+  .admin-heading { font-size: 1.4rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* Section padding */
 .section-top-lg { padding-top: 32px; }
 .section-top-md { padding-top: 24px; }
