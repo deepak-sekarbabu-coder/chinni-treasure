@@ -7,6 +7,7 @@ import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartPr
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import { getCartFromCookies } from "@/src/lib/cart-cookie";
 import { prisma } from "@/src/lib/prisma";
+import PageTransition from "@/src/components/layout/PageTransition";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -97,7 +98,7 @@ export default async function RootLayout({
             </a>
             <Navbar />
             <main id="main-content" role="main">
-              {children}
+              <PageTransition>{children}</PageTransition>
             </main>
             <Footer />
           </ToastProvider>

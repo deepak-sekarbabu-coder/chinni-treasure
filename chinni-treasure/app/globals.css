@@ -633,6 +633,22 @@ a {
   animation: countBounce 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Page transition */
+.page-transition {
+  animation: pageEnter 0.35s var(--ease-out) both;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-cart-enter {
   animation: cartItemSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
