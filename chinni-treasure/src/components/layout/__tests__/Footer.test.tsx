@@ -23,7 +23,6 @@ describe("Footer", () => {
 
   it("renders customer care links", () => {
     render(<Footer />);
-    expect(screen.getByText("Shipping Info")).toBeInTheDocument();
     expect(screen.getByText("Returns Policy")).toBeInTheDocument();
   });
 

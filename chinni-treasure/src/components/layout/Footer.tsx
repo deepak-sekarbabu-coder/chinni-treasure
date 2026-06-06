@@ -79,7 +79,6 @@ export default function Footer() {
         <div>
           <h4>Customer Care</h4>
           <ul role="list">
-            <li role="listitem"><a href="#">Shipping Info</a></li>
             <li role="listitem"><button className="footer-link-btn" onClick={() => setReturnsPolicyOpen(true)}>Returns Policy</button></li>
           </ul>
         </div>
