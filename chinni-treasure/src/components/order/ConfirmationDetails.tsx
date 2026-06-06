@@ -64,13 +64,13 @@ function generateInvoice(order: OrderData, logoBase64?: string | null): jsPDF {
     y += logoH + 8;
   }
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.setFontSize(22);
   doc.setTextColor(gold);
   doc.text("Chinni Treasure", cx, y, { align: "center" });
   y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFont("times", "italic");
+  doc.setFontSize(9);
   doc.setTextColor(dark);
   doc.text("Little Love", cx, y, { align: "center" });
   const heartSize = 2.5;
@@ -86,7 +86,7 @@ function generateInvoice(order: OrderData, logoBase64?: string | null): jsPDF {
   doc.line(margin, y, pageW - margin, y);
   y += 8;
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.setFontSize(16);
   doc.setTextColor(dark);
   doc.text("Order Invoice", margin, y);
