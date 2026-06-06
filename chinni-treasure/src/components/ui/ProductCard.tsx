@@ -65,4 +65,4 @@ export default function ProductCard({
   );
 }
 
-export type { ProductData };
+

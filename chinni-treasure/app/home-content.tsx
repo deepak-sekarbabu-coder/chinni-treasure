@@ -1,16 +1,5 @@
 import Link from "next/link";
 
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  category: { name: string } | null;
-  stockQuantity: number;
-  badge: string | null;
-}
-
 export default function HomeContent() {
   return (
     <>

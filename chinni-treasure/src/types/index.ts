@@ -1,17 +1,3 @@
-import type { Admin, AdminRole, Category, Order, OrderItem, OrderStatus, OrderStatusHistory, Product, ProductBadge } from "@prisma/client";
-
-export type {
-  Admin,
-  AdminRole,
-  Category,
-  Order,
-  OrderItem,
-  OrderStatus,
-  OrderStatusHistory,
-  Product,
-  ProductBadge,
-};
-
 export interface CartItem {
   productId: string;
   quantity: number;

@@ -7,7 +7,7 @@ import ProductCard from "@/src/components/ui/ProductCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 
-export interface Product {
+interface Product {
   id: string;
   name: string;
   price: number;

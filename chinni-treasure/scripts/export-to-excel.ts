@@ -1,3 +1,4 @@
+// fallow-ignore-next-line unused-files
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as Excel from 'exceljs';
