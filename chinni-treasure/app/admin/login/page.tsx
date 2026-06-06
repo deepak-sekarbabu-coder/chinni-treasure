@@ -39,8 +39,7 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Invalid credentials");
       }
 
-      router.refresh();
-      router.replace("/admin");
+      window.location.href = "/admin";
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
