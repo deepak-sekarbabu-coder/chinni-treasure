@@ -32,7 +32,7 @@ export const StatsResponseSchema = z.object({
 export const OrderItemSchema = z.object({
   id: z.string(),
   productName: z.string(),
-  unitPrice: z.number(),
+  unitPrice: z.coerce.number(),
   quantity: z.number(),
 });
 
@@ -44,13 +44,13 @@ export const OrderSchema = z.object({
   customerPhone: z.string(),
   status: z.string(),
   version: z.number(),
-  trackingId: z.string().optional(),
-  totalAmount: z.number(),
-  subtotal: z.number(),
-  shippingCost: z.number(),
+  trackingId: z.string().nullable().optional(),
+  totalAmount: z.coerce.number(),
+  subtotal: z.coerce.number(),
+  shippingCost: z.coerce.number(),
   createdAt: z.string(),
-  transactionId: z.string().optional(),
-  customerNotes: z.string().optional(),
+  transactionId: z.string().nullable().optional(),
+  customerNotes: z.string().nullable().optional(),
   items: z.array(OrderItemSchema),
   addressLine1: z.string(),
   city: z.string(),
@@ -69,7 +69,7 @@ export const OrdersResponseSchema = z.object({
 export const ProductSchema = z.object({
   id: z.string(),
   name: z.string(),
-  price: z.number(),
+  price: z.coerce.number(),
   imageUrl: z.string(),
   description: z.string(),
   stockQuantity: z.number(),

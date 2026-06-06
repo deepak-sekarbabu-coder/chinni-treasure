@@ -26,7 +26,10 @@ export async function GET(request: Request) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10")));
     const skip = (page - 1) * limit;
 
-    const cacheKey = `products:${page}:${limit}`;
+    const isActiveParam = searchParams.get("isActive");
+    const where = isActiveParam === "all" ? {} : { isActive: true };
+
+    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}`;
     const cached = getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {
@@ -36,13 +39,13 @@ export async function GET(request: Request) {
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true },
+        where,
         include: { category: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where }),
     ]);
 
     const payload = {

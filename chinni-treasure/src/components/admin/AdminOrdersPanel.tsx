@@ -18,13 +18,13 @@ interface Order {
   customerPhone: string;
   status: string;
   version: number;
-  trackingId?: string;
+  trackingId?: string | null;
   totalAmount: number;
   subtotal: number;
   shippingCost: number;
   createdAt: string;
-  transactionId?: string;
-  customerNotes?: string;
+  transactionId?: string | null;
+  customerNotes?: string | null;
   items: OrderItem[];
   addressLine1: string;
   city: string;
@@ -59,7 +59,6 @@ export default function AdminOrdersPanel({
 }: Props) {
   function handleFilterClick(key: string) {
     onStatusFilterChange(key);
-    onPageChange(1);
   }
 
   return (

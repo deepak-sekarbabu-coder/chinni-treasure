@@ -144,7 +144,7 @@ export default function AdminPage() {
             }
           }
         } else {
-          console.warn("Orders response schema mismatch:", parsed.error.format());
+          console.warn("Orders response schema mismatch:", parsed.error);
         }
       }
     } catch (err) {
@@ -162,6 +162,7 @@ export default function AdminPage() {
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("limit", String(PRODUCTS_PER_PAGE));
+      params.set("isActive", "all");
       const res = await fetch(`/api/products?${params}`);
       if (res.ok) {
         const json = await res.json();
@@ -534,7 +535,7 @@ export default function AdminPage() {
             onStatusFilterChange={(key) => { setStatusFilter(key); fetchOrders(undefined, 1, key); }}
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={(page) => fetchOrders(undefined, page)}
+            onPageChange={(page) => fetchOrders(undefined, page, statusFilter)}
             advancingOrderId={advancingOrderId}
             selectedOrder={selectedOrder}
             onSelectOrder={(order) => setSelectedOrder(order)}

@@ -22,13 +22,13 @@ interface OrderData {
   customerEmail: string;
   customerPhone: string;
   status: string;
-  trackingId?: string;
+  trackingId?: string | null;
   totalAmount: number;
   subtotal: number;
   shippingCost: number;
   createdAt: string;
-  transactionId?: string;
-  customerNotes?: string;
+  transactionId?: string | null;
+  customerNotes?: string | null;
   items: OrderItem[];
   addressLine1: string;
   city: string;
