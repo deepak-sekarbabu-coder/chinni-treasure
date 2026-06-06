@@ -4286,6 +4286,8 @@ a {
 
   .hero-story {
     max-width: 620px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
