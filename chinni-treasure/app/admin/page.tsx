@@ -75,22 +75,24 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
+    let cancelled = false;
     async function checkAuth() {
       try {
         const res = await fetch("/api/auth/me");
         if (!res.ok) {
-          router.push("/admin/login");
+          if (!cancelled) router.push("/admin/login");
           return;
         }
+        if (cancelled) return;
         setAuthenticated(true);
+        setLoading(false);
         await Promise.all([fetchStats(), fetchOrders(undefined, 1), fetchProducts()]);
       } catch {
-        router.push("/admin/login");
-      } finally {
-        setLoading(false);
+        if (!cancelled) router.push("/admin/login");
       }
     }
     checkAuth();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
