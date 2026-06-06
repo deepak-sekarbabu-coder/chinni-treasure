@@ -6,8 +6,10 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
+import type { CartItem } from "@/src/types";
 
 export interface CartItemDisplay {
   productId: string;
@@ -45,30 +47,46 @@ function saveCart(items: CartItemDisplay[]) {
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItemDisplay[]>([]);
-  const [hasLoadedCart, setHasLoadedCart] = useState(false);
+function toCartCookie(items: CartItemDisplay[]): CartItem[] {
+  return items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+}
+
+const CART_COOKIE = "cart";
+const CART_MAX_AGE = 2592000; // 30 days
+function setCartCookieClient(items: CartItem[]) {
+  if (typeof window === "undefined") return;
+  try {
+    document.cookie = `${CART_COOKIE}=${encodeURIComponent(JSON.stringify(items))}; path=/; max-age=${CART_MAX_AGE}; samesite=lax`;
+  } catch {
+    // ignore
+  }
+}
+
+export function CartProvider({ children, initialItems = [] }: { children: ReactNode; initialItems?: CartItemDisplay[] }) {
+  const [items, setItems] = useState<CartItemDisplay[]>(initialItems);
+  const hasLoadedCart = useRef(false);
 
   useEffect(() => {
-    const loadSavedCart = window.setTimeout(() => {
+    const raw = localStorage.getItem("luxe_cart");
+    if (raw) {
       try {
-        const raw = localStorage.getItem("luxe_cart");
-        setItems(raw ? JSON.parse(raw) : []);
+        const localItems: CartItemDisplay[] = JSON.parse(raw);
+        const timer = setTimeout(() => setItems(localItems), 0);
+        hasLoadedCart.current = true;
+        return () => clearTimeout(timer);
       } catch {
-        setItems([]);
-      } finally {
-        setHasLoadedCart(true);
+        // ignore, keep initialItems
       }
-    }, 0);
-
-    return () => window.clearTimeout(loadSavedCart);
+    }
+    hasLoadedCart.current = true;
   }, []);
 
   // Persist on change
   useEffect(() => {
-    if (!hasLoadedCart) return;
+    if (!hasLoadedCart.current) return;
     saveCart(items);
-  }, [hasLoadedCart, items]);
+    setCartCookieClient(toCartCookie(items));
+  }, [items]);
 
   const addItem = useCallback(
     (product: { id: string; name: string; price: number; image: string; stock: number }) => {

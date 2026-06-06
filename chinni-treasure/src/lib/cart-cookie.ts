@@ -10,7 +10,6 @@ const cartItemSchema = z.object({
 const cartSchema = z.array(cartItemSchema);
 
 const CART_COOKIE = "cart";
-const CART_MAX_AGE = 2592000; // 30 days
 
 export async function getCartFromCookies(): Promise<CartItem[]> {
   const cookieStore = await cookies();
@@ -23,18 +22,4 @@ export async function getCartFromCookies(): Promise<CartItem[]> {
   } catch {
     return [];
   }
-}
-
-export function serializeCartCookie(items: CartItem[]): string {
-  return JSON.stringify(items);
-}
-
-export function getCartCookieOptions() {
-  return {
-    name: CART_COOKIE,
-    maxAge: CART_MAX_AGE,
-    path: "/",
-    sameSite: "lax" as const,
-    httpOnly: false,
-  };
 }

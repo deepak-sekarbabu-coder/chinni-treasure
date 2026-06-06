@@ -3,8 +3,10 @@ import { Cormorant_Garamond, Albert_Sans, Pinyon_Script } from "next/font/google
 import "./globals.css";
 import Navbar from "@/src/components/layout/Navbar";
 import Footer from "@/src/components/layout/Footer";
-import { CartProvider } from "@/src/components/cart/CartProvider";
+import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartProvider";
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
+import { getCartFromCookies } from "@/src/lib/cart-cookie";
+import { prisma } from "@/src/lib/prisma";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -51,15 +53,44 @@ export const viewport: Viewport = {
   themeColor: "#c9a227",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let initialItems: CartItemDisplay[] = [];
+  try {
+    const cookieItems = await getCartFromCookies();
+    if (cookieItems.length > 0) {
+      const productIds = cookieItems.map((i) => i.productId);
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds }, isActive: true },
+        select: { id: true, name: true, price: true, imageUrl: true, stockQuantity: true },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+      initialItems = cookieItems
+        .map((ci) => {
+          const p = productMap.get(ci.productId);
+          if (!p) return null;
+          return {
+            productId: p.id,
+            name: p.name,
+            price: Number(p.price),
+            quantity: ci.quantity,
+            image: p.imageUrl,
+            stock: p.stockQuantity,
+          };
+        })
+        .filter((x): x is CartItemDisplay => x !== null);
+    }
+  } catch {
+    // Cart SSR hydration failed silently — cart will hydrate from localStorage on client
+  }
+
   return (
     <html lang="en" className={`${cormorant.variable} ${albert.variable} ${pinyon.variable}`}>
       <body>
-        <CartProvider>
+        <CartProvider initialItems={initialItems}>
           <ToastProvider>
             <a href="#main-content" className="skip-link">
               Skip to main content
