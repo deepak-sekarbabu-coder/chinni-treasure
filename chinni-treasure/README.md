@@ -160,7 +160,7 @@ chinni-treasure/
 │   ├── layout.tsx                # Root layout (Navbar, Footer, Providers, fonts)
 │   └── page.tsx                  # Homepage (server component)
 ├── prisma/
-│   ├── schema.prisma             # Database schema (7 models + 3 enums)
+│   ├── schema.prisma             # Database schema (6 models + 3 enums)
 │   ├── seed.ts                   # Database seeder (6 products + 4 categories + admin)
 │   └── migrations/               # Database migration history
 ├── scripts/
