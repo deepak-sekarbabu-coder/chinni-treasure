@@ -12,73 +12,15 @@ import AdminTrackingModal from "@/src/components/admin/AdminTrackingModal";
 import AdminDeleteConfirm from "@/src/components/admin/AdminDeleteConfirm";
 import AdminOrdersPanel from "@/src/components/admin/AdminOrdersPanel";
 import AdminCataloguePanel from "@/src/components/admin/AdminCataloguePanel";
-interface Stats {
-  totalOrders: number;
-  pendingOrders: number;
-  approvedOrders: number;
-  packagingOrders: number;
-  shippedOrders: number;
-  deliveredOrders: number;
-  rejectedOrders: number;
-  totalRevenue: number;
-}
+import { StatsResponseSchema, OrdersResponseSchema, ProductsResponseSchema, OrderSchema, ProductSchema } from "@/src/lib/admin-schemas";
+import type { StatsResponse } from "@/src/lib/admin-schemas";
+import type { z } from "zod";
 
-interface ChartPoint {
-  date: string;
-  orders: number;
-  revenue: number;
-}
-
-interface ProductSales {
-  productName: string;
-  quantity: number;
-  revenue: number;
-}
-
-interface OrderItem {
-  id: string;
-  productName: string;
-  unitPrice: number;
-  quantity: number;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  status: string;
-  version: number;
-  trackingId?: string;
-  totalAmount: number;
-  subtotal: number;
-  shippingCost: number;
-  createdAt: string;
-  transactionId?: string;
-  customerNotes?: string;
-  items: OrderItem[];
-  addressLine1: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  stockQuantity: number;
-  badge: string | null;
-  category: { name: string } | null;
-  categoryId: number | null;
-  sku: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+type Stats = StatsResponse["stats"];
+type ChartPoint = StatsResponse["chartData"][number];
+type ProductSales = StatsResponse["productSalesData"][number];
+type Order = z.infer<typeof OrderSchema>;
+type Product = z.infer<typeof ProductSchema>;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -157,10 +99,16 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/stats");
       if (res.ok) {
-        const data = await res.json();
-        setStats(data.stats);
-        setChartData(data.chartData);
-        setProductSales(data.productSalesData);
+        const json = await res.json();
+        const parsed = StatsResponseSchema.safeParse(json);
+        if (parsed.success) {
+          const data = parsed.data;
+          setStats(data.stats);
+          setChartData(data.chartData);
+          setProductSales(data.productSalesData);
+        } else {
+          console.warn("Stats response schema mismatch:", parsed.error.format());
+        }
       }
     } catch (err) {
       console.error("Failed to fetch stats:", err);
@@ -182,15 +130,21 @@ export default function AdminPage() {
 
       const res = await fetch(`/api/orders?${params}`);
       if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders);
-        setTotalPages(data.totalPages);
-        setCurrentPage(data.page);
-        if (currentSelectedId) {
-          const updated = data.orders.find((o: Order) => o.id === currentSelectedId);
-          if (updated) {
-            setSelectedOrder(updated);
+        const json = await res.json();
+        const parsed = OrdersResponseSchema.safeParse(json);
+        if (parsed.success) {
+          const data = parsed.data;
+          setOrders(data.orders);
+          setTotalPages(data.totalPages);
+          setCurrentPage(data.page);
+          if (currentSelectedId) {
+            const updated = data.orders.find((o) => o.id === currentSelectedId);
+            if (updated) {
+              setSelectedOrder(updated);
+            }
           }
+        } else {
+          console.warn("Orders response schema mismatch:", parsed.error.format());
         }
       }
     } catch (err) {
@@ -210,10 +164,16 @@ export default function AdminPage() {
       params.set("limit", String(PRODUCTS_PER_PAGE));
       const res = await fetch(`/api/products?${params}`);
       if (res.ok) {
-        const data = await res.json();
-        setProducts(data.products);
-        setProductTotalPages(data.totalPages);
-        setProductPage(data.page);
+        const json = await res.json();
+        const parsed = ProductsResponseSchema.safeParse(json);
+        if (parsed.success) {
+          const data = parsed.data;
+          setProducts(data.products);
+          setProductTotalPages(data.totalPages);
+          setProductPage(data.page);
+        } else {
+          console.warn("Products response schema mismatch:", parsed.error.format());
+        }
       }
     } catch (err) {
       console.error("Failed to fetch products:", err);
