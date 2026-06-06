@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { getCached, setCache, clearCache } from "@/src/lib/products-cache";
 import { z } from "zod";
 import { ProductBadge } from "@prisma/client";
 
@@ -25,6 +26,14 @@ export async function GET(request: Request) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10")));
     const skip = (page - 1) * limit;
 
+    const cacheKey = `products:${page}:${limit}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
+      });
+    }
+
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where: { isActive: true },
@@ -35,16 +44,19 @@ export async function GET(request: Request) {
       }),
       prisma.product.count({ where: { isActive: true } }),
     ]);
-    return NextResponse.json({
+
+    const payload = {
       products,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    }, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-      },
+    };
+
+    setCache(cacheKey, payload);
+
+    return NextResponse.json(payload, {
+      headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);
@@ -100,6 +112,8 @@ export async function POST(request: Request) {
       data: buildCreateData(parsed.data),
       include: { category: { select: { name: true } } },
     });
+
+    clearCache();
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

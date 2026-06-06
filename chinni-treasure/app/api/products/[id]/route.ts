@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { clearCache } from "@/src/lib/products-cache";
 import { z } from "zod"
 import { ProductBadge } from "@prisma/client"
 
@@ -70,6 +71,8 @@ export async function PUT(
       include: { category: { select: { name: true } } },
     });
 
+    clearCache();
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Failed to update product:", error);
@@ -96,6 +99,9 @@ export async function DELETE(
       where: { id },
       data: { isActive: false },
     });
+
+    clearCache();
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete product:", error);

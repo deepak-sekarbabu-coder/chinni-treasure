@@ -11,5 +11,8 @@ export function createCache<T = unknown>(ttl: number) {
     set(key: string, data: T): void {
       store.set(key, { data, expiry: Date.now() + ttl });
     },
+    clear(): void {
+      store.clear();
+    },
   };
 }
