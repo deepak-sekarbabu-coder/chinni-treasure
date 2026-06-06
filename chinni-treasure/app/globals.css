@@ -910,7 +910,7 @@ a {
   -webkit-backdrop-filter: blur(4px);
   z-index: 9998;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
   opacity: 0;
