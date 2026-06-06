@@ -12,51 +12,50 @@ dotenv.config();
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const headerStyle = {
+  font: { bold: true, size: 11, color: { argb: 'FFFFFFFF' } },
+  fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF1F4E78' } },
+  alignment: { horizontal: 'center' as const, vertical: 'middle' as const },
+  border: { top: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, left: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, bottom: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, right: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } } }
+};
+
+function createSheet<T>(workbook: Excel.Workbook, name: string, data: T[], columns: { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown }[]) {
+  const sheet = workbook.addWorksheet(name, { state: 'visible' });
+  sheet.addRow(columns.map(c => c.header));
+  sheet.getRow(1).eachCell((cell) => { cell.style = headerStyle; });
+  data.forEach((row) => {
+    const rowData = columns.map((c) => {
+      const value = row[c.key];
+      return c.format ? c.format(value) : value;
+    });
+    sheet.addRow(rowData);
+  });
+  columns.forEach((c, index) => { sheet.getColumn(index + 1).width = c.width; });
+  sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columns.length } };
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+  return sheet;
+}
+
+function addLookupSheet(workbook: Excel.Workbook, categories: { id: number; name: string }[], products: { id: string; sku: string | null; name: string }[], orders: { id: string; orderNumber: string }[], admins: { id: string; username: string; email: string }[]) {
+  const lookupSheet = workbook.addWorksheet('ID Lookup');
+  lookupSheet.addRow(['Table', 'ID', 'Name/Identifier']);
+  lookupSheet.getRow(1).eachCell((cell) => { cell.style = headerStyle; });
+  categories.forEach(cat => lookupSheet.addRow(['Category', cat.id, cat.name]));
+  products.forEach(prod => lookupSheet.addRow(['Product', prod.id, `${prod.sku || 'N/A'} - ${prod.name}`]));
+  orders.forEach(order => lookupSheet.addRow(['Order', order.id, order.orderNumber]));
+  admins.forEach(admin => lookupSheet.addRow(['Admin', admin.id, `${admin.username} (${admin.email})`]));
+  lookupSheet.getColumn(1).width = 15;
+  lookupSheet.getColumn(2).width = 40;
+  lookupSheet.getColumn(3).width = 50;
+  return lookupSheet;
+}
+
 async function exportToExcel() {
   console.log('Starting database export to Excel...');
 
   const workbook = new Excel.Workbook();
   workbook.creator = 'Chinni Treasure Export Script';
   workbook.created = new Date();
-
-  // Define styles
-  const headerStyle = {
-    font: { bold: true, size: 11, color: { argb: 'FFFFFFFF' } },
-    fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF1F4E78' } },
-    alignment: { horizontal: 'center' as const, vertical: 'middle' as const },
-    border: { top: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, left: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, bottom: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } }, right: { style: 'thin' as const, color: { argb: 'FFD0D0D0' } } }
-  };
-
-  // Helper function to create a sheet with styled headers
-  function createSheet<T>(workbook: Excel.Workbook, name: string, data: T[], columns: { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown }[]) {
-    const sheet = workbook.addWorksheet(name, { state: 'visible' });
-
-    // Add headers
-    sheet.addRow(columns.map(c => c.header));
-    sheet.getRow(1).eachCell((cell) => {
-      cell.style = headerStyle;
-    });
-
-    // Add data rows
-    data.forEach((row) => {
-      const rowData = columns.map((c) => {
-        const value = row[c.key];
-        return c.format ? c.format(value) : value;
-      });
-      sheet.addRow(rowData);
-    });
-
-    // Set column widths
-    columns.forEach((c, index) => {
-      sheet.getColumn(index + 1).width = c.width;
-    });
-
-    // Auto-filter and freeze first row
-    sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columns.length } };
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-    return sheet;
-  }
 
   // 1. Export Categories
   const categories = await prisma.category.findMany({
@@ -166,36 +165,7 @@ async function exportToExcel() {
   ]);
 
   // Add a "Lookup" sheet with ID mappings for easy reference
-  const lookupSheet = workbook.addWorksheet('ID Lookup');
-  lookupSheet.addRow(['Table', 'ID', 'Name/Identifier']);
-  lookupSheet.getRow(1).eachCell((cell) => {
-    cell.style = headerStyle;
-  });
-
-  // Add category mappings
-  categories.forEach(cat => {
-    lookupSheet.addRow(['Category', cat.id, cat.name]);
-  });
-
-  // Add product mappings
-  products.forEach(prod => {
-    lookupSheet.addRow(['Product', prod.id, `${prod.sku || 'N/A'} - ${prod.name}`]);
-  });
-
-  // Add order mappings
-  orders.forEach(order => {
-    lookupSheet.addRow(['Order', order.id, order.orderNumber]);
-  });
-
-  // Add admin mappings
-  admins.forEach(admin => {
-    lookupSheet.addRow(['Admin', admin.id, `${admin.username} (${admin.email})`]);
-  });
-
-  // Set column widths for lookup sheet
-  lookupSheet.getColumn(1).width = 15;
-  lookupSheet.getColumn(2).width = 40;
-  lookupSheet.getColumn(3).width = 50;
+  addLookupSheet(workbook, categories, products, orders, admins);
 
   // Save the workbook
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);

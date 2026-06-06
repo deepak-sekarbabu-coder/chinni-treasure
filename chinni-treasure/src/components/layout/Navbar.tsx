@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/components/cart/CartProvider";
+import NavCartDropdown from "@/src/components/layout/NavCartDropdown";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -144,46 +145,14 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-              <div
-                className={`cart-dropdown${cartOpen ? " active" : ""}`}
-                role="region"
-                aria-label="Shopping cart preview"
-              >
-                <h4>Shopping Cart</h4>
-                <div className="cart-dropdown-items" id="cart-dropdown-items">
-                  {items.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center", padding: "24px 0" }}>
-                      Your cart is empty
-                    </p>
-                  ) : (
-                    items.map((item) => (
-                      <div key={item.productId} className="cart-dropdown-item">
-                        <Image src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} />
-                        <div className="cart-dropdown-item-info">
-                          <h5>{item.name}</h5>
-                          <p>
-                            Qty: {item.quantity} &times; ₹{item.price.toFixed(2)}
-                          </p>
-                        </div>
-                        <button
-                          className="cart-dropdown-item-remove"
-                          aria-label={`Remove ${item.name} from cart`}
-                          onClick={() => removeItem(item.productId)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="cart-dropdown-total">
-                  <span>Total:</span>
-                  <span id="cart-dropdown-total">₹{total.toFixed(2)}</span>
-                </div>
-                <Link href="/order" className="btn btn-dark" style={{ width: "100%" }} onClick={() => { setCartOpen(false); setMenuOpen(false); }}>
-                  View Cart & Checkout
-                </Link>
-              </div>
+              {cartOpen && (
+                <NavCartDropdown
+                  items={items}
+                  total={total}
+                  onRemove={removeItem}
+                  onClose={() => { setCartOpen(false); setMenuOpen(false); }}
+                />
+              )}
             </div>
 
             <button

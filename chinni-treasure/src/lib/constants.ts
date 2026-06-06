@@ -15,6 +15,16 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 };
 
+export const ORDER_STATUS_FILTERS = [
+  { key: "all", label: "All Orders" },
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "packaging", label: "Packaging" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+  { key: "rejected", label: "Rejected" },
+];
+
 export const ORDER_STATUS_ICONS: Record<string, string> = {
   pending: "⏳",
   approved: "✓",
