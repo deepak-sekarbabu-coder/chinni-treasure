@@ -14,6 +14,7 @@ interface OrderForm {
   email: string;
   phone: string;
   address: string;
+  addressLine2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -95,6 +96,10 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }:
         <label htmlFor="address">Address <span className="required">*</span></label>
         <input type="text" id="address" name="address" value={form.address} onChange={handleChange} className={errors.address ? "error" : ""} placeholder="Street address, apartment, suite, etc." />
         {errors.address && <span className="form-error visible">{errors.address}</span>}
+      </div>
+      <div className="form-group">
+        <label htmlFor="addressLine2">Apartment, Suite, Landmark <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(Optional)</span></label>
+        <input type="text" id="addressLine2" name="addressLine2" value={form.addressLine2} onChange={handleChange} placeholder="Apartment, suite, floor, landmark, etc." />
       </div>
       <div className="form-row">
         <div className="form-group">
@@ -206,6 +211,7 @@ export default function OrderPage() {
     email: "",
     phone: "",
     address: "",
+    addressLine2: "",
     city: "",
     state: "",
     zipCode: "",
@@ -261,6 +267,7 @@ export default function OrderPage() {
           customerEmail: form.email.trim(),
           customerPhone: form.phone.trim(),
           addressLine1: form.address.trim(),
+          addressLine2: form.addressLine2.trim() || undefined,
           city: form.city.trim(),
           stateCode: form.state,
           postalCode: form.zipCode.trim(),
