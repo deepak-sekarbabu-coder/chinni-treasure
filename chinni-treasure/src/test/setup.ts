@@ -24,11 +24,6 @@ vi.mock('next/headers', () => ({
   }),
 }));
 
-vi.mock('isomorphic-dompurify', () => ({
-  default: {
-    sanitize: (input: string) => input.replace(/<[^>]*>/g, '').trim(),
-  },
-}));
 
 // Clean up mocks between tests
 afterEach(() => {

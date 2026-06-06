@@ -1,17 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
-
-// Mock PrismaPg and PrismaClient to avoid needing a real DB connection
-const mockPrismaClient = { $connect: vi.fn() };
-const mockPrismaPg = vi.fn();
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 vi.mock("@prisma/client", () => ({
   PrismaClient: vi.fn(function () {
-    return mockPrismaClient;
+    return { $connect: vi.fn() };
   }),
 }));
 
 vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: mockPrismaPg,
+  PrismaPg: vi.fn(),
 }));
 
 describe("prisma", () => {
@@ -20,9 +18,15 @@ describe("prisma", () => {
     expect(prisma).toBeDefined();
   });
 
-  it("creates a PrismaClient instance", async () => {
+  it("lazily creates PrismaClient on property access", async () => {
     const { prisma } = await import("../prisma");
-    // PrismaClient constructor should have been called
-    expect(prisma).toBe(mockPrismaClient);
+    // Proxy defers instantiation — no calls at module evaluation
+    expect(PrismaPg).not.toHaveBeenCalled();
+    expect(PrismaClient).not.toHaveBeenCalled();
+
+    // Access a property — triggers lazy creation
+    void (prisma as unknown as PrismaClient).$connect;
+    expect(PrismaPg).toHaveBeenCalledTimes(1);
+    expect(PrismaClient).toHaveBeenCalledTimes(1);
   });
 });
