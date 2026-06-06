@@ -20,6 +20,7 @@ const CORS_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
   allowedDevOrigins: ["127.0.0.1"],
   images: {
     remotePatterns: [
