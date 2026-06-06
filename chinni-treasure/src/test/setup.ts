@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Restore Node-native globals that jsdom polyfills break (jose needs real Uint8Array)
+import { TextEncoder, TextDecoder } from 'util';
+Object.assign(globalThis, { TextEncoder, TextDecoder });
+
 // Global mocks for Next.js modules
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
@@ -31,31 +35,34 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// Browser-only mocks — skip when running in node environment (e.g. auth tests)
+if (typeof window !== "undefined") {
+  // Mock window.matchMedia
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  readonly root: Element | Document | null = null;
-  readonly rootMargin: string = "";
-  readonly thresholds: ReadonlyArray<number> = [];
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  takeRecords(): IntersectionObserverEntry[] {
-    return [];
-  }
-  unobserve() {}
-} as unknown as { new(): IntersectionObserver };
+  // Mock IntersectionObserver
+  global.IntersectionObserver = class IntersectionObserver {
+    readonly root: Element | Document | null = null;
+    readonly rootMargin: string = "";
+    readonly thresholds: ReadonlyArray<number> = [];
+    constructor() {}
+    disconnect() {}
+    observe() {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+    unobserve() {}
+  } as unknown as { new(): IntersectionObserver };
+}
