@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import AdminStatCard from "@/src/components/ui/AdminStatCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -486,23 +487,35 @@ export default function AdminPage() {
               <div className="admin-stat-card text-left">
                 <h3 className="font-serif mb-16">Orders (Last 30 Days)</h3>
                 <div className="chart-scroll">
-                  {chartData.map((d) => (
-                    <div key={d.date} className="chart-row">
-                      <span>{d.date}</span>
-                      <span>{d.orders} orders</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const maxOrders = Math.max(...chartData.map(d => d.orders), 1);
+                    return chartData.map((d) => (
+                      <div key={d.date} className="chart-row">
+                        <span className="chart-date">{dayjs(d.date).format("D MMM")}</span>
+                        <div className="chart-bar-wrap">
+                          <div className="chart-bar" style={{ width: `${(d.orders / maxOrders) * 100}%` }}></div>
+                        </div>
+                        <span className="chart-value">{d.orders}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
               <div className="admin-stat-card text-left">
                 <h3 className="font-serif mb-16">Top Products</h3>
                 <div className="chart-scroll">
-                  {productSales.slice(0, 10).map((p, i) => (
-                    <div key={i} className="chart-row">
-                      <span>{p.productName}</span>
-                      <span>{p.quantity} sold</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const maxQty = Math.max(...productSales.map(p => p.quantity), 1);
+                    return productSales.slice(0, 10).map((p, i) => (
+                      <div key={i} className="chart-row">
+                        <span className="chart-product-name">{p.productName}</span>
+                        <div className="chart-bar-wrap">
+                          <div className="chart-bar chart-bar-gold" style={{ width: `${(p.quantity / maxQty) * 100}%` }}></div>
+                        </div>
+                        <span className="chart-value">{p.quantity}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
