@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { jsPDF } from "jspdf";
 
 interface OrderItem {
@@ -29,7 +29,7 @@ interface OrderData {
   items: OrderItem[];
 }
 
-function generateInvoice(order: OrderData): jsPDF {
+function generateInvoice(order: OrderData, logoBase64?: string | null): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = 210;
   const margin = 20;
@@ -40,15 +40,45 @@ function generateInvoice(order: OrderData): jsPDF {
   const gray = "#555";
   const lightGray = "#999";
 
+  const cx = pageW / 2;
+
+  function addHeart(hx: number, hy: number, hs: number) {
+    doc.saveGraphicsState();
+    doc.setFillColor("#e74c3c");
+    const hr = hs * 0.35;
+    doc.circle(hx - hr * 0.6, hy - hr * 0.1, hr, "F");
+    doc.circle(hx + hr * 0.6, hy - hr * 0.1, hr, "F");
+    doc.triangle(
+      hx - hr * 1.15, hy + hr * 0.2,
+      hx + hr * 1.15, hy + hr * 0.2,
+      hx, hy + hr * 1.5,
+      "F",
+    );
+    doc.restoreGraphicsState();
+  }
+
+  if (logoBase64) {
+    const logoW = 18;
+    const logoH = 18;
+    doc.addImage(logoBase64, "PNG", cx - logoW / 2, y, logoW, logoH);
+    y += logoH + 8;
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(gold);
-  doc.text("Chinni Treasure", margin, y);
-  y += 3;
+  doc.text("Chinni Treasure", cx, y, { align: "center" });
+  y += 6;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(lightGray);
-  doc.text("Artisan-Made Luxury Goods", margin, y);
+  doc.setFontSize(8);
+  doc.setTextColor(dark);
+  doc.text("Little Love", cx, y, { align: "center" });
+  const heartSize = 2.5;
+  const loveW = doc.getTextWidth("Little Love");
+  const gap = 3;
+  const heartY = y - 1.2;
+  addHeart(cx - loveW / 2 - gap, heartY, heartSize);
+  addHeart(cx + loveW / 2 + gap, heartY, heartSize);
   y += 10;
 
   doc.setDrawColor(gold);
@@ -206,7 +236,20 @@ function generateInvoice(order: OrderData): jsPDF {
 
   doc.setFontSize(7);
   doc.setTextColor(lightGray);
-  doc.text("Chinni Treasure — Artisan-Made Luxury Goods", margin, y);
+  const footerGap = 2;
+  const fhs = 2;
+  doc.text("Chinni Treasure", margin, y);
+  const fBrandEnd = margin + doc.getTextWidth("Chinni Treasure");
+  const fSepW = doc.getTextWidth(" — ");
+  const fLoveW = doc.getTextWidth("Little Love");
+  const fHeartY = y - 1;
+  const fHeart1X = fBrandEnd + fSepW;
+  const fLoveX = fHeart1X + fhs + footerGap;
+  const fHeart2X = fLoveX + fLoveW + footerGap;
+  doc.text(" — ", fBrandEnd, y);
+  addHeart(fHeart1X, fHeartY, fhs);
+  doc.text("Little Love", fLoveX, y);
+  addHeart(fHeart2X, fHeartY, fhs);
   y += 3;
   doc.text("Thank you for your purchase!", margin, y);
 
@@ -214,8 +257,20 @@ function generateInvoice(order: OrderData): jsPDF {
 }
 
 export default function ConfirmationDetails({ order }: { order: OrderData }) {
+  const logoRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    fetch("/images/branding/logo.png")
+      .then((res) => res.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => { logoRef.current = reader.result as string; };
+        reader.readAsDataURL(blob);
+      });
+  }, []);
+
   const downloadInvoice = useCallback(() => {
-    const doc = generateInvoice(order);
+    const doc = generateInvoice(order, logoRef.current);
     doc.save(`invoice-${order.orderNumber}.pdf`);
   }, [order]);
 
