@@ -15,13 +15,14 @@ interface CartItem {
 interface Props {
   items: CartItem[];
   total: number;
+  open: boolean;
   onRemove: (id: string) => void;
   onClose: () => void;
 }
 
-export default function NavCartDropdown({ items, total, onRemove, onClose }: Props) {
+export default function NavCartDropdown({ items, total, open, onRemove, onClose }: Props) {
   return (
-    <div className="cart-dropdown active" role="region" aria-label="Shopping cart preview">
+    <div className={`cart-dropdown${open ? " active" : ""}`} role="region" aria-label="Shopping cart preview">
       <h4>Shopping Cart</h4>
       <div className="cart-dropdown-items" id="cart-dropdown-items">
         {items.length === 0 ? (

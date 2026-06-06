@@ -145,14 +145,13 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-              {cartOpen && (
-                <NavCartDropdown
-                  items={items}
-                  total={total}
-                  onRemove={removeItem}
-                  onClose={() => { setCartOpen(false); setMenuOpen(false); }}
-                />
-              )}
+              <NavCartDropdown
+                items={items}
+                total={total}
+                open={cartOpen}
+                onRemove={removeItem}
+                onClose={() => { setCartOpen(false); setMenuOpen(false); }}
+              />
             </div>
 
             <button
