@@ -1,6 +1,13 @@
 import { prisma } from "@/src/lib/prisma";
 import Link from "next/link";
 import ConfirmationDetails from "@/src/components/order/ConfirmationDetails";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Order Confirmation — Chinni Treasure",
+  description:
+    "Your order has been placed successfully. View your order details and tracking information.",
+};
 
 interface Props {
   params: Promise<{ id: string }>;

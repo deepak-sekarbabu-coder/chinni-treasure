@@ -1,4 +1,11 @@
 import { openApiSpec } from "@/src/lib/openapi-spec";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "API Documentation — Chinni Treasure",
+  description:
+    "Interactive API documentation for the Chinni Treasure platform. Browse endpoints, schemas, and authentication details.",
+};
 
 type Schema = {
   type?: string;

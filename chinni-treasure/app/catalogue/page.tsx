@@ -1,5 +1,12 @@
 import { prisma } from "@/src/lib/prisma";
 import CatalogueContent from "../catalogue-content";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Collection — Chinni Treasure",
+  description:
+    "Browse our curated collection of artisan-crafted luxury goods. Handcrafted leather wallets, silk scarves, timepieces, and more.",
+};
 
 export default async function CataloguePage() {
   let products: Array<{
