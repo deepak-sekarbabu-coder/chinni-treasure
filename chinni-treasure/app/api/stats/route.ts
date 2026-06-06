@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
+import { createCache } from "@/src/lib/cache";
 
-// ---- In-memory cache (per-instance, lost on cold start) ----
-const cache = new Map<string, { data: unknown; expiry: number }>();
-const CACHE_TTL = 30_000; // 30 seconds
-
-function getCached(key: string): unknown | null {
-  const entry = cache.get(key);
-  if (entry && entry.expiry > Date.now()) return entry.data;
-  cache.delete(key);
-  return null;
-}
-
-function setCache(key: string, data: unknown): void {
-  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
-}
+const { get: getCached, set: setCache } = createCache(30_000);
 
 // GET /api/stats — Dashboard statistics (admin only)
 export async function GET() {

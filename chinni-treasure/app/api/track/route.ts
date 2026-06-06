@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import type { Order, OrderItem } from "@prisma/client";
+import { createCache } from "@/src/lib/cache";
 
-// ---- In-memory cache ----
-const cache = new Map<string, { data: unknown; expiry: number }>();
-const CACHE_TTL = 15_000; // 15 seconds — short TTL since order status can change
-
-function getCached(key: string): unknown | null {
-  const entry = cache.get(key);
-  if (entry && entry.expiry > Date.now()) return entry.data;
-  cache.delete(key);
-  return null;
-}
-
-function setCache(key: string, data: unknown): void {
-  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
-}
+const { get: getCached, set: setCache } = createCache(15_000);
 
 // GET /api/track?orderId=xxx or /api/track?phone=xxx
 export async function GET(request: Request) {
