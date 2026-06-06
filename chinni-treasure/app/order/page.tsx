@@ -9,6 +9,8 @@ import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES } from "@/src/lib/constants";
 
+import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
+
 interface OrderForm {
   fullName: string;
   email: string;
@@ -20,6 +22,7 @@ interface OrderForm {
   zipCode: string;
   transactionId: string;
   notes: string;
+  acceptedTerms: boolean;
 }
 
 const STEP_LABELS = ["Personal Details", "Delivery Details", "Payment & Review"] as const;
@@ -39,6 +42,7 @@ const VALIDATION_RULES: ValidationRule[] = [
   { field: "state", step: 2, test: (f) => !f.state ? "State/UT is required" : undefined },
   { field: "zipCode", step: 2, test: (f) => !f.zipCode.trim() ? "PIN code is required" : f.zipCode.replace(/\D/g, "").length !== 6 ? "Enter a valid 6-digit PIN code" : undefined },
   { field: "transactionId", step: 3, test: (f) => !f.transactionId.trim() ? "Transaction ID is required" : undefined },
+  { field: "acceptedTerms", step: 3, test: (f) => !f.acceptedTerms ? "You must accept the terms and conditions" : undefined },
 ];
 
 function runValidation(form: OrderForm, step?: number): Record<string, string> {
@@ -125,11 +129,14 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }:
   );
 }
 
-function PaymentStep({ form, errors, handleChange }: {
+function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
   form: OrderForm;
   errors: Record<string, string>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  setForm: React.Dispatch<React.SetStateAction<OrderForm>>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }) {
+  const [policyOpen, setPolicyOpen] = useState(false);
   return (
     <>
       <fieldset className="order-fieldset step-fade-in">
@@ -148,6 +155,42 @@ function PaymentStep({ form, errors, handleChange }: {
           <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
         </div>
       </fieldset>
+      <fieldset className="order-fieldset step-fade-in">
+        <legend className="order-legend">Terms &amp; Conditions</legend>
+        <div className="form-group terms-group">
+          <label className="terms-label">
+            <input
+              type="checkbox"
+              name="acceptedTerms"
+              checked={form.acceptedTerms}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, acceptedTerms: e.target.checked }));
+                if (errors.acceptedTerms) {
+                  setErrors((prev) => {
+                    const n = { ...prev };
+                    delete n.acceptedTerms;
+                    return n;
+                  });
+                }
+              }}
+              className={errors.acceptedTerms ? "error" : ""}
+            />
+            <span>
+              I have read and agree to the{" "}
+              <button
+                type="button"
+                className="terms-link-btn"
+                onClick={(e) => { e.preventDefault(); setPolicyOpen(true); }}
+              >
+                Returns Policy
+              </button>
+              . I understand that all sales are final, no returns or refunds will be issued, and payment must be completed before order processing.
+            </span>
+          </label>
+          {errors.acceptedTerms && <span className="form-error visible">{errors.acceptedTerms}</span>}
+        </div>
+      </fieldset>
+      <ReturnsPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />
     </>
   );
 }
@@ -217,6 +260,7 @@ export default function OrderPage() {
     zipCode: "",
     transactionId: "",
     notes: "",
+    acceptedTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -322,7 +366,7 @@ export default function OrderPage() {
             <div className="order-form-fields">
               {currentStep === 1 && <PersonalDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
               {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
-              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} />}
+              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
 
               <StepNavigation
                 currentStep={currentStep}

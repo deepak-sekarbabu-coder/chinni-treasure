@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
 type ContactIconProps = {
   type: "phone" | "whatsapp" | "mail" | "instagram" | "facebook";
@@ -46,7 +50,11 @@ function ContactIcon({ type }: ContactIconProps) {
 }
 
 export default function Footer() {
+  const [returnsPolicyOpen, setReturnsPolicyOpen] = useState(false);
+
   return (
+    <>
+      <ReturnsPolicyModal open={returnsPolicyOpen} onClose={() => setReturnsPolicyOpen(false)} />
     <footer className="footer" role="contentinfo">
       <div className="footer-grid">
         <div className="footer-brand">
@@ -72,7 +80,7 @@ export default function Footer() {
           <h4>Customer Care</h4>
           <ul role="list">
             <li role="listitem"><a href="#">Shipping Info</a></li>
-            <li role="listitem"><a href="#">Returns Policy</a></li>
+            <li role="listitem"><button className="footer-link-btn" onClick={() => setReturnsPolicyOpen(true)}>Returns Policy</button></li>
           </ul>
         </div>
         <div>
@@ -116,5 +124,6 @@ export default function Footer() {
         <span>Made with care</span>
       </div>
     </footer>
+    </>
   );
 }

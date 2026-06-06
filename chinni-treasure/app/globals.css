@@ -1009,6 +1009,23 @@ a {
   font-size: 0.9rem;
 }
 
+/* Returns Policy Modal */
+.returns-policy-card { display: flex; flex-direction: column; gap: 20px; }
+.returns-policy-rule { display: flex; align-items: flex-start; gap: 14px; padding: 16px; background: var(--cream-light); border-radius: 6px; border-left: 3px solid var(--gold); }
+.returns-policy-rule strong { display: block; font-family: var(--font-serif); font-size: 1rem; color: var(--near-black); margin-bottom: 4px; }
+.returns-policy-rule p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+.returns-policy-icon { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--white); border-radius: 50%; font-size: 0.8rem; color: var(--gold-dark); font-weight: 700; border: 1px solid rgba(212, 175, 55, 0.2); margin-top: 2px; }
+.footer-link-btn { background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+.footer-link-btn:hover { color: var(--gold); }
+
+/* Terms Checkbox */
+.terms-group { border: 1px solid var(--cream); border-radius: 6px; padding: 16px; }
+.terms-label { display: flex !important; align-items: flex-start !important; gap: 12px; cursor: pointer; font-size: 0.85rem !important; color: var(--text-muted); line-height: 1.6; }
+.terms-label input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer; }
+.terms-label input[type="checkbox"].error { outline: 2px solid var(--error); outline-offset: 2px; }
+.terms-link-btn { background: none; border: none; color: var(--gold-dark); font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.terms-link-btn:hover { color: var(--gold); }
+
 .modal-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
