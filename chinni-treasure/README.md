@@ -146,6 +146,7 @@ chinni-treasure/
 │   │   ├── docs/                 # OpenAPI spec endpoint
 │   │   ├── orders/               # Order CRUD & status management (with pagination)
 │   │   ├── products/             # Product CRUD
+│   │   ├── export/               # Excel export endpoint
 │   │   ├── stats/                # Dashboard statistics (with caching)
 │   │   └── track/                # Order tracking (with caching)
 │   ├── catalogue/                # Product catalogue (SSR + client interactive)
@@ -171,6 +172,11 @@ chinni-treasure/
 │   │   ├── layout/
 │   │   │   ├── Footer.tsx        # Site footer with 4-column grid
 │   │   │   └── Navbar.tsx        # Fixed navbar with cart dropdown and mobile menu
+│   │   ├── admin/
+│   │   │   ├── AdminCataloguePanel.tsx # Product CRUD form + table
+│   │   │   ├── AdminDeleteConfirm.tsx  # Delete confirmation modal
+│   │   │   ├── AdminOrdersPanel.tsx    # Orders table with filters
+│   │   │   └── AdminTrackingModal.tsx  # Tracking ID input modal
 │   │   ├── order/
 │   │   │   ├── CheckoutProgress.tsx # Multi-step progress indicator
 │   │   │   └── OrderDetailModal.tsx # Order detail modal (admin + customer)
@@ -185,13 +191,15 @@ chinni-treasure/
 │   │       └── __tests__/        # Component unit tests
 │   ├── lib/
 │   │   ├── auth.ts               # JWT auth helpers (sign, verify, session cookies)
+│   │   ├── cache.ts              # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts        # Server-side cart cookie management with Zod
 │   │   ├── constants.ts          # Site constants (states, status flow, labels)
+│   │   ├── csrf.ts               # CSRF protection via Origin/Referer validation
 │   │   ├── openapi-spec.ts       # OpenAPI 3.0 specification document
 │   │   ├── prisma.ts             # Prisma client singleton (global caching)
 │   │   ├── rate-limiter.ts       # In-memory rate limiter (login attempts)
 │   │   ├── sanitize.ts           # XSS sanitization via DOMPurify (isomorphic)
-│   │   ├── useScrollReveal.ts    # IntersectionObserver scroll reveal hook
+│   │   ├── useFocusTrap.ts       # Focus trap hook for accessible modals
 │   │   └── utils.ts              # Order number generation utility
 │   ├── test/                     # Test setup and utilities
 │   │   ├── mocks/                # Mock implementations
@@ -360,6 +368,7 @@ rejected (stock restored)
 | PATCH | `/api/orders/[id]/status` | Update order status (with versioning) | Yes |
 | GET | `/api/track` | Track order by order number or phone (cached) | No |
 | GET | `/api/stats` | Dashboard statistics (cached) | Yes |
+| GET | `/api/export` | Export orders to Excel (.xlsx) | Yes |
 | GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
 
 ---

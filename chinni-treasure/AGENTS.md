@@ -141,13 +141,16 @@ chinni-treasure/
 │   └── export-to-excel.ts        # Excel export utility
 ├── src/
 │   ├── components/
+│   │   ├── admin/                # AdminCataloguePanel, AdminDeleteConfirm,
+│   │   │                            AdminOrdersPanel, AdminTrackingModal
 │   │   ├── cart/CartProvider.tsx  # Cart context + localStorage
 │   │   ├── layout/               # Navbar.tsx, Footer.tsx
 │   │   ├── order/                # CheckoutProgress.tsx, OrderDetailModal.tsx
 │   │   └── ui/                   # ProductCard, StockBadge, StatusBadge, SectionHeader,
 │   │                                AdminStatCard, LoadingSpinner, ToastProvider
-│   ├── lib/                      # auth, prisma, constants, utils, cart-cookie,
-│   │                                rate-limiter, sanitize, useScrollReveal, openapi-spec
+│   ├── lib/                      # auth, cache, cart-cookie, constants, csrf,
+│   │                                openapi-spec, prisma, rate-limiter, sanitize,
+│   │                                useFocusTrap, utils
 │   ├── test/                     # Vitest setup, mocks, utilities
 │   └── types/                    # Shared TypeScript interfaces
 ├── proxy.ts                      # Next.js middleware (JWT admin protection)

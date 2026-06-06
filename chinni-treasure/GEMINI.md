@@ -81,6 +81,11 @@ chinni-treasure/
 │   └── export-to-excel.ts        # Excel export utility
 ├── src/
 │   ├── components/
+│   │   ├── admin/
+│   │   │   ├── AdminCataloguePanel.tsx # Product CRUD form + table
+│   │   │   ├── AdminDeleteConfirm.tsx  # Delete confirmation modal
+│   │   │   ├── AdminOrdersPanel.tsx    # Orders table with filters
+│   │   │   └── AdminTrackingModal.tsx  # Tracking ID input modal
 │   │   ├── cart/CartProvider.tsx  # Cart context + localStorage + cookie sync
 │   │   ├── layout/
 │   │   │   ├── Navbar.tsx        # Fixed navbar with cart dropdown + mobile menu
@@ -99,16 +104,18 @@ chinni-treasure/
 │   │       └── __tests__/        # Unit tests for each component
 │   ├── lib/
 │   │   ├── auth.ts               # JWT helpers (sign/verify), bcrypt, session cookies
+│   │   ├── cache.ts              # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts        # Server-side cart cookie with Zod validation
 │   │   ├── constants.ts          # Indian states, status flow, labels, icons
+│   │   ├── csrf.ts               # CSRF protection via Origin/Referer validation
 │   │   ├── openapi-spec.ts       # OpenAPI 3.0 specification document
 │   │   ├── prisma.ts             # Prisma client singleton (global caching)
 │   │   ├── rate-limiter.ts       # In-memory rate limiter (5 req/min per IP)
 │   │   ├── sanitize.ts          # XSS sanitization via isomorphic-dompurify
-│   │   ├── useScrollReveal.ts    # IntersectionObserver scroll reveal hook
+│   │   ├── useFocusTrap.ts       # Focus trap hook for accessible modals
 │   │   └── utils.ts              # Order number generation
 │   ├── test/
-│   │   ├── mocks/                # Prisma, next/headers mock implementations
+│   │   ├── mocks/                # Prisma mock implementations
 │   │   ├── setup.ts              # Vitest global setup
 │   │   └── utils/                # API test helpers
 │   └── types/
@@ -192,7 +199,7 @@ npm run test:coverage # With coverage report
 - Cart (localStorage, cookie sync)
 - All UI components (ProductCard, StockBadge, StatusBadge, etc.)
 - API routes (auth, orders, products, stats, track)
-- Lib utilities (constants, utils, sanitize, rate-limiter, scroll-reveal)
+- Lib utilities (constants, utils, sanitize, rate-limiter, cache)
 
 ## 9. Agent Instructions
 - **Tooling:** Use `npx prisma` for database tasks. Use `npm run` scripts defined in `package.json`.
