@@ -1015,7 +1015,7 @@ a {
 .returns-policy-rule strong { display: block; font-family: var(--font-serif); font-size: 1rem; color: var(--near-black); margin-bottom: 4px; }
 .returns-policy-rule p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
 .returns-policy-icon { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--white); border-radius: 50%; font-size: 0.8rem; color: var(--gold-dark); font-weight: 700; border: 1px solid rgba(212, 175, 55, 0.2); margin-top: 2px; }
-.footer-link-btn { background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+.footer-link-btn { background: none; border: none; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; padding: 0; text-decoration: none; transition: color 0.3s ease; }
 .footer-link-btn:hover { color: var(--gold); }
 
 /* Terms Checkbox */
