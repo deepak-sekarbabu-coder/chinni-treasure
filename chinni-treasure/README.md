@@ -9,7 +9,6 @@
 - **Styling:** Raw CSS with CSS Variables (no Tailwind)
 - **Authentication:** JWT-based admin auth (stored in httpOnly `session` cookie)
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
-- **Charts:** Chart.js v4 (admin dashboard analytics)
 - **Validation:** Zod schemas for checkout, cart, and input sanitization
 - **Export:** ExcelJS for admin data export
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
@@ -153,7 +152,7 @@ chinni-treasure/
 │   │   ├── page.tsx              # Server component fetching products
 │   │   └── catalogue-content.tsx # Client component with cart interactions
 │   ├── confirmation/[id]/        # Order confirmation after purchase (SSR)
-│   ├── docs/page.tsx             # Swagger UI API documentation viewer
+│   ├── docs/page.tsx             # API documentation viewer (hand-rolled OpenAPI renderer)
 │   ├── home-content.tsx          # Client component for homepage hero + features
 │   ├── order/page.tsx            # Multi-step checkout with delivery form
 │   ├── track/page.tsx            # Order tracking portal
@@ -400,12 +399,9 @@ Tests live alongside their modules in `__tests__/` directories or in `src/test/`
 |---|---|
 | `@prisma/adapter-pg` + `pg` | PostgreSQL database adapter |
 | `bcryptjs` | Password hashing |
-| `jsonwebtoken` | JWT signing and verification |
 | `jose` | JWT verification in middleware |
 | `zod` | Runtime validation (cart, checkout) |
 | `isomorphic-dompurify` | Server-side XSS sanitization |
-| `chart.js` | Admin dashboard charts |
-| `swagger-ui-react` | API documentation UI |
 | `exceljs` | Data export to Excel |
 | `sharp` | Image processing |
 

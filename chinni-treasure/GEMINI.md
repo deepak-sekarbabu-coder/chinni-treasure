@@ -65,7 +65,7 @@ chinni-treasure/
 │   │   └── track/                # Order tracking (with caching)
 │   ├── catalogue/                # Product catalogue (SSR + client interactive)
 │   ├── confirmation/[id]/        # Order confirmation page
-│   ├── docs/                     # Swagger UI API docs viewer
+│   ├── docs/                     # API documentation viewer (hand-rolled OpenAPI renderer)
 │   ├── order/                    # Multi-step checkout with delivery form
 │   ├── track/                    # Order tracking portal
 │   ├── globals.css               # ~2800 lines design system + responsive styles
@@ -167,11 +167,9 @@ Fonts are loaded via `next/font/google` in `app/layout.tsx` and applied as CSS v
 |---|---|
 | `@prisma/adapter-pg` + `pg` | PostgreSQL database adapter |
 | `bcryptjs` | Password hashing |
-| `jsonwebtoken` | JWT signing and verification |
+| `jose` | JWT verification in middleware |
 | `zod` | Runtime validation (cart, checkout) |
 | `isomorphic-dompurify` | Server-side XSS sanitization |
-| `chart.js` | Admin dashboard charts |
-| `swagger-ui-react` | API documentation UI |
 | `exceljs` | Data export to Excel |
 | `sharp` | Image processing (devDependency) |
 | `vitest` + `@testing-library/react` | Unit testing framework |
