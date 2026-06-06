@@ -1,12 +1,19 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { z } from "zod";
 
-// Use Node-native TextEncoder to avoid jsdom polyfill breaking jose's Uint8Array checks
+// Node-native TextEncoder — avoids jsdom polyfill breaking jose's Uint8Array checks
 import { TextEncoder as NodeTextEncoder } from "util";
 const encoder = new NodeTextEncoder();
 const SECRET = encoder.encode(process.env.JWT_SECRET || "dev-secret");
 const COOKIE_NAME = "session";
+
+const AdminSessionSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  role: z.string(),
+});
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
@@ -44,14 +51,11 @@ export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
 }
 
-interface AdminSession {
-  id: string;
-  username: string;
-  role: string;
-}
+export type AdminSession = z.infer<typeof AdminSessionSchema>;
 
 export async function checkAuth(): Promise<AdminSession | null> {
   const session = await getSession();
   if (!session) return null;
-  return session as unknown as AdminSession;
+  const parsed = AdminSessionSchema.safeParse(session);
+  return parsed.success ? parsed.data : null;
 }

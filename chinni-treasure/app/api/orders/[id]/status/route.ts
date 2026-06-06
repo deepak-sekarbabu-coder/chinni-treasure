@@ -17,18 +17,18 @@ const UpdateOrderStatusSchema = z.object({
 
 type OrderStatusValue = "pending" | "approved" | "packaging" | "shipped" | "delivered" | "rejected";
 
-function statusUpdateData(status: string, trackingId?: string, notes?: string): Prisma.OrderUpdateInput {
+function statusUpdateData(status: OrderStatusValue, trackingId?: string, notes?: string): Prisma.OrderUpdateInput {
   return {
-    status: status as OrderStatusValue,
+    status,
     version: { increment: 1 },
     ...(trackingId && { trackingId }),
     statusHistory: {
-      create: { status: status as OrderStatusValue, notes: notes || `Status changed to ${status}` },
+      create: { status, notes: notes || `Status changed to ${status}` },
     },
   };
 }
 
-async function rejectWithStockRestore(orderId: string, status: string, trackingId: string | undefined, notes: string | undefined, items: { id: string; productId: string | null; quantity: number }[]) {
+async function rejectWithStockRestore(orderId: string, status: OrderStatusValue, trackingId: string | undefined, notes: string | undefined, items: { id: string; productId: string | null; quantity: number }[]) {
   await prisma.$transaction(async (tx) => {
     for (const item of items) {
       await tx.product.update({
