@@ -61,6 +61,14 @@ export default function AdminOrdersPanel({
     onStatusFilterChange(key);
   }
 
+  function handlePageChange(page: number) {
+    onPageChange(page);
+    const element = document.getElementById("panel-orders");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
   return (
     <div id="panel-orders" role="tabpanel" aria-labelledby="tab-orders">
       <div className="filters-bar">
@@ -118,12 +126,12 @@ export default function AdminOrdersPanel({
                   </div>
                   <StatusBadge status={order.status} />
                 </div>
-                <div className="flex justify-between">
-                  <div>
-                    <p className="order-card-name">{order.customerName}</p>
+                <div className="flex justify-between items-end gap-12">
+                  <div style={{ minWidth: 0 }}>
+                    <p className="order-card-name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.customerName}</p>
                     <p className="order-card-date">{new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right" style={{ flexShrink: 0 }}>
                     <span className="order-card-price">₹{Number(order.totalAmount).toFixed(2)}</span>
                   </div>
                 </div>
@@ -138,7 +146,7 @@ export default function AdminOrdersPanel({
           <button
             className="btn btn-secondary btn-sm"
             disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => handlePageChange(currentPage - 1)}
           >
             ← Prev
           </button>
@@ -146,7 +154,7 @@ export default function AdminOrdersPanel({
           <button
             className="btn btn-secondary btn-sm"
             disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => handlePageChange(currentPage + 1)}
           >
             Next →
           </button>

@@ -508,7 +508,10 @@ export default function AdminPage() {
                     const maxQty = Math.max(...productSales.map(p => p.quantity), 1);
                     return productSales.slice(0, 10).map((p, i) => (
                       <div key={i} className="chart-row">
-                        <span className="chart-product-name">{p.productName}</span>
+                        <span className="chart-product-name tooltip-wrapper">
+                          {p.productName}
+                          <span className="tooltip-text">{p.productName}</span>
+                        </span>
                         <div className="chart-bar-wrap">
                           <div className="chart-bar chart-bar-gold" style={{ width: `${(p.quantity / maxQty) * 100}%` }}></div>
                         </div>
