@@ -8,6 +8,8 @@ import SectionHeader from "@/src/components/ui/SectionHeader";
 import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES } from "@/src/lib/constants";
+import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
+import { ApiError } from "@/src/lib/api-client";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
@@ -247,6 +249,7 @@ export default function OrderPage() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
   const { showToast } = useToast();
+  const placeOrder = usePlaceOrder();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [form, setForm] = useState({
@@ -263,7 +266,6 @@ export default function OrderPage() {
     acceptedTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
 
 
   const total = getTotal();
@@ -300,40 +302,30 @@ export default function OrderPage() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    setSubmitting(true);
     try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((i) => ({ id: i.productId, quantity: i.quantity })),
-          customerName: form.fullName.trim(),
-          customerEmail: form.email.trim(),
-          customerPhone: form.phone.trim(),
-          addressLine1: form.address.trim(),
-          addressLine2: form.addressLine2.trim() || undefined,
-          city: form.city.trim(),
-          stateCode: form.state,
-          postalCode: form.zipCode.trim(),
-          transactionId: form.transactionId.trim() || undefined,
-          customerNotes: form.notes.trim() || undefined,
-        }),
+      const order = await placeOrder.mutateAsync({
+        items: items.map((i) => ({ id: i.productId, quantity: i.quantity })),
+        customerName: form.fullName.trim(),
+        customerEmail: form.email.trim(),
+        customerPhone: form.phone.trim(),
+        addressLine1: form.address.trim(),
+        addressLine2: form.addressLine2.trim() || undefined,
+        city: form.city.trim(),
+        stateCode: form.state,
+        postalCode: form.zipCode.trim(),
+        transactionId: form.transactionId.trim(),
+        customerNotes: form.notes.trim() || undefined,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to place order");
-      }
-
-      const order = await res.json();
       clearCart();
       showToast("Order placed successfully!", "success");
       router.push(`/confirmation/${order.id}`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message = err instanceof ApiError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Something went wrong";
       showToast(message, "error");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -370,7 +362,7 @@ export default function OrderPage() {
 
               <StepNavigation
                 currentStep={currentStep}
-                submitting={submitting}
+                submitting={placeOrder.isPending}
                 total={total}
                 onNext={goToNextStep}
                 onPrev={goToPrevStep}
@@ -392,7 +384,7 @@ export default function OrderPage() {
       {items.length > 0 && (
         <StickyCheckoutBar
           currentStep={currentStep}
-          submitting={submitting}
+          submitting={placeOrder.isPending}
           total={total}
           onNext={goToNextStep}
         />

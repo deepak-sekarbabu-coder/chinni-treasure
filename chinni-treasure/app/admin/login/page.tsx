@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { apiFetch, ApiError } from "@/src/lib/api-client";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,20 +27,13 @@ export default function AdminLoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      await apiFetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: { username: username.trim(), password },
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Invalid credentials");
-      }
-
       window.location.href = "/admin";
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof ApiError ? err.message : "Login failed");
       setLoading(false);
     }
   }

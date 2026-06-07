@@ -1,53 +1,37 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ProductCard from "@/src/components/ui/ProductCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  category: { name: string } | null;
-  stockQuantity: number;
-  badge: string | null;
-}
+import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
+import type { CatalogueProduct } from "@/src/lib/api-schemas";
 
 interface Props {
-  initialProducts: Product[];
+  initialProducts: CatalogueProduct[];
 }
 
 export default function CatalogueContent({ initialProducts }: Props) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [loading, setLoading] = useState(initialProducts.length === 0);
   const { addItem } = useCart();
   const { showToast } = useToast();
 
-  useEffect(() => {
-    if (initialProducts.length > 0) return;
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/products?limit=200");
-        if (res.ok) {
-          const data = await res.json();
-          setProducts(data.products ?? data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, [initialProducts.length]);
+  const shouldFetch = initialProducts.length === 0;
+  const catalogueQuery = useCatalogueProducts(initialProducts, shouldFetch);
+
+  const products: CatalogueProduct[] = shouldFetch
+    ? (catalogueQuery.data
+        ? "products" in catalogueQuery.data
+          ? catalogueQuery.data.products
+          : catalogueQuery.data
+        : [])
+    : initialProducts;
+
+  const loading = shouldFetch && catalogueQuery.isLoading;
 
   const handleAdd = useCallback(
-    (p: Product) => {
+    (p: CatalogueProduct) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;

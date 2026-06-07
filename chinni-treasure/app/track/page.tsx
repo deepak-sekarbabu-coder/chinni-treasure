@@ -4,43 +4,19 @@ import { useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import TrackOrderCard from "@/src/components/track/TrackOrderCard";
-
-interface OrderResult {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  status: string;
-  totalAmount: number;
-  trackingId?: string;
-  createdAt: string;
-  itemCount: number;
-  items: {
-    id: string;
-    productName: string;
-    unitPrice: number;
-    quantity: number;
-  }[];
-  addressLine1: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-  customerPhone: string;
-  customerEmail: string;
-  subtotal: number;
-  shippingCost: number;
-  transactionId?: string;
-  customerNotes?: string;
-}
+import { useTrackSearch } from "@/src/lib/hooks/useTrackSearch";
+import { ApiError } from "@/src/lib/api-client";
+import type { TrackOrderResult } from "@/src/lib/api-schemas";
 
 export default function TrackPage() {
   const [method, setMethod] = useState<"order-id" | "phone">("order-id");
   const [orderId, setOrderId] = useState("");
   const [phone, setPhone] = useState("");
-  const [results, setResults] = useState<OrderResult[]>([]);
+  const [results, setResults] = useState<TrackOrderResult[]>([]);
   const [searched, setSearched] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OrderResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<TrackOrderResult | null>(null);
   const { showToast } = useToast();
+  const trackSearch = useTrackSearch();
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -58,30 +34,24 @@ export default function TrackPage() {
       }
     }
 
-    setLoading(true);
     try {
-      const queryParam =
-        method === "order-id"
-          ? `orderId=${encodeURIComponent(orderId.trim())}`
-          : `phone=${encodeURIComponent(phone.replace(/\D/g, ""))}`;
-      const res = await fetch(`/api/track?${queryParam}`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data);
-        if (data.length === 0) {
-          showToast("No orders found", "info");
-        } else {
-          showToast(`Found ${data.length} order(s)`, "success");
-        }
+      const params = method === "order-id"
+        ? { orderId: orderId.trim() }
+        : { phone: phone.replace(/\D/g, "") };
+      const data = await trackSearch.mutateAsync(params);
+      setResults(data);
+      if (data.length === 0) {
+        showToast("No orders found", "info");
       } else {
-        showToast("Failed to search orders", "error");
+        showToast(`Found ${data.length} order(s)`, "success");
       }
-    } catch {
-      showToast("Failed to search orders", "error");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to search orders";
+      showToast(message, "error");
     }
   }
+
+  const loading = trackSearch.isPending;
 
   return (
     <div style={{ paddingTop: "72px" }}>

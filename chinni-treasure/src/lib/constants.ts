@@ -4,7 +4,7 @@ export const ORDER_STATUS_FLOW = [
   "packaging",
   "shipped",
   "delivered",
-];
+] as const;
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: "Pending",

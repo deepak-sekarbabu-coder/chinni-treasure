@@ -7,37 +7,10 @@ import {
   ORDER_STATUS_LABELS,
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
-
-interface OrderItem {
-  id: string;
-  productName: string;
-  unitPrice: number;
-  quantity: number;
-}
-
-interface OrderData {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  status: string;
-  trackingId?: string | null;
-  totalAmount: number;
-  subtotal: number;
-  shippingCost: number;
-  createdAt: string;
-  transactionId?: string | null;
-  customerNotes?: string | null;
-  items: OrderItem[];
-  addressLine1: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-}
+import type { Order } from "@/src/lib/api-schemas";
 
 interface Props {
-  order: OrderData;
+  order: Order;
   onClose: () => void;
   showActions?: boolean;
   onAdvance?: (id: string) => void;
@@ -61,13 +34,13 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
   }, [onClose]);
 
   const isRejected = order.status === "rejected";
-  const completedStatuses = isRejected
+  const completedStatuses: readonly string[] = isRejected
     ? ["rejected"]
-    : ORDER_STATUS_FLOW.slice(
+    : (ORDER_STATUS_FLOW as readonly string[]).slice(
         0,
-        ORDER_STATUS_FLOW.indexOf(order.status) + 1,
+        ORDER_STATUS_FLOW.indexOf(order.status as (typeof ORDER_STATUS_FLOW)[number]) + 1,
       );
-  const currentIdx = ORDER_STATUS_FLOW.indexOf(order.status);
+  const currentIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(order.status);
   const nextStatus = currentIdx >= 0 && currentIdx < ORDER_STATUS_FLOW.length - 1
     ? ORDER_STATUS_FLOW[currentIdx + 1]
     : null;

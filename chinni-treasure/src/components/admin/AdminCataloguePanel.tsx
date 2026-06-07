@@ -1,22 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  stockQuantity: number;
-  badge: string | null;
-  category: { name: string } | null;
-  categoryId: number | null;
-  sku: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Product } from "@/src/lib/api-schemas";
 
 interface ProductFormData {
   id: string;

@@ -5,6 +5,7 @@ import Navbar from "@/src/components/layout/Navbar";
 import Footer from "@/src/components/layout/Footer";
 import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartProvider";
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
+import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { getCartFromCookies } from "@/src/lib/cart-cookie";
 import { prisma } from "@/src/lib/prisma";
 import PageTransition from "@/src/components/layout/PageTransition";
@@ -94,18 +95,20 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${cormorant.variable} ${albert.variable} ${pinyon.variable}`}>
       <body>
-        <CartProvider initialItems={initialItems}>
-          <ToastProvider>
-            <a href="#main-content" className="skip-link">
-              Skip to main content
-            </a>
-            <Navbar />
-            <main id="main-content" role="main">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer />
-          </ToastProvider>
-        </CartProvider>
+        <QueryProvider>
+          <CartProvider initialItems={initialItems}>
+            <ToastProvider>
+              <a href="#main-content" className="skip-link">
+                Skip to main content
+              </a>
+              <Navbar />
+              <main id="main-content" role="main">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Footer />
+            </ToastProvider>
+          </CartProvider>
+        </QueryProvider>
       </body>
     </html>
   );

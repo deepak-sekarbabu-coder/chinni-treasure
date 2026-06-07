@@ -1,37 +1,11 @@
 "use client";
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
-
-interface OrderResult {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  status: string;
-  totalAmount: number;
-  trackingId?: string;
-  createdAt: string;
-  itemCount: number;
-  items: {
-    id: string;
-    productName: string;
-    unitPrice: number;
-    quantity: number;
-  }[];
-  addressLine1: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-  customerPhone: string;
-  customerEmail: string;
-  subtotal: number;
-  shippingCost: number;
-  transactionId?: string;
-  customerNotes?: string;
-}
+import type { TrackOrderResult } from "@/src/lib/api-schemas";
 
 interface Props {
-  order: OrderResult;
-  onClick: (order: OrderResult) => void;
+  order: TrackOrderResult;
+  onClick: (order: TrackOrderResult) => void;
 }
 
 export default function TrackOrderCard({ order, onClick }: Props) {

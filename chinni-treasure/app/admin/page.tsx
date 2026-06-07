@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
@@ -13,265 +13,215 @@ import AdminTrackingModal from "@/src/components/admin/AdminTrackingModal";
 import AdminDeleteConfirm from "@/src/components/admin/AdminDeleteConfirm";
 import AdminOrdersPanel from "@/src/components/admin/AdminOrdersPanel";
 import AdminCataloguePanel from "@/src/components/admin/AdminCataloguePanel";
-import { StatsResponseSchema, OrdersResponseSchema, ProductsResponseSchema, OrderSchema, ProductSchema } from "@/src/lib/admin-schemas";
-import type { StatsResponse } from "@/src/lib/admin-schemas";
-import type { z } from "zod";
+import {
+  useAdminOrders,
+  useAdminProducts,
+  useAdminStats,
+  useAuthMe,
+  ADMIN_PAGE_SIZES,
+} from "@/src/lib/hooks/useAdminData";
+import {
+  useCreateProduct,
+  useDeleteProduct,
+  useExportToExcel,
+  useLogout,
+  useUpdateOrderStatus,
+  useUpdateProduct,
+} from "@/src/lib/hooks/useAdminMutations";
+import { ApiError } from "@/src/lib/api-client";
+import type { Product } from "@/src/lib/api-schemas";
 
-type Stats = StatsResponse["stats"];
-type ChartPoint = StatsResponse["chartData"][number];
-type ProductSales = StatsResponse["productSalesData"][number];
-type Order = z.infer<typeof OrderSchema>;
-type Product = z.infer<typeof ProductSchema>;
+const PRODUCTS_PER_PAGE = ADMIN_PAGE_SIZES.products;
+const ITEMS_PER_PAGE = ADMIN_PAGE_SIZES.orders;
+
+interface ProductFormState {
+  id: string;
+  name: string;
+  sku: string;
+  description: string;
+  price: string;
+  stockQuantity: string;
+  imageUrl: string;
+  badge: string;
+  categoryId: string;
+}
+
+const EMPTY_PRODUCT_FORM: ProductFormState = {
+  id: "",
+  name: "",
+  sku: "",
+  description: "",
+  price: "",
+  stockQuantity: "",
+  imageUrl: "",
+  badge: "",
+  categoryId: "",
+};
+
+function extractApiErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
 
 export default function AdminPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [chartData, setChartData] = useState<ChartPoint[]>([]);
-  const [productSales, setProductSales] = useState<ProductSales[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [activeTab, setActiveTab] = useState<"orders" | "catalogue">("orders");
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [chartsLoading, setChartsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [productPage, setProductPage] = useState(1);
-  const [productTotalPages, setProductTotalPages] = useState(1);
-  const ITEMS_PER_PAGE = 10;
-  const PRODUCTS_PER_PAGE = 12;
-
-  // Product form
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"orders" | "catalogue">("orders");
+  const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
   const [showProductForm, setShowProductForm] = useState(false);
-  const [productLoading, setProductLoading] = useState(false);
-  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
-  const [productsLoading, setProductsLoading] = useState(false);
   const [productFormClosing, setProductFormClosing] = useState(false);
-  const [productForm, setProductForm] = useState({
-    id: "",
-    name: "",
-    sku: "",
-    description: "",
-    price: "",
-    stockQuantity: "",
-    imageUrl: "",
-    badge: "",
-    categoryId: "",
-  });
-  // Tracking modal
+  const [productForm, setProductForm] = useState<ProductFormState>(EMPTY_PRODUCT_FORM);
   const [trackingModal, setTrackingModal] = useState<{ orderId: string; open: boolean }>({
     orderId: "",
     open: false,
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; productId: string; productName: string }>({
-    open: false,
-    productId: "",
-    productName: "",
-  });
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    productId: string;
+    productName: string;
+  }>({ open: false, productId: "", productName: "" });
+
+  const authQuery = useAuthMe();
+  const authenticated = authQuery.isSuccess && authQuery.data?.authenticated === true;
+  const statsQuery = useAdminStats(authenticated);
+  const ordersQuery = useAdminOrders(
+    { page: currentPage, limit: ITEMS_PER_PAGE, status: statusFilter },
+    authenticated,
+  );
+  const productsQuery = useAdminProducts(
+    { page: productPage, limit: PRODUCTS_PER_PAGE, isActive: "all" },
+    authenticated,
+  );
+
+  const orders = useMemo(() => ordersQuery.data?.orders ?? [], [ordersQuery.data?.orders]);
+  const totalPages = ordersQuery.data?.totalPages ?? 1;
+  const products = useMemo(() => productsQuery.data?.products ?? [], [productsQuery.data?.products]);
+  const productTotalPages = productsQuery.data?.totalPages ?? 1;
+  const stats = statsQuery.data?.stats ?? null;
+  const chartData = statsQuery.data?.chartData ?? [];
+  const productSales = statsQuery.data?.productSalesData ?? [];
+  const selectedOrder = useMemo(
+    () => (selectedOrderId ? orders.find((o) => o.id === selectedOrderId) ?? null : null),
+    [orders, selectedOrderId],
+  );
+
+  const chartsLoading = statsQuery.isLoading;
+  const ordersLoading = ordersQuery.isLoading;
+  const productsLoading = productsQuery.isLoading;
+
+  const updateStatus = useUpdateOrderStatus();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+  const exportMutation = useExportToExcel();
+  const logoutMutation = useLogout();
 
   useEffect(() => {
-    let cancelled = false;
-    async function checkAuth() {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (!res.ok) {
-          if (!cancelled) router.push("/admin/login");
-          return;
-        }
-        if (cancelled) return;
-        setAuthenticated(true);
-        setLoading(false);
-        await Promise.all([fetchStats(), fetchOrders(undefined, 1), fetchProducts()]);
-      } catch {
-        if (!cancelled) router.push("/admin/login");
-      }
+    if (authQuery.isSuccess && !authQuery.data.authenticated) {
+      router.push("/admin/login");
     }
-    checkAuth();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [authQuery.data, authQuery.isSuccess, router]);
 
-  async function fetchStats() {
-    setChartsLoading(true);
-    try {
-      const res = await fetch("/api/stats");
-      if (res.ok) {
-        const json = await res.json();
-        const parsed = StatsResponseSchema.safeParse(json);
-        if (parsed.success) {
-          const data = parsed.data;
-          setStats(data.stats);
-          setChartData(data.chartData);
-          setProductSales(data.productSalesData);
-        } else {
-          console.warn("Stats response schema mismatch:", parsed.error.format());
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
-      showToast("Failed to load stats", "error");
-    } finally {
-      setChartsLoading(false);
+  useEffect(() => {
+    if (authQuery.error) {
+      router.push("/admin/login");
     }
-  }
+  }, [authQuery.error, router]);
 
-  async function fetchOrders(currentSelectedId?: string, pageNum?: number, statusParam?: string) {
-    setOrdersLoading(true);
-    try {
-      const page = pageNum ?? currentPage;
-      const status = statusParam ?? statusFilter;
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("limit", String(ITEMS_PER_PAGE));
-      if (status !== "all") params.set("status", status);
+  const authLoading = authQuery.isPending;
 
-      const res = await fetch(`/api/orders?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        const parsed = OrdersResponseSchema.safeParse(json);
-        if (parsed.success) {
-          const data = parsed.data;
-          setOrders(data.orders);
-          setTotalPages(data.totalPages);
-          setCurrentPage(data.page);
-          if (currentSelectedId) {
-            const updated = data.orders.find((o) => o.id === currentSelectedId);
-            if (updated) {
-              setSelectedOrder(updated);
-            }
-          }
-        } else {
-          console.warn("Orders response schema mismatch:", parsed.error);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch orders:", err);
-      showToast("Failed to load orders", "error");
-    } finally {
-      setOrdersLoading(false);
-    }
-  }
+  const isTransitioning = updateStatus.isPending;
 
-  async function fetchProducts(pageNum?: number) {
-    setProductsLoading(true);
-    try {
-      const page = pageNum ?? productPage;
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("limit", String(PRODUCTS_PER_PAGE));
-      params.set("isActive", "all");
-      const res = await fetch(`/api/products?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        const parsed = ProductsResponseSchema.safeParse(json);
-        if (parsed.success) {
-          const data = parsed.data;
-          setProducts(data.products);
-          setProductTotalPages(data.totalPages);
-          setProductPage(data.page);
-        } else {
-          console.warn("Products response schema mismatch:", parsed.error.format());
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch products:", err);
-      showToast("Failed to load products", "error");
-    } finally {
-      setProductsLoading(false);
-    }
-  }
-
-  const handleAdvance = useCallback(async (orderId: string) => {
-    const order = orders.find((o) => o.id === orderId);
-    if (!order) return;
-
-    const currentIdx = ORDER_STATUS_FLOW.indexOf(order.status);
-    if (currentIdx < 0 || currentIdx >= ORDER_STATUS_FLOW.length - 1) return;
-
-    const nextStatus = ORDER_STATUS_FLOW.find((_, i) => i === currentIdx + 1);
-
-    // If next is shipped, ask for tracking ID
-    if (nextStatus === "shipped") {
-      setTrackingModal({ orderId: order.id, open: true });
-      return;
-    }
-
-    setAdvancingOrderId(orderId);
-    setIsTransitioning(true);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus, expectedVersion: order.version }),
-      });
-      if (res.ok) {
-        await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Failed to update status", "error");
-      }
-    } catch (err) {
-      console.error("Failed to update status:", err);
-      showToast("Failed to update status", "error");
-    } finally {
-      setIsTransitioning(false);
-      setAdvancingOrderId(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [orders, currentPage]);
-
-  const handleReject = useCallback(async (orderId: string) => {
-    const order = orders.find((o) => o.id === orderId);
-    if (!order) return;
-    setAdvancingOrderId(orderId);
-    setIsTransitioning(true);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected", expectedVersion: order.version }),
-      });
-      if (res.ok) {
-        await Promise.all([fetchOrders(orderId, currentPage), fetchStats()]);
-        setSelectedOrder(null);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Failed to reject order", "error");
-      }
-    } catch (err) {
-      console.error("Failed to reject order:", err);
-      showToast("Failed to reject order", "error");
-    } finally {
-      setIsTransitioning(false);
-      setAdvancingOrderId(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders, currentPage]);
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/admin/login");
-  }
-
-  async function handleExport() {
-    try {
-      const res = await fetch("/api/export");
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Failed to export data", "error");
+  const handleAdvance = useCallback(
+    async (orderId: string) => {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
+      const currentIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(order.status);
+      if (currentIdx < 0 || currentIdx >= ORDER_STATUS_FLOW.length - 1) return;
+      const nextStatus = ORDER_STATUS_FLOW[currentIdx + 1];
+      if (nextStatus === "shipped") {
+        setTrackingModal({ orderId: order.id, open: true });
         return;
       }
-      const blob = await res.blob();
+      setAdvancingOrderId(orderId);
+      try {
+        await updateStatus.mutateAsync({
+          orderId,
+          input: { status: nextStatus, expectedVersion: order.version },
+        });
+      } catch (err) {
+        showToast(extractApiErrorMessage(err, "Failed to update status"), "error");
+      } finally {
+        setAdvancingOrderId(null);
+      }
+    },
+    [orders, updateStatus, showToast],
+  );
+
+  const handleReject = useCallback(
+    async (orderId: string) => {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
+      setAdvancingOrderId(orderId);
+      try {
+        await updateStatus.mutateAsync({
+          orderId,
+          input: { status: "rejected", expectedVersion: order.version },
+        });
+        setSelectedOrderId(null);
+      } catch (err) {
+        showToast(extractApiErrorMessage(err, "Failed to reject order"), "error");
+      } finally {
+        setAdvancingOrderId(null);
+      }
+    },
+    [orders, updateStatus, showToast],
+  );
+
+  const handleTrackingSubmit = useCallback(
+    async (trackingId: string) => {
+      const orderId = trackingModal.orderId;
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
+      setAdvancingOrderId(orderId);
+      try {
+        await updateStatus.mutateAsync({
+          orderId,
+          input: { status: "shipped", trackingId, expectedVersion: order.version },
+        });
+        setTrackingModal({ orderId: "", open: false });
+        showToast("Order marked as shipped successfully", "success");
+      } catch (err) {
+        showToast(extractApiErrorMessage(err, "Failed to ship order"), "error");
+      } finally {
+        setAdvancingOrderId(null);
+      }
+    },
+    [orders, trackingModal.orderId, updateStatus, showToast],
+  );
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch {
+      // Even if logout fails server-side, clear local state and redirect.
+    } finally {
+      router.push("/admin/login");
+    }
+  }, [logoutMutation, router]);
+
+  const handleExport = useCallback(async () => {
+    try {
+      const blob = await exportMutation.mutateAsync();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const disposition = res.headers.get("Content-Disposition") || "";
+      const disposition = ""; // browser will use blob default name
       const match = disposition.match(/filename="?(.+?)"?$/);
       a.download = match ? match[1] : `chinni-treasure-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
       document.body.appendChild(a);
@@ -281,102 +231,77 @@ export default function AdminPage() {
       showToast("Export downloaded successfully", "success");
     } catch (err) {
       console.error("Export failed:", err);
-      showToast("Failed to export data", "error");
+      showToast(extractApiErrorMessage(err, "Failed to export data"), "error");
     }
-  }
+  }, [exportMutation, showToast]);
 
-  async function handleProductSave(e: React.FormEvent) {
-    e.preventDefault();
-    const isEdit = !!productForm.id;
-    const url = isEdit ? `/api/products/${productForm.id}` : "/api/products";
-    const method = isEdit ? "PUT" : "POST";
-
-    setProductLoading(true);
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: productForm.name,
-          sku: productForm.sku || undefined,
-          description: productForm.description,
-          price: parseFloat(productForm.price),
-          stockQuantity: parseInt(productForm.stockQuantity) || 0,
-          imageUrl: productForm.imageUrl || undefined,
-          badge: productForm.badge || null,
-          categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
-        }),
-      });
-      if (res.ok) {
+  const handleProductSave = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const isEdit = !!productForm.id;
+      const price = parseFloat(productForm.price);
+      if (!productForm.name.trim() || Number.isNaN(price) || price <= 0) {
+        showToast("Product name and a valid price are required", "error");
+        return;
+      }
+      const stockQuantity = parseInt(productForm.stockQuantity) || 0;
+      const payload = {
+        name: productForm.name.trim(),
+        sku: productForm.sku.trim() || undefined,
+        description: productForm.description,
+        price,
+        stockQuantity,
+        imageUrl: productForm.imageUrl || undefined,
+        badge: productForm.badge || null,
+        categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
+      };
+      try {
+        if (isEdit) {
+          await updateProduct.mutateAsync({ productId: productForm.id, input: payload });
+          showToast(`Product "${productForm.name}" updated successfully`, "success");
+        } else {
+          await createProduct.mutateAsync(payload);
+          showToast(`Product "${productForm.name}" created successfully`, "success");
+        }
         setProductPage(1);
-        await fetchProducts(1);
-        resetProductForm();
         setShowProductForm(false);
         setProductFormClosing(false);
-        showToast(
-          isEdit ? `Product "${productForm.name}" updated successfully` : `Product "${productForm.name}" created successfully`,
-          "success"
-        );
-      } else {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Failed to save product", "error");
+        setProductForm(EMPTY_PRODUCT_FORM);
+      } catch (err) {
+        console.error("Failed to save product:", err);
+        showToast(extractApiErrorMessage(err, "Failed to save product"), "error");
       }
-    } catch (err) {
-      console.error("Failed to save product:", err);
-      showToast("Failed to save product", "error");
-    } finally {
-      setProductLoading(false);
-    }
-  }
+    },
+    [productForm, createProduct, updateProduct, showToast],
+  );
 
-  function requestProductDelete(product: Product) {
-    setDeleteConfirm({
-      open: true,
-      productId: product.id,
-      productName: product.name,
-    });
-  }
-
-  function closeDeleteConfirm() {
-    setDeleteConfirm({ open: false, productId: "", productName: "" });
-  }
-
-  async function handleProductDeleteConfirmed() {
+  const handleProductDeleteConfirmed = useCallback(async () => {
     if (!deleteConfirm.productId) return;
-    setLoadingProductId(deleteConfirm.productId);
     try {
-      const res = await fetch(`/api/products/${deleteConfirm.productId}`, { method: "DELETE" });
-      if (res.ok) {
-        await fetchProducts();
-        showToast("Product deleted successfully", "success");
-        closeDeleteConfirm();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Failed to delete product", "error");
-      }
+      await deleteProduct.mutateAsync(deleteConfirm.productId);
+      showToast("Product deleted successfully", "success");
+      setDeleteConfirm({ open: false, productId: "", productName: "" });
     } catch (err) {
       console.error("Failed to delete product:", err);
-      showToast("Failed to delete product", "error");
-    } finally {
-      setLoadingProductId(null);
+      showToast(extractApiErrorMessage(err, "Failed to delete product"), "error");
     }
-  }
+  }, [deleteConfirm.productId, deleteProduct, showToast]);
 
-  function toggleProductForm() {
+  const toggleProductForm = useCallback(() => {
     if (showProductForm) {
       setProductFormClosing(true);
       setTimeout(() => {
         setShowProductForm(false);
         setProductFormClosing(false);
-        resetProductForm();
+        setProductForm(EMPTY_PRODUCT_FORM);
       }, 300);
     } else {
-      resetProductForm();
+      setProductForm(EMPTY_PRODUCT_FORM);
       setShowProductForm(true);
     }
-  }
+  }, [showProductForm]);
 
-  function editProduct(product: Product) {
+  const editProduct = useCallback((product: Product) => {
     setProductFormClosing(false);
     setProductForm({
       id: product.id,
@@ -390,37 +315,59 @@ export default function AdminPage() {
       categoryId: product.categoryId ? product.categoryId.toString() : "",
     });
     setShowProductForm(true);
-  }
+  }, []);
 
-  function resetProductForm() {
-    setProductForm({
-      id: "", name: "", sku: "", description: "", price: "",
-      stockQuantity: "", imageUrl: "", badge: "", categoryId: "",
-    });
-  }
+  const requestProductDelete = useCallback((product: Product) => {
+    setDeleteConfirm({ open: true, productId: product.id, productName: product.name });
+  }, []);
 
-  if (loading) {
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirm({ open: false, productId: "", productName: "" });
+  }, []);
+
+  const handleStatusFilterChange = useCallback((key: string) => {
+    setStatusFilter(key);
+    setCurrentPage(1);
+  }, []);
+
+  const handleOrdersPageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleProductPageChange = useCallback((page: number) => {
+    setProductPage(page);
+  }, []);
+
+  const onFormChange = useCallback((next: ProductFormState) => {
+    setProductForm(next);
+  }, []);
+
+  const productLoading = createProduct.isPending || updateProduct.isPending;
+  const loadingProductId = deleteProduct.isPending ? deleteConfirm.productId : null;
+
+  if (authLoading || (!authenticated && !authQuery.isError)) {
     return <LoadingSpinner fullPage />;
   }
-
   if (!authenticated) return null;
 
   return (
     <div className="admin-page-root">
-      {/* Admin Header */}
       <div className="admin-top-header">
         <div className="section admin-header-row">
           <div>
             <div className="section-subtitle text-gold">Administrator Portal</div>
-            <h1 className="admin-heading">
-              Dashboard
-            </h1>
-          </div>                          <div className="admin-header-actions">
+            <h1 className="admin-heading">Dashboard</h1>
+          </div>
+          <div className="admin-header-actions">
             <Link href="/docs" className="btn btn-secondary btn-link btn-lg">
               API Docs
             </Link>
-            <button className="btn btn-secondary btn-lg" onClick={handleExport}>
-              Export Excel
+            <button
+              className="btn btn-secondary btn-lg"
+              onClick={handleExport}
+              disabled={exportMutation.isPending}
+            >
+              {exportMutation.isPending ? "Exporting..." : "Export Excel"}
             </button>
             <button className="btn btn-secondary btn-lg" onClick={handleLogout}>
               Logout
@@ -429,7 +376,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       {stats && (
         <section className="section section-top-lg">
           <div className="stats-grid">
@@ -439,7 +385,11 @@ export default function AdminPage() {
               { label: "Approved", value: stats.approvedOrders, color: "var(--success)" },
               { label: "Shipped", value: stats.shippedOrders, color: "#9b59b6" },
               { label: "Delivered", value: stats.deliveredOrders, color: "var(--success)" },
-              { label: "Revenue", value: `₹${Number(stats.totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, color: "var(--gold-dark)" },
+              {
+                label: "Revenue",
+                value: `₹${Number(stats.totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+                color: "var(--gold-dark)",
+              },
             ].map((s, idx) => (
               <div
                 key={s.label}
@@ -455,78 +405,73 @@ export default function AdminPage() {
         </section>
       )}
 
-      {/* Charts Section (placeholder for Chart.js - will render a simple table instead) */}
-      {(chartsLoading || chartData.length > 0) && (
-        <section className="section section-top-md">
-          {chartsLoading ? (
-            <div className="charts-grid">
-              {/* Skeleton: Orders Chart */}
-              <div className="admin-stat-card chart-skeleton text-left">
-                <div className="skeleton-text" style={{ width: "180px", height: "18px", marginBottom: "20px" }} />
-                <div className="flex flex-col gap-12">
-                  {[
-                    { left: 110, right: 45 },
-                    { left: 130, right: 55 },
-                    { left: 95, right: 50 },
-                    { left: 120, right: 60 },
-                    { left: 140, right: 40 },
-                    { left: 100, right: 48 },
-                    { left: 115, right: 52 },
-                    { left: 125, right: 58 },
-                  ].map((item, idx) => (
-                    <div key={idx} className="skeleton-row">
-                      <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
-                      <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
+      <section className="section section-top-md">
+        {chartsLoading ? (
+          <div className="charts-grid">
+            <div className="admin-stat-card chart-skeleton text-left">
+              <div className="skeleton-text" style={{ width: "180px", height: "18px", marginBottom: "20px" }} />
+              <div className="flex flex-col gap-12">
+                {[
+                  { left: 110, right: 45 },
+                  { left: 130, right: 55 },
+                  { left: 95, right: 50 },
+                  { left: 120, right: 60 },
+                  { left: 140, right: 40 },
+                  { left: 100, right: 48 },
+                  { left: 115, right: 52 },
+                  { left: 125, right: 58 },
+                ].map((item, idx) => (
+                  <div key={idx} className="skeleton-row">
+                    <div className="skeleton-text" style={{ width: `${item.left}px`, height: "12px" }} />
+                    <div className="skeleton-text" style={{ width: `${item.right}px`, height: "12px" }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : chartData.length > 0 ? (
+          <div className="charts-grid">
+            <div className="admin-stat-card text-left">
+              <h3 className="font-serif mb-16">Orders (Last 30 Days)</h3>
+              <div className="chart-scroll">
+                {(() => {
+                  const maxOrders = Math.max(...chartData.map((d) => d.orders), 1);
+                  return chartData.map((d) => (
+                    <div key={d.date} className="chart-row">
+                      <span className="chart-date">{dayjs(d.date).format("D MMM")}</span>
+                      <div className="chart-bar-wrap">
+                        <div className="chart-bar" style={{ width: `${(d.orders / maxOrders) * 100}%` }}></div>
+                      </div>
+                      <span className="chart-value">{d.orders}</span>
                     </div>
-                  ))}
-                </div>
+                  ));
+                })()}
               </div>
             </div>
-          ) : (
-            <div className="charts-grid">
-              <div className="admin-stat-card text-left">
-                <h3 className="font-serif mb-16">Orders (Last 30 Days)</h3>
-                <div className="chart-scroll">
-                  {(() => {
-                    const maxOrders = Math.max(...chartData.map(d => d.orders), 1);
-                    return chartData.map((d) => (
-                      <div key={d.date} className="chart-row">
-                        <span className="chart-date">{dayjs(d.date).format("D MMM")}</span>
-                        <div className="chart-bar-wrap">
-                          <div className="chart-bar" style={{ width: `${(d.orders / maxOrders) * 100}%` }}></div>
-                        </div>
-                        <span className="chart-value">{d.orders}</span>
+            <div className="admin-stat-card text-left">
+              <h3 className="font-serif mb-16">Top Products</h3>
+              <div className="chart-scroll">
+                {(() => {
+                  const maxQty = Math.max(...productSales.map((p) => p.quantity), 1);
+                  return productSales.slice(0, 10).map((p, i) => (
+                    <div key={i} className="chart-row">
+                      <span className="chart-product-name tooltip-wrapper">
+                        {p.productName}
+                        <span className="tooltip-text">{p.productName}</span>
+                      </span>
+                      <div className="chart-bar-wrap">
+                        <div className="chart-bar chart-bar-gold" style={{ width: `${(p.quantity / maxQty) * 100}%` }}></div>
                       </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-              <div className="admin-stat-card text-left">
-                <h3 className="font-serif mb-16">Top Products</h3>
-                <div className="chart-scroll">
-                  {(() => {
-                    const maxQty = Math.max(...productSales.map(p => p.quantity), 1);
-                    return productSales.slice(0, 10).map((p, i) => (
-                      <div key={i} className="chart-row">
-                        <span className="chart-product-name tooltip-wrapper">
-                          {p.productName}
-                          <span className="tooltip-text">{p.productName}</span>
-                        </span>
-                        <div className="chart-bar-wrap">
-                          <div className="chart-bar chart-bar-gold" style={{ width: `${(p.quantity / maxQty) * 100}%` }}></div>
-                        </div>
-                        <span className="chart-value">{p.quantity}</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
+                      <span className="chart-value">{p.quantity}</span>
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
-          )}
-        </section>
-      )}
+          </div>
+        ) : null}
+      </section>
 
-      {/* Tabs */}
       <section className="section section-top-md">
         <div role="tablist" className="admin-tab-buttons flex gap-8 mb-32">
           {(["orders", "catalogue"] as const).map((tab) => (
@@ -544,23 +489,21 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Orders Tab */}
         {activeTab === "orders" && (
           <AdminOrdersPanel
             orders={orders}
-            loading={ordersLoading}
+            loading={ordersLoading || ordersQuery.isFetching}
             statusFilter={statusFilter}
-            onStatusFilterChange={(key) => { setStatusFilter(key); fetchOrders(undefined, 1, key); }}
+            onStatusFilterChange={handleStatusFilterChange}
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={(page) => fetchOrders(undefined, page, statusFilter)}
+            onPageChange={handleOrdersPageChange}
             advancingOrderId={advancingOrderId}
             selectedOrder={selectedOrder}
-            onSelectOrder={(order) => setSelectedOrder(order)}
+            onSelectOrder={(order) => setSelectedOrderId(order?.id ?? null)}
           />
         )}
 
-        {/* Catalogue Tab */}
         {activeTab === "catalogue" && (
           <AdminCataloguePanel
             showForm={showProductForm}
@@ -568,25 +511,24 @@ export default function AdminPage() {
             productForm={productForm}
             productLoading={productLoading}
             products={products}
-            productsLoading={productsLoading}
+            productsLoading={productsLoading || productsQuery.isFetching}
             loadingProductId={loadingProductId}
             productPage={productPage}
             productTotalPages={productTotalPages}
             onToggleForm={toggleProductForm}
-            onFormChange={(form) => setProductForm(form)}
+            onFormChange={onFormChange}
             onSave={handleProductSave}
             onEdit={editProduct}
             onRequestDelete={requestProductDelete}
-            onPageChange={fetchProducts}
+            onPageChange={handleProductPageChange}
           />
         )}
       </section>
 
-      {/* Order Detail Modal */}
       {selectedOrder && (
         <OrderDetailModal
           order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
+          onClose={() => setSelectedOrderId(null)}
           showActions
           onAdvance={handleAdvance}
           onReject={handleReject}
@@ -594,44 +536,17 @@ export default function AdminPage() {
         />
       )}
 
-      {/* Tracking ID Modal */}
       {trackingModal.open && (
         <AdminTrackingModal
           onClose={() => setTrackingModal({ orderId: "", open: false })}
-          onSubmit={async (trackingId) => {
-            setAdvancingOrderId(trackingModal.orderId);
-            setIsTransitioning(true);
-            try {
-              const order = orders.find((o) => o.id === trackingModal.orderId);
-              if (!order) return;
-              const res = await fetch(`/api/orders/${trackingModal.orderId}/status`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "shipped", trackingId, expectedVersion: order.version }),
-              });
-              if (res.ok) {
-                await Promise.all([fetchOrders(trackingModal.orderId, currentPage), fetchStats()]);
-                setTrackingModal({ orderId: "", open: false });
-                showToast("Order marked as shipped successfully", "success");
-              } else {
-                const data = await res.json().catch(() => ({}));
-                showToast(data.error || "Failed to ship order", "error");
-              }
-            } catch {
-              showToast("Failed to ship order", "error");
-            } finally {
-              setIsTransitioning(false);
-              setAdvancingOrderId(null);
-            }
-          }}
+          onSubmit={handleTrackingSubmit}
         />
       )}
 
-      {/* Product Delete Confirmation Modal */}
       {deleteConfirm.open && (
         <AdminDeleteConfirm
           productName={deleteConfirm.productName}
-          loading={loadingProductId === deleteConfirm.productId}
+          loading={deleteProduct.isPending}
           onConfirm={handleProductDeleteConfirmed}
           onCancel={closeDeleteConfirm}
         />

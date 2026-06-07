@@ -3,6 +3,8 @@ import Link from "next/link";
 import ConfirmationDetails from "@/src/components/order/ConfirmationDetails";
 import type { Metadata } from "next";
 
+export const revalidate = 30;
+
 export const metadata: Metadata = {
   title: "Order Confirmation — Chinni Treasure",
   description:

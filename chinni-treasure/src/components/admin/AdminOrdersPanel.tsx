@@ -2,35 +2,7 @@
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
-
-interface OrderItem {
-  id: string;
-  productName: string;
-  unitPrice: number;
-  quantity: number;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  status: string;
-  version: number;
-  trackingId?: string | null;
-  totalAmount: number;
-  subtotal: number;
-  shippingCost: number;
-  createdAt: string;
-  transactionId?: string | null;
-  customerNotes?: string | null;
-  items: OrderItem[];
-  addressLine1: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-}
+import type { Order } from "@/src/lib/api-schemas";
 
 interface Props {
   orders: Order[];
