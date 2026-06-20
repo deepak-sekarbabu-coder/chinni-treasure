@@ -20,12 +20,16 @@ const CORS_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,
   generateEtags: true,
+  experimental: {
+    optimizePackageImports: ["jspdf", "exceljs"],
+  },
   images: {
     remotePatterns: [
       {
