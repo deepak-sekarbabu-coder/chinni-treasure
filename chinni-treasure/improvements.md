@@ -63,7 +63,7 @@ export function sanitize(input: string): string {
 | 6 | **Tracking endpoint exposes full PII** | Returns `customerEmail`, `customerPhone`, `transactionId` to unauthenticated users |
 | 7 | ~~**Stats endpoint fetches ALL order items**~~ **FIXED** — replaced with Prisma `groupBy` SQL aggregation | Aggregation done in SQL |
 | 8 | ~~**Export endpoint loads entire DB into memory**~~ **FIXED** — cursor-based pagination in 1000-record batches | Batched reads |
-| 9 | **Missing `allowed_origin` env var in `.env.example`** | `ALLOWED_ORIGIN` used in `next.config.ts` but not documented |
+| 9 | ~~**Missing `allowed_origin` env var in `.env.example`**~~ **FIXED** — added `ALLOWED_ORIGIN` | Documented |
 
 ### Recommended Fixes
 
