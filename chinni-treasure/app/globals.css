@@ -910,7 +910,7 @@ a {
   -webkit-backdrop-filter: blur(4px);
   z-index: 9998;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 24px;
   opacity: 0;
@@ -969,6 +969,8 @@ a {
   transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  position: relative;
+  z-index: 2;
 }
 
 .modal-close:active {

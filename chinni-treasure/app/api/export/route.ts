@@ -17,11 +17,9 @@ const headerStyle = {
   },
 };
 
-function createSheet<T>(
-  workbook: Excel.Workbook,
-  name: string,
-  columns: { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown }[],
-) {
+type ColumnDef<T> = { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown };
+
+function createSheet<T>(workbook: Excel.Workbook, name: string, columns: ColumnDef<T>[]) {
   const sheet = workbook.addWorksheet(name, { state: "visible" });
   sheet.addRow(columns.map((c) => c.header));
   sheet.getRow(1).eachCell((cell) => { cell.style = headerStyle; });
@@ -31,15 +29,136 @@ function createSheet<T>(
   return sheet;
 }
 
-function addRows<T>(
-  sheet: Excel.Worksheet,
-  data: T[],
-  columns: { header: string; key: keyof T; width: number; format?: (value: unknown) => unknown }[],
-) {
+function addRows<T>(sheet: Excel.Worksheet, data: T[], columns: ColumnDef<T>[]) {
   for (const row of data) {
     sheet.addRow(columns.map((c) => (c.format ? c.format(row[c.key]) : row[c.key])));
   }
 }
+
+async function batchedFetch<T extends { id: string }>(
+  findMany: (args: { take: number; skip?: number; cursor?: { id: string } }) => Promise<T[]>,
+  orderBy: "asc" | "desc",
+): Promise<T[]> {
+  const results: T[] = [];
+  let lastId: string | undefined;
+  for (;;) {
+    const batch = await findMany({
+      take: BATCH_SIZE,
+      ...(lastId ? { skip: 1, cursor: { id: lastId } } : {}),
+    });
+    if (batch.length === 0) break;
+    results.push(...batch);
+    lastId = batch[batch.length - 1].id;
+    if (batch.length < BATCH_SIZE) break;
+  }
+  return results;
+}
+
+function addBatchedSheet<T extends { id: string }>(
+  workbook: Excel.Workbook,
+  name: string,
+  columns: ColumnDef<T>[],
+  findMany: (args: { take: number; skip?: number; cursor?: { id: string } }) => Promise<T[]>,
+) {
+  const sheet = createSheet(workbook, name, columns);
+  let lastId: string | undefined;
+  return (async () => {
+    for (;;) {
+      const batch = await findMany({
+        take: BATCH_SIZE,
+        ...(lastId ? { skip: 1, cursor: { id: lastId } } : {}),
+      });
+      if (batch.length === 0) break;
+      addRows(sheet, batch, columns);
+      lastId = batch[batch.length - 1].id;
+      if (batch.length < BATCH_SIZE) break;
+    }
+  })();
+}
+
+const formatDate = (v: unknown) => (v ? (v as Date).toLocaleString() : "");
+const formatBool = (v: unknown) => (v ? "Yes" : "No");
+const formatString = (v: unknown) => String(v ?? "");
+
+const catColumns: ColumnDef<{ id: number; name: string; slug: string; description: string | null; displayOrder: number; isActive: boolean; createdAt: Date; updatedAt: Date }>[] = [
+  { header: "ID", key: "id", width: 8 },
+  { header: "Name", key: "name", width: 25 },
+  { header: "Slug", key: "slug", width: 20 },
+  { header: "Description", key: "description", width: 40 },
+  { header: "Display Order", key: "displayOrder", width: 15 },
+  { header: "Is Active", key: "isActive", width: 12, format: formatBool },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+  { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
+];
+
+const prodColumns: ColumnDef<{ id: string; sku: string | null; name: string; categoryId: number | null; category: { name: string } | null; description: string | null; price: unknown; stockQuantity: number; imageUrl: string | null; badge: string | null; isActive: boolean; createdAt: Date; updatedAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "SKU", key: "sku", width: 15 },
+  { header: "Name", key: "name", width: 40 },
+  { header: "Category ID", key: "categoryId", width: 10 },
+  { header: "Category Name", key: "category", width: 25, format: (v) => ((v as { name?: string } | null)?.name ?? "") },
+  { header: "Description", key: "description", width: 50 },
+  { header: "Price", key: "price", width: 12, format: formatString },
+  { header: "Stock Quantity", key: "stockQuantity", width: 18 },
+  { header: "Image URL", key: "imageUrl", width: 50 },
+  { header: "Badge", key: "badge", width: 15 },
+  { header: "Is Active", key: "isActive", width: 12, format: formatBool },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+  { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
+];
+
+const orderColumns: ColumnDef<{ id: string; orderNumber: string; customerName: string; customerEmail: string; customerPhone: string; addressLine1: string; addressLine2: string | null; city: string; stateCode: string; postalCode: string; countryCode: string; status: string; trackingId: string | null; subtotal: unknown; shippingCost: unknown; totalAmount: unknown; transactionId: string | null; customerNotes: string | null; adminNotes: string | null; createdAt: Date; updatedAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "Order Number", key: "orderNumber", width: 20 },
+  { header: "Customer Name", key: "customerName", width: 30 },
+  { header: "Customer Email", key: "customerEmail", width: 35 },
+  { header: "Customer Phone", key: "customerPhone", width: 18 },
+  { header: "Address Line 1", key: "addressLine1", width: 40 },
+  { header: "Address Line 2", key: "addressLine2", width: 40 },
+  { header: "City", key: "city", width: 20 },
+  { header: "State Code", key: "stateCode", width: 12 },
+  { header: "Postal Code", key: "postalCode", width: 12 },
+  { header: "Country Code", key: "countryCode", width: 12 },
+  { header: "Status", key: "status", width: 15 },
+  { header: "Tracking ID", key: "trackingId", width: 20 },
+  { header: "Subtotal", key: "subtotal", width: 12, format: formatString },
+  { header: "Shipping Cost", key: "shippingCost", width: 15, format: formatString },
+  { header: "Total Amount", key: "totalAmount", width: 15, format: formatString },
+  { header: "Transaction ID", key: "transactionId", width: 30 },
+  { header: "Customer Notes", key: "customerNotes", width: 40 },
+  { header: "Admin Notes", key: "adminNotes", width: 40 },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+  { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
+];
+
+const itemColumns: ColumnDef<{ id: string; orderId: string; productId: string | null; productName: string; unitPrice: unknown; quantity: number; createdAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "Order ID", key: "orderId", width: 36 },
+  { header: "Product ID", key: "productId", width: 36 },
+  { header: "Product Name", key: "productName", width: 40 },
+  { header: "Unit Price", key: "unitPrice", width: 12, format: formatString },
+  { header: "Quantity", key: "quantity", width: 10 },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+];
+
+const histColumns: ColumnDef<{ id: string; orderId: string; status: string; notes: string | null; createdAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "Order ID", key: "orderId", width: 36 },
+  { header: "Status", key: "status", width: 15 },
+  { header: "Notes", key: "notes", width: 50 },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+];
+
+const adminColumns: ColumnDef<{ id: string; username: string; email: string; role: string; isActive: boolean; lastLoginAt: Date | null; createdAt: Date; updatedAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "Username", key: "username", width: 20 },
+  { header: "Email", key: "email", width: 35 },
+  { header: "Role", key: "role", width: 15 },
+  { header: "Is Active", key: "isActive", width: 12, format: formatBool },
+  { header: "Last Login At", key: "lastLoginAt", width: 20, format: (v) => (v ? formatDate(v) : "Never") },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
+  { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
+];
 
 export async function GET() {
   const admin = await checkAuth();
@@ -58,139 +177,28 @@ export async function GET() {
       prisma.admin.findMany({ orderBy: { createdAt: "asc" } }),
     ]);
 
-    const catColumns = [
-      { header: "ID", key: "id" as const, width: 8 },
-      { header: "Name", key: "name" as const, width: 25 },
-      { header: "Slug", key: "slug" as const, width: 20 },
-      { header: "Description", key: "description" as const, width: 40 },
-      { header: "Display Order", key: "displayOrder" as const, width: 15 },
-      { header: "Is Active", key: "isActive" as const, width: 12, format: (v: unknown) => (v ? "Yes" : "No") },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-      { header: "Updated At", key: "updatedAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const catSheet = createSheet(workbook, "Categories", catColumns);
     addRows(catSheet, categories, catColumns);
 
-    const prodColumns = [
-      { header: "ID", key: "id" as const, width: 36 },
-      { header: "SKU", key: "sku" as const, width: 15 },
-      { header: "Name", key: "name" as const, width: 40 },
-      { header: "Category ID", key: "categoryId" as const, width: 10 },
-      { header: "Category Name", key: "category" as const, width: 25, format: (v: unknown) => ((v as { name?: string } | null)?.name ?? "") },
-      { header: "Description", key: "description" as const, width: 50 },
-      { header: "Price", key: "price" as const, width: 12, format: (v: unknown) => String(v) },
-      { header: "Stock Quantity", key: "stockQuantity" as const, width: 18 },
-      { header: "Image URL", key: "imageUrl" as const, width: 50 },
-      { header: "Badge", key: "badge" as const, width: 15 },
-      { header: "Is Active", key: "isActive" as const, width: 12, format: (v: unknown) => (v ? "Yes" : "No") },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-      { header: "Updated At", key: "updatedAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const prodSheet = createSheet(workbook, "Products", prodColumns);
     addRows(prodSheet, products, prodColumns);
 
-    // ---- Orders (batched) ----
-    const orderColumns = [
-      { header: "ID", key: "id" as const, width: 36 },
-      { header: "Order Number", key: "orderNumber" as const, width: 20 },
-      { header: "Customer Name", key: "customerName" as const, width: 30 },
-      { header: "Customer Email", key: "customerEmail" as const, width: 35 },
-      { header: "Customer Phone", key: "customerPhone" as const, width: 18 },
-      { header: "Address Line 1", key: "addressLine1" as const, width: 40 },
-      { header: "Address Line 2", key: "addressLine2" as const, width: 40 },
-      { header: "City", key: "city" as const, width: 20 },
-      { header: "State Code", key: "stateCode" as const, width: 12 },
-      { header: "Postal Code", key: "postalCode" as const, width: 12 },
-      { header: "Country Code", key: "countryCode" as const, width: 12 },
-      { header: "Status", key: "status" as const, width: 15 },
-      { header: "Tracking ID", key: "trackingId" as const, width: 20 },
-      { header: "Subtotal", key: "subtotal" as const, width: 12, format: (v: unknown) => String(v) },
-      { header: "Shipping Cost", key: "shippingCost" as const, width: 15, format: (v: unknown) => String(v) },
-      { header: "Total Amount", key: "totalAmount" as const, width: 15, format: (v: unknown) => String(v) },
-      { header: "Transaction ID", key: "transactionId" as const, width: 30 },
-      { header: "Customer Notes", key: "customerNotes" as const, width: 40 },
-      { header: "Admin Notes", key: "adminNotes" as const, width: 40 },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-      { header: "Updated At", key: "updatedAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const orderSheet = createSheet(workbook, "Orders", orderColumns);
-
-    let lastOrderId: string | undefined;
-    for (;;) {
-      const batch = await prisma.order.findMany({
-        orderBy: { createdAt: "desc" },
-        take: BATCH_SIZE,
-        ...(lastOrderId ? { skip: 1, cursor: { id: lastOrderId } } : {}),
-      });
-      if (batch.length === 0) break;
-      addRows(orderSheet, batch, orderColumns);
-      lastOrderId = batch[batch.length - 1].id;
-      if (batch.length < BATCH_SIZE) break;
-    }
-
-    // ---- Order Items (batched) ----
-    const itemColumns = [
-      { header: "ID", key: "id" as const, width: 36 },
-      { header: "Order ID", key: "orderId" as const, width: 36 },
-      { header: "Product ID", key: "productId" as const, width: 36 },
-      { header: "Product Name", key: "productName" as const, width: 40 },
-      { header: "Unit Price", key: "unitPrice" as const, width: 12, format: (v: unknown) => String(v) },
-      { header: "Quantity", key: "quantity" as const, width: 10 },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const itemSheet = createSheet(workbook, "Order Items", itemColumns);
-
-    let lastItemId: string | undefined;
-    for (;;) {
-      const batch = await prisma.orderItem.findMany({
-        orderBy: { createdAt: "asc" },
-        take: BATCH_SIZE,
-        ...(lastItemId ? { skip: 1, cursor: { id: lastItemId } } : {}),
-      });
-      if (batch.length === 0) break;
-      addRows(itemSheet, batch, itemColumns);
-      lastItemId = batch[batch.length - 1].id;
-      if (batch.length < BATCH_SIZE) break;
-    }
-
-    // ---- Status History (batched) ----
-    const histColumns = [
-      { header: "ID", key: "id" as const, width: 36 },
-      { header: "Order ID", key: "orderId" as const, width: 36 },
-      { header: "Status", key: "status" as const, width: 15 },
-      { header: "Notes", key: "notes" as const, width: 50 },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const histSheet = createSheet(workbook, "Order Status History", histColumns);
 
-    let lastHistId: string | undefined;
-    for (;;) {
-      const batch = await prisma.orderStatusHistory.findMany({
-        orderBy: { createdAt: "asc" },
-        take: BATCH_SIZE,
-        ...(lastHistId ? { skip: 1, cursor: { id: lastHistId } } : {}),
-      });
-      if (batch.length === 0) break;
-      addRows(histSheet, batch, histColumns);
-      lastHistId = batch[batch.length - 1].id;
-      if (batch.length < BATCH_SIZE) break;
-    }
+    await Promise.all([
+      addBatchedSheet(workbook, "Orders", orderColumns, (args) =>
+        prisma.order.findMany({ orderBy: { createdAt: "desc" }, ...args })),
+      addBatchedSheet(workbook, "Order Items", itemColumns, (args) =>
+        prisma.orderItem.findMany({ orderBy: { createdAt: "asc" }, ...args })),
+      addBatchedSheet(workbook, "Order Status History", histColumns, (args) =>
+        prisma.orderStatusHistory.findMany({ orderBy: { createdAt: "asc" }, ...args })),
+    ]);
 
-    // ---- Admins (small, load fully) ----
-    const adminColumns = [
-      { header: "ID", key: "id" as const, width: 36 },
-      { header: "Username", key: "username" as const, width: 20 },
-      { header: "Email", key: "email" as const, width: 35 },
-      { header: "Role", key: "role" as const, width: 15 },
-      { header: "Is Active", key: "isActive" as const, width: 12, format: (v: unknown) => (v ? "Yes" : "No") },
-      { header: "Last Login At", key: "lastLoginAt" as const, width: 20, format: (v: unknown) => (v ? (v as Date).toLocaleString() : "Never") },
-      { header: "Created At", key: "createdAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-      { header: "Updated At", key: "updatedAt" as const, width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    ];
     const adminSheet = createSheet(workbook, "Admins", adminColumns);
     addRows(adminSheet, admins, adminColumns);
 
-    // ID Lookup sheet
     const lookupSheet = workbook.addWorksheet("ID Lookup");
     lookupSheet.addRow(["Table", "ID", "Name/Identifier"]);
     lookupSheet.getRow(1).eachCell((cell) => { cell.style = headerStyle; });
@@ -201,20 +209,11 @@ export async function GET() {
     lookupSheet.getColumn(2).width = 40;
     lookupSheet.getColumn(3).width = 50;
 
-    // Add order numbers to lookup from batches
-    lastOrderId = undefined;
-    for (;;) {
-      const orderBatch: { id: string; orderNumber: string }[] = await prisma.order.findMany({
-        orderBy: { createdAt: "desc" },
-        select: { id: true, orderNumber: true },
-        take: BATCH_SIZE,
-        ...(lastOrderId ? { skip: 1, cursor: { id: lastOrderId } } : {}),
-      });
-      if (orderBatch.length === 0) break;
-      for (const o of orderBatch) lookupSheet.addRow(["Order", o.id, o.orderNumber]);
-      lastOrderId = orderBatch[orderBatch.length - 1].id;
-      if (orderBatch.length < BATCH_SIZE) break;
-    }
+    const orders = await batchedFetch(
+      (args) => prisma.order.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, orderNumber: true }, ...args }),
+      "desc",
+    );
+    for (const o of orders) lookupSheet.addRow(["Order", o.id, o.orderNumber]);
 
     const buffer = await workbook.xlsx.writeBuffer();
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);

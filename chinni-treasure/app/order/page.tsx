@@ -168,10 +168,6 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
             <span className="bank-detail-label">UPI ID</span>
             <span className="bank-detail-value">9499011029@ibl</span>
           </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Customer ID</span>
-            <span className="bank-detail-value">92458542971</span>
-          </div>
           <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
         </div>
       </fieldset>

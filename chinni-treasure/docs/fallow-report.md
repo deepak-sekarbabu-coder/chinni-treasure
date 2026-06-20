@@ -20,7 +20,7 @@
 - `sharp`
 
 
-## Fallow: 18 clone groups found (2.6% duplication)
+## Fallow: 15 clone groups found (2.5% duplication)
 
 ### Duplicates
 
@@ -43,79 +43,64 @@
 - `app/api/products/%5Bid%5D/route.ts:60-72`
 - `app/api/products/route.ts:106-117`
 
-**Clone group 4** (17 lines, 2 instances)
+**Clone group 4** (13 lines, 2 instances)
 
-- `app/api/export/route.ts:6-22`
-- `scripts/export-to-excel.ts:13-22`
+- `app/api/export/route.ts:6-18`
+- `scripts/export-to-excel.ts:13-20`
 
-**Clone group 5** (5 lines, 2 instances)
+**Clone group 5** (21 lines, 2 instances)
 
-- `app/api/export/route.ts:23-27`
-- `scripts/export-to-excel.ts:22-25`
-
-**Clone group 6** (21 lines, 2 instances)
-
-- `app/api/export/route.ts:27-42`
+- `app/api/export/route.ts:25-36`
 - `scripts/export-to-excel.ts:31-51`
 
-**Clone group 7** (6 lines, 2 instances)
+**Clone group 6** (15 lines, 2 instances)
 
-- `app/api/export/route.ts:66-71`
-- `app/api/export/route.ts:84-89`
+- `app/api/export/route.ts:110-124`
+- `scripts/export-to-excel.ts:99-113`
 
-**Clone group 8** (5 lines, 2 instances)
-
-- `app/api/export/route.ts:85-89`
-- `app/api/export/route.ts:186-190`
-
-**Clone group 9** (5 lines, 2 instances)
-
-- `app/api/export/route.ts:112-116`
-- `app/api/export/route.ts:186-190`
-
-**Clone group 10** (15 lines, 2 instances)
+**Clone group 7** (15 lines, 2 instances)
 
 - `app/api/orders/%5Bid%5D/status/route.ts:63-77`
 - `app/api/products/%5Bid%5D/route.ts:46-60`
 
-**Clone group 11** (13 lines, 3 instances)
+**Clone group 8** (13 lines, 3 instances)
 
 - `app/api/orders/%5Bid%5D/status/route.ts:63-75`
 - `app/api/products/%5Bid%5D/route.ts:46-58`
 - `app/api/products/%5Bid%5D/route.ts:85-97`
 
-**Clone group 12** (9 lines, 2 instances)
+**Clone group 9** (9 lines, 2 instances)
 
 - `app/api/products/%5Bid%5D/route.ts:60-68`
 - `app/api/products/route.ts:106-114`
 
-**Clone group 13** (12 lines, 2 instances)
+**Clone group 10** (12 lines, 2 instances)
 
 - `app/order/page.tsx:60-71`
 - `app/order/page.tsx:91-102`
 
-**Clone group 14** (6 lines, 3 instances)
+**Clone group 11** (6 lines, 3 instances)
 
 - `app/order/page.tsx:60-65`
 - `app/order/page.tsx:91-96`
 - `app/order/page.tsx:134-139`
 
-**Clone group 15** (14 lines, 2 instances)
+**Clone group 12** (14 lines, 2 instances)
 
 - `app/order/page.tsx:146-159`
 - `app/order/page.tsx:162-175`
 
-**Clone group 16** (10 lines, 2 instances)
+**Clone group 13** (10 lines, 2 instances)
 
 - `scripts/export-to-excel.ts:69-78`
 - `scripts/export-to-excel.ts:89-98`
 
-**Clone group 17** (9 lines, 2 instances)
+**Clone group 14** (9 lines, 2 instances)
 
 - `scripts/export-to-excel.ts:70-78`
 - `scripts/export-to-excel.ts:118-126`
 
-**Clone group 18** (8 lines, 2 instances)
+**Clone group 15** (8 lines, 2 instances)
 
 - `src/components/order/ConfirmationDetails.tsx:106-113`
 - `src/components/order/ConfirmationDetails.tsx:138-145`
@@ -134,49 +119,43 @@
 
 - Extract shared function (20 lines) from route.ts, route.ts, route.ts, route.ts, route.ts (~80 lines saved)
 
-**Family 4** (3 groups, 16 lines across `app/api/export/route.ts`)
+**Family 4** (3 groups, 49 lines across `app/api/export/route.ts`, `scripts/export-to-excel.ts`)
 
-- Extract shared function (6 lines) from route.ts, route.ts (~6 lines saved)
-- Extract shared function (5 lines) from route.ts, route.ts (~5 lines saved)
-- Extract shared function (5 lines) from route.ts, route.ts (~5 lines saved)
-
-**Family 5** (3 groups, 43 lines across `app/api/export/route.ts`, `scripts/export-to-excel.ts`)
-
-- Extract shared function (17 lines) from route.ts, export-to-excel.ts (~17 lines saved)
-- Extract shared function (5 lines) from route.ts, export-to-excel.ts (~5 lines saved)
+- Extract shared function (15 lines) from route.ts, export-to-excel.ts (~15 lines saved)
+- Extract shared function (13 lines) from route.ts, export-to-excel.ts (~13 lines saved)
 - Extract shared function (21 lines) from route.ts, export-to-excel.ts (~21 lines saved)
 
-**Family 6** (2 groups, 28 lines across `app/api/orders/%5Bid%5D/status/route.ts`, `app/api/products/%5Bid%5D/route.ts`)
+**Family 5** (2 groups, 28 lines across `app/api/orders/%5Bid%5D/status/route.ts`, `app/api/products/%5Bid%5D/route.ts`)
 
 - Extract shared function (15 lines) from route.ts, route.ts (~15 lines saved)
 - Extract shared function (13 lines) from route.ts, route.ts, route.ts (~26 lines saved)
 
-**Family 7** (1 group, 9 lines across `app/api/products/%5Bid%5D/route.ts`, `app/api/products/route.ts`)
+**Family 6** (1 group, 9 lines across `app/api/products/%5Bid%5D/route.ts`, `app/api/products/route.ts`)
 
 - Extract shared function (9 lines) from route.ts, route.ts (~9 lines saved)
 
-**Family 8** (3 groups, 32 lines across `app/order/page.tsx`)
+**Family 7** (3 groups, 32 lines across `app/order/page.tsx`)
 
 - Extract shared function (14 lines) from page.tsx, page.tsx (~14 lines saved)
 - Extract shared function (12 lines) from page.tsx, page.tsx (~12 lines saved)
 - Extract shared function (6 lines) from page.tsx, page.tsx, page.tsx (~12 lines saved)
 
-**Family 9** (2 groups, 19 lines across `scripts/export-to-excel.ts`)
+**Family 8** (2 groups, 19 lines across `scripts/export-to-excel.ts`)
 
 - Extract shared function (10 lines) from export-to-excel.ts, export-to-excel.ts (~10 lines saved)
 - Extract shared function (9 lines) from export-to-excel.ts, export-to-excel.ts (~9 lines saved)
 
-**Family 10** (1 group, 8 lines across `src/components/order/ConfirmationDetails.tsx`)
+**Family 9** (1 group, 8 lines across `src/components/order/ConfirmationDetails.tsx`)
 
 - Extract shared function (8 lines) from ConfirmationDetails.tsx, ConfirmationDetails.tsx (~8 lines saved)
 
-**Summary:** 348 duplicated lines (2.6%) across 12 files
+**Summary:** 339 duplicated lines (2.5%) across 12 files
 
 ## Vital Signs
 
 | Metric | Value |
 |:-------|------:|
-| Total LOC | 13712 |
+| Total LOC | 13711 |
 | Avg Cyclomatic | 2.2 |
 | P90 Cyclomatic | 5 |
 | Dead Files | 0.0% |
@@ -186,11 +165,10 @@
 | Circular Deps | 0 |
 | Unused Deps | 2 |
 
-## Fallow: 51 high complexity functions
+## Fallow: 53 high complexity functions
 
 | File | Function | Severity | Cyclomatic | Cognitive | CRAP | Lines |
 |:-----|:---------|:---------|:-----------|:----------|:-----|:------|
-| `app/api/export/route.ts:44` | `GET` | critical | 24 **!** | 36 **!** | 600.0 **!** | 192 |
 | `src/components/order/OrderDetailModal.tsx:21` | `OrderDetailModal` | critical | 22 **!** | 22 **!** | 506.0 **!** | 200 |
 | `src/lib/api/client.ts:83` | `apiFetch` | critical | 15 | 17 **!** | 240.0 **!** | 62 |
 | `src/components/layout/Navbar.tsx:10` | `Navbar` | moderate | 14 | 24 **!** | - | 167 |
@@ -207,6 +185,7 @@
 | `src/components/admin/AdminCataloguePanel.tsx:130` | `ProductRow` | critical | 10 | 10 | 110.0 **!** | 43 |
 | `app/order/page.tsx:60` | `PersonalDetailsStep` | critical | 10 | 10 | 110.0 **!** | 30 |
 | `app/track/page.tsx:21` | `handleSearch` | high | 9 | 11 | 90.0 **!** | 32 |
+| `app/api/export/route.ts:163` | `GET` | high | 8 | 7 | 72.0 **!** | 72 |
 | `app/api/products/route.ts:81` | `buildCreateData` | high | 8 | 7 | 72.0 **!** | 12 |
 | `src/components/order/ConfirmationDetails.tsx:32` | `generateInvoice` | high | 8 | 8 | 72.0 **!** | 226 |
 | `app/api/orders/route.ts:107` | `order` | high | 8 | 10 | 72.0 **!** | 91 |
@@ -226,6 +205,8 @@
 | `src/components/order/OrderSummaryCard.tsx:23` | `OrderSummaryCard` | moderate | 6 | 6 | 42.0 **!** | 114 |
 | `app/api/orders/route.ts:39` | `GET` | moderate | 6 | 5 | 42.0 **!** | 38 |
 | `app/order/page.tsx:134` | `PaymentStep` | moderate | 6 | 7 | 42.0 **!** | 99 |
+| `app/api/export/route.ts:38` | `batchedFetch` | moderate | 5 | 7 | 30.0 **!** | 18 |
+| `app/api/export/route.ts:65` | `<arrow>` | moderate | 5 | 7 | 30.0 **!** | 12 |
 | `app/api/products/route.ts:95` | `POST` | moderate | 5 | 4 | 30.0 **!** | 32 |
 | `app/docs/page.tsx:80` | `<arrow>` | moderate | 5 | 4 | 30.0 **!** | 14 |
 | `app/docs/page.tsx:66` | `renderSchema` | moderate | 5 | 5 | 30.0 **!** | 31 |
@@ -242,13 +223,12 @@
 | `src/components/track/TrackOrderCard.tsx:11` | `TrackOrderCard` | moderate | 5 | 3 | 30.0 **!** | 50 |
 | `src/lib/hooks/useAdminCatalogueController.ts:65` | `useAdminCatalogueController` | moderate | 4 | 18 **!** | - | 114 |
 
-**101** files, **530** functions analyzed (thresholds: cyclomatic > 20, cognitive > 15, CRAP >= 30.0)
+**101** files, **522** functions analyzed (thresholds: cyclomatic > 20, cognitive > 15, CRAP >= 30.0)
 
 ### File Health Scores (90 files)
 
 | File | Maintainability | Fan-in | Fan-out | Dead Code | Density | Risk |
 |:-----|:---------------|:-------|:--------|:----------|:--------|:-----|
-| `app/api/export/route.ts` | 88.1 | 0 | 2 | 0% | 0.25 | 600.0 |
 | `src/components/order/OrderDetailModal.tsx` | 88.8 | 2 | 4 | 0% | 0.16 | 506.0 |
 | `src/lib/api/client.ts` | 80.6 | 4 | 1 | 50% | 0.22 | 240.0 |
 | `app/admin/useAdminPageState.ts` | 83.5 | 1 | 6 | 0% | 0.29 | 182.0 |
@@ -264,6 +244,7 @@
 | `src/components/admin/AdminCataloguePanel.tsx` | 92.1 | 1 | 1 | 0% | 0.17 | 110.0 |
 | `app/api/products/route.ts` | 87.7 | 0 | 5 | 0% | 0.17 | 72.0 |
 | `app/api/orders/route.ts` | 88.6 | 0 | 6 | 0% | 0.12 | 72.0 |
+| `app/api/export/route.ts` | 90.2 | 0 | 2 | 0% | 0.18 | 72.0 |
 | `app/api/stats/route.ts` | 90.9 | 0 | 3 | 0% | 0.12 | 72.0 |
 | `src/components/order/ConfirmationDetails.tsx` | 97.9 | 1 | 0 | 0% | 0.07 | 72.0 |
 | `src/components/pages/catalogue-content.tsx` | 88.1 | 1 | 7 | 0% | 0.12 | 56.0 |
@@ -341,13 +322,12 @@
 
 **Average maintainability index:** 93.8/100
 
-### Refactoring Targets (3)
+### Refactoring Targets (2)
 
 | Efficiency | Category | Effort / Confidence | File | Recommendation |
 |:-----------|:---------|:--------------------|:-----|:---------------|
 | 15.0 | dead code | medium / high | `src/lib/api/client.ts` | Remove 2 unused exports to reduce surface area (50% dead) |
 | 10.2 | high impact | high / medium | `src/lib/csrf.ts` | Split high-impact file (21 LOC), 6 dependents amplify every change |
-| 5.0 | complexity | medium / high | `app/api/export/route.ts` | Extract GET (cognitive: 36) in 236-LOC file into smaller functions |
 
 ---
 
