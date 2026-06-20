@@ -1,14 +1,6 @@
 import { z } from "zod";
 
-export const ProductBadgeSchema = z.enum([
-  "bestseller",
-  "new",
-  "premium",
-  "limited",
-  "luxury",
-]);
-
-export const OrderStatusSchema = z.enum([
+const OrderStatusSchema = z.enum([
   "pending",
   "approved",
   "packaging",
@@ -17,7 +9,7 @@ export const OrderStatusSchema = z.enum([
   "rejected",
 ]);
 
-export const OrderItemSchema = z.object({
+const OrderItemSchema = z.object({
   id: z.string(),
   productName: z.string(),
   unitPrice: z.coerce.number(),
@@ -131,14 +123,14 @@ export const StatsResponseSchema = z.object({
   productSalesData: z.array(ProductSalesSchema),
 });
 
-export const SessionSchema = z.object({
+const SessionSchema = z.object({
   authenticated: z.literal(true),
   id: z.string(),
   username: z.string(),
   role: z.enum(["admin", "super_admin"]),
 });
 
-export const UnauthenticatedResponseSchema = z.object({
+const UnauthenticatedResponseSchema = z.object({
   authenticated: z.literal(false),
 });
 
@@ -188,18 +180,12 @@ export const ProductInputSchema = z.object({
   categoryId: z.coerce.number().int().positive().nullable().optional(),
 });
 
-export const ErrorResponseSchema = z.object({
-  error: z.string().optional(),
-});
-
 export const ApiErrorSchema = z.object({
   error: z.string().optional(),
   message: z.string().optional(),
 });
 
 export type Order = z.infer<typeof OrderSchema>;
-export type OrderItem = z.infer<typeof OrderItemSchema>;
-export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 export type OrdersResponse = z.infer<typeof OrdersResponseSchema>;
 export type TrackOrderResult = z.infer<typeof TrackOrderResultSchema>;
 export type TrackOrdersResponse = z.infer<typeof TrackOrdersResponseSchema>;

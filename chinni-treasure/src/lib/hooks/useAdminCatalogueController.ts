@@ -10,7 +10,7 @@ import {
 import { extractApiErrorMessage } from "@/src/lib/utils";
 import type { Product } from "@/src/lib/api/schemas";
 
-export interface ProductFormState {
+interface ProductFormState {
   id: string;
   name: string;
   sku: string;
@@ -22,7 +22,7 @@ export interface ProductFormState {
   categoryId: string;
 }
 
-export const EMPTY_PRODUCT_FORM: ProductFormState = {
+const EMPTY_PRODUCT_FORM: ProductFormState = {
   id: "",
   name: "",
   sku: "",
