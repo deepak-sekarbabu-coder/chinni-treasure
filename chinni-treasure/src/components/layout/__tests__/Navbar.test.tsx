@@ -281,6 +281,7 @@ function NavbarTestHelper() {
   const { addItem } = useCart();
   React.useEffect(() => {
     addItem({ id: "prod-1", name: "Test Product", price: 29.99, image: "/test.jpg", stock: 10 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return <Navbar />;
 }

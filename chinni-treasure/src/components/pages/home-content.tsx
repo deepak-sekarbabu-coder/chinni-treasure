@@ -15,7 +15,7 @@ export default function HomeContent() {
             For Everyday Elegance.&rdquo;
           </h1>
           <p>
-            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you'll love.
+            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you&apos;ll love.
           </p>
           <div className="hero-trust" aria-label="brand highlights">
             <span>Handcrafted Originals</span>

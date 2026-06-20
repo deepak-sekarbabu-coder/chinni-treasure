@@ -10,9 +10,6 @@ vi.mock("next/headers", () => ({
 
 import { cookies } from "next/headers";
 
-// Store original env for cleanup
-const origJwtSecret = process.env.JWT_SECRET;
-
 describe("signToken and verifyToken", () => {
   const payload = { id: "test-id", username: "admin", role: "admin" };
 

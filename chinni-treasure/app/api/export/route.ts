@@ -37,7 +37,6 @@ function addRows<T>(sheet: Excel.Worksheet, data: T[], columns: ColumnDef<T>[]) 
 
 async function batchedFetch<T extends { id: string }>(
   findMany: (args: { take: number; skip?: number; cursor?: { id: string } }) => Promise<T[]>,
-  orderBy: "asc" | "desc",
 ): Promise<T[]> {
   const results: T[] = [];
   let lastId: string | undefined;
@@ -183,10 +182,6 @@ export async function GET() {
     const prodSheet = createSheet(workbook, "Products", prodColumns);
     addRows(prodSheet, products, prodColumns);
 
-    const orderSheet = createSheet(workbook, "Orders", orderColumns);
-    const itemSheet = createSheet(workbook, "Order Items", itemColumns);
-    const histSheet = createSheet(workbook, "Order Status History", histColumns);
-
     await Promise.all([
       addBatchedSheet(workbook, "Orders", orderColumns, (args) =>
         prisma.order.findMany({ orderBy: { createdAt: "desc" }, ...args })),
@@ -211,7 +206,6 @@ export async function GET() {
 
     const orders = await batchedFetch(
       (args) => prisma.order.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, orderNumber: true }, ...args }),
-      "desc",
     );
     for (const o of orders) lookupSheet.addRow(["Order", o.id, o.orderNumber]);
 

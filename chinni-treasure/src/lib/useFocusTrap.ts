@@ -19,7 +19,6 @@ export function useFocusTrap(active: boolean) {
 
     const focusable = container.querySelectorAll<HTMLElement>(FOCUSABLE);
     const first = focusable[0];
-    const last = focusable[focusable.length - 1];
     first?.focus();
 
     function onKeyDown(e: KeyboardEvent) {

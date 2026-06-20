@@ -22,7 +22,7 @@ describe("CheckoutProgress", () => {
   });
 
   it("handles step 1 correctly", () => {
-    const { container } = render(<CheckoutProgress currentStep={1} />);
+    render(<CheckoutProgress currentStep={1} />);
     expect(screen.getByText("Step 1 of 3: Personal")).toBeInTheDocument();
   });
 

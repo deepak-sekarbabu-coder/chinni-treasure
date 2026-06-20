@@ -25,7 +25,7 @@ describe("StatusBadge", () => {
   });
 
   it("renders without icon when icon={false}", () => {
-    const { container } = render(<StatusBadge status="pending" icon={false} />);
+    render(<StatusBadge status="pending" icon={false} />);
     expect(screen.getByText(/Pending/)).toBeInTheDocument();
   });
 

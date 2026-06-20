@@ -75,9 +75,8 @@ describe("CartProvider", () => {
     });
 
     // Third add should hit stock limit — verify state effect
-    let returnValue: string | undefined;
     act(() => {
-      returnValue = result.current.addItem(lowStockProduct);
+      result.current.addItem(lowStockProduct);
     });
 
     // State should reflect the limit
@@ -88,9 +87,8 @@ describe("CartProvider", () => {
     const { result } = renderCart();
     const outOfStock = { ...mockProduct, stock: 0 };
 
-    let returnValue: string | undefined;
     act(() => {
-      returnValue = result.current.addItem(outOfStock);
+      result.current.addItem(outOfStock);
     });
 
     expect(result.current.items).toHaveLength(0);
@@ -165,9 +163,8 @@ describe("CartProvider", () => {
       result.current.addItem(mockProduct);
     });
 
-    let returnValue: string | undefined;
     act(() => {
-      returnValue = result.current.updateQuantity("nonexistent-id", 1);
+      result.current.updateQuantity("nonexistent-id", 1);
     });
   });
 
