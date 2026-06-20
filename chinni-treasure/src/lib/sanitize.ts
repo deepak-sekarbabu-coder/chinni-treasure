@@ -1,6 +1,9 @@
-import DOMPurify from "isomorphic-dompurify";
-
 export function sanitize(input: string): string {
-  return DOMPurify.sanitize(input.trim());
+  return input
+    .trim()
+    .replace(/[<>]/g, "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
 }
 
