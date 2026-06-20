@@ -1,7 +1,8 @@
 "use client";
 
-import dayjs from "dayjs";
 import type { ChartPoint, ProductSales } from "@/src/lib/api/schemas";
+
+const fmtDate = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" });
 
 interface Props {
   loading: boolean;
@@ -46,7 +47,7 @@ function OrdersChart({ data }: { data: ChartPoint[] }) {
       <div className="chart-scroll">
         {data.map((d) => (
           <div key={d.date} className="chart-row">
-            <span className="chart-date">{dayjs(d.date).format("D MMM")}</span>
+            <span className="chart-date">{fmtDate.format(new Date(d.date))}</span>
             <div className="chart-bar-wrap">
               <div className="chart-bar" style={{ width: `${(d.orders / maxOrders) * 100}%` }} />
             </div>

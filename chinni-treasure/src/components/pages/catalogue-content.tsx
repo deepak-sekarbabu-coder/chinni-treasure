@@ -90,6 +90,7 @@ export default function CatalogueContent({ initialProducts }: Props) {
                   product={product}
                   onAdd={handleAdd}
                   transitionDelay={idx * 0.05}
+                  priority={idx < 6}
                 />
               ))
             )}

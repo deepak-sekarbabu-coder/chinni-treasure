@@ -1,16 +1,30 @@
 "use client";
 
-import OrderDetailModal from "@/src/components/order/OrderDetailModal";
+import dynamic from "next/dynamic";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
-import AdminCataloguePanel from "@/src/components/admin/AdminCataloguePanel";
-import AdminChartsSection from "@/src/components/admin/AdminChartsSection";
-import AdminDeleteConfirm from "@/src/components/admin/AdminDeleteConfirm";
 import AdminHeader from "@/src/components/admin/AdminHeader";
-import AdminOrdersPanel from "@/src/components/admin/AdminOrdersPanel";
 import AdminStatsGrid from "@/src/components/admin/AdminStatsGrid";
 import AdminTabs from "@/src/components/admin/AdminTabs";
-import AdminTrackingModal from "@/src/components/admin/AdminTrackingModal";
 import { useAdminPageState } from "./useAdminPageState";
+
+const AdminOrdersPanel = dynamic(() => import("@/src/components/admin/AdminOrdersPanel"), {
+  ssr: false,
+});
+const AdminCataloguePanel = dynamic(() => import("@/src/components/admin/AdminCataloguePanel"), {
+  ssr: false,
+});
+const AdminChartsSection = dynamic(() => import("@/src/components/admin/AdminChartsSection"), {
+  ssr: false,
+});
+const AdminDeleteConfirm = dynamic(() => import("@/src/components/admin/AdminDeleteConfirm"), {
+  ssr: false,
+});
+const AdminTrackingModal = dynamic(() => import("@/src/components/admin/AdminTrackingModal"), {
+  ssr: false,
+});
+const OrderDetailModal = dynamic(() => import("@/src/components/order/OrderDetailModal"), {
+  ssr: false,
+});
 
 export default function AdminPage() {
   const {

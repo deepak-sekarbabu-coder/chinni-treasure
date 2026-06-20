@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
-import * as Excel from "exceljs";
+import type * as Excel from "exceljs";
 
 const BATCH_SIZE = 1000;
 
@@ -166,7 +166,8 @@ export async function GET() {
   }
 
   try {
-    const workbook = new Excel.Workbook();
+    const ExcelMod = await import("exceljs");
+    const workbook = new ExcelMod.Workbook();
     workbook.creator = "Chinni Treasure";
     workbook.created = new Date();
 

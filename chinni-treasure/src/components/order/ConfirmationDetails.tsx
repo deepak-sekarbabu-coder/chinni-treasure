@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useCallback, useRef } from "react";
-import { jsPDF } from "jspdf";
+import { useEffect, useCallback, useRef, useState } from "react";
 
 interface OrderItem {
   id: string;
@@ -29,7 +28,8 @@ interface OrderData {
   items: OrderItem[];
 }
 
-function generateInvoice(order: OrderData, logoBase64?: string | null): jsPDF {
+async function generateInvoice(order: OrderData, logoBase64?: string | null) {
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = 210;
   const margin = 20;
@@ -258,6 +258,7 @@ function generateInvoice(order: OrderData, logoBase64?: string | null): jsPDF {
 
 export default function ConfirmationDetails({ order }: { order: OrderData }) {
   const logoRef = useRef<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch("/images/branding/logo.png")
@@ -269,17 +270,16 @@ export default function ConfirmationDetails({ order }: { order: OrderData }) {
       });
   }, []);
 
-  const downloadInvoice = useCallback(() => {
-    const doc = generateInvoice(order, logoRef.current);
-    doc.save(`invoice-${order.orderNumber}.pdf`);
-  }, [order]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      downloadInvoice();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [downloadInvoice]);
+  const downloadInvoice = useCallback(async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const doc = await generateInvoice(order, logoRef.current);
+      doc.save(`invoice-${order.orderNumber}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  }, [order, downloading]);
 
   return (
     <div className="confirmation-card">
@@ -336,8 +336,8 @@ export default function ConfirmationDetails({ order }: { order: OrderData }) {
       </p>
 
       <div className="confirmation-actions" style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-primary" onClick={downloadInvoice}>
-          Download Invoice
+        <button type="button" className="btn btn-primary" onClick={downloadInvoice} disabled={downloading}>
+          {downloading ? "Downloading..." : "Download Invoice"}
         </button>
         <Link href="/" className="btn btn-secondary">Continue Shopping</Link>
         <Link href="/track" className="btn btn-secondary">Track Orders</Link>

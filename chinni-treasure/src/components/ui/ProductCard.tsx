@@ -16,12 +16,14 @@ interface Props {
   product: ProductData;
   onAdd: (product: ProductData) => void;
   transitionDelay?: number;
+  priority?: boolean;
 }
 
 export default function ProductCard({
   product,
   onAdd,
   transitionDelay = 0,
+  priority = false,
 }: Props) {
   return (
     <div
@@ -36,6 +38,8 @@ export default function ProductCard({
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="product-card-img"
+          loading={priority ? "eager" : "lazy"}
+          priority={priority}
         />
         {product.badge && (
           <span className="product-card-badge">{product.badge}</span>
