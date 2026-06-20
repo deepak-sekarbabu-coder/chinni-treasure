@@ -201,13 +201,26 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
           </div>
           <div className="bank-detail-row">
             <span className="bank-detail-label">UPI ID</span>
-            <span className="bank-detail-value">9499011029@ibl</span>
+            <a
+              href="upi://pay?pa=9499011029%40ibl&pn=CHINNI%20TREASURE&cu=INR"
+              className="bank-detail-value bank-upi-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              9499011029@ibl
+              <span className="upi-open-hint">Tap to pay</span>
+            </a>
           </div>
           <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
-          <div className="bank-qr-code">
+          <a
+            href="upi://pay?pa=9499011029%40ibl&pn=CHINNI%20TREASURE&cu=INR"
+            className="bank-qr-code"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <img src="/images/branding/qr.png" alt="Scan QR code to pay via UPI" width="200" height="200" />
-            <span className="bank-qr-label">Scan to pay via UPI</span>
-          </div>
+            <span className="bank-qr-label">Tap to pay via UPI</span>
+          </a>
         </div>
       </fieldset>
       <fieldset className="order-fieldset step-fade-in">

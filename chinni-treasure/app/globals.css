@@ -2283,17 +2283,51 @@ a {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px dashed var(--cream);
+  text-decoration: none;
 }
 
 .bank-qr-code img {
   border-radius: 8px;
   border: 2px solid var(--cream);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bank-qr-code:active img {
+  transform: scale(0.97);
 }
 
 .bank-qr-label {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 8px;
+}
+
+.bank-upi-link {
+  color: var(--gold-dark);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: color 0.2s ease;
+}
+
+.bank-upi-link:hover {
+  color: var(--gold);
+}
+
+.upi-open-hint {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-qr-code img {
+    transition: none;
+  }
 }
 
 /* Order Summary Sidebar */
