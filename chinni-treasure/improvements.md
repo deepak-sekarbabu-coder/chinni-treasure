@@ -257,8 +257,8 @@ export const env = envSchema.parse(process.env);
 | 18 | **`generateOrderNumber()` uses `Math.random()`** | Works but less robust than DB sequences or UUIDs |
 | 19 | **Public OpenAPI spec with CORS `*`** | `app/api/docs/route.ts` exposes full API schema |
 | 20 | **Admin dashboard is fully client-side** | No SSR — slower initial load on admin pages |
-| 21 | **Rate limiter memory leak** | Map never cleans up expired entries |
-| 22 | **`postcss.config.mjs` exists but unused** | No PostCSS plugins configured |
+| 21 | ~~**Rate limiter memory leak**~~ **FIXED** — added periodic eviction of expired entries every 5 minutes | Self-cleaning Map |
+| 22 | ~~**`postcss.config.mjs` exists but unused**~~ **FIXED** — file removed | Clean |
 
 ### Recommended Fixes
 
