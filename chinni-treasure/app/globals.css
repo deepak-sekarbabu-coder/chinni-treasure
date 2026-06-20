@@ -2276,6 +2276,26 @@ a {
   line-height: 1.5;
 }
 
+.bank-qr-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--cream);
+}
+
+.bank-qr-code img {
+  border-radius: 8px;
+  border: 2px solid var(--cream);
+}
+
+.bank-qr-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
 /* Order Summary Sidebar */
 .order-summary-sidebar {
   position: sticky;

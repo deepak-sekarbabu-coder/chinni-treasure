@@ -142,52 +142,6 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
   return (
     <>
       <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Bank Transfer Details</legend>
-        <div className="bank-details-card">
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Account Name</span>
-            <span className="bank-detail-value">CHINNI TREASURE</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Account Number</span>
-            <span className="bank-detail-value">452689137194</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Bank &amp; Branch</span>
-            <span className="bank-detail-value">State Bank of India — Madambakkam</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">IFSC Code</span>
-            <span className="bank-detail-value">SBIN0021634</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">MICR Code</span>
-            <span className="bank-detail-value">600002379</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">UPI ID</span>
-            <span className="bank-detail-value">9499011029@ibl</span>
-          </div>
-          <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
-        </div>
-      </fieldset>
-      <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Payment Details</legend>
-        <div className="form-group">
-          <label htmlFor="transactionId">Transaction ID <span className="required">*</span></label>
-          <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="Enter your payment transaction/reference ID" aria-describedby={errors.transactionId ? "transactionId-error" : undefined} aria-invalid={!!errors.transactionId} />
-          {errors.transactionId && <span id="transactionId-error" className="form-error visible">{errors.transactionId}</span>}
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "6px", display: "block" }}>Share your payment transaction ID after completing the transfer. Our team will verify and process your order.</span>
-        </div>
-      </fieldset>
-      <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Additional Notes</legend>
-        <div className="form-group">
-          <label htmlFor="notes">Order Notes (Optional)</label>
-          <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
-        </div>
-      </fieldset>
-      <fieldset className="order-fieldset step-fade-in">
         <legend className="order-legend">Terms &amp; Conditions</legend>
         <div className="form-group terms-group">
           <label className="terms-label">
@@ -220,6 +174,56 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
             </span>
           </label>
           {errors.acceptedTerms && <span id="acceptedTerms-error" className="form-error visible">{errors.acceptedTerms}</span>}
+        </div>
+      </fieldset>
+      <fieldset className="order-fieldset step-fade-in">
+        <legend className="order-legend">Bank Transfer Details</legend>
+        <div className="bank-details-card">
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Account Name</span>
+            <span className="bank-detail-value">CHINNI TREASURE</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Account Number</span>
+            <span className="bank-detail-value">452689137194</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Bank &amp; Branch</span>
+            <span className="bank-detail-value">State Bank of India — Madambakkam</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">IFSC Code</span>
+            <span className="bank-detail-value">SBIN0021634</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">MICR Code</span>
+            <span className="bank-detail-value">600002379</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">UPI ID</span>
+            <span className="bank-detail-value">9499011029@ibl</span>
+          </div>
+          <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
+          <div className="bank-qr-code">
+            <img src="/images/branding/qr.png" alt="Scan QR code to pay via UPI" width="200" height="200" />
+            <span className="bank-qr-label">Scan to pay via UPI</span>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset className="order-fieldset step-fade-in">
+        <legend className="order-legend">Payment Details</legend>
+        <div className="form-group">
+          <label htmlFor="transactionId">Transaction ID <span className="required">*</span></label>
+          <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="Enter your payment transaction/reference ID" aria-describedby={errors.transactionId ? "transactionId-error" : undefined} aria-invalid={!!errors.transactionId} />
+          {errors.transactionId && <span id="transactionId-error" className="form-error visible">{errors.transactionId}</span>}
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "6px", display: "block" }}>Share your payment transaction ID after completing the transfer. Our team will verify and process your order.</span>
+        </div>
+      </fieldset>
+      <fieldset className="order-fieldset step-fade-in">
+        <legend className="order-legend">Additional Notes</legend>
+        <div className="form-group">
+          <label htmlFor="notes">Order Notes (Optional)</label>
+          <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
         </div>
       </fieldset>
       <ReturnsPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />
