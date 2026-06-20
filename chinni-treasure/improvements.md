@@ -148,9 +148,9 @@ ALLOWED_ORIGIN=http://localhost:3000
 | 10 | **Root layout DB call on every page navigation** | Cart hydration queries Prisma on every request — should be client-only or cached |
 | 11 | **In-memory cache not shared across serverless instances** | Use Vercel KV or Redis |
 | 12 | **`window.location.href` after login** | Causes full page reload instead of client-side navigation (`app/admin/login/page.tsx:34`) |
-| 13 | **Loading spinners lack `role="status"` / `aria-label`** | Screen readers can't announce loading state |
-| 14 | **Form error messages not linked to inputs via `aria-describedby`** | Checkout form errors not programmatically associated |
-| 15 | **`outline: none` without `forced-colors` fallback** | Broken in Windows High Contrast mode |
+| 13 | ~~**Loading spinners lack `role="status"` / `aria-label`**~~ **FIXED** — added `role="status"`, `aria-live="polite"`, and `sr-only` text | Announced by screen readers |
+| 14 | ~~**Form error messages not linked to inputs via `aria-describedby`**~~ **FIXED** — added `aria-describedby` + `aria-invalid` to all form fields | Programmatically associated |
+| 15 | ~~**`outline: none` without `forced-colors` fallback**~~ **FIXED** — added `@media (forced-colors: active)` block | Visible in Windows High Contrast |
 | 16 | **No structured error reporting** | `console.error` only — needs Sentry/Logflare for production observability |
 | 17 | **No startup env var validation** | Missing `DATABASE_URL` or `JWT_SECRET` produces confusing runtime errors |
 

@@ -4161,6 +4161,20 @@ a {
   }
 }
 
+/* ── Windows High Contrast / Forced Colors ── */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 3px solid;
+  }
+
+  .btn:focus-visible,
+  .cart-btn:focus-visible,
+  .btn-add:focus-visible {
+    outline: 3px solid;
+    box-shadow: none;
+  }
+}
+
 /* ── Print Styles ── */
 @media print {
 

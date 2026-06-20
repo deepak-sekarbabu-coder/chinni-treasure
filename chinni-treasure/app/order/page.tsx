@@ -69,19 +69,19 @@ function PersonalDetailsStep({ form, errors, handleChange, setForm, setErrors }:
       <legend className="order-legend">Personal Details</legend>
       <div className="form-group">
         <label htmlFor="fullName">Full Name <span className="required">*</span></label>
-        <input type="text" id="fullName" name="fullName" value={form.fullName} onChange={handleChange} className={errors.fullName ? "error" : ""} placeholder="Your full name" />
-        {errors.fullName && <span className="form-error visible">{errors.fullName}</span>}
+        <input type="text" id="fullName" name="fullName" value={form.fullName} onChange={handleChange} className={errors.fullName ? "error" : ""} placeholder="Your full name" aria-describedby={errors.fullName ? "fullName-error" : undefined} aria-invalid={!!errors.fullName} />
+        {errors.fullName && <span id="fullName-error" className="form-error visible">{errors.fullName}</span>}
       </div>
       <div className="form-row">
         <div className="form-group">
           <label htmlFor="email">Email <span className="required">*</span></label>
-          <input type="email" id="email" name="email" value={form.email} onChange={handleChange} className={errors.email ? "error" : ""} placeholder="email@example.com" />
-          {errors.email && <span className="form-error visible">{errors.email}</span>}
+          <input type="email" id="email" name="email" value={form.email} onChange={handleChange} className={errors.email ? "error" : ""} placeholder="email@example.com" aria-describedby={errors.email ? "email-error" : undefined} aria-invalid={!!errors.email} />
+          {errors.email && <span id="email-error" className="form-error visible">{errors.email}</span>}
         </div>
         <div className="form-group">
           <label htmlFor="phone">Phone <span className="required">*</span></label>
-          <input type="tel" id="phone" name="phone" value={form.phone} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10); setForm((prev) => ({ ...prev, phone: cleaned })); if (errors.phone) setErrors((prev) => { const n = { ...prev }; delete n.phone; return n; }); }} className={errors.phone ? "error" : ""} placeholder="9876543210" maxLength={10} />
-          {errors.phone && <span className="form-error visible">{errors.phone}</span>}
+          <input type="tel" id="phone" name="phone" value={form.phone} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10); setForm((prev) => ({ ...prev, phone: cleaned })); if (errors.phone) setErrors((prev) => { const n = { ...prev }; delete n.phone; return n; }); }} className={errors.phone ? "error" : ""} placeholder="9876543210" maxLength={10} aria-describedby={errors.phone ? "phone-error" : undefined} aria-invalid={!!errors.phone} />
+          {errors.phone && <span id="phone-error" className="form-error visible">{errors.phone}</span>}
         </div>
       </div>
     </fieldset>
@@ -100,8 +100,8 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }:
       <legend className="order-legend">Delivery Details</legend>
       <div className="form-group">
         <label htmlFor="address">Address <span className="required">*</span></label>
-        <input type="text" id="address" name="address" value={form.address} onChange={handleChange} className={errors.address ? "error" : ""} placeholder="Street address, apartment, suite, etc." />
-        {errors.address && <span className="form-error visible">{errors.address}</span>}
+        <input type="text" id="address" name="address" value={form.address} onChange={handleChange} className={errors.address ? "error" : ""} placeholder="Street address, apartment, suite, etc." aria-describedby={errors.address ? "address-error" : undefined} aria-invalid={!!errors.address} />
+        {errors.address && <span id="address-error" className="form-error visible">{errors.address}</span>}
       </div>
       <div className="form-group">
         <label htmlFor="addressLine2">Apartment, Suite, Landmark <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(Optional)</span></label>
@@ -110,22 +110,22 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }:
       <div className="form-row">
         <div className="form-group">
           <label htmlFor="city">City <span className="required">*</span></label>
-          <input type="text" id="city" name="city" value={form.city} onChange={handleChange} className={errors.city ? "error" : ""} placeholder="City" />
-          {errors.city && <span className="form-error visible">{errors.city}</span>}
+          <input type="text" id="city" name="city" value={form.city} onChange={handleChange} className={errors.city ? "error" : ""} placeholder="City" aria-describedby={errors.city ? "city-error" : undefined} aria-invalid={!!errors.city} />
+          {errors.city && <span id="city-error" className="form-error visible">{errors.city}</span>}
         </div>
         <div className="form-group">
           <label htmlFor="state">State/UT <span className="required">*</span></label>
-          <select id="state" name="state" value={form.state} onChange={handleChange} className={errors.state ? "error" : ""}>
+          <select id="state" name="state" value={form.state} onChange={handleChange} className={errors.state ? "error" : ""} aria-describedby={errors.state ? "state-error" : undefined} aria-invalid={!!errors.state}>
             <option value="">Select State/UT</option>
             {INDIAN_STATES.map((s) => (<option key={s.code} value={s.code}>{s.name}</option>))}
           </select>
-          {errors.state && <span className="form-error visible">{errors.state}</span>}
+          {errors.state && <span id="state-error" className="form-error visible">{errors.state}</span>}
         </div>
       </div>
       <div className="form-group">
         <label htmlFor="zipCode">PIN Code <span className="required">*</span></label>
-        <input type="text" id="zipCode" name="zipCode" value={form.zipCode} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6); setForm((prev) => ({ ...prev, zipCode: cleaned })); if (errors.zipCode) setErrors((prev) => { const n = { ...prev }; delete n.zipCode; return n; }); }} className={errors.zipCode ? "error" : ""} placeholder="6-digit PIN code" maxLength={6} />
-        {errors.zipCode && <span className="form-error visible">{errors.zipCode}</span>}
+        <input type="text" id="zipCode" name="zipCode" value={form.zipCode} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6); setForm((prev) => ({ ...prev, zipCode: cleaned })); if (errors.zipCode) setErrors((prev) => { const n = { ...prev }; delete n.zipCode; return n; }); }} className={errors.zipCode ? "error" : ""} placeholder="6-digit PIN code" maxLength={6} aria-describedby={errors.zipCode ? "zipCode-error" : undefined} aria-invalid={!!errors.zipCode} />
+        {errors.zipCode && <span id="zipCode-error" className="form-error visible">{errors.zipCode}</span>}
       </div>
     </fieldset>
   );
@@ -179,8 +179,8 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
         <legend className="order-legend">Payment Details</legend>
         <div className="form-group">
           <label htmlFor="transactionId">Transaction ID <span className="required">*</span></label>
-          <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="Enter your payment transaction/reference ID" />
-          {errors.transactionId && <span className="form-error visible">{errors.transactionId}</span>}
+          <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="Enter your payment transaction/reference ID" aria-describedby={errors.transactionId ? "transactionId-error" : undefined} aria-invalid={!!errors.transactionId} />
+          {errors.transactionId && <span id="transactionId-error" className="form-error visible">{errors.transactionId}</span>}
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "6px", display: "block" }}>Share your payment transaction ID after completing the transfer. Our team will verify and process your order.</span>
         </div>
       </fieldset>
@@ -223,7 +223,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
               . I understand that all sales are final, no returns or refunds will be issued, and payment must be completed before order processing.
             </span>
           </label>
-          {errors.acceptedTerms && <span className="form-error visible">{errors.acceptedTerms}</span>}
+          {errors.acceptedTerms && <span id="acceptedTerms-error" className="form-error visible">{errors.acceptedTerms}</span>}
         </div>
       </fieldset>
       <ReturnsPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />

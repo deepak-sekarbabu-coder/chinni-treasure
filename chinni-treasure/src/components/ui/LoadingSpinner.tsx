@@ -5,6 +5,9 @@ interface Props {
 export default function LoadingSpinner({ fullPage }: Props) {
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading content"
       style={
         fullPage
           ? {
@@ -17,6 +20,7 @@ export default function LoadingSpinner({ fullPage }: Props) {
       }
     >
       <div className="loading-spinner" style={{ margin: "0 auto" }}></div>
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }
