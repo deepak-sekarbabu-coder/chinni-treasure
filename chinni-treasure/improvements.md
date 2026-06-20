@@ -152,7 +152,7 @@ ALLOWED_ORIGIN=http://localhost:3000
 | 14 | ~~**Form error messages not linked to inputs via `aria-describedby`**~~ **FIXED** — added `aria-describedby` + `aria-invalid` to all form fields | Programmatically associated |
 | 15 | ~~**`outline: none` without `forced-colors` fallback**~~ **FIXED** — added `@media (forced-colors: active)` block | Visible in Windows High Contrast |
 | 16 | **No structured error reporting** | `console.error` only — needs Sentry/Logflare for production observability |
-| 17 | **No startup env var validation** | Missing `DATABASE_URL` or `JWT_SECRET` produces confusing runtime errors |
+| 17 | ~~**No startup env var validation**~~ **FIXED** — created `src/lib/env.ts` with `requireEnv()` that throws clear errors at startup | Centralized env validation |
 
 ### Recommended Fixes
 
@@ -254,7 +254,7 @@ export const env = envSchema.parse(process.env);
 
 | # | Area | Details |
 |---|---|---|
-| 18 | **`generateOrderNumber()` uses `Math.random()`** | Works but less robust than DB sequences or UUIDs |
+| 18 | ~~**`generateOrderNumber()` uses `Math.random()`**~~ **FIXED** — replaced with `crypto.randomUUID()` | Cryptographic randomness |
 | 19 | **Public OpenAPI spec with CORS `*`** | `app/api/docs/route.ts` exposes full API schema |
 | 20 | **Admin dashboard is fully client-side** | No SSR — slower initial load on admin pages |
 | 21 | ~~**Rate limiter memory leak**~~ **FIXED** — added periodic eviction of expired entries every 5 minutes | Self-cleaning Map |

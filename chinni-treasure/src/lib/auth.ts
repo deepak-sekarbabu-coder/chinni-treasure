@@ -2,11 +2,12 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
+import { env } from "@/src/lib/env";
 
 // Node-native TextEncoder — avoids jsdom polyfill breaking jose's Uint8Array checks
 import { TextEncoder as NodeTextEncoder } from "util";
 const encoder = new NodeTextEncoder();
-const SECRET = encoder.encode(process.env.JWT_SECRET || "dev-secret");
+const SECRET = encoder.encode(env.JWT_SECRET);
 const COOKIE_NAME = "session";
 
 const AdminSessionSchema = z.object({
