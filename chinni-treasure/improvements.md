@@ -30,7 +30,7 @@
 | # | Issue | Status |
 |---|---|---|
 | 5 | **In-memory rate limiter ineffective on serverless** | Open — needs Redis/Upstash for Vercel deployment |
-| 6 | **Tracking endpoint exposes full PII without auth** | Open — should limit returned fields |
+| 6 | **Tracking endpoint exposes full PII without auth** | **FIXED** — limited to orderNumber, status, trackingId, totalAmount, items |
 | 7 | **Stats endpoint fetches ALL order items** | **FIXED** — `app/api/stats/route.ts` uses Prisma `groupBy` SQL aggregation |
 | 8 | **Export endpoint loads entire DB into memory** | **FIXED** — `app/api/export/route.ts` uses cursor-based pagination in 1000-record batches |
 | 9 | **Missing `ALLOWED_ORIGIN` env var in `.env.example`** | **FIXED** — added to `.env.example` |

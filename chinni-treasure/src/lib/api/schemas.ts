@@ -48,8 +48,15 @@ export const OrdersResponseSchema = z.object({
   totalPages: z.number(),
 });
 
-export const TrackOrderResultSchema = OrderSchema.extend({
+export const TrackOrderResultSchema = z.object({
+  id: z.string(),
+  orderNumber: z.string(),
+  status: OrderStatusSchema,
+  trackingId: z.string().nullable().optional(),
+  totalAmount: z.coerce.number(),
+  createdAt: z.string(),
   itemCount: z.number().optional(),
+  items: z.array(OrderItemSchema).optional(),
 });
 
 export const TrackOrdersResponseSchema = z.array(TrackOrderResultSchema);

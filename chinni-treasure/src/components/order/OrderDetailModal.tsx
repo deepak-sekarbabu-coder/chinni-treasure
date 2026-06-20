@@ -7,10 +7,10 @@ import {
   ORDER_STATUS_LABELS,
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
-import type { Order } from "@/src/lib/api/schemas";
+import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
 
 interface Props {
-  order: Order;
+  order: Partial<Order> & TrackOrderResult;
   onClose: () => void;
   showActions?: boolean;
   onAdvance?: (id: string) => void;
@@ -115,31 +115,41 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             </div>
           )}
 
-          <div className="modal-section">
-            <h3>
-              <span className="section-icon">👤</span> Customer Details
-            </h3>
-            <div className="modal-info-grid">
-              <div className="modal-info-item">
-                <div className="label">Name</div>
-                <div className="value">{order.customerName}</div>
-              </div>
-              <div className="modal-info-item">
-                <div className="label">Address</div>
-                <div className="value">
-                  {order.addressLine1}, {order.city}, {order.stateCode} {order.postalCode}
-                </div>
-              </div>
-              <div className="modal-info-item">
-                <div className="label">Email</div>
-                <div className="value">{order.customerEmail}</div>
-              </div>
-              <div className="modal-info-item">
-                <div className="label">Phone</div>
-                <div className="value">{order.customerPhone}</div>
+          {(order.customerName || order.customerEmail) && (
+            <div className="modal-section">
+              <h3>
+                <span className="section-icon">👤</span> Customer Details
+              </h3>
+              <div className="modal-info-grid">
+                {order.customerName && (
+                  <div className="modal-info-item">
+                    <div className="label">Name</div>
+                    <div className="value">{order.customerName}</div>
+                  </div>
+                )}
+                {order.addressLine1 && (
+                  <div className="modal-info-item">
+                    <div className="label">Address</div>
+                    <div className="value">
+                      {order.addressLine1}, {order.city}, {order.stateCode} {order.postalCode}
+                    </div>
+                  </div>
+                )}
+                {order.customerEmail && (
+                  <div className="modal-info-item">
+                    <div className="label">Email</div>
+                    <div className="value">{order.customerEmail}</div>
+                  </div>
+                )}
+                {order.customerPhone && (
+                  <div className="modal-info-item">
+                    <div className="label">Phone</div>
+                    <div className="value">{order.customerPhone}</div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           <div className="modal-section">
             <h3>
@@ -154,7 +164,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
                 </tr>
               </thead>
               <tbody>
-                {order.items.map((item) => (
+                {(order.items || []).map((item) => (
                   <tr key={item.id}>
                     <td>{item.productName}</td>
                     <td>{item.quantity}</td>
