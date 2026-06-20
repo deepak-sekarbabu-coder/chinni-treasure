@@ -9,8 +9,9 @@
 - **Styling:** Raw CSS with CSS Variables (no Tailwind)
 - **Authentication:** JWT-based admin auth (stored in httpOnly `session` cookie)
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
-- **Validation:** Zod schemas for checkout, cart, and input sanitization
-- **Export:** ExcelJS for admin data export
+- **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching
+- **Validation:** Zod schemas for checkout, cart, and API input/output validation
+- **Export:** ExcelJS for admin data export; jsPDF for invoice generation
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
 
 ---
@@ -116,7 +117,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start the Next.js development server (with Turbopack) |
+| `npm run dev` | Start the Next.js development server |
 | `npm run build` | Build the application for production |
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint across the project |
@@ -136,82 +137,151 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```
 chinni-treasure/
-├── app/                          # Next.js App Router pages
+├── app/                              # Next.js App Router pages
 │   ├── admin/
-│   │   ├── login/page.tsx        # Admin login page
-│   │   └── page.tsx              # Admin dashboard (orders, stats, catalogue CRUD)
-│   ├── api/                      # API route handlers
-│   │   ├── auth/                 # Login / logout / session
-│   │   ├── docs/                 # OpenAPI spec endpoint
-│   │   ├── orders/               # Order CRUD & status management (with pagination)
-│   │   ├── products/             # Product CRUD
-│   │   ├── export/               # Excel export endpoint
-│   │   ├── stats/                # Dashboard statistics (with caching)
-│   │   └── track/                # Order tracking (with caching)
-│   ├── catalogue/                # Product catalogue (SSR + client interactive)
-│   │   ├── page.tsx              # Server component fetching products
-│   │   └── catalogue-content.tsx # Client component with cart interactions
-│   ├── confirmation/[id]/        # Order confirmation after purchase (SSR)
-│   ├── docs/page.tsx             # API documentation viewer (hand-rolled OpenAPI renderer)
-│   ├── home-content.tsx          # Client component for homepage hero + features
-│   ├── order/page.tsx            # Multi-step checkout with delivery form
-│   ├── track/page.tsx            # Order tracking portal
-│   ├── globals.css               # Global styles and design system (~2800 lines)
-│   ├── layout.tsx                # Root layout (Navbar, Footer, Providers, fonts)
-│   └── page.tsx                  # Homepage (server component)
+│   │   ├── login/page.tsx            # Admin login page
+│   │   ├── page.tsx                  # Admin dashboard (delegates to sub-components)
+│   │   ├── useAdminPageState.ts      # Admin page state management hook
+│   │   ├── error.tsx                 # Admin error boundary
+│   │   ├── loading.tsx               # Admin loading state
+│   │   └── not-found.tsx             # Admin 404
+│   ├── api/                          # API route handlers
+│   │   ├── auth/
+│   │   │   ├── login/route.ts        # Admin login (rate-limited)
+│   │   │   ├── logout/route.ts       # Admin logout
+│   │   │   └── me/route.ts           # Current session check
+│   │   ├── docs/route.ts             # OpenAPI spec endpoint
+│   │   ├── orders/
+│   │   │   ├── route.ts              # Order CRUD (with pagination)
+│   │   │   └── [id]/route.ts         # Single order retrieval
+│   │   │   └── [id]/status/route.ts  # Order status update (versioned)
+│   │   ├── products/
+│   │   │   ├── route.ts              # Product CRUD (with pagination)
+│   │   │   └── [id]/route.ts         # Single product update/delete
+│   │   ├── export/route.ts           # Excel export endpoint
+│   │   ├── stats/route.ts            # Dashboard statistics (cached)
+│   │   └── track/route.ts            # Order tracking (cached)
+│   ├── catalogue/
+│   │   ├── page.tsx                  # Server component fetching products
+│   │   └── loading.tsx               # Catalogue loading state
+│   ├── confirmation/[id]/            # Order confirmation (SSR)
+│   │   ├── page.tsx
+│   │   └── loading.tsx
+│   ├── docs/
+│   │   ├── page.tsx                  # API documentation viewer (OpenAPI renderer)
+│   │   └── loading.tsx
+│   ├── order/
+│   │   ├── page.tsx                  # Multi-step checkout with delivery form
+│   │   ├── layout.tsx                # Order page layout
+│   │   └── loading.tsx
+│   ├── track/
+│   │   ├── page.tsx                  # Order tracking portal
+│   │   ├── layout.tsx                # Track page layout
+│   │   └── loading.tsx
+│   ├── error.tsx                     # Root error boundary
+│   ├── loading.tsx                   # Root loading state
+│   ├── not-found.tsx                 # Root 404
+│   ├── sitemap.ts                    # Dynamic sitemap generation
+│   ├── globals.css                   # Global styles and design system (~5300 lines)
+│   ├── layout.tsx                    # Root layout (Navbar, Footer, Providers, fonts)
+│   └── page.tsx                      # Homepage (server component)
 ├── prisma/
-│   ├── schema.prisma             # Database schema (6 models + 3 enums)
-│   ├── seed.ts                   # Database seeder (6 products + 4 categories + admin)
-│   └── migrations/               # Database migration history
+│   ├── schema.prisma                 # Database schema (6 models + 3 enums)
+│   ├── seed.ts                       # Database seeder (6 products + 4 categories + admin)
+│   └── migrations/                   # Database migration history
 ├── scripts/
-│   └── export-to-excel.ts        # Excel export utility
+│   └── export-to-excel.ts            # Excel export utility
 ├── src/
 │   ├── components/
-│   │   ├── cart/CartProvider.tsx  # Cart context + localStorage persistence
+│   │   ├── cart/
+│   │   │   ├── CartProvider.tsx       # Cart context + localStorage + cookie sync
+│   │   │   └── __tests__/
 │   │   ├── layout/
-│   │   │   ├── Footer.tsx        # Site footer with 4-column grid
-│   │   │   └── Navbar.tsx        # Fixed navbar with cart dropdown and mobile menu
+│   │   │   ├── Footer.tsx            # Site footer with 4-column grid
+│   │   │   ├── Navbar.tsx            # Fixed navbar with cart dropdown and mobile menu
+│   │   │   ├── NavCartDropdown.tsx    # Cart dropdown in navbar
+│   │   │   ├── PageTransition.tsx    # Page transition wrapper
+│   │   │   └── __tests__/
 │   │   ├── admin/
-│   │   │   ├── AdminCataloguePanel.tsx # Product CRUD form + table
-│   │   │   ├── AdminDeleteConfirm.tsx  # Delete confirmation modal
-│   │   │   ├── AdminOrdersPanel.tsx    # Orders table with filters
-│   │   │   └── AdminTrackingModal.tsx  # Tracking ID input modal
+│   │   │   ├── AdminCataloguePanel.tsx  # Product CRUD form + table
+│   │   │   ├── AdminChartsSection.tsx   # Revenue & sales charts (Chart.js)
+│   │   │   ├── AdminDeleteConfirm.tsx   # Delete confirmation modal
+│   │   │   ├── AdminHeader.tsx          # Admin header with export/logout
+│   │   │   ├── AdminOrdersPanel.tsx     # Orders table with filters
+│   │   │   ├── AdminStatsGrid.tsx       # Dashboard stats cards
+│   │   │   ├── AdminTabs.tsx            # Tab navigation (Orders/Catalogue)
+│   │   │   └── AdminTrackingModal.tsx   # Tracking ID input modal
 │   │   ├── order/
-│   │   │   ├── CheckoutProgress.tsx # Multi-step progress indicator
-│   │   │   └── OrderDetailModal.tsx # Order detail modal (admin + customer)
+│   │   │   ├── CheckoutProgress.tsx     # Multi-step progress indicator
+│   │   │   ├── ConfirmationDetails.tsx  # Order confirmation with invoice PDF
+│   │   │   ├── OrderDetailModal.tsx     # Order detail modal (admin + customer)
+│   │   │   ├── OrderSummaryCard.tsx     # Order summary display card
+│   │   │   └── __tests__/
+│   │   ├── track/
+│   │   │   └── TrackOrderCard.tsx       # Track order result card
+│   │   ├── pages/
+│   │   │   ├── home-content.tsx         # Client homepage hero + features
+│   │   │   └── catalogue-content.tsx    # Client catalogue with cart interactions
+│   │   ├── providers/
+│   │   │   └── QueryProvider.tsx        # React Query provider
 │   │   └── ui/
-│   │       ├── AdminStatCard.tsx  # Dashboard stat display card
-│   │       ├── LoadingSpinner.tsx # Loading indicator (full-page or inline)
-│   │       ├── ProductCard.tsx    # Product grid card with add-to-cart
-│   │       ├── SectionHeader.tsx  # Section heading component
-│   │       ├── StatusBadge.tsx    # Order status badge (color-coded)
-│   │       ├── StockBadge.tsx     # Stock level badge (in-stock/low/empty)
-│   │       ├── ToastProvider.tsx  # Toast notification system
-│   │       └── __tests__/        # Component unit tests
+│   │       ├── AdminStatCard.tsx        # Dashboard stat display card
+│   │       ├── LoadingSpinner.tsx       # Loading indicator (full-page or inline)
+│   │       ├── ProductCard.tsx          # Product grid card with add-to-cart
+│   │       ├── ReturnsPolicyModal.tsx   # Returns policy modal
+│   │       ├── SectionHeader.tsx        # Section heading component
+│   │       ├── StatusBadge.tsx          # Order status badge (color-coded)
+│   │       ├── StockBadge.tsx           # Stock level badge (in-stock/low/empty)
+│   │       ├── ToastProvider.tsx        # Toast notification system
+│   │       └── __tests__/              # Component unit tests (7 files)
 │   ├── lib/
-│   │   ├── auth.ts               # JWT auth helpers (sign, verify, session cookies)
-│   │   ├── cache.ts              # Shared in-memory cache with TTL
-│   │   ├── cart-cookie.ts        # Server-side cart cookie management with Zod
-│   │   ├── constants.ts          # Site constants (states, status flow, labels)
-│   │   ├── csrf.ts               # CSRF protection via Origin/Referer validation
-│   │   ├── openapi-spec.ts       # OpenAPI 3.0 specification document
-│   │   ├── prisma.ts             # Prisma client singleton (global caching)
-│   │   ├── rate-limiter.ts       # In-memory rate limiter (login attempts)
-│   │   ├── sanitize.ts           # XSS sanitization via DOMPurify (isomorphic)
-│   │   ├── useFocusTrap.ts       # Focus trap hook for accessible modals
-│   │   └── utils.ts              # Order number generation utility
-│   ├── test/                     # Test setup and utilities
-│   │   ├── mocks/                # Mock implementations
-│   │   ├── setup.ts              # Vitest global setup
-│   │   └── utils/                # Test helper utilities
-│   └── types/
-│       └── index.ts              # Shared TypeScript interfaces
-├── proxy.ts                      # Next.js middleware (JWT admin route protection)
-├── prisma.config.ts              # Prisma configuration (defineConfig)
-├── next.config.ts                # Next.js configuration (image domains, etc.)
-├── vercel.json                   # Vercel deployment config
-├── .env.example                  # Environment variable template
-├── vitest.config.ts              # Vitest test runner configuration
+│   │   ├── api/
+│   │   │   ├── client.ts               # Typed API fetch client with Zod validation
+│   │   │   ├── index.ts                # API function exports (fetchStats, fetchOrders, etc.)
+│   │   │   └── schemas.ts              # Zod schemas for all API inputs/outputs
+│   │   ├── hooks/
+│   │   │   ├── useAdminCatalogueController.ts  # Product CRUD state management
+│   │   │   ├── useAdminData.ts                 # React Query data hooks
+│   │   │   ├── useAdminHeaderActions.ts        # Export/logout actions
+│   │   │   ├── useAdminMutations.ts            # Product/order mutation hooks
+│   │   │   ├── useAdminOrdersController.ts     # Order status advancement
+│   │   │   ├── useAdminSession.ts              # Auth session management
+│   │   │   ├── useTrackSearch.ts               # Order tracking search
+│   │   │   └── __tests__/                      # Hook unit tests (4 files)
+│   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
+│   │   ├── cache.ts                  # Shared in-memory cache with TTL
+│   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
+│   │   ├── constants.ts              # Indian states, status flow, labels, icons
+│   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
+│   │   ├── csrf-helpers.ts           # CSRF host validation helpers
+│   │   ├── env.ts                    # Environment variable validation (requireEnv)
+│   │   ├── openapi-spec.ts           # OpenAPI 3.0 specification document
+│   │   ├── prisma.ts                 # Prisma client singleton (global caching)
+│   │   ├── products-cache.ts         # Product-specific cache wrapper
+│   │   ├── query-keys.ts             # React Query key factory
+│   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts)
+│   │   ├── sanitize.ts               # XSS sanitization via isomorphic-dompurify
+│   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
+│   │   └── utils.ts                  # API error extraction utility
+│   ├── test/                         # Test setup and utilities
+│   │   ├── mocks/                    # Prisma mock implementations
+│   │   ├── setup.ts                  # Vitest global setup
+│   │   └── utils/                    # Test helper utilities
+│   ├── types/
+│   │   ├── cart.ts                   # CartItem interface
+│   │   └── index.ts                  # Re-exports
+│   └── __tests__/
+│       ├── api/                      # API route handler tests (10 files)
+│       ├── lib/                      # Lib module tests (12 files)
+│       ├── mocks/                    # Shared mock implementations
+│       ├── setup.ts                  # Test setup
+│       └── utils/                    # Test utilities
+├── proxy.ts                          # Next.js middleware (JWT admin route protection)
+├── prisma.config.ts                  # Prisma configuration (defineConfig)
+├── next.config.ts                    # Next.js configuration (image domains, etc.)
+├── vercel.json                       # Vercel deployment config
+├── .env.example                      # Environment variable template
+├── vitest.config.ts                  # Vitest test runner configuration
 └── package.json
 ```
 
@@ -356,8 +426,8 @@ rejected (stock restored)
 |---|---|---|---|
 | POST | `/api/auth/login` | Admin login (rate-limited) | No |
 | POST | `/api/auth/logout` | Admin logout | No |
-| GET | `/api/auth/me` | Get current admin session | Yes |
-| GET | `/api/products` | List active products (cached) | No |
+| GET | `/api/auth/me` | Get current admin session | No |
+| GET | `/api/products` | List products (with pagination, cached for catalogue) | No |
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
 | DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
@@ -366,8 +436,8 @@ rejected (stock restored)
 | GET | `/api/orders/[id]` | Get order with items & status history | No |
 | PATCH | `/api/orders/[id]/status` | Update order status (with versioning) | Yes |
 | GET | `/api/track` | Track order by order number or phone (cached) | No |
-| GET | `/api/stats` | Dashboard statistics (cached) | Yes |
-| GET | `/api/export` | Export orders to Excel (.xlsx) | Yes |
+| GET | `/api/stats` | Dashboard statistics (cached, SQL aggregation) | Yes |
+| GET | `/api/export` | Export orders to Excel (.xlsx, cursor-based batching) | Yes |
 | GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
 
 ---
@@ -381,7 +451,7 @@ The file `proxy.ts` acts as Next.js middleware, protecting all `/admin/*` routes
 
 ## Testing
 
-The project uses **Vitest** with ~99% test coverage across components and lib modules.
+The project uses **Vitest** with comprehensive test coverage across components, lib modules, API routes, and hooks.
 
 ```bash
 npm test              # Watch mode
@@ -389,7 +459,12 @@ npm run test:run      # Single run
 npm run test:coverage # With coverage report
 ```
 
-Tests live alongside their modules in `__tests__/` directories or in `src/test/` for shared test utilities.
+**Test locations:**
+- `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, UI)
+- `src/lib/hooks/__tests__/` — Custom hook tests
+- `src/__tests__/api/` — API route handler tests (10 files)
+- `src/__tests__/lib/` — Lib module tests (12 files)
+- `src/test/` — Test setup, mocks, and utility helpers
 
 ---
 
@@ -398,9 +473,12 @@ Tests live alongside their modules in `__tests__/` directories or in `src/test/`
 | Library | Purpose |
 |---|---|
 | `@prisma/adapter-pg` + `pg` | PostgreSQL database adapter |
+| `@tanstack/react-query` | Server state management with caching |
 | `bcryptjs` | Password hashing |
+| `dayjs` | Date/time formatting |
 | `jose` | JWT verification in middleware |
-| `zod` | Runtime validation (cart, checkout) |
+| `jspdf` | PDF invoice generation |
+| `zod` | Runtime validation (API schemas, cart, checkout) |
 | `isomorphic-dompurify` | Server-side XSS sanitization |
 | `exceljs` | Data export to Excel |
 | `sharp` | Image processing |

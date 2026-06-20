@@ -13,9 +13,10 @@ This document outlines the architecture, roles, operational guidelines, and memo
 - **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
 - **Styling:** Raw CSS with custom CSS variables (no TailwindCSS)
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for persistent guest shopping carts; server-side cookie cart with Zod validation for SSR access
+- **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching and query key management
 - **Authentication:** JWT-based admin authorization stored in secure `HttpOnly` cookies (`session`)
 - **Charts:** Chart.js v4 for administrative analytics
-- **Validation:** Zod schemas for checkout, cart, and input sanitization
+- **Validation:** Zod schemas for checkout, cart, and API input/output validation
 - **Fonts:** Cormorant Garamond (serif), Albert Sans (sans-serif), and Pinyon Script (script) via `next/font`
 
 ---
@@ -112,50 +113,130 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
 
 ```
 chinni-treasure/
-├── app/                          # Next.js App Router pages & API
+├── app/                              # Next.js App Router pages & API
 │   ├── admin/
-│   │   ├── login/page.tsx        # Admin login page
-│   │   └── page.tsx              # Admin dashboard (orders, stats, catalogue CRUD)
-│   ├── api/                      # Server-side API handlers
-│   │   ├── auth/                 # Login / logout / session
-│   │   ├── docs/                 # OpenAPI spec JSON
-│   │   ├── orders/               # Order CRUD + status management with pagination
-│   │   ├── products/             # Product CRUD
-│   │   ├── stats/                # Dashboard statistics with caching
-│   │   └── track/                # Order tracking with caching
-│   ├── catalogue/                # Product catalogue (SSR + client interactive)
-│   ├── confirmation/[id]/        # Order confirmation page
-│   ├── docs/                     # Swagger UI API docs viewer
-│   ├── order/                    # Multi-step checkout
-│   ├── track/                    # Order tracking portal
-│   ├── globals.css               # ~2800 lines of design system + responsive styles
-│   ├── layout.tsx                # Root layout (fonts, providers, nav, footer)
-│   ├── home-content.tsx          # Client homepage hero & features
-│   ├── catalogue-content.tsx     # Client catalogue with cart interactions
-│   └── page.tsx                  # Homepage server component
+│   │   ├── login/page.tsx            # Admin login page
+│   │   ├── page.tsx                  # Admin dashboard (delegates to sub-components)
+│   │   ├── useAdminPageState.ts      # Admin page state management hook
+│   │   ├── error.tsx                 # Admin error boundary
+│   │   ├── loading.tsx               # Admin loading state
+│   │   └── not-found.tsx             # Admin 404
+│   ├── api/                          # Server-side API handlers
+│   │   ├── auth/
+│   │   │   ├── login/route.ts        # Admin login (rate-limited)
+│   │   │   ├── logout/route.ts       # Admin logout
+│   │   │   └── me/route.ts           # Current session check
+│   │   ├── docs/route.ts             # OpenAPI spec JSON
+│   │   ├── orders/
+│   │   │   ├── route.ts              # Order CRUD + status management with pagination
+│   │   │   └── [id]/
+│   │   │       ├── route.ts          # Single order retrieval
+│   │   │       └── status/route.ts   # Order status update (versioned)
+│   │   ├── products/
+│   │   │   ├── route.ts              # Product CRUD with pagination
+│   │   │   └── [id]/route.ts         # Single product update/delete
+│   │   ├── export/route.ts           # Excel export (cursor-based batching)
+│   │   ├── stats/route.ts            # Dashboard statistics with caching (SQL aggregation)
+│   │   └── track/route.ts            # Order tracking with caching
+│   ├── catalogue/                    # Product catalogue (SSR + client interactive)
+│   ├── confirmation/[id]/            # Order confirmation page
+│   ├── docs/                         # Swagger UI API docs viewer
+│   ├── order/                        # Multi-step checkout
+│   ├── track/                        # Order tracking portal
+│   ├── globals.css                   # ~5300 lines of design system + responsive styles
+│   ├── layout.tsx                    # Root layout (fonts, providers, nav, footer)
+│   ├── sitemap.ts                    # Dynamic sitemap generation
+│   ├── error.tsx                     # Root error boundary
+│   ├── loading.tsx                   # Root loading state
+│   ├── not-found.tsx                 # Root 404
+│   └── page.tsx                      # Homepage server component
 ├── prisma/
-│   ├── schema.prisma             # Database schema (6 models + 3 enums)
-│   ├── seed.ts                   # Database seeder (6 products, 4 categories, admin)
-│   └── migrations/               # Migration history
+│   ├── schema.prisma                 # Database schema (6 models + 3 enums)
+│   ├── seed.ts                       # Database seeder (6 products, 4 categories, admin)
+│   └── migrations/                   # Migration history
 ├── scripts/
-│   └── export-to-excel.ts        # Excel export utility
+│   └── export-to-excel.ts            # Excel export utility
 ├── src/
 │   ├── components/
-│   │   ├── admin/                # AdminCataloguePanel, AdminDeleteConfirm,
-│   │   │                            AdminOrdersPanel, AdminTrackingModal
-│   │   ├── cart/CartProvider.tsx  # Cart context + localStorage
-│   │   ├── layout/               # Navbar.tsx, Footer.tsx
-│   │   ├── order/                # CheckoutProgress.tsx, OrderDetailModal.tsx
-│   │   └── ui/                   # ProductCard, StockBadge, StatusBadge, SectionHeader,
-│   │                                AdminStatCard, LoadingSpinner, ToastProvider
-│   ├── lib/                      # auth, cache, cart-cookie, constants, csrf,
-│   │                                openapi-spec, prisma, rate-limiter, sanitize,
-│   │                                useFocusTrap, utils
-│   ├── test/                     # Vitest setup, mocks, utilities
-│   └── types/                    # Shared TypeScript interfaces
-├── proxy.ts                      # Next.js middleware (JWT admin protection)
-├── prisma.config.ts              # Prisma defineConfig
-├── vitest.config.ts              # Vitest test configuration
+│   │   ├── admin/
+│   │   │   ├── AdminCataloguePanel.tsx   # Product CRUD form + table
+│   │   │   ├── AdminChartsSection.tsx    # Revenue & sales charts (Chart.js)
+│   │   │   ├── AdminDeleteConfirm.tsx    # Delete confirmation modal
+│   │   │   ├── AdminHeader.tsx           # Admin header with export/logout
+│   │   │   ├── AdminOrdersPanel.tsx      # Orders table with filters
+│   │   │   ├── AdminStatsGrid.tsx        # Dashboard stats cards
+│   │   │   ├── AdminTabs.tsx             # Tab navigation (Orders/Catalogue)
+│   │   │   └── AdminTrackingModal.tsx    # Tracking ID input modal
+│   │   ├── cart/CartProvider.tsx          # Cart context + localStorage + cookie sync
+│   │   ├── layout/
+│   │   │   ├── Footer.tsx                # Site footer with 4-column grid
+│   │   │   ├── Navbar.tsx                # Fixed navbar with cart dropdown and mobile menu
+│   │   │   ├── NavCartDropdown.tsx        # Cart dropdown in navbar
+│   │   │   └── PageTransition.tsx        # Page transition wrapper
+│   │   ├── order/
+│   │   │   ├── CheckoutProgress.tsx      # Multi-step progress indicator
+│   │   │   ├── ConfirmationDetails.tsx   # Order confirmation with invoice PDF
+│   │   │   ├── OrderDetailModal.tsx      # Order detail modal (admin + customer)
+│   │   │   └── OrderSummaryCard.tsx      # Order summary display card
+│   │   ├── track/
+│   │   │   └── TrackOrderCard.tsx        # Track order result card
+│   │   ├── pages/
+│   │   │   ├── home-content.tsx          # Client homepage hero & features
+│   │   │   └── catalogue-content.tsx     # Client catalogue with cart interactions
+│   │   ├── providers/
+│   │   │   └── QueryProvider.tsx         # React Query provider
+│   │   └── ui/
+│   │       ├── AdminStatCard.tsx          # Dashboard stat display card
+│   │       ├── LoadingSpinner.tsx         # Loading indicator (full-page or inline)
+│   │       ├── ProductCard.tsx            # Product grid card with add-to-cart
+│   │       ├── ReturnsPolicyModal.tsx     # Returns policy modal
+│   │       ├── SectionHeader.tsx          # Section heading component
+│   │       ├── StatusBadge.tsx            # Order status badge (color-coded)
+│   │       ├── StockBadge.tsx             # Stock level badge (in-stock/low/empty)
+│   │       └── ToastProvider.tsx          # Toast notification system
+│   ├── lib/
+│   │   ├── api/
+│   │   │   ├── client.ts                 # Typed API fetch client with Zod validation
+│   │   │   ├── index.ts                  # API function exports
+│   │   │   └── schemas.ts                # Zod schemas for all API inputs/outputs
+│   │   ├── hooks/
+│   │   │   ├── useAdminCatalogueController.ts  # Product CRUD state management
+│   │   │   ├── useAdminData.ts                 # React Query data hooks
+│   │   │   ├── useAdminHeaderActions.ts        # Export/logout actions
+│   │   │   ├── useAdminMutations.ts            # Product/order mutation hooks
+│   │   │   ├── useAdminOrdersController.ts     # Order status advancement
+│   │   │   ├── useAdminSession.ts              # Auth session management
+│   │   │   └── useTrackSearch.ts               # Order tracking search
+│   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
+│   │   ├── cache.ts                  # Shared in-memory cache with TTL
+│   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
+│   │   ├── constants.ts              # Indian states, status flow, labels, icons
+│   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
+│   │   ├── csrf-helpers.ts           # CSRF host validation helpers
+│   │   ├── env.ts                    # Environment variable validation (requireEnv)
+│   │   ├── openapi-spec.ts           # OpenAPI 3.0 specification document
+│   │   ├── prisma.ts                 # Prisma client singleton (global caching)
+│   │   ├── products-cache.ts         # Product-specific cache wrapper
+│   │   ├── query-keys.ts             # React Query key factory
+│   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts)
+│   │   ├── sanitize.ts               # XSS sanitization via isomorphic-dompurify
+│   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
+│   │   └── utils.ts                  # API error extraction utility
+│   ├── test/                         # Test setup and utilities
+│   │   ├── mocks/                    # Prisma mock implementations
+│   │   ├── setup.ts                  # Vitest global setup
+│   │   └── utils/                    # Test helper utilities
+│   ├── types/
+│   │   ├── cart.ts                   # CartItem interface
+│   │   └── index.ts                  # Re-exports
+│   └── __tests__/
+│       ├── api/                      # API route handler tests (10 files)
+│       ├── lib/                      # Lib module tests (12 files)
+│       ├── mocks/                    # Shared mock implementations
+│       └── utils/                    # Test utilities
+├── proxy.ts                          # Next.js middleware (JWT admin protection)
+├── prisma.config.ts                  # Prisma defineConfig
+├── vitest.config.ts                  # Vitest test configuration
 └── package.json
 ```
 
@@ -167,7 +248,7 @@ Use the following commands during development and maintenance:
 
 | Command | Action |
 |---|---|
-| `npm run dev` | Start the Next.js development server with Turbopack |
+| `npm run dev` | Start the Next.js development server |
 | `npm run build` | Generate Prisma client, validate TypeScript, build for production |
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint across the project |
