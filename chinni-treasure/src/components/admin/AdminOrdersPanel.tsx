@@ -2,7 +2,7 @@
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
-import type { Order } from "@/src/lib/api-schemas";
+import type { Order } from "@/src/lib/api/schemas";
 
 interface Props {
   orders: Order[];

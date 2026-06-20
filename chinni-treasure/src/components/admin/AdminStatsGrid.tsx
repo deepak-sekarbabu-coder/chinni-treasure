@@ -1,7 +1,7 @@
 "use client";
 
 import AdminStatCard from "@/src/components/ui/AdminStatCard";
-import type { Stats } from "@/src/lib/api-schemas";
+import type { Stats } from "@/src/lib/api/schemas";
 
 interface Props {
   stats: Stats | null;

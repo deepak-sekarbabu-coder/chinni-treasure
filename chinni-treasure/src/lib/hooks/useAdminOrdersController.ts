@@ -5,7 +5,7 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import { useUpdateOrderStatus } from "@/src/lib/hooks/useAdminMutations";
 import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
 import { extractApiErrorMessage } from "@/src/lib/utils";
-import type { Order } from "@/src/lib/api-schemas";
+import type { Order } from "@/src/lib/api/schemas";
 
 interface TrackingModalState {
   orderId: string;

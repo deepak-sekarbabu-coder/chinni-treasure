@@ -8,7 +8,7 @@ import {
   useUpdateProduct,
 } from "@/src/lib/hooks/useAdminMutations";
 import { extractApiErrorMessage } from "@/src/lib/utils";
-import type { Product } from "@/src/lib/api-schemas";
+import type { Product } from "@/src/lib/api/schemas";
 
 export interface ProductFormState {
   id: string;

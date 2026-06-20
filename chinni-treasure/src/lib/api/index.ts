@@ -1,4 +1,4 @@
-import { apiFetch } from "@/src/lib/api-client";
+import { apiFetch } from "./client";
 import {
   AuthMeResponseSchema,
   CatalogueProductsResponseSchema,
@@ -22,7 +22,7 @@ import {
   type StatsResponse,
   type TrackOrdersResponse,
   type UpdateOrderStatusInput,
-} from "@/src/lib/api-schemas";
+} from "./schemas";
 
 export async function fetchAuthMe(signal?: AbortSignal): Promise<AuthMeResponse> {
   const res = await fetch("/api/auth/me", {

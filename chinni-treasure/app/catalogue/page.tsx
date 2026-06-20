@@ -1,5 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
-import CatalogueContent from "../catalogue-content";
+import CatalogueContent from "@/src/components/pages/catalogue-content";
 import type { Metadata } from "next";
 
 export const revalidate = 60;

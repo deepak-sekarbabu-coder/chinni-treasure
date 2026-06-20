@@ -17,7 +17,7 @@ import type {
   Product,
   ProductInput,
   UpdateOrderStatusInput,
-} from "@/src/lib/api-schemas";
+} from "@/src/lib/api/schemas";
 
 function invalidateAdminQueries(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all([

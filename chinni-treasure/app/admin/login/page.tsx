@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { apiFetch, ApiError } from "@/src/lib/api-client";
+import { apiFetch, ApiError } from "@/src/lib/api/client";
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");

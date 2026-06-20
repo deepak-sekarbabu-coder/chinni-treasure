@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { createNextRequest } from "@/src/test/utils/api-test";
-import { createMockPrisma } from "@/src/test/mocks/prisma";
+import { createNextRequest } from "@/src/__tests__/utils/api-test";
+import { createMockPrisma } from "@/src/__tests__/mocks/prisma";
 
 vi.mock("@/src/lib/prisma", () => createMockPrisma());
 

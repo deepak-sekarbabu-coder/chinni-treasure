@@ -1,7 +1,7 @@
 "use client";
 
 import dayjs from "dayjs";
-import type { ChartPoint, ProductSales } from "@/src/lib/api-schemas";
+import type { ChartPoint, ProductSales } from "@/src/lib/api/schemas";
 
 interface Props {
   loading: boolean;

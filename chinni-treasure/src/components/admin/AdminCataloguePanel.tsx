@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { Product } from "@/src/lib/api-schemas";
+import type { Product } from "@/src/lib/api/schemas";
 
 interface ProductFormData {
   id: string;

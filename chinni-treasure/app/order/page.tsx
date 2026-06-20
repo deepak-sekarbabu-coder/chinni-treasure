@@ -9,7 +9,7 @@ import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES } from "@/src/lib/constants";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
-import { ApiError } from "@/src/lib/api-client";
+import { ApiError } from "@/src/lib/api/client";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 

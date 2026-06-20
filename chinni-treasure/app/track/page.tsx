@@ -5,8 +5,8 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import TrackOrderCard from "@/src/components/track/TrackOrderCard";
 import { useTrackSearch } from "@/src/lib/hooks/useTrackSearch";
-import { ApiError } from "@/src/lib/api-client";
-import type { TrackOrderResult } from "@/src/lib/api-schemas";
+import { ApiError } from "@/src/lib/api/client";
+import type { TrackOrderResult } from "@/src/lib/api/schemas";
 
 export default function TrackPage() {
   const [method, setMethod] = useState<"order-id" | "phone">("order-id");

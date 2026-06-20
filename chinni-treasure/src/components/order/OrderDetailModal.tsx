@@ -7,7 +7,7 @@ import {
   ORDER_STATUS_LABELS,
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
-import type { Order } from "@/src/lib/api-schemas";
+import type { Order } from "@/src/lib/api/schemas";
 
 interface Props {
   order: Order;

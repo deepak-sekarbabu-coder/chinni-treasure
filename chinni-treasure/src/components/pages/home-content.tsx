@@ -15,7 +15,7 @@ export default function HomeContent() {
             For Everyday Elegance.&rdquo;
           </h1>
           <p>
-            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you’ll love.
+            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you'll love.
           </p>
           <div className="hero-trust" aria-label="brand highlights">
             <span>Handcrafted Originals</span>
@@ -67,10 +67,10 @@ export default function HomeContent() {
       >
         <div className="features-grid" role="list">
           {[
-            { icon: "✦", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-            { icon: "➤", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
-            { icon: "◈", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
-            { icon: "♢", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
+            { icon: "\u2726", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
+            { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
+            { icon: "\u25c8", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
+            { icon: "\u2662", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
           ].map((f, i) => (
             <div key={i} className="feature-item" role="listitem">
               <div className="feature-icon" aria-hidden="true">

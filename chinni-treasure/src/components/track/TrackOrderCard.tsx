@@ -1,7 +1,7 @@
 "use client";
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
-import type { TrackOrderResult } from "@/src/lib/api-schemas";
+import type { TrackOrderResult } from "@/src/lib/api/schemas";
 
 interface Props {
   order: TrackOrderResult;

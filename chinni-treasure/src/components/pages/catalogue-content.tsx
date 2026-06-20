@@ -7,7 +7,7 @@ import ProductCard from "@/src/components/ui/ProductCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
-import type { CatalogueProduct } from "@/src/lib/api-schemas";
+import type { CatalogueProduct } from "@/src/lib/api/schemas";
 
 interface Props {
   initialProducts: CatalogueProduct[];

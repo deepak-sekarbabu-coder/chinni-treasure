@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ApiErrorSchema } from "@/src/lib/api-schemas";
+import { ApiErrorSchema } from "@/src/lib/api/schemas";
 
 export class ApiError extends Error {
   status: number;
