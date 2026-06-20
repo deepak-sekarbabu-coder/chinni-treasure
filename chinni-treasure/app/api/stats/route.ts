@@ -22,7 +22,6 @@ export async function GET() {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // Lighter: use count queries per status instead of fetching all orders
     const [
       totalOrders,
       pendingOrders,
@@ -33,7 +32,7 @@ export async function GET() {
       rejectedOrders,
       totalRevenue,
       recentOrders,
-      orderItems,
+      salesByProduct,
     ] = await Promise.all([
       prisma.order.count(),
       prisma.order.count({ where: { status: "pending" } }),
@@ -43,14 +42,15 @@ export async function GET() {
       prisma.order.count({ where: { status: "delivered" } }),
       prisma.order.count({ where: { status: "rejected" } }),
       prisma.order.aggregate({ _sum: { totalAmount: true } }),
-      // Only fetch last 30 days for chart data
       prisma.order.findMany({
         where: { createdAt: { gte: thirtyDaysAgo } },
         select: { totalAmount: true, createdAt: true },
       }),
-      // Product sales from sold items
-      prisma.orderItem.findMany({
-        select: { productName: true, quantity: true, unitPrice: true },
+      prisma.orderItem.groupBy({
+        by: ["productName"],
+        _sum: { quantity: true, unitPrice: true },
+        _count: true,
+        orderBy: { _sum: { unitPrice: "desc" } },
       }),
     ]);
 
@@ -87,24 +87,12 @@ export async function GET() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, data]) => ({ date, ...data }));
 
-    // ---- Product sales ----
-    const productSalesMap: Record<string, { quantity: number; revenue: number }> = {};
-    for (const item of orderItems) {
-      const prev = productSalesMap[item.productName];
-      if (prev) {
-        prev.quantity += item.quantity;
-        prev.revenue += Number(item.unitPrice) * item.quantity;
-      } else {
-        productSalesMap[item.productName] = {
-          quantity: item.quantity,
-          revenue: Number(item.unitPrice) * item.quantity,
-        };
-      }
-    }
-
-    const productSalesData = Object.entries(productSalesMap)
-      .map(([productName, data]) => ({ productName, ...data }))
-      .sort((a, b) => b.revenue - a.revenue);
+    // ---- Product sales (aggregated by SQL) ----
+    const productSalesData = salesByProduct.map((item) => ({
+      productName: item.productName,
+      quantity: item._sum.quantity ?? 0,
+      revenue: Number(item._sum.unitPrice ?? 0),
+    }));
 
     const payload = { stats, chartData, productSalesData };
 

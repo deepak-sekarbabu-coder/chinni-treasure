@@ -1,4 +1,6 @@
+import DOMPurify from "isomorphic-dompurify";
+
 export function sanitize(input: string): string {
-  return input.trim().replace(/<[^>]*>/g, "");
+  return DOMPurify.sanitize(input.trim());
 }
 

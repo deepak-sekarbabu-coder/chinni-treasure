@@ -43,12 +43,18 @@ export async function getSession(): Promise<Record<string, unknown> | null> {
   return verifyToken(token);
 }
 
+const isProd = process.env.NODE_ENV === "production";
+
 export function createSessionCookie(token: string): string {
-  return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=86400`;
+  const flags = ["HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=86400"];
+  if (isProd) flags.push("Secure");
+  return `${COOKIE_NAME}=${token}; ${flags.join("; ")}`;
 }
 
 export function clearSessionCookie(): string {
-  return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
+  const flags = ["HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
+  if (isProd) flags.push("Secure");
+  return `${COOKIE_NAME}=; ${flags.join("; ")}`;
 }
 
 export type AdminSession = z.infer<typeof AdminSessionSchema>;
