@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/src/lib/api/client";
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,7 +33,8 @@ export default function AdminLoginPage() {
         method: "POST",
         body: { username: username.trim(), password },
       });
-      window.location.href = "/admin";
+      await new Promise((r) => setTimeout(r, 100));
+      router.push("/admin");
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : "Login failed");
       setLoading(false);
