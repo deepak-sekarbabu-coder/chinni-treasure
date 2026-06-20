@@ -22,6 +22,10 @@ const CORS_HEADERS = [
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
   allowedDevOrigins: ["127.0.0.1"],
+  poweredByHeader: false,
+  reactStrictMode: true,
+  compress: true,
+  generateEtags: true,
   images: {
     remotePatterns: [
       {
@@ -29,12 +33,61 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
+    deviceSizes: [640, 768, 1024, 1280, 1536],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ["image/webp"],
+    minimumCacheTTL: 60,
   },
+
   headers() {
     return [
       {
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: CORS_HEADERS,
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=259200",
+          },
+        ],
+      },
+      {
+        source: "/icons/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
     ];
   },

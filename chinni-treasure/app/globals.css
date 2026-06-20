@@ -1017,7 +1017,7 @@ a {
 .returns-policy-rule strong { display: block; font-family: var(--font-serif); font-size: 1rem; color: var(--near-black); margin-bottom: 4px; }
 .returns-policy-rule p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
 .returns-policy-icon { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--white); border-radius: 50%; font-size: 0.8rem; color: var(--gold-dark); font-weight: 700; border: 1px solid rgba(212, 175, 55, 0.2); margin-top: 2px; }
-.footer-link-btn { background: none; border: none; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; padding: 0; text-decoration: none; transition: color 0.3s ease; }
+.footer-link-btn { background: none; border: none; font-size: 0.85rem; color: var(--text-light); cursor: pointer; padding: 0; text-decoration: none; transition: color 0.3s ease; }
 .footer-link-btn:hover { color: var(--gold); }
 
 /* Terms Checkbox */
@@ -1521,7 +1521,7 @@ a {
 
 .footer-brand p {
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   line-height: 1.7;
 }
 
@@ -1564,7 +1564,7 @@ a {
 
 .footer ul li a {
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   transition: color 0.3s ease;
 }
 
@@ -1604,7 +1604,7 @@ a {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-light);
 }
 
 /* ===== HERO ===== */

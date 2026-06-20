@@ -65,6 +65,12 @@ export default function HomeContent() {
         className="features"
         aria-labelledby="features-heading"
       >
+        <div className="section-header">
+          <p id="features-heading" className="section-subtitle">Why Choose Us</p>
+          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(1.8rem, 3vw, 2.8rem)", color: "var(--near-black)", marginBottom: "16px", fontWeight: 400 }}>
+            Crafted With Passion, Delivered With Care
+          </h2>
+        </div>
         <div className="features-grid" role="list">
           {[
             { icon: "\u2726", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },

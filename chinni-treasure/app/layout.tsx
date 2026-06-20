@@ -8,7 +8,6 @@ import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { getCartFromCookies } from "@/src/lib/cart-cookie";
 import { prisma } from "@/src/lib/prisma";
-import PageTransition from "@/src/components/layout/PageTransition";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -103,7 +102,7 @@ export default async function RootLayout({
               </a>
               <Navbar />
               <main id="main-content" role="main">
-                <PageTransition>{children}</PageTransition>
+                <div className="page-transition">{children}</div>
               </main>
               <Footer />
             </ToastProvider>

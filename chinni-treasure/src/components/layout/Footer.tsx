@@ -1,8 +1,5 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
+import FooterClientWrapper from "@/src/components/layout/FooterClientWrapper";
 
 type ContactIconProps = {
   type: "phone" | "whatsapp" | "mail" | "instagram" | "facebook";
@@ -50,11 +47,7 @@ function ContactIcon({ type }: ContactIconProps) {
 }
 
 export default function Footer() {
-  const [returnsPolicyOpen, setReturnsPolicyOpen] = useState(false);
-
   return (
-    <>
-      <ReturnsPolicyModal open={returnsPolicyOpen} onClose={() => setReturnsPolicyOpen(false)} />
     <footer className="footer" role="contentinfo">
       <div className="footer-grid">
         <div className="footer-brand">
@@ -79,38 +72,38 @@ export default function Footer() {
         <div>
           <h4>Customer Care</h4>
           <ul role="list">
-            <li role="listitem"><button className="footer-link-btn" onClick={() => setReturnsPolicyOpen(true)}>Returns Policy</button></li>
+            <li role="listitem"><FooterClientWrapper /></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
           <ul className="contact-list" role="list">
             <li role="listitem">
-              <a href="tel:+919499011029" aria-label="Call Chinni Treasure at 9499011029">
+              <a href="tel:+919499011029" aria-label="Call Chinni Treasure at +91 9499011029">
                 <ContactIcon type="phone" />
                 <span>+91 9499011029</span>
               </a>
             </li>
             <li role="listitem">
-              <a href="https://wa.me/919499011029" target="_blank" rel="noopener noreferrer" aria-label="Message Chinni Treasure on WhatsApp">
+              <a href="https://wa.me/919499011029" target="_blank" rel="noopener noreferrer" aria-label="Message Chinni Treasure on WhatsApp at +91 9499011029">
                 <ContactIcon type="whatsapp" />
                 <span>+91 9499011029</span>
               </a>
             </li>
             <li role="listitem">
-              <a href="mailto:chinnitreasures29@gmail.com" aria-label="Email Chinni Treasure">
+              <a href="mailto:chinnitreasures29@gmail.com" aria-label="Email Chinni Treasure at chinnitreasure29@gmail.com">
                 <ContactIcon type="mail" />
                 <span>chinnitreasure29@gmail.com</span>
               </a>
             </li>
             <li role="listitem">
-              <a href="https://www.instagram.com/ChinniTreasure" target="_blank" rel="noopener noreferrer" aria-label="Open Chinni Treasure on Instagram">
+              <a href="https://www.instagram.com/ChinniTreasure" target="_blank" rel="noopener noreferrer" aria-label="Open Chinni Treasure on Instagram — ChinniTreasure">
                 <ContactIcon type="instagram" />
                 <span>ChinniTreasure</span>
               </a>
             </li>
             <li role="listitem">
-              <a href="https://www.facebook.com/ChinniTreasures" target="_blank" rel="noopener noreferrer" aria-label="Open Chinni Treasure on Facebook">
+              <a href="https://www.facebook.com/ChinniTreasures" target="_blank" rel="noopener noreferrer" aria-label="Open Chinni Treasure on Facebook — ChinniTreasures">
                 <ContactIcon type="facebook" />
                 <span>ChinniTreasures</span>
               </a>
@@ -123,6 +116,5 @@ export default function Footer() {
         <span>Made with care</span>
       </div>
     </footer>
-    </>
   );
 }
