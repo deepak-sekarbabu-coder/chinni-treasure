@@ -2229,6 +2229,51 @@ a {
   clear: both;
 }
 
+/* Bank Details Card */
+.bank-details-card {
+  background: var(--cream);
+  border-radius: 4px;
+  padding: 20px 24px;
+}
+
+.bank-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.bank-detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.bank-detail-label {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.bank-detail-value {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--near-black);
+  text-align: right;
+  word-break: break-all;
+  max-width: 60%;
+}
+
+.bank-details-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 14px 0 0;
+  line-height: 1.5;
+}
+
 /* Order Summary Sidebar */
 .order-summary-sidebar {
   position: sticky;

@@ -142,6 +142,40 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
   return (
     <>
       <fieldset className="order-fieldset step-fade-in">
+        <legend className="order-legend">Bank Transfer Details</legend>
+        <div className="bank-details-card">
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Account Name</span>
+            <span className="bank-detail-value">CHINNI TREASURE</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Account Number</span>
+            <span className="bank-detail-value">452689137194</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Bank &amp; Branch</span>
+            <span className="bank-detail-value">State Bank of India — Madambakkam</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">IFSC Code</span>
+            <span className="bank-detail-value">SBIN0021634</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">MICR Code</span>
+            <span className="bank-detail-value">600002379</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">UPI ID</span>
+            <span className="bank-detail-value">9499011029@ibl</span>
+          </div>
+          <div className="bank-detail-row">
+            <span className="bank-detail-label">Customer ID</span>
+            <span className="bank-detail-value">92458542971</span>
+          </div>
+          <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
+        </div>
+      </fieldset>
+      <fieldset className="order-fieldset step-fade-in">
         <legend className="order-legend">Payment Details</legend>
         <div className="form-group">
           <label htmlFor="transactionId">Transaction ID <span className="required">*</span></label>
