@@ -147,7 +147,7 @@ ALLOWED_ORIGIN=http://localhost:3000
 |---|---|---|
 | 10 | **Root layout DB call on every page navigation** | Cart hydration queries Prisma on every request — should be client-only or cached |
 | 11 | **In-memory cache not shared across serverless instances** | Use Vercel KV or Redis |
-| 12 | ~~**`window.location.href` after login**~~ **FIXED** — replaced with `router.push()` for client-side navigation | No full page reload |
+| 12 | **`window.location.href` after login** — required for middleware cookie timing; full reload guarantees cookie availability before middleware check | Deferred (architectural constraint) |
 | 13 | ~~**Loading spinners lack `role="status"` / `aria-label`**~~ **FIXED** — added `role="status"`, `aria-live="polite"`, and `sr-only` text | Announced by screen readers |
 | 14 | ~~**Form error messages not linked to inputs via `aria-describedby`**~~ **FIXED** — added `aria-describedby` + `aria-invalid` to all form fields | Programmatically associated |
 | 15 | ~~**`outline: none` without `forced-colors` fallback**~~ **FIXED** — added `@media (forced-colors: active)` block | Visible in Windows High Contrast |
