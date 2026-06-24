@@ -11,6 +11,7 @@ import { INDIAN_STATES } from "@/src/lib/constants";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { buildUpiPaymentUrl } from "@/src/lib/upi";
+import { QRCodeCanvas } from "qrcode.react";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
@@ -225,23 +226,38 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
             </a>
           </div>
           <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
-          <a
-            href={upiLink}
-            className="bank-qr-code"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => {
-              if (typeof window === "undefined") return;
-              const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
-              if (!isMobile) {
-                event.preventDefault();
-                window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
-              }
-            }}
-          >
-            <img src="/images/branding/qr.png" alt="Scan QR code to pay via UPI" width="200" height="200" />
-            <span className="bank-qr-label">Tap to pay via UPI</span>
-          </a>
+          <div className="bank-qr-code">
+            {total > 0 ? (
+              <a
+                href={upiLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => {
+                  if (typeof window === "undefined") return;
+                  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+                  if (!isMobile) {
+                    event.preventDefault();
+                    window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                style={{ display: "inline-block", textDecoration: "none" }}
+              >
+                <QRCodeCanvas
+                  value={upiLink}
+                  size={200}
+                  level="H"
+                  bgColor="#FFFFFF"
+                  fgColor="#1A1A1A"
+                  includeMargin
+                />
+                <span className="bank-qr-label">Scan to pay ₹{total.toFixed(2)} via UPI</span>
+              </a>
+            ) : (
+              <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "40px 0" }}>
+                Add items to your cart to see the payment QR code.
+              </p>
+            )}
+          </div>
         </div>
       </fieldset>
       <fieldset className="order-fieldset step-fade-in">
