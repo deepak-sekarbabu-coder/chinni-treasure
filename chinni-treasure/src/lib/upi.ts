@@ -10,8 +10,9 @@ export function buildUpiPaymentUrl(
     params.set("pa", upiId);
     params.set("pn", merchantName);
     params.set("cu", "INR");
+    params.set("mode", "01"); // 01 = payment intent (required by many UPI apps)
 
-    if (typeof amount === "number" && Number.isFinite(amount)) {
+    if (typeof amount === "number" && Number.isFinite(amount) && amount > 0) {
         params.set("am", amount.toFixed(2));
     }
 

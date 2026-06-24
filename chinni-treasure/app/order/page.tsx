@@ -132,15 +132,16 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }:
   );
 }
 
-function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
+function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: {
   form: OrderForm;
   errors: Record<string, string>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setForm: React.Dispatch<React.SetStateAction<OrderForm>>;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  total: number;
 }) {
   const [policyOpen, setPolicyOpen] = useState(false);
-  const upiLink = buildUpiPaymentUrl("9499011029@ibl", "CHINNI TREASURE");
+  const upiLink = buildUpiPaymentUrl("9499011029@ibl", "CHINNI TREASURE", total > 0 ? total : undefined);
   const upiFallbackUrl = "https://pay.google.com/about/upi/";
 
   return (
@@ -425,7 +426,7 @@ export default function OrderPage() {
             <div className="order-form-fields">
               {currentStep === 1 && <PersonalDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
               {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
-              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
+              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} total={total} />}
 
               <StepNavigation
                 currentStep={currentStep}
