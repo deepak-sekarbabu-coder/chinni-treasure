@@ -10,6 +10,7 @@ import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES } from "@/src/lib/constants";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
+import { buildUpiPaymentUrl } from "@/src/lib/upi";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
@@ -139,6 +140,9 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }) {
   const [policyOpen, setPolicyOpen] = useState(false);
+  const upiLink = buildUpiPaymentUrl("9499011029@ibl", "CHINNI TREASURE");
+  const upiFallbackUrl = "https://pay.google.com/about/upi/";
+
   return (
     <>
       <fieldset className="order-fieldset step-fade-in">
@@ -202,10 +206,18 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
           <div className="bank-detail-row">
             <span className="bank-detail-label">UPI ID</span>
             <a
-              href="upi://pay?pa=9499011029%40ibl&pn=CHINNI%20TREASURE&cu=INR"
+              href={upiLink}
               className="bank-detail-value bank-upi-link"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(event) => {
+                if (typeof window === "undefined") return;
+                const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+                if (!isMobile) {
+                  event.preventDefault();
+                  window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
+                }
+              }}
             >
               9499011029@ibl
               <span className="upi-open-hint">Tap to pay</span>
@@ -213,10 +225,18 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors }: {
           </div>
           <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
           <a
-            href="upi://pay?pa=9499011029%40ibl&pn=CHINNI%20TREASURE&cu=INR"
+            href={upiLink}
             className="bank-qr-code"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(event) => {
+              if (typeof window === "undefined") return;
+              const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+              if (!isMobile) {
+                event.preventDefault();
+                window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
+              }
+            }}
           >
             <img src="/images/branding/qr.png" alt="Scan QR code to pay via UPI" width="200" height="200" />
             <span className="bank-qr-label">Tap to pay via UPI</span>
