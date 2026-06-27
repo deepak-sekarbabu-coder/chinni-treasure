@@ -32,6 +32,7 @@
 @import "./styles/products.css";
 @import "./styles/features.css";
 @import "./styles/track.css";
+@import "./styles/gallery.css";
 @import "./styles/checkout.css";
 @import "./styles/order.css";
 @import "./styles/confirmation.css";

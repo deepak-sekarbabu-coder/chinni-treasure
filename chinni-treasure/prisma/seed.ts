@@ -26,7 +26,7 @@ async function seedCategories() {
 
 async function seedProducts(categoryMap: Record<string, number>) {
   for (const p of SEED_PRODUCTS) {
-    await prisma.product.upsert({
+    const product = await prisma.product.upsert({
       where: { sku: p.sku },
       update: {
         name: p.name,
@@ -48,6 +48,28 @@ async function seedProducts(categoryMap: Record<string, number>) {
         categoryId: categoryMap[p.categorySlug] || null,
       },
     });
+
+    // Create product images (upsert to handle re-seeding)
+    const seenUrls = new Set<string>();
+    for (let i = 0; i < p.additionalImages.length; i++) {
+      const url = p.additionalImages[i];
+      if (seenUrls.has(url)) continue;
+      seenUrls.add(url);
+
+      const existing = await prisma.productImage.findFirst({
+        where: { productId: product.id, url },
+      });
+      if (!existing) {
+        await prisma.productImage.create({
+          data: {
+            productId: product.id,
+            url,
+            isPrimary: i === 0,
+            displayOrder: i,
+          },
+        });
+      }
+    }
   }
 }
 

@@ -1,7 +1,15 @@
 import Image from "next/image";
+import Link from "next/link";
 import StockBadge from "./StockBadge";
 
-interface ProductData {
+export interface ProductImageData {
+  id: string;
+  url: string;
+  isPrimary: boolean;
+  displayOrder: number;
+}
+
+export interface ProductData {
   id: string;
   name: string;
   price: number;
@@ -10,6 +18,7 @@ interface ProductData {
   category: { name: string } | null;
   stockQuantity: number;
   badge: string | null;
+  images?: ProductImageData[];
 }
 
 interface Props {
@@ -25,31 +34,41 @@ export default function ProductCard({
   transitionDelay = 0,
   priority = false,
 }: Props) {
+  // Use primary image from images array, fall back to imageUrl
+  const primaryImage =
+    product.images?.find((img) => img.isPrimary)?.url ||
+    product.imageUrl ||
+    "/placeholder.svg";
+
   return (
     <div
       className="product-card fade-in visible"
       style={{ transitionDelay: `${transitionDelay}s` }}
       role="listitem"
     >
-      <div className="product-card-image">
-        <Image
-          src={product.imageUrl || "/placeholder.svg"}
-          alt={product.name}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="product-card-img"
-          loading={priority ? "eager" : "lazy"}
-          priority={priority}
-        />
-        {product.badge && (
-          <span className="product-card-badge">{product.badge}</span>
-        )}
-      </div>
+      <Link href={`/catalogue/${product.id}`} className="product-card-image-link">
+        <div className="product-card-image">
+          <Image
+            src={primaryImage}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="product-card-img"
+            loading={priority ? "eager" : "lazy"}
+            priority={priority}
+          />
+          {product.badge && (
+            <span className="product-card-badge">{product.badge}</span>
+          )}
+        </div>
+      </Link>
       <div className="product-card-body">
         <div className="product-card-category">
           {product.category?.name || "General"}
         </div>
-        <h3>{product.name}</h3>
+        <Link href={`/catalogue/${product.id}`} className="product-card-title-link">
+          <h3>{product.name}</h3>
+        </Link>
         <p className="product-card-description">{product.description}</p>
         <div className="product-card-footer">
           <span className="product-card-price">

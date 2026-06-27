@@ -20,6 +20,7 @@ interface ProductFormState {
   imageUrl: string;
   badge: string;
   categoryId: string;
+  images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
 }
 
 const EMPTY_PRODUCT_FORM: ProductFormState = {
@@ -32,6 +33,7 @@ const EMPTY_PRODUCT_FORM: ProductFormState = {
   imageUrl: "",
   badge: "",
   categoryId: "",
+  images: [],
 };
 
 interface DeleteConfirmState {
@@ -59,6 +61,11 @@ function productToFormState(product: Product): ProductFormState {
     imageUrl: product.imageUrl || "",
     badge: product.badge || "",
     categoryId: product.categoryId ? product.categoryId.toString() : "",
+    images: (product.images || []).map((img) => ({
+      url: img.url,
+      isPrimary: img.isPrimary,
+      displayOrder: img.displayOrder,
+    })),
   };
 }
 
@@ -124,6 +131,13 @@ export function useAdminCatalogueController(options?: { onAfterSave?: () => void
         imageUrl: productForm.imageUrl || undefined,
         badge: productForm.badge || null,
         categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
+        images: productForm.images.length > 0
+          ? productForm.images.map((img) => ({
+            url: img.url,
+            isPrimary: img.isPrimary,
+            displayOrder: img.displayOrder,
+          }))
+          : undefined,
       };
       try {
         if (isEdit) {

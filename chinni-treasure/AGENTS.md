@@ -43,7 +43,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
   - **Catalogue CRUD:** Create, read, update, and toggle status (`isActive`) of products and categories with mandatory validations.
   - **Order Operations:** Move orders through fulfillment states with notes:
 
-    ```
+    ```text
     pending → approved → packaging → shipped → delivered
        ↓
     rejected (restores stock)
@@ -66,11 +66,12 @@ This document outlines the architecture, roles, operational guidelines, and memo
 **Models:**
 
 1. **Category:** Supports active filtering, description, and display sorting order.
-2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, and Category relation.
-3. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
-4. **OrderItem:** Connects orders with products, recording historical unit prices.
-5. **OrderStatusHistory:** Logs every transition of order status for traceability.
-6. **Admin:** Tracks user credentials, email, hashed passwords, and role (admin/super_admin).
+2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, Category relation, and `images` relation to ProductImage.
+3. **ProductImage:** Each product can have multiple images stored in a separate normalized table. Each image has a `url`, `isPrimary` flag (one image per product can be primary), and `displayOrder` for sorting. The `imageUrl` field on Product is retained as a fallback for backward compatibility.
+4. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
+5. **OrderItem:** Connects orders with products, recording historical unit prices.
+6. **OrderStatusHistory:** Logs every transition of order status for traceability.
+7. **Admin:** Tracks user credentials, email, hashed passwords, and role (admin/super_admin).
 
 ### Core Logic & State Management
 
@@ -120,7 +121,7 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
 
 ## 5. File Structure Reference
 
-```
+```text
 chinni-treasure/
 ├── app/                              # Next.js App Router pages & API
 │   ├── admin/
@@ -148,11 +149,12 @@ chinni-treasure/
 │   │   ├── stats/route.ts            # Dashboard statistics with caching (SQL aggregation)
 │   │   └── track/route.ts            # Order tracking with caching
 │   ├── catalogue/                    # Product catalogue (SSR + client interactive)
+│   │   └── [id]/                     # Product details page with image gallery
 │   ├── confirmation/[id]/            # Order confirmation page
 │   ├── docs/                         # Swagger UI API docs viewer
 │   ├── order/                        # Multi-step checkout
 │   ├── track/                        # Order tracking portal
-│   ├── styles/                       # Decomposed modular CSS files (26 files)
+│   ├── styles/                       # Decomposed modular CSS files (27 files)
 │   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
 │   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
 │   │   ├── keyframes.css             # All @keyframes animations
@@ -168,6 +170,7 @@ chinni-treasure/
 │   │   ├── hero.css                  # Hero section with premium refresh overrides
 │   │   ├── products.css              # Products grid + product cards
 │   │   ├── features.css              # Features section
+│   │   ├── gallery.css               # Product image gallery and product details page
 │   │   ├── track.css                 # Track order page
 │   │   ├── checkout.css              # Checkout progress + sticky bar
 │   │   ├── order.css                 # Order page + summary sidebar + bank details
@@ -218,13 +221,15 @@ chinni-treasure/
 │   │   │   └── TrackOrderCard.tsx        # Track order result card
 │   │   ├── pages/
 │   │   │   ├── home-content.tsx          # Client homepage hero & features
-│   │   │   └── catalogue-content.tsx     # Client catalogue with cart interactions
+│   │   │   ├── catalogue-content.tsx     # Client catalogue with cart interactions
+│   │   │   └── ProductDetailsContent.tsx  # Client product details page with image gallery
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx         # React Query provider
 │   │   └── ui/
 │   │       ├── AdminStatCard.tsx          # Dashboard stat display card
 │   │       ├── LoadingSpinner.tsx         # Loading indicator (full-page or inline)
-│   │       ├── ProductCard.tsx            # Product grid card with add-to-cart
+│   │   ├── ProductCard.tsx            # Product grid card with add-to-cart, links to product details
+│   │   ├── ProductImageGallery.tsx    # Image gallery with thumbnails and carousel navigation
 │   │       ├── ReturnsPolicyModal.tsx     # Returns policy modal
 │   │       ├── SectionHeader.tsx          # Section heading component
 │   │       ├── StatusBadge.tsx            # Order status badge (color-coded)
@@ -283,7 +288,7 @@ chinni-treasure/
 Use the following commands during development and maintenance:
 
 | Command | Action |
-|---|---|
+| --- | --- |
 | `npm run dev` | Start the Next.js development server |
 | `npm run build` | Generate Prisma client, validate TypeScript, build for production |
 | `npm start` | Start the production server |

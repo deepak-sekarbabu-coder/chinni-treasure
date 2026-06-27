@@ -23,6 +23,17 @@
     box-shadow: 0 14px 38px rgba(25, 25, 25, 0.12);
 }
 
+.product-card-image-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-card-image-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
 .product-card-image {
     position: relative;
     aspect-ratio: 3 / 4;
@@ -39,6 +50,22 @@
 
 .product-card:hover .product-card-image img {
     transform: scale(1.05);
+}
+
+.product-card-title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-card-title-link:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-light);
+}
+
+.product-card-title-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 .product-card-badge {

@@ -20,12 +20,16 @@ export default async function CataloguePage() {
     category: { name: string } | null;
     stockQuantity: number;
     badge: string | null;
+    images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
   }> = [];
 
   try {
     const data = await prisma.product.findMany({
       where: { isActive: true },
-      include: { category: { select: { name: true } } },
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
       orderBy: { createdAt: "desc" },
     });
     products = data.map((p) => ({
@@ -37,6 +41,12 @@ export default async function CataloguePage() {
       category: p.category,
       stockQuantity: p.stockQuantity,
       badge: p.badge,
+      images: p.images.map((img) => ({
+        id: img.id,
+        url: img.url,
+        isPrimary: img.isPrimary,
+        displayOrder: img.displayOrder,
+      })),
     }));
   } catch (err) {
     console.error("Failed to fetch products:", err);

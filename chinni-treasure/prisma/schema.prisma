@@ -43,25 +43,39 @@ model Category {
 }
 
 model Product {
-  id            String       @id @default(uuid())
-  sku           String?      @unique @db.VarChar(50)
-  name          String       @db.VarChar(255)
-  categoryId    Int?         @map("category_id")
-  category      Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  id            String        @id @default(uuid())
+  sku           String?       @unique @db.VarChar(50)
+  name          String        @db.VarChar(255)
+  categoryId    Int?          @map("category_id")
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   description   String?
-  price         Decimal      @db.Decimal(10, 2)
-  stockQuantity Int          @default(0) @map("stock_quantity")
-  imageUrl      String?      @db.VarChar(500) @map("image_url")
+  price         Decimal       @db.Decimal(10, 2)
+  stockQuantity Int           @default(0) @map("stock_quantity")
+  imageUrl      String?       @db.VarChar(500) @map("image_url")
   badge         ProductBadge?
-  isActive      Boolean      @default(true) @map("is_active")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
   orderItems    OrderItem[]
+  images        ProductImage[]
 
   @@index([categoryId])
   @@index([isActive])
   @@index([badge])
   @@map("products")
+}
+
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String   @map("product_id")
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url          String   @db.VarChar(500)
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([productId])
+  @@map("product_images")
 }
 
 model Order {

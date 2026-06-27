@@ -14,6 +14,13 @@ export function createMockPrisma() {
       update: vi.fn(),
       count: vi.fn(),
     },
+    productImage: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
     order: {
       findMany: vi.fn(),
       findUnique: vi.fn(),

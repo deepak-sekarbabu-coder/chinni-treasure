@@ -61,6 +61,13 @@ export const TrackOrderResultSchema = z.object({
 
 export const TrackOrdersResponseSchema = z.array(TrackOrderResultSchema);
 
+export const ProductImageSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  isPrimary: z.boolean(),
+  displayOrder: z.number(),
+});
+
 export const ProductSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -75,6 +82,7 @@ export const ProductSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
+  images: z.array(ProductImageSchema).optional(),
 });
 
 export const ProductsResponseSchema = z.object({
@@ -94,6 +102,7 @@ export const CatalogueProductSchema = z.object({
   category: z.object({ name: z.string() }).nullable(),
   stockQuantity: z.number(),
   badge: z.string().nullable(),
+  images: z.array(ProductImageSchema).optional(),
 });
 
 export const CatalogueProductsResponseSchema = z.union([
@@ -176,6 +185,12 @@ export const UpdateOrderStatusInputSchema = z.object({
   expectedVersion: z.number().int().optional(),
 });
 
+export const ProductImageInputSchema = z.object({
+  url: z.string().min(1, "Image URL is required"),
+  isPrimary: z.boolean().optional().default(false),
+  displayOrder: z.number().int().min(0).optional().default(0),
+});
+
 export const ProductInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string().optional(),
@@ -185,6 +200,7 @@ export const ProductInputSchema = z.object({
   imageUrl: z.string().optional(),
   badge: z.string().nullable().optional(),
   categoryId: z.coerce.number().int().positive().nullable().optional(),
+  images: z.array(ProductImageInputSchema).optional(),
 });
 
 export const ApiErrorSchema = z.object({
@@ -212,3 +228,5 @@ export type UpdateOrderStatusInput = z.infer<
   typeof UpdateOrderStatusInputSchema
 >;
 export type ProductInput = z.infer<typeof ProductInputSchema>;
+export type ProductImage = z.infer<typeof ProductImageSchema>;
+export type ProductImageInput = z.infer<typeof ProductImageInputSchema>;

@@ -7,6 +7,12 @@ import { clearCache } from "@/src/lib/products-cache";
 import { z } from "zod"
 import { ProductBadge } from "@prisma/client"
 
+const ImageInputSchema = z.object({
+  url: z.string().min(1),
+  isPrimary: z.boolean().optional(),
+  displayOrder: z.number().int().min(0).optional(),
+});
+
 const UpdateProductSchema = z.object({
   name: z.string().min(1).optional(),
   price: z.coerce.number().positive("Price must be a positive number").optional(),
@@ -17,6 +23,7 @@ const UpdateProductSchema = z.object({
   imageUrl: z.string().optional().nullable(),
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
   isActive: z.boolean().optional(),
+  images: z.array(ImageInputSchema).optional(),
 });
 
 const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
@@ -34,7 +41,7 @@ const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
 function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed)) {
-    if (value !== undefined) {
+    if (value !== undefined && key !== "images") {
       data[key] = FIELD_MAPPERS[key] ? FIELD_MAPPERS[key](value) : value;
     }
   }
@@ -65,10 +72,30 @@ export async function PUT(
       );
     }
 
+    const { images, ...productFields } = parsed.data;
+
+    // Handle image updates: delete existing, create new ones
+    if (images !== undefined) {
+      await prisma.productImage.deleteMany({ where: { productId: id } });
+      if (images.length > 0) {
+        await prisma.productImage.createMany({
+          data: images.map((img, idx) => ({
+            productId: id,
+            url: img.url,
+            isPrimary: img.isPrimary ?? idx === 0,
+            displayOrder: img.displayOrder ?? idx,
+          })),
+        });
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
-      data: buildUpdateData(parsed.data as Record<string, unknown>) as Parameters<typeof prisma.product.update>[0]["data"],
-      include: { category: { select: { name: true } } },
+      data: buildUpdateData(productFields as Record<string, unknown>) as Parameters<typeof prisma.product.update>[0]["data"],
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
     });
 
     clearCache();

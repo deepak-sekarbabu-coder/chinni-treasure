@@ -301,9 +301,10 @@
 }
 
 .product-form-wrapper.open {
-    max-height: 800px;
+    max-height: 2000px;
     opacity: 1;
     margin-bottom: 24px;
+    overflow-y: auto;
 }
 
 .product-form-wrapper.closing {

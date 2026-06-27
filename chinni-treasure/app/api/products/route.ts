@@ -16,6 +16,15 @@ const CreateProductSchema = z.object({
   stockQuantity: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional(),
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
+  images: z
+    .array(
+      z.object({
+        url: z.string().min(1),
+        isPrimary: z.boolean().optional().default(false),
+        displayOrder: z.number().int().min(0).optional().default(0),
+      }),
+    )
+    .optional(),
 });
 
 // GET /api/products — List products (optionally paginated)
@@ -40,7 +49,10 @@ export async function GET(request: Request) {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: { category: { select: { name: true } } },
+        include: {
+          category: { select: { name: true } },
+          images: { orderBy: { displayOrder: "asc" } },
+        },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
@@ -76,6 +88,7 @@ type CreateProductInput = {
   stockQuantity?: number;
   imageUrl?: string;
   badge?: ProductBadge | null;
+  images?: Array<{ url: string; isPrimary?: boolean; displayOrder?: number }>;
 };
 
 function buildCreateData(input: CreateProductInput) {
@@ -111,9 +124,24 @@ export async function POST(request: Request) {
       );
     }
 
+    const { images, ...productData } = parsed.data;
     const product = await prisma.product.create({
-      data: buildCreateData(parsed.data),
-      include: { category: { select: { name: true } } },
+      data: {
+        ...buildCreateData(productData as CreateProductInput),
+        images: images && images.length > 0
+          ? {
+            create: images.map((img, idx) => ({
+              url: img.url,
+              isPrimary: img.isPrimary ?? idx === 0,
+              displayOrder: img.displayOrder ?? idx,
+            })),
+          }
+          : undefined,
+      },
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
     });
 
     clearCache();
