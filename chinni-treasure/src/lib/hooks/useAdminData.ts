@@ -11,10 +11,11 @@ import {
   type OrdersQueryParams,
   type ProductsQueryParams,
 } from "@/src/lib/api";
+import type { ProductsResponse } from "@/src/lib/api/schemas";
 
 const ITEMS_PER_PAGE = 10;
 const PRODUCTS_PER_PAGE = 12;
-const CATALOGUE_PAGE_LIMIT = 200;
+const CATALOGUE_PAGE_SIZE = 6;
 
 export function useAuthMe(enabled = true) {
   return useQuery({
@@ -54,12 +55,12 @@ export function useAdminProducts(params: ProductsQueryParams, enabled = true) {
   });
 }
 
-export function useCatalogueProducts(initialProducts: unknown[], enabled = true) {
+export function useCatalogueProducts(page: number, initialData?: ProductsResponse) {
   return useQuery({
-    queryKey: queryKeys.products.catalogue(CATALOGUE_PAGE_LIMIT),
-    queryFn: ({ signal }) => fetchCatalogueProducts(CATALOGUE_PAGE_LIMIT, signal),
-    enabled: enabled && initialProducts.length === 0,
-    initialData: undefined,
+    queryKey: queryKeys.products.catalogue(page, CATALOGUE_PAGE_SIZE),
+    queryFn: ({ signal }) => fetchCatalogueProducts(page, CATALOGUE_PAGE_SIZE, signal),
+    initialData: page === 1 ? initialData : undefined,
+    placeholderData: (previousData) => previousData,
     staleTime: 30_000,
   });
 }
@@ -67,5 +68,5 @@ export function useCatalogueProducts(initialProducts: unknown[], enabled = true)
 export const ADMIN_PAGE_SIZES = {
   orders: ITEMS_PER_PAGE,
   products: PRODUCTS_PER_PAGE,
-  catalogue: CATALOGUE_PAGE_LIMIT,
+  catalogue: CATALOGUE_PAGE_SIZE,
 } as const;

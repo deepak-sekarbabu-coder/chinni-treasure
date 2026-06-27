@@ -1,7 +1,6 @@
 import { apiFetch } from "./client";
 import {
   AuthMeResponseSchema,
-  CatalogueProductsResponseSchema,
   CreateOrderInputSchema,
   OrderSchema,
   OrdersResponseSchema,
@@ -12,7 +11,6 @@ import {
   TrackOrdersResponseSchema,
   UpdateOrderStatusInputSchema,
   type AuthMeResponse,
-  type CatalogueProductsResponse,
   type CreateOrderInput,
   type Order,
   type OrdersResponse,
@@ -76,10 +74,13 @@ export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal)
   });
 }
 
-export function fetchCatalogueProducts(limit = 200, signal?: AbortSignal) {
-  return apiFetch<CatalogueProductsResponse>(`/api/products?limit=${limit}`, {
+export function fetchCatalogueProducts(page: number = 1, limit: number = 6, signal?: AbortSignal) {
+  // Defensive: ensure page and limit are valid numbers
+  const safePage = typeof page === "number" && Number.isFinite(page) && page >= 1 ? page : 1;
+  const safeLimit = typeof limit === "number" && Number.isFinite(limit) && limit >= 1 ? limit : 6;
+  return apiFetch<ProductsResponse>(`/api/products?page=${safePage}&limit=${safeLimit}`, {
     signal,
-    schema: CatalogueProductsResponseSchema,
+    schema: ProductsResponseSchema,
   });
 }
 

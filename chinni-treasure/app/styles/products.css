@@ -171,3 +171,48 @@
     color: #424242;
     font-weight: 500;
 }
+
+/* ── Catalogue Pagination ── */
+.catalogue-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 48px;
+    padding-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.catalogue-pagination .btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    transition:
+        background var(--motion-smooth),
+        color var(--motion-smooth),
+        border-color var(--motion-smooth);
+}
+
+.catalogue-pagination .btn-primary {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+}
+
+.catalogue-pagination .btn-primary:hover {
+    background: var(--gold-dark);
+    border-color: var(--gold-dark);
+    color: var(--cream);
+}
+
+.catalogue-pagination .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.catalogue-pagination .btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}

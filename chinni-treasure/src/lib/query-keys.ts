@@ -20,8 +20,8 @@ export const queryKeys = {
     list: (params: { page: number; limit: number; isActive?: string }) =>
       [...queryKeys.products.lists(), params] as const,
     catalogues: () => [...queryKeys.products.all(), "catalogue"] as const,
-    catalogue: (limit: number) =>
-      [...queryKeys.products.catalogues(), { limit }] as const,
+    catalogue: (page: number, limit: number) =>
+      [...queryKeys.products.catalogues(), { page, limit }] as const,
   },
   track: {
     all: () => [...queryKeys.all, "track"] as const,
