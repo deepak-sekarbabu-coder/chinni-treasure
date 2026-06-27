@@ -1,6 +1,6 @@
 # Chinni Treasure — Improvement Tracker
 
-> Last updated: 2026-06-20 | Project: chinni-treasure
+> Last updated: 2026-06-27 | Project: chinni-treasure | Docs validated against live codebase
 
 ---
 
@@ -18,7 +18,7 @@
 
 | # | Issue | Status |
 |---|---|---|
-| 1 | **Hardcoded JWT fallback `"dev-secret"`** — mitigated by env validation (`src/lib/env.ts`) which throws in production if `JWT_SECRET` is missing | Mitigated |
+| 1 | **Hardcoded JWT fallback `"dev-secret"`** — mitigated by env validation (`src/lib/env.ts`) which throws in production if `JWT_SECRET` is missing. Confirmed: `requireEnv` allows dev-only fallback at line 14. | Mitigated |
 | 2 | **Session cookie missing `Secure` flag** | **FIXED** — `src/lib/auth.ts:46-58` |
 | 3 | **`sanitize()` is a simple regex, not DOMPurify** | **FIXED** — `src/lib/sanitize.ts` uses `isomorphic-dompurify` |
 | 4 | **CORS defaults to `*`** | **FIXED** — `ALLOWED_ORIGIN` documented in `.env.example`, configurable via env |

@@ -1,5 +1,7 @@
 # Codebase Architectural Gaps & Technical Debt
 
+> **Last validated:** June 27, 2026 — Metrics refreshed against current codebase.
+
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 
 ## 1. Critical Gaps (Require immediate attention)
@@ -9,12 +11,13 @@ None currently identified.
 ## 2. Major Gaps (Architectural Improvements Needed)
 
 *   **Monolithic Styling (`app/globals.css`)**
-    *   **Issue:** The CSS file has grown to over 5,300 lines, containing all styles for the entire application. This makes maintainability and CSS-variable management extremely difficult.
+    *   **Issue:** The CSS file has grown to ~6,000 lines (5,987 as of last count), containing all styles for the entire application. This makes maintainability and CSS-variable management extremely difficult.
     *   **Recommendation:** Decompose the stylesheet into component-specific modules or CSS files. Adopt a consistent naming convention or consider CSS-in-JS (though Vanilla CSS is the current mandate).
 
-*   **Inconsistent Data Fetching Patterns (Partial)**
-    *   **Issue:** The codebase has integrated React Query (`@tanstack/react-query`) for admin dashboard data fetching, but some pages (catalogue, track) still use `useEffect` for client-side fetching. No unified strategy for caching, loading state management, or error handling across all pages.
-    *   **Recommendation:** Standardize on React Query for all client-side data fetching. Migrate remaining `useEffect`-based fetching to React Query hooks.
+*   **Inconsistent Data Fetching Patterns (Improving)**
+    *   **Issue:** React Query (`@tanstack/react-query`) is used for admin dashboard data fetching (orders, stats, products), but some pages still use client-side effects or server rendering for data hydration.
+    *   **Note:** The migration from `useEffect`-based fetching to React Query is largely complete. Remaining `useEffect` calls are primarily for UI interactions (focus traps, scroll handling, modal transitions), not data fetching.
+    *   **Recommendation:** Continue standardizing on React Query for all client-side data fetching where applicable. Ensure server-rendered pages (catalogue, confirmation) have clear error boundaries.
 
 ## 3. Minor Gaps (Improvement / Best Practice)
 
@@ -23,7 +26,7 @@ None currently identified.
     *   **Recommendation:** Implement higher-level integration or E2E tests covering critical user journeys.
 
 *   **Lack of Dynamic Metadata**
-    *   **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`, but individual product and category pages lack dynamic `metadata` generation in Next.js, impacting search engine visibility for dynamic content.
+    *   **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`, but individual product and category pages lack dynamic `generateMetadata` functions in Next.js, impacting search engine visibility for dynamic content.
     *   **Recommendation:** Implement dynamic `generateMetadata` functions for all pages that render dynamic content from the database.
 
 *   **In-Memory Cache Not Shared Across Serverless Instances**

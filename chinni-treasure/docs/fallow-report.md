@@ -1,3 +1,5 @@
+> **Generated:** ~June 20, 2026 | **Snapshot report** — reflects codebase state at that date. Metrics will drift as the codebase evolves.
+
 ## Fallow: 10 issues found
 
 ### Unused exports (8)

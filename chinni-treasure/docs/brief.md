@@ -1,5 +1,7 @@
 # Chinni Treasure — Little Love
 
+> **Last validated against codebase:** June 27, 2026 — All tokens, fonts, breakpoints, and component patterns confirmed current.
+
 ## Register
 
 This is a **hybrid** surface. The front-facing store (homepage, catalogue, order,
@@ -85,8 +87,9 @@ palette is the visual equivalent: precious, grounded, light.
 | `--font-script` | Pinyon Script | Decorative brand taglines, accents |
 | `--text-muted` | #707070 | Secondary labels, metadata |
 
-**Spacing** follows the 1-4-9 rhythm: 4px micro, 16px component gap, 36px+
-section break. No in-between values.
+**Spacing** targets a 1-4-9 rhythm: 4px micro, 16px component gap, 36px+
+section break. In practice, the stylesheet defines a broader utility set
+(4, 6, 8, 10, 12, 16, 18, 20, 24, 32, 36, 40px) for flexible layout needs.
 
 **Breakpoints**: 320px / 480px / 640px / 768px / 1024px / 1440px. Content
 pressure drives layout change, not device classes.

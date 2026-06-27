@@ -2424,7 +2424,7 @@ a {
 .bank-qr-label {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .bank-upi-link {
@@ -2434,6 +2434,7 @@ a {
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 

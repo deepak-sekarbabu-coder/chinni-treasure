@@ -142,6 +142,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
   total: number;
 }) {
   const [policyOpen, setPolicyOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const upiLink = buildUpiPaymentUrl("9499011029@ibl", "CHINNI TREASURE", total > 0 ? total : undefined);
   const upiFallbackUrl = "https://pay.google.com/about/upi/";
 
@@ -207,23 +208,41 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
           </div>
           <div className="bank-detail-row">
             <span className="bank-detail-label">UPI ID</span>
-            <a
-              href={upiLink}
+            <span
               className="bank-detail-value bank-upi-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => {
+              role="button"
+              tabIndex={0}
+              onClick={() => {
                 if (typeof window === "undefined") return;
-                const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
-                if (!isMobile) {
-                  event.preventDefault();
-                  window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
+                navigator.clipboard.writeText("9499011029@ibl").then(() => {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }).catch(() => {
+                  // Fallback: select the text
+                  const selection = window.getSelection();
+                  const range = document.createRange();
+                  const el = document.getElementById("upi-id-text");
+                  if (el) {
+                    range.selectNodeContents(el);
+                    selection?.removeAllRanges();
+                    selection?.addRange(range);
+                  }
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigator.clipboard.writeText("9499011029@ibl").then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  });
                 }
               }}
+              style={{ cursor: "pointer" }}
             >
-              9499011029@ibl
-              <span className="upi-open-hint">Tap to pay</span>
-            </a>
+              <span id="upi-id-text">9499011029@ibl</span>
+              <span className="upi-open-hint">{copied ? "Copied!" : "Tap to copy"}</span>
+            </span>
           </div>
           <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
           <div className="bank-qr-code">
@@ -240,8 +259,9 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
                     window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
                   }
                 }}
-                style={{ display: "inline-block", textDecoration: "none" }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none" }}
               >
+                <span className="bank-qr-label">Scan to pay ₹{total.toFixed(2)} via UPI</span>
                 <QRCodeCanvas
                   value={upiLink}
                   size={200}
@@ -250,7 +270,6 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
                   fgColor="#1A1A1A"
                   includeMargin
                 />
-                <span className="bank-qr-label">Scan to pay ₹{total.toFixed(2)} via UPI</span>
               </a>
             ) : (
               <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "40px 0" }}>
