@@ -4,7 +4,25 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 ---
 
-## 1. Project Overview
+## 1. Agent Tooling
+
+### Graphify (Knowledge Graph)
+
+`/graphify` builds a queryable knowledge graph from this codebase. Use it for:
+
+- **Cross-module questions**: "How does checkout interact with inventory?", "What's the data flow from cart to order?"
+- **Architecture exploration**: "Trace the order fulfillment path", "Which components use the Prisma client?"
+- **Relationship discovery**: "What connects admin panels to the tracking system?"
+
+**To reduce cost, avoid graphify for:**
+
+- Single-file lookups — use `Read`/`Grep` instead
+- Simple definitions — use `Grep` for class/function locations
+- The graph is cached in `graphify-out/` after first build; subsequent `/graphify query` calls cost near-zero tokens
+
+---
+
+## 2. Project Overview
 
 **Chinni Treasure — Little Love** is a high-end, artisan-crafted luxury goods e-commerce platform. It is built as a highly responsive Next.js application with robust server-side data persistence, dynamic cart state, and a secure administration workflow.
 
@@ -12,17 +30,18 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
 - **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Modular raw CSS with custom CSS variables (no TailwindCSS). The monolithic `app/globals.css` has been decomposed into 26 component-specific files under `app/styles/`, orchestrating via `@import` statements in the entry point.
+- **Styling:** Modular raw CSS with custom CSS variables (no TailwindCSS). The monolithic `app/globals.css` has been decomposed into 28 component-specific files under `app/styles/`, orchestrating via `@import` statements in the entry point.
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for persistent guest shopping carts; server-side cookie cart with Zod validation for SSR access
 - **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching and query key management
 - **Authentication:** JWT-based admin authorization stored in secure `HttpOnly` cookies (`session`)
-- **Charts:** Chart.js v4 for administrative analytics
 - **Validation:** Zod schemas for checkout, cart, and API input/output validation
+- **Charts:** Pure CSS bar charts (no Chart.js dependency) for administrative analytics
 - **Fonts:** Cormorant Garamond (serif), Albert Sans (sans-serif), and Pinyon Script (script) via `next/font`
+- **Utilities:** dayjs (dates), exceljs (export), jspdf (invoices), qrcode.react (UPI QR codes), sharp (image processing)
 
 ---
 
-## 2. Core Roles & Personas
+## 3. Core Roles & Personas
 
 ### A. The Customer (Guest)
 
@@ -39,7 +58,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 - **Objective:** Manage product catalog, monitor operations, and handle fulfillment.
 - **Capabilities:**
   - **Secure Login:** Access restricted pages via `/admin/login` (validated securely using server-side JWT and bcryptjs password hashes).
-  - **Interactive Analytics:** View revenue trends, sales distributions, and total orders on the dashboard powered by Chart.js.
+  - **Interactive Analytics:** View revenue trends, sales distributions, and total orders on the dashboard powered by pure CSS charts.
   - **Catalogue CRUD:** Create, read, update, and toggle status (`isActive`) of products and categories with mandatory validations.
   - **Order Operations:** Move orders through fulfillment states with notes:
 
@@ -53,7 +72,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 ---
 
-## 3. Architecture & Codebase Design
+## 4. Architecture & Codebase Design
 
 ### Database Schema (Prisma Models + Enums)
 
@@ -63,7 +82,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 - `ProductBadge`: `bestseller` | `new` | `premium` | `limited` | `luxury`
 - `AdminRole`: `admin` | `super_admin`
 
-**Models:**
+**Models (7):**
 
 1. **Category:** Supports active filtering, description, and display sorting order.
 2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, Category relation, and `images` relation to ProductImage.
@@ -71,7 +90,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 4. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
 5. **OrderItem:** Connects orders with products, recording historical unit prices.
 6. **OrderStatusHistory:** Logs every transition of order status for traceability.
-7. **Admin:** Tracks user credentials, email, hashed passwords, and role (admin/super_admin).
+7. **Admin:** Tracks user credentials, email, hashed passwords, role (admin/super_admin), and `lastLoginAt`.
 
 ### Core Logic & State Management
 
@@ -84,13 +103,13 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 ---
 
-## 4. Development Guidelines for AI Agents
+## 5. Development Guidelines for AI Agents
 
 To maintain the high-end luxury feel and rigorous code standards of this application, all modifications must adhere to these rules:
 
 1. **Design Integrity (Modular Raw CSS):**
    - Never introduce TailwindCSS or style frameworks.
-   - All styles are organized into modular files under `app/styles/`. **Never** add new CSS to `app/globals.css` — add styles to the appropriate component file. See the file structure in Section 5 for the full list.
+    - All styles are organized into modular files under `app/styles/`. **Never** add new CSS to `app/globals.css` — add styles to the appropriate component file. See the file structure in Section 6 for the full list.
    - CSS custom properties are defined in `app/styles/variables.css` to respect the curated color palette and typography pairs:
      - Serif Font (`--font-serif`): Cormorant Garamond for headings, brand voice, and prices.
      - Sans Font (`--font-sans`): Albert Sans for labels, body, inputs, and admin layout.
@@ -119,7 +138,7 @@ To maintain the high-end luxury feel and rigorous code standards of this applica
 
 ---
 
-## 5. File Structure Reference
+## 6. File Structure Reference
 
 ```text
 chinni-treasure/
@@ -130,7 +149,8 @@ chinni-treasure/
 │   │   ├── useAdminPageState.ts      # Admin page state management hook
 │   │   ├── error.tsx                 # Admin error boundary
 │   │   ├── loading.tsx               # Admin loading state
-│   │   └── not-found.tsx             # Admin 404
+│   │   ├── not-found.tsx             # Admin 404
+│   │   └── layout.tsx                # Admin layout (metadata, no-index)
 │   ├── api/                          # Server-side API handlers
 │   │   ├── auth/
 │   │   │   ├── login/route.ts        # Admin login (rate-limited)
@@ -154,7 +174,7 @@ chinni-treasure/
 │   ├── docs/                         # Swagger UI API docs viewer
 │   ├── order/                        # Multi-step checkout
 │   ├── track/                        # Order tracking portal
-│   ├── styles/                       # Decomposed modular CSS files (27 files)
+│   ├── styles/                       # Decomposed modular CSS files (28 files)
 │   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
 │   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
 │   │   ├── keyframes.css             # All @keyframes animations
@@ -178,11 +198,12 @@ chinni-treasure/
 │   │   ├── admin.css                 # All admin styles (stats, charts, tables, login)
 │   │   ├── error.css                 # Error / Not Found / Loading pages
 │   │   ├── docs.css                  # API docs page + Swagger UI overrides
+│   │   ├── breadcrumbs.css           # Breadcrumb navigation component
 │   │   ├── loading.css               # Loading spinners, skeletons, shimmer
 │   │   ├── utility.css               # Utility classes (flex, spacing, text helpers)
 │   │   ├── responsive.css            # Shared responsive breakpoints
 │   │   └── accessibility.css         # prefers-reduced-motion, contrast, print
-│   ├── globals.css                   # Entry point — 48 lines of @import statements importing styles/
+│   ├── globals.css                   # Entry point — 52 lines of @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (fonts, providers, nav, footer)
 │   ├── sitemap.ts                    # Dynamic sitemap generation
 │   ├── error.tsx                     # Root error boundary
@@ -190,8 +211,9 @@ chinni-treasure/
 │   ├── not-found.tsx                 # Root 404
 │   └── page.tsx                      # Homepage server component
 ├── prisma/
-│   ├── schema.prisma                 # Database schema (6 models + 3 enums)
-│   ├── seed.ts                       # Database seeder (6 products, 4 categories, admin)
+│   ├── schema.prisma                 # Database schema (7 models + 3 enums)
+│   ├── seed.ts                       # Database seeder
+│   ├── seed-data.ts                  # Seed product/category data definitions
 │   └── migrations/                   # Migration history
 ├── scripts/
 │   └── export-to-excel.ts            # Excel export utility
@@ -199,7 +221,7 @@ chinni-treasure/
 │   ├── components/
 │   │   ├── admin/
 │   │   │   ├── AdminCataloguePanel.tsx   # Product CRUD form + table
-│   │   │   ├── AdminChartsSection.tsx    # Revenue & sales charts (Chart.js)
+│   │   │   ├── AdminChartsSection.tsx    # Revenue & sales charts (pure CSS)
 │   │   │   ├── AdminDeleteConfirm.tsx    # Delete confirmation modal
 │   │   │   ├── AdminHeader.tsx           # Admin header with export/logout
 │   │   │   ├── AdminOrdersPanel.tsx      # Orders table with filters
@@ -209,9 +231,9 @@ chinni-treasure/
 │   │   ├── cart/CartProvider.tsx          # Cart context + localStorage + cookie sync
 │   │   ├── layout/
 │   │   │   ├── Footer.tsx                # Site footer with 4-column grid
+│   │   │   ├── FooterClientWrapper.tsx   # Client footer (returns policy trigger)
 │   │   │   ├── Navbar.tsx                # Fixed navbar with cart dropdown and mobile menu
-│   │   │   ├── NavCartDropdown.tsx        # Cart dropdown in navbar
-│   │   │   └── PageTransition.tsx        # Page transition wrapper
+│   │   │   └── NavCartDropdown.tsx        # Cart dropdown in navbar
 │   │   ├── order/
 │   │   │   ├── CheckoutProgress.tsx      # Multi-step progress indicator
 │   │   │   ├── ConfirmationDetails.tsx   # Order confirmation with invoice PDF
@@ -222,14 +244,16 @@ chinni-treasure/
 │   │   ├── pages/
 │   │   │   ├── home-content.tsx          # Client homepage hero & features
 │   │   │   ├── catalogue-content.tsx     # Client catalogue with cart interactions
-│   │   │   └── ProductDetailsContent.tsx  # Client product details page with image gallery
+│   │   │   └── ProductDetailsContent.tsx # Client product details page with image gallery
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx         # React Query provider
 │   │   └── ui/
 │   │       ├── AdminStatCard.tsx          # Dashboard stat display card
+│   │       ├── Breadcrumbs.tsx            # Breadcrumb navigation component
+│   │       ├── JsonLd.tsx                # JSON-LD structured data injection
 │   │       ├── LoadingSpinner.tsx         # Loading indicator (full-page or inline)
-│   │   ├── ProductCard.tsx            # Product grid card with add-to-cart, links to product details
-│   │   ├── ProductImageGallery.tsx    # Image gallery with thumbnails and carousel navigation
+│   │       ├── ProductCard.tsx            # Product grid card with add-to-cart
+│   │       ├── ProductImageGallery.tsx    # Image gallery with thumbnails and carousel
 │   │       ├── ReturnsPolicyModal.tsx     # Returns policy modal
 │   │       ├── SectionHeader.tsx          # Section heading component
 │   │       ├── StatusBadge.tsx            # Order status badge (color-coded)
@@ -261,20 +285,18 @@ chinni-treasure/
 │   │   ├── query-keys.ts             # React Query key factory
 │   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts)
 │   │   ├── sanitize.ts               # XSS sanitization via isomorphic-dompurify
+│   │   ├── upi.ts                    # UPI payment URL builder (NPCI v1.6)
 │   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
 │   │   └── utils.ts                  # API error extraction utility
-│   ├── test/                         # Test setup and utilities
-│   │   ├── mocks/                    # Prisma mock implementations
-│   │   ├── setup.ts                  # Vitest global setup
-│   │   └── utils/                    # Test helper utilities
 │   ├── types/
 │   │   ├── cart.ts                   # CartItem interface
 │   │   └── index.ts                  # Re-exports
 │   └── __tests__/
+│       ├── setup.ts                  # Vitest global setup
 │       ├── api/                      # API route handler tests (10 files)
 │       ├── lib/                      # Lib module tests (12 files)
-│       ├── mocks/                    # Shared mock implementations
-│       └── utils/                    # Test utilities
+│       ├── mocks/                    # Shared mock implementations (prisma.ts)
+│       └── utils/                    # Test utilities (api-test.ts)
 ├── proxy.ts                          # Next.js middleware (JWT admin protection)
 ├── prisma.config.ts                  # Prisma defineConfig
 ├── vitest.config.ts                  # Vitest test configuration
@@ -283,7 +305,7 @@ chinni-treasure/
 
 ---
 
-## 6. Common Developer Workflows
+## 7. Common Developer Workflows
 
 Use the following commands during development and maintenance:
 
@@ -293,6 +315,8 @@ Use the following commands during development and maintenance:
 | `npm run build` | Generate Prisma client, validate TypeScript, build for production |
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint across the project |
+| `npm run lint:fix` | Run ESLint with auto-fix |
+| `npm run format` | Format code with ESLint fix |
 | `npm run typecheck` | Validate type safety (`tsc --noEmit`) |
 | `npm test` | Run tests in watch mode |
 | `npm run test:run` | Run tests once |
@@ -301,4 +325,4 @@ Use the following commands during development and maintenance:
 | `npm run prisma:generate` | Generate the Prisma client |
 | `npm run prisma:push` | Push the Prisma schema to the database |
 | `npm run prisma:seed` | Seed the database |
-| `npx prisma studio` | Open Prisma GUI client to view local database state |
+| `npm run prisma:studio` | Open Prisma GUI client to view local database state |

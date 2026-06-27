@@ -1,0 +1,1 @@
+{"nodes": [{"id": "api_docs_route", "label": "GET /api/docs", "file_type": "code", "source_file": "app/api/docs/route.ts"}], "edges": [{"source": "api_docs_route", "target": "src_lib_openapi_spec", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "app/api/docs/route.ts"}], "hyperedges": []}

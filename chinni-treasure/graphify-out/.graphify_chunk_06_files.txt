@@ -1,0 +1,3 @@
+C:\Projects\website\chinni-treasure\public\placeholder.svg
+C:\Projects\website\chinni-treasure\public\vercel.svg
+C:\Projects\website\chinni-treasure\public\window.svg

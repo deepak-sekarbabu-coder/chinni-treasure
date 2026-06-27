@@ -1,0 +1,1 @@
+{"nodes": [{"id": "api_orders_id_route", "label": "GET /api/orders/[id]", "file_type": "code", "source_file": "app/api/orders/[id]/route.ts"}], "edges": [{"source": "api_orders_id_route", "target": "src_lib_prisma", "relation": "calls", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "app/api/orders/[id]/route.ts"}], "hyperedges": []}
