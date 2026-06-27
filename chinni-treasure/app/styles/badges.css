@@ -1,0 +1,73 @@
+/* ===== STATUS BADGE ===== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 2px;
+}
+
+.status-badge.pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning);
+}
+
+.status-badge.approved {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--success);
+}
+
+.status-badge.packaging {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+.status-badge.shipped {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+}
+
+.status-badge.delivered {
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--success);
+}
+
+.status-badge.rejected {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--error);
+}
+
+/* ===== STOCK BADGE ===== */
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 2px;
+}
+
+.stock-badge.in-stock {
+    color: var(--success);
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.stock-badge.low {
+    color: var(--warning);
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.stock-badge.empty {
+    color: var(--error);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* ── Badge size utility ── */
+.badge-tiny {
+    font-size: 0.6rem;
+}

@@ -1,0 +1,39 @@
+/* ===== DESIGN TOKENS ===== */
+
+:root {
+    --gold: #d4af37;
+    --gold-light: #f0d68a;
+    --gold-dark: #b8960f;
+    --black: #0d0d0d;
+    --near-black: #1a1a1a;
+    --dark-gray: #2a2a2a;
+    --charcoal: #3a3a3a;
+    --cream: #f5f0e8;
+    --cream-light: #faf7f2;
+    --white: #ffffff;
+    --text-light: #a0a0a0;
+    --text-muted: #6d6d6d;
+    --success: #2ecc71;
+    --error: #e74c3c;
+    --warning: #f39c12;
+
+    --font-serif: "Cormorant Garamond", Georgia, serif;
+    --font-sans: "Albert Sans", -apple-system, sans-serif;
+    --font-script: "Pinyon Script", cursive;
+
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.15);
+    --shadow-gold: 0 4px 24px rgba(212, 175, 55, 0.15);
+
+    --premium-lift: translateY(-2px);
+    --premium-press: translateY(1px) scale(0.985);
+    --motion-smooth: 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-snappy: 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}

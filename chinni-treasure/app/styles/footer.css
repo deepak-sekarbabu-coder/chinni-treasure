@@ -1,0 +1,112 @@
+/* ===== FOOTER ===== */
+.footer {
+    background: var(--black);
+    padding: 60px 24px 32px;
+    margin-top: 0;
+}
+
+.footer-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+}
+
+.footer-brand h3 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--gold);
+    margin-bottom: 2px;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 12px rgba(212, 175, 55, 0.08), 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.footer-brand p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    line-height: 1.7;
+}
+
+/* Script font for the Little Love brand tagline */
+.brand-tagline {
+    font-family: var(--font-script);
+    font-size: 0.9em;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+/* Make Little Love text in footer visible */
+.footer .little-love-text {
+    color: var(--gold-light);
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+    display: inline-block;
+}
+
+.footer h4 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cream);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.footer ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer ul li a {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+
+.footer ul li a:hover {
+    color: var(--gold);
+}
+
+.contact-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 32px;
+}
+
+.contact-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.6;
+}
+
+.contact-icon path,
+.contact-icon rect,
+.contact-icon circle {
+    vector-effect: non-scaling-stroke;
+}
+
+.footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-light);
+}

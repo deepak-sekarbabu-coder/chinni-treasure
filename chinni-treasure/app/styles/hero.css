@@ -1,0 +1,169 @@
+/* ===== HERO ===== */
+.hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 720px) minmax(280px, 420px);
+    justify-content: center;
+    align-items: center;
+    gap: clamp(32px, 5vw, 96px);
+    padding: 108px 24px 90px;
+    text-align: center;
+    position: relative;
+    background: var(--black);
+}
+
+.hero-pattern {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 600px 400px at 50% 30%, rgba(212, 175, 55, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 300px at 80% 70%, rgba(212, 175, 55, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    max-width: 700px;
+    width: 100%;
+    z-index: 1;
+    padding-top: 80px;
+    padding-bottom: 100px;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 24px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: var(--gold);
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    background: rgba(245, 240, 232, 0.06);
+    backdrop-filter: blur(6px);
+}
+
+.hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 5vw, 4.2rem);
+    line-height: 1.07;
+    color: var(--cream);
+    margin-bottom: 24px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 16px rgba(212, 175, 55, 0.06), 0 4px 32px rgba(0, 0, 0, 0.2);
+}
+
+.hero h1 .highlight {
+    color: var(--gold);
+}
+
+.hero p {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 40px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.hero-scroll {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.scroll-line {
+    padding-top: 40px;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollDown 2s ease-in-out infinite;
+}
+
+/* ── Hero Trust Badges ── */
+.hero-trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 30px;
+    justify-content: center;
+}
+
+.hero-trust span {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    font-size: 0.62rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    color: rgba(245, 240, 232, 0.92);
+    background: rgba(245, 240, 232, 0.04);
+}
+
+/* ── Hero Story Card ── */
+.hero-story-card {
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.35);
+    padding: 26px;
+}
+
+.hero-story-label {
+    font-size: 0.62rem;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    margin-bottom: 10px;
+}
+
+.hero-story-card h3 {
+    font-family: var(--font-serif);
+    color: var(--cream);
+    font-size: 1.45rem;
+    line-height: 1.2;
+    margin-bottom: 10px;
+}
+
+.hero-story-card p {
+    color: rgba(245, 240, 232, 0.8);
+    font-size: 0.86rem;
+    margin-bottom: 18px;
+}
+
+.hero-story-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.hero-story-stats strong {
+    font-family: var(--font-serif);
+    color: var(--gold);
+    font-size: 1.1rem;
+}
+
+.hero-story-stats span {
+    display: block;
+    color: rgba(245, 240, 232, 0.7);
+    font-size: 0.65rem;
+    letter-spacing: 0.6px;
+}

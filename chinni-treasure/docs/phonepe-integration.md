@@ -1287,7 +1287,7 @@ async function handlePayWithPhonePe() {
 
 ### 9.2 Add CSS for Payment Options
 
-Add to `app/globals.css`:
+Add to `app/styles/checkout.css`:
 
 ```css
 /* Payment Option Card */
@@ -1819,7 +1819,7 @@ Decoded `response` value:
 | `src/lib/api/schemas.ts` | Add PhonePe-related Zod schemas |
 | `src/components/order/ConfirmationDetails.tsx` | Show payment status |
 | `src/components/admin/AdminOrdersPanel.tsx` | Add payment status column |
-| `app/globals.css` | Add payment processing page styles |
+| `app/styles/order.css` | Add payment processing page styles |
 | `package.json` | Add reconciliation script entry |
 
 ---

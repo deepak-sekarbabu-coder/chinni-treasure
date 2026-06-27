@@ -6,7 +6,7 @@
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
 - **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Raw CSS with CSS Variables (no Tailwind)
+- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into 26 component-specific files under `app/styles/`, orchestrating via `@import` statements in the entry point.
 - **Authentication:** JWT-based admin auth (stored in httpOnly `session` cookie)
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
 - **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching
@@ -80,6 +80,7 @@ npm run setup
 ```
 
 This will:
+
 - Generate the Prisma client
 - Push the schema to your PostgreSQL database
 - Seed the database with sample data
@@ -99,6 +100,7 @@ npm run prisma:seed
 ```
 
 The seed script creates:
+
 - **4 categories** (Accessories, Apparel, Watches, Home)
 - **6 artisan products** (Leather Wallet, Silk Scarf, Handcrafted Timepiece, Crystal Perfume Bottle, Italian Leather Belt, Cashmere Throw Blanket) with pricing and stock
 - **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
@@ -182,7 +184,34 @@ chinni-treasure/
 │   ├── loading.tsx                   # Root loading state
 │   ├── not-found.tsx                 # Root 404
 │   ├── sitemap.ts                    # Dynamic sitemap generation
-│   ├── globals.css                   # Global styles and design system (~5300 lines)
+│   ├── styles/                       # Decomposed modular CSS files (26 files)
+│   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
+│   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
+│   │   ├── keyframes.css             # All @keyframes animations
+│   │   ├── buttons.css               # Button system (base + premium + responsive)
+│   │   ├── forms.css                 # Form elements, inputs, validation
+│   │   ├── badges.css                # Status badges + stock badges
+│   │   ├── toast.css                 # Toast notification system
+│   │   ├── tooltip.css               # Tooltip component
+│   │   ├── section.css               # Section headers
+│   │   ├── navbar.css                # Navbar, cart dropdown, hamburger menu
+│   │   ├── footer.css                # Footer grid layout
+│   │   ├── modal.css                 # Modal system + timeline + items table
+│   │   ├── hero.css                  # Hero section with premium refresh overrides
+│   │   ├── products.css              # Products grid + product cards
+│   │   ├── features.css              # Features section
+│   │   ├── track.css                 # Track order page
+│   │   ├── checkout.css              # Checkout progress + sticky bar
+│   │   ├── order.css                 # Order page + summary sidebar + bank details
+│   │   ├── confirmation.css          # Order confirmation page
+│   │   ├── admin.css                 # All admin styles (stats, charts, tables, login)
+│   │   ├── error.css                 # Error / Not Found / Loading pages
+│   │   ├── docs.css                  # API docs page + Swagger UI overrides
+│   │   ├── loading.css               # Loading spinners, skeletons, shimmer
+│   │   ├── utility.css               # Utility classes (flex, spacing, text helpers)
+│   │   ├── responsive.css            # Shared responsive breakpoints
+│   │   └── accessibility.css         # prefers-reduced-motion, contrast, print
+│   ├── globals.css                   # Entry point — 48 lines of @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (Navbar, Footer, Providers, fonts)
 │   └── page.tsx                      # Homepage (server component)
 ├── prisma/
@@ -365,6 +394,7 @@ Or, if you don't have the Vercel CLI installed:
 1. Go to **Vercel Dashboard → Your Project → Storage → your-database → Quickstart**
 2. Copy the full `DATABASE_URL` from there
 3. Run locally:
+
    ```bash
    DATABASE_URL="paste-the-url-here" npx prisma migrate deploy
    ```
@@ -442,7 +472,6 @@ rejected (stock restored)
 
 ---
 
-
 ## Middleware (Admin Route Protection)
 
 The file `proxy.ts` acts as Next.js middleware, protecting all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
@@ -460,6 +489,7 @@ npm run test:coverage # With coverage report
 ```
 
 **Test locations:**
+
 - `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, UI)
 - `src/lib/hooks/__tests__/` — Custom hook tests
 - `src/__tests__/api/` — API route handler tests (10 files)

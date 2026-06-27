@@ -1,0 +1,77 @@
+/* ===== TRACK PAGE ===== */
+.order-hero {
+    background: var(--black);
+    text-align: center;
+    padding: 80px 24px;
+}
+
+.order-hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--cream);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 16px rgba(212, 175, 55, 0.06), 0 4px 32px rgba(0, 0, 0, 0.2);
+}
+
+.order-hero p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.track-toggle {
+    display: flex;
+    background: var(--cream-light);
+    border: 1px solid #e0d8cc;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.track-radio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.track-radio input {
+    display: none;
+}
+
+.track-radio.active {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.track-radio:not(.active):hover {
+    background: rgba(212, 175, 55, 0.06);
+}
+
+.track-radio-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.track-radio.active .track-radio-indicator::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--black);
+}

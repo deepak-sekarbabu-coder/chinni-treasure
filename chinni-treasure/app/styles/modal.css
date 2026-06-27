@@ -1,0 +1,393 @@
+/* ===== MODAL ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    position: relative;
+    background: var(--white);
+    border-radius: 8px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+    animation: modalIn 0.3s ease-out;
+}
+
+.modal-header {
+    padding: 32px 36px 24px;
+    border-bottom: 1px solid var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    z-index: 1;
+}
+
+.modal-header h2 {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    color: var(--near-black);
+    letter-spacing: 0.01em;
+}
+
+.modal-close {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--cream-light);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-close:active {
+    transform: scale(0.92);
+}
+
+.modal-close:hover {
+    background: var(--error);
+    color: var(--white);
+}
+
+.modal-body {
+    padding: 24px 36px 36px;
+}
+
+.modal-section {
+    margin-bottom: 28px;
+}
+
+.modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-section h3 {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--near-black);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-section h3 .section-icon {
+    color: var(--gold-dark);
+    font-size: 0.9rem;
+}
+
+/* ── Modal widths ── */
+.modal-content-sm {
+    max-width: 480px;
+}
+
+.modal-content-md {
+    max-width: 520px;
+}
+
+/* ── Modal info grid ── */
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.modal-info-item {
+    padding: 10px 14px;
+    background: var(--cream-light);
+    border-radius: 4px;
+}
+
+.modal-info-item .label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.modal-info-item .value {
+    font-size: 0.9rem;
+    color: var(--near-black);
+    font-weight: 500;
+}
+
+/* ── Modal input ── */
+.modal-input {
+    background: var(--cream-light);
+}
+
+/* ── Modal actions ── */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+/* ── Returns Policy Modal ── */
+.returns-policy-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.returns-policy-rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    background: var(--cream-light);
+    border-radius: 6px;
+    border-left: 3px solid var(--gold);
+}
+
+.returns-policy-rule strong {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    color: var(--near-black);
+    margin-bottom: 4px;
+}
+
+.returns-policy-rule p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.returns-policy-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--white);
+    border-radius: 50%;
+    font-size: 0.8rem;
+    color: var(--gold-dark);
+    font-weight: 700;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    margin-top: 2px;
+}
+
+/* ===== TIMELINE ===== */
+.modal-timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 16px 0;
+}
+
+.timeline-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.timeline-step .timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e0d8cc;
+    margin: 0 auto 8px;
+    position: relative;
+    z-index: 1;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timeline-step.completed .timeline-dot {
+    background: var(--success);
+}
+
+.timeline-step.active .timeline-dot {
+    background: var(--warning);
+    box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.2);
+    animation: timelinePulse 2s ease-in-out infinite;
+}
+
+.timeline-step .timeline-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.timeline-step.completed .timeline-label,
+.timeline-step.active .timeline-label {
+    color: var(--near-black);
+}
+
+.timeline-step::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e0d8cc;
+    z-index: 0;
+    transition: background 0.3s ease;
+}
+
+.timeline-step:last-child::after {
+    display: none;
+}
+
+.timeline-step.completed::after {
+    background: var(--success);
+}
+
+/* ===== MODAL ITEMS TABLE ===== */
+.modal-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+}
+
+.modal-items-table th {
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--cream);
+    text-align: left;
+    font-weight: 600;
+}
+
+.modal-items-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--cream);
+    color: var(--near-black);
+}
+
+.modal-items-table tbody tr:hover {
+    background: var(--cream-light);
+}
+
+.modal-totals {
+    padding: 12px 0;
+}
+
+.modal-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: var(--near-black);
+}
+
+.modal-total-row.grand {
+    border-top: 2px solid var(--cream);
+    margin-top: 6px;
+    padding-top: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-serif);
+    color: var(--gold-dark);
+}
+
+/* ── Delete confirm box (Admin) ── */
+.delete-warning {
+    color: var(--text-muted);
+}
+
+.delete-box {
+    background: var(--cream-light);
+    border: 1px solid rgba(231, 76, 60, 0.25);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+}
+
+.delete-label {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.delete-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--near-black);
+}
+
+/* ── Modal loading overlay ── */
+.modal-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-loading-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(212, 175, 55, 0.1);
+    border-top-color: var(--gold-dark);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+.modal-loading-text {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    color: var(--near-black);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}

@@ -3,12 +3,14 @@
 This document serves as the primary source of truth for architecture, conventions, and workflows within the Chinni Treasure codebase. Adhere to these instructions strictly.
 
 ## 1. Project Overview
+
 Chinni Treasure is a hybrid e-commerce platform for artisan luxury goods. It features a high-emotion, brand-focused customer storefront and a high-efficiency, product-focused admin dashboard.
 
 - **Stack:** Next.js (App Router), TypeScript, Prisma (PostgreSQL), React 19.
-- **Design:** Custom Vanilla CSS (no Tailwind), focusing on warmth, gold accents, and a serif/sans-serif typographic hierarchy.
+- **Design:** Custom Vanilla CSS (no Tailwind), decomposed into 26 modular files under `app/styles/`, focusing on warmth, gold accents, and a serif/sans-serif typographic hierarchy.
 
 ## 2. Tech Stack & Environment
+
 - **Node.js:** v24.x (LTS)
 - **Database:** PostgreSQL (via Prisma with `@prisma/adapter-pg`)
 - **Package Manager:** npm
@@ -35,6 +37,7 @@ Chinni Treasure is a hybrid e-commerce platform for artisan luxury goods. It fea
 ## 4. Core Workflows
 
 ### 4.1 Database Management (Prisma)
+
 - **Schema Changes:** Modify `prisma/schema.prisma`.
 - **Syncing:** Use `npm run prisma:push` for local development. Use `npx prisma migrate dev` if formal migrations are required for production-like environments.
 - **Generation:** Always run `npm run prisma:generate` after schema changes.
@@ -42,6 +45,7 @@ Chinni Treasure is a hybrid e-commerce platform for artisan luxury goods. It fea
 - **Full Reset:** `npm run setup` runs generate, push, and seed in sequence.
 
 ### 4.2 Development & Build
+
 - **Dev:** `npm run dev` (Starts Next.js on port 3000).
 - **Type Checking:** `npm run typecheck` (Runs `tsc --noEmit`).
 - **Linting:** `npm run lint` (ESLint).
@@ -50,6 +54,7 @@ Chinni Treasure is a hybrid e-commerce platform for artisan luxury goods. It fea
 ## 5. Architecture & Conventions
 
 ### 5.1 Directory Structure
+
 ```
 chinni-treasure/
 ├── app/                              # Next.js App Router pages & API
@@ -82,7 +87,34 @@ chinni-treasure/
 │   ├── docs/                         # API documentation viewer (hand-rolled OpenAPI renderer)
 │   ├── order/                        # Multi-step checkout with delivery form
 │   ├── track/                        # Order tracking portal
-│   ├── globals.css                   # ~5300 lines of design system + responsive styles
+│   ├── styles/                       # Decomposed modular CSS files (26 files)
+│   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
+│   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
+│   │   ├── keyframes.css             # All @keyframes animations
+│   │   ├── buttons.css               # Button system (base + premium + responsive)
+│   │   ├── forms.css                 # Form elements, inputs, validation
+│   │   ├── badges.css                # Status badges + stock badges
+│   │   ├── toast.css                 # Toast notification system
+│   │   ├── tooltip.css               # Tooltip component
+│   │   ├── section.css               # Section headers
+│   │   ├── navbar.css                # Navbar, cart dropdown, hamburger menu
+│   │   ├── footer.css                # Footer grid layout
+│   │   ├── modal.css                 # Modal system + timeline + items table
+│   │   ├── hero.css                  # Hero section with premium refresh overrides
+│   │   ├── products.css              # Products grid + product cards
+│   │   ├── features.css              # Features section
+│   │   ├── track.css                 # Track order page
+│   │   ├── checkout.css              # Checkout progress + sticky bar
+│   │   ├── order.css                 # Order page + summary sidebar + bank details
+│   │   ├── confirmation.css          # Order confirmation page
+│   │   ├── admin.css                 # All admin styles (stats, charts, tables, login)
+│   │   ├── error.css                 # Error / Not Found / Loading pages
+│   │   ├── docs.css                  # API docs page + Swagger UI overrides
+│   │   ├── loading.css               # Loading spinners, skeletons, shimmer
+│   │   ├── utility.css               # Utility classes (flex, spacing, text helpers)
+│   │   ├── responsive.css            # Shared responsive breakpoints
+│   │   └── accessibility.css         # prefers-reduced-motion, contrast, print
+│   ├── globals.css                   # Entry point — 48 lines of @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (fonts, providers, nav, footer)
 │   ├── sitemap.ts                    # Dynamic sitemap generation
 │   ├── error.tsx                     # Root error boundary
@@ -181,6 +213,7 @@ chinni-treasure/
 ```
 
 ### 5.2 Coding Standards
+
 - **Component Patterns:** Prefer functional components with explicit interfaces for props.
 - **State Management:** Use React Context (`CartProvider`) for global UI state; React Query for server state; server components for initial data fetching.
 - **Data Fetching:** Server Components for initial data; React Query for client-side data management with proper query key management (`src/lib/query-keys.ts`).
@@ -190,6 +223,7 @@ chinni-treasure/
 ## 6. Design & UI Standards (from brief.md)
 
 ### 6.1 Color Palette
+
 | Token | Value | Role |
 |---|---|---|
 | `--gold` | `#d4af37` | Primary accent, CTAs, brand markers |
@@ -202,6 +236,7 @@ chinni-treasure/
 | `--text-muted` | `#707070` | Secondary labels, metadata |
 
 ### 6.2 Typography
+
 - **Headings/Prices:** `Cormorant Garamond` (Serif) via `--font-serif`.
 - **Body/Admin/Buttons:** `Albert Sans` (Sans-serif) via `--font-sans`.
 - **Decorative Taglines:** `Pinyon Script` (Script) via `--font-script`.
@@ -209,6 +244,7 @@ chinni-treasure/
 Fonts are loaded via `next/font/google` in `app/layout.tsx` and applied as CSS variables on the `<html>` element.
 
 ### 6.3 Principles
+
 - **Warmth over sterile polish:** Use texture and warm colors.
 - **One job per screen:** Maintain clear focus in UI layout.
 - **Physicality:** Evoke "warm brass" and "polished wood" through visual depth.
@@ -243,6 +279,7 @@ npm run test:coverage # With coverage report
 ```
 
 **Test locations:**
+
 - `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, UI)
 - `src/lib/hooks/__tests__/` — Custom hook tests
 - `src/__tests__/api/` — API route handler tests (10 files)
@@ -250,6 +287,7 @@ npm run test:coverage # With coverage report
 - `src/test/` — Test setup, mocks, and utility helpers
 
 **Coverage includes:**
+
 - Auth (JWT, bcrypt, sessions)
 - Cart (localStorage, cookie sync)
 - All UI components (ProductCard, StockBadge, StatusBadge, etc.)
@@ -258,6 +296,7 @@ npm run test:coverage # With coverage report
 - Custom hooks (useAdminCatalogueController, useAdminOrdersController, useAdminSession, useAdminHeaderActions)
 
 ## 9. Agent Instructions
+
 - **Tooling:** Use `npx prisma` for database tasks. Use `npm run` scripts defined in `package.json`.
 - **Windows Compatibility:** The OS is win32. Use forward slashes (`/`) in imports/code. For terminal commands, use bash-compatible syntax (the shell is bash).
 - **Testing:** Tests live in `__tests__/` dirs alongside modules and in `src/__tests__/api/`. Run `npm run test:run` for CI-style single run.

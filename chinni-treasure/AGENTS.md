@@ -9,9 +9,10 @@ This document outlines the architecture, roles, operational guidelines, and memo
 **Chinni Treasure — Little Love** is a high-end, artisan-crafted luxury goods e-commerce platform. It is built as a highly responsive Next.js application with robust server-side data persistence, dynamic cart state, and a secure administration workflow.
 
 ### Technical Stack
+
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
 - **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Raw CSS with custom CSS variables (no TailwindCSS)
+- **Styling:** Modular raw CSS with custom CSS variables (no TailwindCSS). The monolithic `app/globals.css` has been decomposed into 26 component-specific files under `app/styles/`, orchestrating via `@import` statements in the entry point.
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for persistent guest shopping carts; server-side cookie cart with Zod validation for SSR access
 - **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching and query key management
 - **Authentication:** JWT-based admin authorization stored in secure `HttpOnly` cookies (`session`)
@@ -24,6 +25,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 ## 2. Core Roles & Personas
 
 ### A. The Customer (Guest)
+
 - **Objective:** Discover heritage products, manage their cart, and securely place orders.
 - **Capabilities:**
   - Browse artisan catalogue featuring dynamic stock badges (e.g., *In Stock*, *Low Stock*, *Out of Stock*).
@@ -33,17 +35,20 @@ This document outlines the architecture, roles, operational guidelines, and memo
   - View full, historical order timelines in a premium, elegant interface.
 
 ### B. The Administrator
+
 - **Objective:** Manage product catalog, monitor operations, and handle fulfillment.
 - **Capabilities:**
   - **Secure Login:** Access restricted pages via `/admin/login` (validated securely using server-side JWT and bcryptjs password hashes).
   - **Interactive Analytics:** View revenue trends, sales distributions, and total orders on the dashboard powered by Chart.js.
   - **Catalogue CRUD:** Create, read, update, and toggle status (`isActive`) of products and categories with mandatory validations.
   - **Order Operations:** Move orders through fulfillment states with notes:
+
     ```
     pending → approved → packaging → shipped → delivered
        ↓
     rejected (restores stock)
     ```
+
   - **Fulfillment Constraints:** Entering a **Tracking ID** is strictly mandatory when transitioning an order from `packaging` to `shipped`.
 
 ---
@@ -53,11 +58,13 @@ This document outlines the architecture, roles, operational guidelines, and memo
 ### Database Schema (Prisma Models + Enums)
 
 **Enums:**
+
 - `OrderStatus`: `pending` | `approved` | `packaging` | `shipped` | `delivered` | `rejected`
 - `ProductBadge`: `bestseller` | `new` | `premium` | `limited` | `luxury`
 - `AdminRole`: `admin` | `super_admin`
 
 **Models:**
+
 1. **Category:** Supports active filtering, description, and display sorting order.
 2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, and Category relation.
 3. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
@@ -66,6 +73,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 6. **Admin:** Tracks user credentials, email, hashed passwords, and role (admin/super_admin).
 
 ### Core Logic & State Management
+
 - **Cart Context:** Managed via `CartProvider.tsx` (`src/components/cart/`). It reads/writes to `localStorage` key `luxe_cart` on the client, and restricts quantities to active product stock levels.
 - **Server Cart Cookie:** `cart-cookie.ts` (`src/lib/`) provides server-side cart access via Zod-validated cookies, enabling SSR cart hydration.
 - **Inventory Sync:** Stock is deducted server-side within a **serializable transaction** when an order is finalized, and seamlessly restored to the inventory pool if the administrator sets the status to `rejected`. A `stock_quantity >= 0` database constraint prevents overselling.
@@ -79,9 +87,10 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 To maintain the high-end luxury feel and rigorous code standards of this application, all modifications must adhere to these rules:
 
-1. **Design Integrity (Raw CSS):** 
+1. **Design Integrity (Modular Raw CSS):**
    - Never introduce TailwindCSS or style frameworks.
-   - Use CSS custom properties in `app/globals.css` to respect the curated color palette and typography pairs:
+   - All styles are organized into modular files under `app/styles/`. **Never** add new CSS to `app/globals.css` — add styles to the appropriate component file. See the file structure in Section 5 for the full list.
+   - CSS custom properties are defined in `app/styles/variables.css` to respect the curated color palette and typography pairs:
      - Serif Font (`--font-serif`): Cormorant Garamond for headings, brand voice, and prices.
      - Sans Font (`--font-sans`): Albert Sans for labels, body, inputs, and admin layout.
      - Script Font (`--font-script`): Pinyon Script for decorative brand taglines.
@@ -143,7 +152,34 @@ chinni-treasure/
 │   ├── docs/                         # Swagger UI API docs viewer
 │   ├── order/                        # Multi-step checkout
 │   ├── track/                        # Order tracking portal
-│   ├── globals.css                   # ~5300 lines of design system + responsive styles
+│   ├── styles/                       # Decomposed modular CSS files (26 files)
+│   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
+│   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
+│   │   ├── keyframes.css             # All @keyframes animations
+│   │   ├── buttons.css               # Button system (base + premium + responsive)
+│   │   ├── forms.css                 # Form elements, inputs, validation
+│   │   ├── badges.css                # Status badges + stock badges
+│   │   ├── toast.css                 # Toast notification system
+│   │   ├── tooltip.css               # Tooltip component
+│   │   ├── section.css               # Section headers
+│   │   ├── navbar.css                # Navbar, cart dropdown, hamburger menu
+│   │   ├── footer.css                # Footer grid layout
+│   │   ├── modal.css                 # Modal system + timeline + items table
+│   │   ├── hero.css                  # Hero section with premium refresh overrides
+│   │   ├── products.css              # Products grid + product cards
+│   │   ├── features.css              # Features section
+│   │   ├── track.css                 # Track order page
+│   │   ├── checkout.css              # Checkout progress + sticky bar
+│   │   ├── order.css                 # Order page + summary sidebar + bank details
+│   │   ├── confirmation.css          # Order confirmation page
+│   │   ├── admin.css                 # All admin styles (stats, charts, tables, login)
+│   │   ├── error.css                 # Error / Not Found / Loading pages
+│   │   ├── docs.css                  # API docs page + Swagger UI overrides
+│   │   ├── loading.css               # Loading spinners, skeletons, shimmer
+│   │   ├── utility.css               # Utility classes (flex, spacing, text helpers)
+│   │   ├── responsive.css            # Shared responsive breakpoints
+│   │   └── accessibility.css         # prefers-reduced-motion, contrast, print
+│   ├── globals.css                   # Entry point — 48 lines of @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (fonts, providers, nav, footer)
 │   ├── sitemap.ts                    # Dynamic sitemap generation
 │   ├── error.tsx                     # Root error boundary

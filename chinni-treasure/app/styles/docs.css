@@ -1,0 +1,158 @@
+/* ===== API DOCS PAGE ===== */
+.docs-page {
+    min-height: 100vh;
+    padding-top: 100px;
+    padding-bottom: 60px;
+    background: linear-gradient(180deg, #f7f3ec 0%, #f3ede3 100%);
+}
+
+.docs-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+    text-align: center;
+}
+
+.docs-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    color: var(--near-black);
+    margin-bottom: 12px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+.docs-kicker {
+    color: var(--gold-dark);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.docs-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    max-width: 760px;
+    margin: 0 auto;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.docs-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Swagger UI overrides to match luxury brand */
+.docs-content .swagger-ui {
+    font-family: var(--font-sans);
+    color: var(--near-black);
+}
+
+.docs-content .swagger-ui .topbar {
+    display: none;
+}
+
+.docs-content .swagger-ui .info {
+    margin: 0;
+}
+
+.docs-content .swagger-ui .info .title {
+    font-family: var(--font-serif);
+    color: var(--near-black);
+}
+
+.docs-content .swagger-ui .info .title small.version-stamp {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.docs-content .swagger-ui .scheme-container {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin: 16px 0;
+}
+
+.docs-content .swagger-ui .opblock-tag {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--near-black);
+    border-bottom: 2px solid var(--gold);
+    padding: 16px 0;
+}
+
+.docs-content .swagger-ui .opblock {
+    border-radius: 4px;
+    border: 1px solid #e0d8cc;
+    margin: 0 0 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.docs-content .swagger-ui .opblock .opblock-summary {
+    border-bottom: none;
+}
+
+.docs-content .swagger-ui .opblock .opblock-summary-description {
+    color: var(--text-muted);
+}
+
+.docs-content .swagger-ui .opblock.opblock-get {
+    border-color: #61affe;
+    background: rgba(97, 175, 254, 0.03);
+}
+
+.docs-content .swagger-ui .opblock.opblock-post {
+    border-color: #49cc90;
+    background: rgba(73, 204, 144, 0.03);
+}
+
+.docs-content .swagger-ui .opblock.opblock-put {
+    border-color: #fca130;
+    background: rgba(252, 161, 48, 0.03);
+}
+
+.docs-content .swagger-ui .opblock.opblock-patch {
+    border-color: #50e3c2;
+    background: rgba(80, 227, 194, 0.03);
+}
+
+.docs-content .swagger-ui .opblock.opblock-delete {
+    border-color: #f93e3e;
+    background: rgba(249, 62, 62, 0.03);
+}
+
+.docs-content .swagger-ui .opblock .opblock-summary-method {
+    border-radius: 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    min-width: 64px;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.docs-content .swagger-ui .btn {
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    box-shadow: none;
+    transition: all var(--transition);
+}
+
+.docs-content .swagger-ui .btn:hover {
+    transform: translateY(-1px);
+}
+
+.docs-content .swagger-ui .btn.execute {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold-dark);
+}

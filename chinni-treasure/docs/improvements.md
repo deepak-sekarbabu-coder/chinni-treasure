@@ -46,7 +46,7 @@
 | 12 | **`window.location.href` after admin login** | Deferred — full reload required for middleware cookie timing |
 | 13 | **Loading spinners lack `role="status"` / `aria-label`** | **FIXED** — `LoadingSpinner.tsx` and `loading.tsx` |
 | 14 | **Form error messages not linked to inputs** | **FIXED** — `app/order/page.tsx` uses `aria-describedby` + `aria-invalid` |
-| 15 | **`outline: none` without `forced-colors` fallback** | **FIXED** — `app/globals.css` has `@media (forced-colors: active)` block |
+| 15 | **`outline: none` without `forced-colors` fallback** | **FIXED** — `app/styles/accessibility.css` has `@media (forced-colors: active)` block |
 | 16 | **No structured error reporting** | Open — `console.error` only; needs Sentry/Logflare |
 | 17 | **No startup env var validation** | **FIXED** — `src/lib/env.ts` with `requireEnv()` |
 

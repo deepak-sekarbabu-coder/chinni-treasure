@@ -1,0 +1,190 @@
+/* ===== CHECKOUT PROGRESS ===== */
+.order-checkout-section {
+    color: var(--cream);
+}
+
+.order-checkout-section .section-header h2 {
+    color: var(--cream);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+.order-checkout-section .section-header p {
+    color: rgba(245, 240, 232, 0.84);
+    font-weight: 500;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+}
+
+.checkout-progress {
+    margin-bottom: 32px;
+    padding: 0 4px;
+}
+
+.checkout-progress-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.checkout-progress-bar::before,
+.checkout-progress-bar::after {
+    content: "";
+    position: absolute;
+    left: calc(100% / 6);
+    right: calc(100% / 6);
+    top: 18px;
+    height: 2px;
+    background: #e0d8cc;
+}
+
+.checkout-progress-bar::after {
+    right: auto;
+    width: 0;
+    background: var(--success);
+    transition: width var(--transition);
+}
+
+.checkout-progress-bar.step-2::after {
+    width: 33.333333%;
+}
+
+.checkout-progress-bar.step-3::after {
+    width: 66.666667%;
+}
+
+.checkout-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.checkout-step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.checkout-step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    background: var(--cream-light);
+    color: var(--text-muted);
+    border: 2px solid #e0d8cc;
+    flex-shrink: 0;
+    transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+    position: relative;
+    z-index: 2;
+}
+
+.checkout-step.current .checkout-step-circle {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+}
+
+.checkout-step.completed .checkout-step-circle {
+    background: var(--success);
+    color: var(--white);
+    border-color: var(--success);
+}
+
+.checkout-step-connector {
+    display: none;
+}
+
+.checkout-step.completed .checkout-step-connector {
+    background: var(--success);
+}
+
+.checkout-step.current .checkout-step-connector {
+    background: #e0d8cc;
+}
+
+.checkout-step-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: color var(--transition);
+    white-space: nowrap;
+}
+
+.checkout-step.completed .checkout-step-label,
+.checkout-step.current .checkout-step-label {
+    color: var(--near-black);
+}
+
+.checkout-step-name {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.order-checkout-section .checkout-step-label {
+    color: rgba(245, 240, 232, 0.66);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.order-checkout-section .checkout-step.completed .checkout-step-label,
+.order-checkout-section .checkout-step.current .checkout-step-label {
+    color: var(--cream);
+}
+
+.order-checkout-section .checkout-step-name {
+    color: rgba(245, 240, 232, 0.72);
+    font-weight: 600;
+}
+
+/* Step transition animation */
+.step-fade-in {
+    animation: fadeIn 0.35s var(--ease-out) both;
+}
+
+/* Step navigation buttons */
+.step-navigation {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.step-nav-btn {
+    flex: 1;
+    padding: 16px 24px;
+}
+
+.step-nav-next {
+    flex: 2;
+}
+
+/* ===== STICKY MOBILE CHECKOUT BAR ===== */
+.sticky-checkout-bar {
+    display: none;
+    /* hidden on desktop */
+}
+
+@keyframes slideUpBar {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
