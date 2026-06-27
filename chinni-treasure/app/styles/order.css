@@ -236,6 +236,16 @@
     gap: 8px;
 }
 
+/* Quantity count between − / + buttons — needs visible base styling */
+.qty-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--near-black);
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+}
+
 .order-summary-remove {
     margin-left: auto;
     background: none;
@@ -282,7 +292,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: var(--font-serif);
     color: var(--gold-dark);
     padding-top: 12px;
