@@ -1,13 +1,26 @@
 import { prisma } from "@/src/lib/prisma";
 import CatalogueContent from "@/src/components/pages/catalogue-content";
+import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
+import JsonLd from "@/src/components/ui/JsonLd";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
 
 export const metadata: Metadata = {
   title: "Collection — Chinni Treasure",
   description:
     "Browse our curated collection of artisan-crafted luxury goods. Handcrafted leather wallets, silk scarves, timepieces, and more.",
+  alternates: {
+    canonical: "/catalogue",
+  },
+  openGraph: {
+    title: "Collection — Chinni Treasure",
+    description:
+      "Browse our curated collection of artisan-crafted luxury goods. Handcrafted leather wallets, silk scarves, timepieces, and more.",
+    url: "/catalogue",
+  },
 };
 
 const CATALOGUE_PAGE_SIZE = 6;
@@ -63,11 +76,29 @@ export default async function CataloguePage() {
     console.error("Failed to fetch products:", err);
   }
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Collection" },
+    ],
+  };
+
   return (
-    <CatalogueContent
-      initialProducts={products}
-      initialTotal={total}
-      initialTotalPages={totalPages}
-    />
+    <>
+      <JsonLd data={breadcrumbSchema} />
+      <Breadcrumbs
+        crumbs={[
+          { label: "Home", href: "/" },
+          { label: "Collection" },
+        ]}
+      />
+      <CatalogueContent
+        initialProducts={products}
+        initialTotal={total}
+        initialTotalPages={totalPages}
+      />
+    </>
   );
 }

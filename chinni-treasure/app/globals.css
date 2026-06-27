@@ -40,6 +40,9 @@
 /* Admin */
 @import "./styles/admin.css";
 
+/* Breadcrumbs */
+@import "./styles/breadcrumbs.css";
+
 /* Error & Docs */
 @import "./styles/error.css";
 @import "./styles/docs.css";

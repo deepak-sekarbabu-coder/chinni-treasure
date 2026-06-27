@@ -8,6 +8,7 @@ import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { getCartFromCookies } from "@/src/lib/cart-cookie";
 import { prisma } from "@/src/lib/prisma";
+import JsonLd from "@/src/components/ui/JsonLd";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -31,10 +32,13 @@ const pinyon = Pinyon_Script({
   preload: false,
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+
 export const metadata: Metadata = {
-  title: "Chinni Treasure — ❤️ Little Love ❤️",
+  metadataBase: new URL(siteUrl),
+  title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
   description:
-    "Discover our curated collection of artisan-crafted luxury goods. Enjoy free shipping on all orders.",
+    "Discover our curated collection of artisan-crafted luxury goods. Handcrafted leather accessories, silk scarves, and premium gifts with free shipping across India.",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -47,6 +51,44 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Chinni Treasure",
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "Chinni Treasure",
+    title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
+    description:
+      "Discover our curated collection of artisan-crafted luxury goods. Handcrafted leather accessories, silk scarves, and premium gifts with free shipping across India.",
+    url: "/",
+    images: [
+      {
+        url: "/images/branding/logo.png",
+        width: 512,
+        height: 512,
+        alt: "Chinni Treasure — Little Love",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chinni Treasure — Little Love",
+    description:
+      "Discover our curated collection of artisan-crafted luxury goods.",
+    images: ["/images/branding/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -91,9 +133,44 @@ export default async function RootLayout({
     // Cart SSR hydration failed silently — cart will hydrate from localStorage on client
   }
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Chinni Treasure",
+    url: siteUrl,
+    logo: `${siteUrl}/icons/icon-512x512.png`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+91-9499011029",
+      contactType: "customer service",
+      availableLanguage: ["English", "Hindi"],
+    },
+    sameAs: [
+      "https://www.instagram.com/ChinniTreasure",
+      "https://www.facebook.com/ChinniTreasures",
+    ],
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Chinni Treasure",
+    url: siteUrl,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteUrl}/catalogue?search={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang="en" className={`${cormorant.variable} ${albert.variable} ${pinyon.variable}`}>
       <body>
+        <JsonLd data={organizationSchema} />
+        <JsonLd data={websiteSchema} />
         <QueryProvider>
           <CartProvider initialItems={initialItems}>
             <ToastProvider>
