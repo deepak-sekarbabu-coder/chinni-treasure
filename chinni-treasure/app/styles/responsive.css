@@ -351,8 +351,8 @@
     }
 
     .brand-logo-wrap {
-        width: 40px;
-        height: 40px;
+        width: 66px;
+        height: 66px;
         border-radius: 7px;
         padding: 3px;
     }
@@ -363,11 +363,11 @@
     }
 
     .brand-text-wrap>div:first-child {
-        font-size: 0.9rem;
+        font-size: 2.2rem;
     }
 
     .brand-text-wrap>div:last-child {
-        font-size: 0.65rem !important;
+        font-size: 1.7rem !important;
     }
 
     .nav-brand {
@@ -435,11 +435,11 @@
     }
 
     .nav-brand {
-        font-size: 1.1rem;
+        font-size: 2.4rem;
     }
 
     .nav-brand span {
-        font-size: 0.5rem;
+        font-size: 1.35rem;
     }
 
     .section {
@@ -687,7 +687,7 @@
     }
 
     .nav-brand {
-        font-size: 1rem;
+        font-size: 2.2rem;
     }
 
     .nav-links li a {
@@ -874,11 +874,11 @@
     }
 
     .nav-brand {
-        font-size: 0.9rem;
+        font-size: 2.1rem;
     }
 
     .nav-brand span {
-        font-size: 0.45rem;
+        font-size: 1.15rem;
         letter-spacing: 2px;
     }
 
