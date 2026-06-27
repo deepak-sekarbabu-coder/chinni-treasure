@@ -49,7 +49,7 @@ export default function HomeContent() {
               </div>
               <div>
                 <strong>100%</strong>
-                <span>Free Shipping on all Orders</span>
+                <span>Free Shipping on all orders</span>
               </div>
             </div>
           </div>
