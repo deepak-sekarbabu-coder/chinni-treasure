@@ -37,7 +37,7 @@
 
 .nav-brand {
     font-family: var(--font-serif);
-    font-size: 1.3rem;
+    font-size: 1.56rem;
     color: var(--gold);
     line-height: 1.2;
     display: inline-flex;
@@ -47,8 +47,8 @@
 }
 
 .brand-logo-wrap {
-    width: 58px;
-    height: 58px;
+    width: 70px;
+    height: 70px;
     border-radius: 0;
     background: transparent;
     border: none;

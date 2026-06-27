@@ -68,7 +68,7 @@ export default function Navbar() {
           </div>
           <div className="brand-text-wrap" style={{ textAlign: "center" }}>
             <div style={{ fontWeight: "bold" }}>Chinni Treasure</div>
-            <div style={{ fontSize: "0.9rem", textAlign: "center" }}>
+            <div style={{ fontSize: "1.08rem", textAlign: "center" }}>
               <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span>{" "}
               <span className="brand-heart">❤</span>
             </div>
