@@ -40,9 +40,11 @@ export default function ProductCard({
     product.imageUrl ||
     "/placeholder.svg";
 
+  const isOutOfStock = product.stockQuantity <= 0;
+
   return (
     <div
-      className="product-card fade-in visible"
+      className={`product-card fade-in visible${isOutOfStock ? " out-of-stock" : ""}`}
       style={{ transitionDelay: `${transitionDelay}s` }}
       role="listitem"
     >
@@ -57,8 +59,16 @@ export default function ProductCard({
             loading={priority ? "eager" : "lazy"}
             priority={priority}
           />
-          {product.badge && (
+          {product.badge && !isOutOfStock && (
             <span className="product-card-badge">{product.badge}</span>
+          )}
+          {isOutOfStock && (
+            <div className="product-card-out-of-stock-overlay" aria-hidden="true">
+              <span className="product-card-out-of-stock-label">Out of Stock</span>
+              <span className="product-card-out-of-stock-sub">
+                Please wait until we restock this
+              </span>
+            </div>
           )}
         </div>
       </Link>
@@ -77,10 +87,10 @@ export default function ProductCard({
           <StockBadge stockQuantity={product.stockQuantity} />
           <button
             className="btn-add"
-            disabled={product.stockQuantity <= 0}
+            disabled={isOutOfStock}
             onClick={() => onAdd(product)}
           >
-            {product.stockQuantity <= 0 ? "Sold Out" : "Add to Cart"}
+            {isOutOfStock ? "Sold Out" : "Add to Cart"}
           </button>
         </div>
       </div>
