@@ -67,16 +67,15 @@ export default function AdminCataloguePanel({
 
   return (
     <div id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue">
-      <div className="product-form-actions">
-        <button
-          className={`btn ${showForm ? "btn-secondary product-add-btn cancel" : "btn-primary product-add-btn"}`}
-          onClick={onToggleForm}
-        >
-          {showForm ? "✕ Cancel" : "+ Add Product"}
-        </button>
-      </div>
+      {!showForm && (
+        <div className="product-form-actions">
+          <button className="btn btn-primary product-add-btn" onClick={onToggleForm}>
+            + Add Product
+          </button>
+        </div>
+      )}
 
-      <ProductForm showForm={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} setFormField={setFormField} onFormChange={onFormChange} onSave={onSave} />
+      <ProductForm showForm={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} setFormField={setFormField} onFormChange={onFormChange} onSave={onSave} onToggleForm={onToggleForm} />
 
       <div className="admin-product-table-wrap">
         <table className="admin-table">
@@ -181,7 +180,7 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
   );
 }
 
-function ProductForm({ showForm, formClosing, productForm, productLoading, setFormField, onFormChange, onSave }: {
+function ProductForm({ showForm, formClosing, productForm, productLoading, setFormField, onFormChange, onSave, onToggleForm }: {
   showForm: boolean;
   formClosing: boolean;
   productForm: ProductFormData;
@@ -189,6 +188,7 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
   setFormField: (field: keyof ProductFormData, value: string) => void;
   onFormChange: (form: ProductFormData) => void;
   onSave: (e: React.FormEvent) => Promise<void>;
+  onToggleForm: () => void;
 }) {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -415,7 +415,12 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
                 </div>
               </div>
             </div>
-            <SubmitButton loading={productLoading} isEdit={!!productForm.id} />
+            <div className="product-form-footer">
+              <button type="button" className="btn btn-secondary product-add-btn cancel" onClick={onToggleForm}>
+                Cancel
+              </button>
+              <FormSubmitButton loading={productLoading} isEdit={!!productForm.id} />
+            </div>
           </form>
         </div>
       </div>
@@ -423,10 +428,10 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
   );
 }
 
-function SubmitButton({ loading, isEdit }: { loading: boolean; isEdit: boolean }) {
+function FormSubmitButton({ loading, isEdit }: { loading: boolean; isEdit: boolean }) {
   const label = loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Product" : "Create Product");
   return (
-    <button type="submit" className={`btn btn-dark product-action-btn mt-16 ${loading ? "loading" : ""}`} disabled={loading}>
+    <button type="submit" className={`btn btn-dark product-action-btn ${loading ? "loading" : ""}`} disabled={loading}>
       {loading && <span className="btn-spinner"></span>}
       {label}
     </button>

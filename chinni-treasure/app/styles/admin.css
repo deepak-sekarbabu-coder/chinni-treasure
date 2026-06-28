@@ -291,6 +291,16 @@
     margin-bottom: 24px;
 }
 
+.product-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--cream);
+}
+
 /* ── Product Management Animations ── */
 .product-form-wrapper {
     overflow: hidden;
