@@ -7,7 +7,7 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
-import { INDIAN_STATES } from "@/src/lib/constants";
+import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { buildUpiPaymentUrl } from "@/src/lib/upi";
@@ -71,18 +71,18 @@ function PersonalDetailsStep({ form, errors, handleChange, setForm, setErrors }:
       <legend className="order-legend">Personal Details</legend>
       <div className="form-group">
         <label htmlFor="fullName">Full Name <span className="required">*</span></label>
-        <input type="text" id="fullName" name="fullName" value={form.fullName} onChange={handleChange} className={errors.fullName ? "error" : ""} placeholder="Your full name" autoComplete="name" aria-describedby={errors.fullName ? "fullName-error" : undefined} aria-invalid={!!errors.fullName} />
+        <input type="text" id="fullName" name="fullName" value={form.fullName} onChange={handleChange} className={errors.fullName ? "error" : ""} autoComplete="name" aria-describedby={errors.fullName ? "fullName-error" : undefined} aria-invalid={!!errors.fullName} />
         {errors.fullName && <span id="fullName-error" className="form-error visible">{errors.fullName}</span>}
       </div>
       <div className="form-row">
         <div className="form-group">
           <label htmlFor="email">Email <span className="required">*</span></label>
-          <input type="email" id="email" name="email" value={form.email} onChange={handleChange} className={errors.email ? "error" : ""} placeholder="email@example.com" autoComplete="email" aria-describedby={errors.email ? "email-error" : undefined} aria-invalid={!!errors.email} />
+          <input type="email" id="email" name="email" value={form.email} onChange={handleChange} className={errors.email ? "error" : ""} autoComplete="email" aria-describedby={errors.email ? "email-error" : undefined} aria-invalid={!!errors.email} />
           {errors.email && <span id="email-error" className="form-error visible">{errors.email}</span>}
         </div>
         <div className="form-group">
           <label htmlFor="phone">Phone <span className="required">*</span></label>
-          <input type="tel" id="phone" name="phone" value={form.phone} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10); setForm((prev) => ({ ...prev, phone: cleaned })); if (errors.phone) setErrors((prev) => { const n = { ...prev }; delete n.phone; return n; }); }} className={errors.phone ? "error" : ""} placeholder="9876543210" maxLength={10} autoComplete="tel" aria-describedby={errors.phone ? "phone-error" : undefined} aria-invalid={!!errors.phone} />
+          <input type="tel" id="phone" name="phone" value={form.phone} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10); setForm((prev) => ({ ...prev, phone: cleaned })); if (errors.phone) setErrors((prev) => { const n = { ...prev }; delete n.phone; return n; }); }} className={errors.phone ? "error" : ""} maxLength={10} inputMode="numeric" autoComplete="tel" aria-describedby={errors.phone ? "phone-error" : undefined} aria-invalid={!!errors.phone} />
           {errors.phone && <span id="phone-error" className="form-error visible">{errors.phone}</span>}
         </div>
       </div>
@@ -90,43 +90,53 @@ function PersonalDetailsStep({ form, errors, handleChange, setForm, setErrors }:
   );
 }
 
-function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors }: {
+function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors, isCustomCity, setIsCustomCity }: {
   form: OrderForm;
   errors: Record<string, string>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setForm: React.Dispatch<React.SetStateAction<OrderForm>>;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  isCustomCity: boolean;
+  setIsCustomCity: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   return (
     <fieldset className="order-fieldset step-fade-in">
       <legend className="order-legend">Delivery Details</legend>
       <div className="form-group">
         <label htmlFor="address">Address <span className="required">*</span></label>
-        <input type="text" id="address" name="address" value={form.address} onChange={handleChange} className={errors.address ? "error" : ""} placeholder="Street address, apartment, suite, etc." autoComplete="street-address" aria-describedby={errors.address ? "address-error" : undefined} aria-invalid={!!errors.address} />
+        <input type="text" id="address" name="address" value={form.address} onChange={handleChange} className={errors.address ? "error" : ""} autoComplete="street-address" aria-describedby={errors.address ? "address-error" : undefined} aria-invalid={!!errors.address} />
         {errors.address && <span id="address-error" className="form-error visible">{errors.address}</span>}
       </div>
       <div className="form-group">
         <label htmlFor="addressLine2">Apartment, Suite, Landmark <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(Optional)</span></label>
-        <input type="text" id="addressLine2" name="addressLine2" value={form.addressLine2} onChange={handleChange} placeholder="Apartment, suite, floor, landmark, etc." autoComplete="address-line2" />
+        <input type="text" id="addressLine2" name="addressLine2" value={form.addressLine2} onChange={handleChange} autoComplete="address-line2" />
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="city">City <span className="required">*</span></label>
-          <input type="text" id="city" name="city" value={form.city} onChange={handleChange} className={errors.city ? "error" : ""} placeholder="City" autoComplete="address-level2" aria-describedby={errors.city ? "city-error" : undefined} aria-invalid={!!errors.city} />
-          {errors.city && <span id="city-error" className="form-error visible">{errors.city}</span>}
-        </div>
-        <div className="form-group">
           <label htmlFor="state">State/UT <span className="required">*</span></label>
-          <select id="state" name="state" value={form.state} onChange={handleChange} className={errors.state ? "error" : ""} autoComplete="address-level1" aria-describedby={errors.state ? "state-error" : undefined} aria-invalid={!!errors.state}>
+          <select id="state" name="state" value={form.state} onChange={(e) => { handleChange(e); setForm((prev) => ({ ...prev, city: "" })); setIsCustomCity(false); }} className={errors.state ? "error" : ""} autoComplete="address-level1" aria-describedby={errors.state ? "state-error" : undefined} aria-invalid={!!errors.state}>
             <option value="">Select State/UT</option>
             {INDIAN_STATES.map((s) => (<option key={s.code} value={s.code}>{s.name}</option>))}
           </select>
           {errors.state && <span id="state-error" className="form-error visible">{errors.state}</span>}
         </div>
+        <div className="form-group">
+          <label htmlFor="city">City <span className="required">*</span></label>
+          {!isCustomCity ? (
+            <select id="city" name="city" value={form.city} onChange={(e) => { if (e.target.value === "__other__") { setIsCustomCity(true); setForm((prev) => ({ ...prev, city: "" })); } else { handleChange(e); } }} className={errors.city ? "error" : ""} autoComplete="address-level2" aria-describedby={errors.city ? "city-error" : undefined} aria-invalid={!!errors.city} disabled={!form.state}>
+              <option value="">{form.state ? "Select City" : "Select State first"}</option>
+              {form.state && INDIAN_CITIES[form.state]?.map((city) => (<option key={city} value={city}>{city}</option>))}
+              {form.state && <option value="__other__">Other</option>}
+            </select>
+          ) : (
+            <input type="text" id="city" name="city" value={form.city} onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))} className={errors.city ? "error" : ""} placeholder="Enter your city" autoComplete="address-level2" aria-describedby={errors.city ? "city-error" : undefined} aria-invalid={!!errors.city} autoFocus />
+          )}
+          {errors.city && <span id="city-error" className="form-error visible">{errors.city}</span>}
+        </div>
       </div>
       <div className="form-group">
         <label htmlFor="zipCode">PIN Code <span className="required">*</span></label>
-        <input type="text" id="zipCode" name="zipCode" value={form.zipCode} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6); setForm((prev) => ({ ...prev, zipCode: cleaned })); if (errors.zipCode) setErrors((prev) => { const n = { ...prev }; delete n.zipCode; return n; }); }} className={errors.zipCode ? "error" : ""} placeholder="6-digit PIN code" maxLength={6} autoComplete="postal-code" aria-describedby={errors.zipCode ? "zipCode-error" : undefined} aria-invalid={!!errors.zipCode} />
+        <input type="text" id="zipCode" name="zipCode" value={form.zipCode} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6); setForm((prev) => ({ ...prev, zipCode: cleaned })); if (errors.zipCode) setErrors((prev) => { const n = { ...prev }; delete n.zipCode; return n; }); }} className={errors.zipCode ? "error" : ""} maxLength={6} inputMode="numeric" autoComplete="postal-code" aria-describedby={errors.zipCode ? "zipCode-error" : undefined} aria-invalid={!!errors.zipCode} />
         {errors.zipCode && <span id="zipCode-error" className="form-error visible">{errors.zipCode}</span>}
       </div>
     </fieldset>
@@ -369,6 +379,7 @@ export default function OrderPage() {
     acceptedTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCustomCity, setIsCustomCity] = useState(false);
 
 
   const total = getTotal();
@@ -460,7 +471,7 @@ export default function OrderPage() {
           <form id="order-form" onSubmit={handleSubmit} aria-label="Order checkout form">
             <div className="order-form-fields">
               {currentStep === 1 && <PersonalDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
-              {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
+              {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} isCustomCity={isCustomCity} setIsCustomCity={setIsCustomCity} />}
               {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} total={total} />}
 
               <StepNavigation
