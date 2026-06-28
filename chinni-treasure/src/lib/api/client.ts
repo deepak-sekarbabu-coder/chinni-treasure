@@ -95,6 +95,11 @@ export async function apiFetch<TResponse = unknown>(
     init.body = body instanceof FormData ? body : JSON.stringify(body);
   }
 
+  // Prevent browser HTTP cache from returning stale data after mutations
+  if (!init.cache && method === "GET") {
+    init.cache = "no-cache";
+  }
+
   let res: Response;
   try {
     res = await fetch(url, init);

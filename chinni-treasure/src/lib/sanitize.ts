@@ -1,9 +1,6 @@
 export function sanitize(input: string): string {
-  return input
-    .trim()
-    .replace(/[<>]/g, "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
+  // Only strip HTML angle brackets to prevent XSS.
+  // Do NOT encode HTML entities — React escapes output via JSX.
+  return input.trim().replace(/[<>]/g, "");
 }
 
