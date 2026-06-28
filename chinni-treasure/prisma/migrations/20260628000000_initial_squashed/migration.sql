@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('pending', 'approved', 'packaging', 'shipped', 'delivered', 'rejected');
 
@@ -40,6 +43,18 @@ CREATE TABLE "products" (
 );
 
 -- CreateTable
+CREATE TABLE "product_images" (
+    "id" TEXT NOT NULL,
+    "product_id" TEXT NOT NULL,
+    "url" VARCHAR(500) NOT NULL,
+    "is_primary" BOOLEAN NOT NULL DEFAULT false,
+    "display_order" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "product_images_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
     "order_number" VARCHAR(20) NOT NULL,
@@ -60,6 +75,7 @@ CREATE TABLE "orders" (
     "transaction_id" VARCHAR(100),
     "customer_notes" TEXT,
     "admin_notes" TEXT,
+    "version" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -121,6 +137,9 @@ CREATE INDEX "products_is_active_idx" ON "products"("is_active");
 CREATE INDEX "products_badge_idx" ON "products"("badge");
 
 -- CreateIndex
+CREATE INDEX "product_images_product_id_idx" ON "product_images"("product_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "orders_order_number_key" ON "orders"("order_number");
 
 -- CreateIndex
@@ -161,6 +180,9 @@ CREATE INDEX "admins_username_idx" ON "admins"("username");
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_images" ADD CONSTRAINT "product_images_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
