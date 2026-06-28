@@ -14,13 +14,12 @@ export default function HomeContent() {
             <br />
             For Everyday Elegance.&rdquo;
           </h1>
-          <p>
-            Artisan-made. Premium materials. Unrivaled design. Discover handcrafted items that make a statement, paired with a seamless shopping experience you&apos;ll love.
-          </p>
+          <p> Artisan-made 🪄 Premium materials 💎 Unrivaled design ✍️ </p>
+          <p> Discover handcrafted items that make a statement, paired with a seamless shopping experience you&apos;ll fall in love. </p>
           <div className="hero-trust" aria-label="brand highlights">
-            <span>Handcrafted Originals</span>
-            <span>Limited Batch Drops</span>
-            <span>Concierge Support</span>
+            <span>⭐Handcrafted Originals⭐</span>
+            <span>⏳Limited Batch Drops⏳</span>
+            <span>🎁Concierge Support🎁</span>
           </div>
           <div className="hero-actions">
             <Link href="/catalogue" className="btn btn-primary">
@@ -36,7 +35,7 @@ export default function HomeContent() {
             <div className="hero-story-label"><h2>Signature Edit</h2></div>
             <h3>Designed To Be Gifted And Kept Forever</h3>
             <p>
-              Designed for today, crafted to last generations. Every piece in our signature collection is chosen to elevate your everyday moments
+              Designed for today, crafted to last generations. Every piece in our signature collection is chosen to elevate your everyday moments.
             </p>
             <div className="hero-story-stats">
               <div>
@@ -44,8 +43,10 @@ export default function HomeContent() {
                 <span>Customer Delight</span>
               </div>
               <div>
-                <strong>5 -10 Days</strong>
-                <span>Delivery</span>
+                <strong>5 -7</strong>
+                <span>(Business Days)</span>
+                <span>Delivery Time</span>
+
               </div>
               <div>
                 <strong>100%</strong>
@@ -74,7 +75,7 @@ export default function HomeContent() {
         <div className="features-grid" role="list">
           {[
             { icon: "\u2726", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-            { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-10 business days." },
+            { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-7 business days." },
             { icon: "\u25c8", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
             { icon: "\u2662", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
           ].map((f, i) => (

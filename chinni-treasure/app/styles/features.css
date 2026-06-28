@@ -15,11 +15,9 @@
 .feature-item {
     text-align: center;
     padding: 32px 20px;
-    border: 1px solid rgba(212, 175, 55, 0.16);
+    border: 1px solid rgba(212, 175, 55, 0.3);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    background: var(--gold);
     transition:
         transform var(--motion-smooth),
         box-shadow var(--motion-smooth),
@@ -31,19 +29,19 @@
     width: 56px;
     height: 56px;
     margin: 0 auto 20px;
-    background: var(--cream);
+    background: var(--near-black);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    color: var(--gold-dark);
+    color: var(--gold-light);
     transition: var(--transition);
 }
 
 .feature-item:hover .feature-icon {
-    background: var(--gold);
-    color: var(--black);
+    background: var(--white);
+    color: var(--near-black);
     transform: scale(1.1);
 }
 
@@ -56,6 +54,6 @@
 
 .feature-item p {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--charcoal);
     line-height: 1.7;
 }

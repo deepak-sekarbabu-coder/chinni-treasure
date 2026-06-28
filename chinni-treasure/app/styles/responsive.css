@@ -351,8 +351,8 @@
     }
 
     .brand-logo-wrap {
-        width: 66px;
-        height: 66px;
+        width: 73px;
+        height: 73px;
         border-radius: 7px;
         padding: 3px;
     }
@@ -413,9 +413,7 @@
     }
 
     .feature-item {
-        background: #fff;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
+        background: var(--gold);
         transition: border-color var(--motion-snappy), background var(--motion-snappy);
     }
 }
@@ -435,7 +433,7 @@
     }
 
     .nav-brand {
-        font-size: 2.4rem;
+        font-size: 1.9rem;
     }
 
     .nav-brand span {
@@ -687,7 +685,7 @@
     }
 
     .nav-brand {
-        font-size: 2.2rem;
+        font-size: 1.7rem;
     }
 
     .nav-links li a {
@@ -874,7 +872,7 @@
     }
 
     .nav-brand {
-        font-size: 2.1rem;
+        font-size: 1.6rem;
     }
 
     .nav-brand span {

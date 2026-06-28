@@ -13,7 +13,7 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
   const { items, removeItem, getTotal, getCount } = useCart();
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
@@ -61,8 +61,8 @@ export default function Navbar() {
             <Image
               src="/images/branding/logo.png"
               alt="Chinni Treasure Little Love logo"
-              width={58}
-              height={58}
+              width={64}
+              height={64}
               className="brand-logo-image"
             />
           </div>
