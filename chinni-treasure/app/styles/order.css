@@ -299,3 +299,27 @@
     border-top: 1px solid var(--cream);
     margin-top: 8px;
 }
+
+/* ===== EMPTY CART GUARD ===== */
+.empty-cart-guard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 80px 24px;
+    background: var(--white);
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--cream);
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.empty-cart-guard-text {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 32px;
+    max-width: 400px;
+}

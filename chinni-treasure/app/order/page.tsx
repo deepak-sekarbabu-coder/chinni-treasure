@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import SectionHeader from "@/src/components/ui/SectionHeader";
@@ -185,7 +186,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
                 className="terms-link-btn"
                 onClick={(e) => { e.preventDefault(); setPolicyOpen(true); }}
               >
-                Returns Policy
+                Return Policy
               </button>
               . I understand that all sales are final, no returns or refunds will be issued, and payment must be completed before order processing.
             </span>
@@ -383,6 +384,30 @@ export default function OrderPage() {
 
 
   const total = getTotal();
+
+  if (items.length === 0) {
+    return (
+      <div style={{ paddingTop: "72px" }}>
+        <section className="section order-checkout-section" aria-labelledby="empty-cart-heading">
+          <SectionHeader
+            subtitle="Checkout"
+            title="Your Cart is Empty"
+            description="Add some items to your cart before proceeding to checkout."
+            style={{ marginBottom: "48px" }}
+          />
+          <div className="empty-cart-guard">
+            <p className="empty-cart-guard-text">
+              Looks like you haven&apos;t added anything to your cart yet. Browse our
+              collection and add items before placing an order.
+            </p>
+            <Link href="/catalogue" className="btn btn-dark">
+              Browse Products
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   function validateStep(step: number): boolean {
     const errs = runValidation(form, step);
