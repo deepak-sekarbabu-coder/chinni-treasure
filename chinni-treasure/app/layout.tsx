@@ -8,6 +8,7 @@ import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { getCartFromCookies } from "@/src/lib/cart-cookie";
 import { prisma } from "@/src/lib/prisma";
+import { Analytics } from "@vercel/analytics/next";
 import JsonLd from "@/src/components/ui/JsonLd";
 
 const cormorant = Cormorant_Garamond({
@@ -182,6 +183,7 @@ export default async function RootLayout({
                 <div className="page-transition">{children}</div>
               </main>
               <Footer />
+              <Analytics />
             </ToastProvider>
           </CartProvider>
         </QueryProvider>
