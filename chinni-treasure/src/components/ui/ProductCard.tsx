@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import StockBadge from "./StockBadge";
 
 export interface ProductImageData {
@@ -79,7 +80,9 @@ export default function ProductCard({
         <Link href={`/catalogue/${product.id}`} className="product-card-title-link">
           <h3>{product.name}</h3>
         </Link>
-        <p className="product-card-description">{product.description}</p>
+        <div className="product-card-description">
+          <ReactMarkdown>{product.description}</ReactMarkdown>
+        </div>
         <div className="product-card-footer">
           <span className="product-card-price">
             ₹{Number(product.price).toFixed(2)}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import StockBadge from "@/src/components/ui/StockBadge";
@@ -97,7 +98,9 @@ export default function ProductDetailsContent({ product }: Props) {
 
                     <div className="product-details-description">
                         <h3>Description</h3>
-                        <p>{product.description}</p>
+                        <div className="product-description-markdown">
+                            <ReactMarkdown>{product.description}</ReactMarkdown>
+                        </div>
                     </div>
 
                     <div className="product-details-actions">
