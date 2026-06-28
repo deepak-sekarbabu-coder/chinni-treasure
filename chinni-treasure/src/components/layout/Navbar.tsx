@@ -12,11 +12,19 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
+  const [showAdmin, setShowAdmin] = useState(false);
   const { items, removeItem, getTotal, getCount } = useCart();
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      setShowAdmin(hostname === "chinnitreasure.vercel.app" || hostname === "localhost");
+    }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -108,16 +116,18 @@ export default function Navbar() {
                 Track
               </Link>
             </li>
-            <li role="none">
-              <Link
-                href="/admin"
-                className={isActive("/admin") ? "active" : ""}
-                role="menuitem"
-                onClick={() => { setMenuOpen(false); setCartOpen(false); }}
-              >
-                Admin
-              </Link>
-            </li>
+            {showAdmin && (
+              <li role="none">
+                <Link
+                  href="/admin"
+                  className={isActive("/admin") ? "active" : ""}
+                  role="menuitem"
+                  onClick={() => { setMenuOpen(false); setCartOpen(false); }}
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
 
           </ul>
 
