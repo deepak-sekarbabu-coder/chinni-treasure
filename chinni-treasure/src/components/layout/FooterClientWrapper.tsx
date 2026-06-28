@@ -9,7 +9,7 @@ export default function FooterClientWrapper() {
   return (
     <>
       <button className="footer-link-btn" onClick={() => setReturnsPolicyOpen(true)}>
-        Returns Policy
+        Return Policy
       </button>
       <ReturnsPolicyModal open={returnsPolicyOpen} onClose={() => setReturnsPolicyOpen(false)} />
     </>

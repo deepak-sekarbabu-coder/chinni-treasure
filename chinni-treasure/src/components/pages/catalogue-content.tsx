@@ -79,8 +79,7 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
       </section>
       <section className="section catalogue-section" aria-labelledby="catalogue-heading">
         <SectionHeader
-          subtitle="Our Collection"
-          title="Full Catalogue"
+          title="Our Collection"
           description="Discover our complete selection of artisan-crafted luxury goods. Each item is carefully selected for its exceptional quality and timeless appeal."
         />
 
