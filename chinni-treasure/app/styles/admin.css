@@ -301,6 +301,21 @@
     border-top: 1px solid var(--cream);
 }
 
+/* ── Product Form Grid ── */
+.admin-product-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.admin-product-form-grid .full-width {
+    grid-column: span 2;
+}
+
+.admin-product-form-grid textarea {
+    min-height: 200px;
+}
+
 /* ── Product Management Animations ── */
 .product-form-wrapper {
     overflow: hidden;
