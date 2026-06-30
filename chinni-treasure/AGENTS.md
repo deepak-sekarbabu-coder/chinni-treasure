@@ -47,7 +47,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 
 - **Objective:** Discover heritage products, manage their cart, and securely place orders.
 - **Capabilities:**
-  - Browse artisan catalogue featuring dynamic stock badges (e.g., *In Stock*, *Low Stock*, *Out of Stock*).
+  - Browse artisan catalogue featuring dynamic stock badges (e.g., *In Stock*, *Low Stock*, *Out of Stock*) and price comparisons (original price displayed with strikethrough when discounted).
   - Add items to cart with automatic verification against real-time database stock levels.
   - Complete purchase using a fully validated **Indian Address Form** (requiring 6-digit numeric PIN, 10-digit Phone, State/UT dropdown, and correct address fields).
   - Track orders instantly via **Order ID (UUID)** or **Customer Phone Number** (exactly 10 digits).
@@ -85,7 +85,7 @@ This document outlines the architecture, roles, operational guidelines, and memo
 **Models (7):**
 
 1. **Category:** Supports active filtering, description, and display sorting order.
-2. **Product:** Tracks SKU, Name, Description, Price (Decimal), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, Category relation, and `images` relation to ProductImage.
+2. **Product:** Tracks SKU, Name, Description, Price (Decimal), CompareAtPrice (Decimal, nullable), Stock Quantity, Image URL, Badge (ProductBadge: Bestseller/New/Premium/Limited/Luxury), Active state, Category relation, and `images` relation to ProductImage. When `compareAtPrice` is set and greater than `price`, it displays as strikethrough original price.
 3. **ProductImage:** Each product can have multiple images stored in a separate normalized table. Each image has a `url`, `isPrimary` flag (one image per product can be primary), and `displayOrder` for sorting. The `imageUrl` field on Product is retained as a fallback for backward compatibility.
 4. **Order:** Stores detailed customer details, state code, tracking ID, totals (`subtotal`, `shippingCost`, `totalAmount`), transaction reference, notes, and `version` field for optimistic concurrency control.
 5. **OrderItem:** Connects orders with products, recording historical unit prices.
@@ -297,8 +297,7 @@ chinni-treasure/
 │       ├── lib/                      # Lib module tests (12 files)
 │       ├── mocks/                    # Shared mock implementations (prisma.ts)
 │       └── utils/                    # Test utilities (api-test.ts)
-├── middleware.ts                      # Re-exports proxy.ts (Next.js middleware entry)
-├── proxy.ts                          # Middleware logic (JWT admin route protection)
+├── proxy.ts                          # Middleware logic (JWT admin route protection, Next.js 16 proxy convention)
 ├── prisma.config.ts                  # Prisma defineConfig
 ├── vitest.config.ts                  # Vitest test configuration
 └── package.json
