@@ -83,7 +83,7 @@ export default function AdminCataloguePanel({
             <tr>
               <th>Image</th>
               <th>Name</th>
-              <th>SKU</th>
+              <th>Code</th>
               <th>Price</th>
               <th>Stock</th>
               <th>Badge</th>
@@ -276,7 +276,7 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
                 <input type="text" value={productForm.name} onChange={(e) => setFormField("name", e.target.value)} required className="input-cream" />
               </div>
               <div className="form-group">
-                <label>SKU</label>
+                <label>Code</label>
                 <input type="text" value={productForm.sku} onChange={(e) => setFormField("sku", e.target.value)} className="input-cream" />
               </div>
               <div className="form-group">

@@ -96,7 +96,7 @@ export default function ProductDetailsContent({ product }: Props) {
 
                     {product.sku && (
                         <p className="product-details-sku">
-                            SKU: <span>{product.sku}</span>
+                            Code: <span>{product.sku}</span>
                         </p>
                     )}
 
