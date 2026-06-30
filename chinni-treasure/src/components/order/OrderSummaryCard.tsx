@@ -81,8 +81,8 @@ export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuant
                     <div className="order-summary-item-qty">
                       <button
                         className="btn-secondary qty-btn"
-                        onClick={() => onUpdateQuantity(item.productId, -1)}
-                        disabled={item.quantity <= 1}
+                        onClick={() => item.quantity <= 1 ? onRemove(item.productId) : onUpdateQuantity(item.productId, -1)}
+                        disabled={item.quantity < 1}
                       >
                         −
                       </button>
@@ -104,7 +104,7 @@ export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuant
                         ✕
                       </button>
                     </div>
-                    {item.quantity >= item.stock && (
+                    {item.quantity >= item.stock && item.stock > 1 && (
                       <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
                         Max available quantity reached ({item.stock} in stock)
                       </p>

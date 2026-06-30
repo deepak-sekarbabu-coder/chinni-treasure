@@ -13,9 +13,9 @@ describe("StockBadge", () => {
     expect(screen.getByText("Out of Stock")).toBeInTheDocument();
   });
 
-  it('renders "Only N left" when stockQuantity is 1', () => {
+  it('renders "In Stock" when stockQuantity is 1', () => {
     render(<StockBadge stockQuantity={1} />);
-    expect(screen.getByText("Only 1 left")).toBeInTheDocument();
+    expect(screen.getByText("In Stock")).toBeInTheDocument();
   });
 
   it('renders "Only N left" when stockQuantity is 3 (boundary)', () => {

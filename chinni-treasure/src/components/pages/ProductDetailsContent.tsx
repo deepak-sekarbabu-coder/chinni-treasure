@@ -132,7 +132,7 @@ export default function ProductDetailsContent({ product }: Props) {
                         </button>
                     </div>
 
-                    {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
+                    {product.stockQuantity > 1 && product.stockQuantity <= 5 && (
                         <p className="product-details-low-stock">
                             Only {product.stockQuantity} left in stock — order soon
                         </p>

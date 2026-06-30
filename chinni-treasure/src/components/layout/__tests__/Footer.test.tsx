@@ -23,7 +23,7 @@ describe("Footer", () => {
 
   it("renders customer care links", () => {
     render(<Footer />);
-    expect(screen.getByText("Returns Policy")).toBeInTheDocument();
+    expect(screen.getByText("Return Policy")).toBeInTheDocument();
   });
 
   it("renders contact information", () => {
@@ -37,11 +37,11 @@ describe("Footer", () => {
 
   it("renders contact links with correct aria-labels", () => {
     render(<Footer />);
-    expect(screen.getByLabelText("Call Chinni Treasure at 9499011029")).toBeInTheDocument();
-    expect(screen.getByLabelText("Message Chinni Treasure on WhatsApp")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email Chinni Treasure")).toBeInTheDocument();
-    expect(screen.getByLabelText("Open Chinni Treasure on Instagram")).toBeInTheDocument();
-    expect(screen.getByLabelText("Open Chinni Treasure on Facebook")).toBeInTheDocument();
+    expect(screen.getByLabelText("Call Chinni Treasure at +91 9499011029")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message Chinni Treasure on WhatsApp at +91 9499011029")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email Chinni Treasure at chinnitreasure29@gmail.com")).toBeInTheDocument();
+    expect(screen.getByLabelText("Open Chinni Treasure on Instagram — ChinniTreasure")).toBeInTheDocument();
+    expect(screen.getByLabelText("Open Chinni Treasure on Facebook — ChinniTreasures")).toBeInTheDocument();
   });
 
   it("renders the copyright year", () => {
