@@ -71,6 +71,7 @@ export default function Navbar() {
               alt="Chinni Treasure Little Love logo"
               width={64}
               height={64}
+              loading="eager"
               className="brand-logo-image"
             />
           </div>
