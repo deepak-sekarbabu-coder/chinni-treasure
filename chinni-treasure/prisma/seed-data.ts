@@ -12,6 +12,7 @@ export interface SeedProduct {
   name: string;
   categorySlug: string;
   price: number;
+  compareAtPrice: number | null;
   stockQuantity: number;
   imageUrl: string;
   additionalImages: string[];
@@ -25,6 +26,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Artisan Leather Wallet",
     categorySlug: "accessories",
     price: 89.0,
+    compareAtPrice: 149.0,
     stockQuantity: 15,
     imageUrl: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&h=700&fit=crop",
     additionalImages: [
@@ -40,6 +42,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Premium Silk Scarf",
     categorySlug: "apparel",
     price: 129.0,
+    compareAtPrice: 199.0,
     stockQuantity: 8,
     imageUrl: "https://copilot.microsoft.com/th/id/BCO.3992779c-884a-4f83-afcb-b4b45a3217e6.png",
     additionalImages: [
@@ -55,6 +58,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Handcrafted Timepiece",
     categorySlug: "watches",
     price: 349.0,
+    compareAtPrice: 549.0,
     stockQuantity: 5,
     imageUrl: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=700&fit=crop",
     additionalImages: [
@@ -70,6 +74,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Crystal Perfume Bottle",
     categorySlug: "home",
     price: 199.0,
+    compareAtPrice: 329.0,
     stockQuantity: 3,
     imageUrl: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&h=700&fit=crop",
     additionalImages: [
@@ -85,6 +90,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Italian Leather Belt",
     categorySlug: "accessories",
     price: 159.0,
+    compareAtPrice: 229.0,
     stockQuantity: 12,
     imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=700&fit=crop",
     additionalImages: [
@@ -100,6 +106,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     name: "Cashmere Throw Blanket",
     categorySlug: "home",
     price: 279.0,
+    compareAtPrice: 399.0,
     stockQuantity: 6,
     imageUrl: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?w=600&h=700&fit=crop",
     additionalImages: [

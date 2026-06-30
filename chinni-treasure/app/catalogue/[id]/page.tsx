@@ -61,11 +61,13 @@ export default async function ProductDetailsPage({ params }: Props) {
     }
 
     const price = Number(product.price);
+    const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
 
     const productData = {
         id: product.id,
         name: product.name,
         price,
+        compareAtPrice,
         imageUrl: product.imageUrl ?? "",
         description: product.description ?? "",
         category: product.category,

@@ -236,6 +236,14 @@
     margin-bottom: 16px;
 }
 
+.product-details-price-original {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-right: 12px;
+}
+
 .product-details-stock {
     margin-bottom: 16px;
 }

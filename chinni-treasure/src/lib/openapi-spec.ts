@@ -170,7 +170,8 @@ export const openApiSpec = {
                   name: { type: "string", description: "Product name" },
                   categoryId: { type: "integer", nullable: true },
                   description: { type: "string", nullable: true },
-                  price: { type: "number", description: "Product price" },
+                  price: { type: "number", description: "Current selling price" },
+                  compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
                   stockQuantity: { type: "integer", default: 0 },
                   imageUrl: { type: "string", nullable: true },
                   badge: {
@@ -215,6 +216,7 @@ export const openApiSpec = {
                   categoryId: { type: "integer", nullable: true },
                   description: { type: "string", nullable: true },
                   price: { type: "number" },
+                  compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
                   stockQuantity: { type: "integer" },
                   imageUrl: { type: "string", nullable: true },
                   badge: {
@@ -624,7 +626,8 @@ export const openApiSpec = {
             },
           },
           description: { type: "string", nullable: true },
-          price: { type: "number" },
+          price: { type: "number", description: "Current selling price (discounted)" },
+          compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
           stockQuantity: { type: "integer" },
           imageUrl: { type: "string", nullable: true },
           badge: {

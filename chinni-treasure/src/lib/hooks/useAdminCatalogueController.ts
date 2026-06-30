@@ -16,6 +16,7 @@ interface ProductFormState {
   sku: string;
   description: string;
   price: string;
+  compareAtPrice: string;
   stockQuantity: string;
   imageUrl: string;
   badge: string;
@@ -29,6 +30,7 @@ const EMPTY_PRODUCT_FORM: ProductFormState = {
   sku: "",
   description: "",
   price: "",
+  compareAtPrice: "",
   stockQuantity: "",
   imageUrl: "",
   badge: "",
@@ -57,6 +59,7 @@ function productToFormState(product: Product): ProductFormState {
     sku: product.sku || "",
     description: product.description || "",
     price: product.price.toString(),
+    compareAtPrice: product.compareAtPrice?.toString() ?? "",
     stockQuantity: product.stockQuantity.toString(),
     imageUrl: product.imageUrl || "",
     badge: product.badge || "",
@@ -122,11 +125,13 @@ export function useAdminCatalogueController(options?: { onAfterSave?: () => void
         return;
       }
       const stockQuantity = parseInt(productForm.stockQuantity) || 0;
+      const compareAtPrice = productForm.compareAtPrice ? parseFloat(productForm.compareAtPrice) : null;
       const payload = {
         name: productForm.name.trim(),
         sku: productForm.sku.trim() || undefined,
         description: productForm.description,
         price,
+        compareAtPrice: compareAtPrice && compareAtPrice > 0 ? compareAtPrice : null,
         stockQuantity,
         imageUrl: productForm.imageUrl || undefined,
         badge: productForm.badge || null,

@@ -305,7 +305,8 @@ chinni-treasure/
 │       ├── mocks/                    # Shared mock implementations
 │       ├── setup.ts                  # Test setup
 │       └── utils/                    # Test utilities
-├── proxy.ts                          # Next.js middleware (JWT admin route protection)
+├── middleware.ts                      # Re-exports proxy.ts (Next.js middleware entry)
+├── proxy.ts                          # Next.js middleware logic (JWT admin route protection)
 ├── prisma.config.ts                  # Prisma configuration (defineConfig)
 ├── next.config.ts                    # Next.js configuration (image domains, etc.)
 ├── vercel.json                       # Vercel deployment config
@@ -474,7 +475,7 @@ rejected (stock restored)
 
 ## Middleware (Admin Route Protection)
 
-The file `proxy.ts` acts as Next.js middleware, protecting all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
+The `proxy.ts` file contains the middleware logic (JWT verification), and `middleware.ts` is a thin re-export shim that Next.js requires as its middleware entry point. Together they protect all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
 
 ---
 

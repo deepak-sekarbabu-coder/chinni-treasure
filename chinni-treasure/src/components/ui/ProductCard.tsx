@@ -14,6 +14,7 @@ export interface ProductData {
   id: string;
   name: string;
   price: number;
+  compareAtPrice?: number | null;
   imageUrl: string;
   description: string;
   category: { name: string } | null;
@@ -85,7 +86,14 @@ export default function ProductCard({
         </div>
         <div className="product-card-footer">
           <span className="product-card-price">
-            ₹{Number(product.price).toFixed(2)}
+            {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) ? (
+              <>
+                <span className="product-card-price-original">₹{Number(product.compareAtPrice).toFixed(2)}</span>
+                ₹{Number(product.price).toFixed(2)}
+              </>
+            ) : (
+              <>₹{Number(product.price).toFixed(2)}</>
+            )}
           </span>
           <StockBadge stockQuantity={product.stockQuantity} />
           <button

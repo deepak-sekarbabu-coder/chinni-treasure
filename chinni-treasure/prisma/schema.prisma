@@ -48,9 +48,10 @@ model Product {
   name          String        @db.VarChar(255)
   categoryId    Int?          @map("category_id")
   category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  description   String?
-  price         Decimal       @db.Decimal(10, 2)
-  stockQuantity Int           @default(0) @map("stock_quantity")
+  description     String?
+  price           Decimal       @db.Decimal(10, 2)
+  compareAtPrice  Decimal?      @map("compare_at_price") @db.Decimal(10, 2)
+  stockQuantity   Int           @default(0) @map("stock_quantity")
   imageUrl      String?       @db.VarChar(500) @map("image_url")
   badge         ProductBadge?
   isActive      Boolean       @default(true) @map("is_active")

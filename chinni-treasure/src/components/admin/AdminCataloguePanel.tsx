@@ -10,6 +10,7 @@ export interface ProductFormData {
   sku: string;
   description: string;
   price: string;
+  compareAtPrice: string;
   stockQuantity: string;
   imageUrl: string;
   badge: string;
@@ -85,6 +86,7 @@ export default function AdminCataloguePanel({
               <th>Name</th>
               <th>Code</th>
               <th>Price</th>
+              <th>MRP</th>
               <th>Stock</th>
               <th>Badge</th>
               <th>Images</th>
@@ -150,6 +152,13 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
       <td className="fw-500">{product.name}</td>
       <td className="font-mono text-xs text-muted">{product.sku || "—"}</td>
       <td className="text-gold-dark fw-600">₹{Number(product.price).toFixed(2)}</td>
+      <td className="text-muted">
+        {product.compareAtPrice ? (
+          <span style={{ textDecoration: "line-through" }}>₹{Number(product.compareAtPrice).toFixed(2)}</span>
+        ) : (
+          <span className="text-muted">—</span>
+        )}
+      </td>
       <td>
         <span className={`stock-badge ${product.stockQuantity <= 0 ? "empty" : product.stockQuantity <= 3 ? "low" : "in-stock"}`}>
           {product.stockQuantity}
@@ -282,6 +291,10 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
               <div className="form-group">
                 <label>Price *</label>
                 <input type="number" step="0.01" min="0" value={productForm.price} onChange={(e) => setFormField("price", e.target.value)} required className="input-cream" />
+              </div>
+              <div className="form-group">
+                <label>Compare At Price (MRP)</label>
+                <input type="number" step="0.01" min="0" value={productForm.compareAtPrice} onChange={(e) => setFormField("compareAtPrice", e.target.value)} className="input-cream" placeholder="Original price before discount" />
               </div>
               <div className="form-group">
                 <label>Stock Quantity</label>

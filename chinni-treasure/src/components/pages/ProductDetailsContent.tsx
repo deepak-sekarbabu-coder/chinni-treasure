@@ -12,6 +12,7 @@ interface ProductDetails {
     id: string;
     name: string;
     price: number;
+    compareAtPrice?: number | null;
     imageUrl: string;
     description: string;
     category: { name: string } | null;
@@ -87,7 +88,14 @@ export default function ProductDetailsContent({ product }: Props) {
                     )}
 
                     <p className="product-details-price">
-                        ₹{Number(product.price).toFixed(2)}
+                        {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) ? (
+                            <>
+                                <span className="product-details-price-original">₹{Number(product.compareAtPrice).toFixed(2)}</span>
+                                ₹{Number(product.price).toFixed(2)}
+                            </>
+                        ) : (
+                            <>₹{Number(product.price).toFixed(2)}</>
+                        )}
                     </p>
 
                     <div className="product-details-stock">

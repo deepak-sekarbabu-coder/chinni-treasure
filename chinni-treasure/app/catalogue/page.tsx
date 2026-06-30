@@ -30,6 +30,7 @@ export default async function CataloguePage() {
     id: string;
     name: string;
     price: number;
+    compareAtPrice?: number | null;
     imageUrl: string;
     description: string;
     category: { name: string } | null;
@@ -58,6 +59,7 @@ export default async function CataloguePage() {
       id: p.id,
       name: p.name,
       price: Number(p.price),
+      compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
       imageUrl: p.imageUrl ?? "",
       description: p.description ?? "",
       category: p.category,

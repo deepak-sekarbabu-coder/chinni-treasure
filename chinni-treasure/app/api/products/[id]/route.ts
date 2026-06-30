@@ -5,7 +5,7 @@ import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { clearCache } from "@/src/lib/products-cache";
 import { z } from "zod"
-import { ProductBadge } from "@prisma/client"
+import { Prisma, ProductBadge } from "@prisma/client"
 
 const ImageInputSchema = z.object({
   url: z.string().min(1),
@@ -16,6 +16,7 @@ const ImageInputSchema = z.object({
 const UpdateProductSchema = z.object({
   name: z.string().min(1).optional(),
   price: z.coerce.number().positive("Price must be a positive number").optional(),
+  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
   sku: z.string().optional().nullable(),
   categoryId: z.coerce.number().int().positive().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -32,6 +33,7 @@ const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
   categoryId: (v) => v ?? null,
   description: (v) => (v ? sanitize(v as string) : null),
   price: (v) => v,
+  compareAtPrice: (v) => v ?? null,
   stockQuantity: (v) => v,
   imageUrl: (v) => v || null,
   badge: (v) => v || null,
@@ -103,6 +105,15 @@ export async function PUT(
     return NextResponse.json(product);
   } catch (error) {
     console.error("Failed to update product:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        const target = (error.meta?.target as string[])?.join(", ") || "field";
+        return NextResponse.json({ error: `A product with this ${target} already exists` }, { status: 409 });
+      }
+      if (error.code === "P2025") {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+    }
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }

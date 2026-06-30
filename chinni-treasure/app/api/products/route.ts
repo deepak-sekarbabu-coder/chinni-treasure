@@ -10,6 +10,7 @@ import { ProductBadge } from "@prisma/client";
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   price: z.coerce.number().positive("Price must be a positive number"),
+  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
   sku: z.string().optional(),
   categoryId: z.coerce.number().int().positive().optional().nullable(),
   description: z.string().optional(),
@@ -84,6 +85,7 @@ export async function GET(request: Request) {
 type CreateProductInput = {
   name: string;
   price: number;
+  compareAtPrice?: number | null;
   sku?: string;
   categoryId?: number | null;
   description?: string;
@@ -100,6 +102,7 @@ function buildCreateData(input: CreateProductInput) {
     categoryId: input.categoryId || null,
     description: input.description ? sanitize(input.description) : null,
     price: input.price,
+    compareAtPrice: input.compareAtPrice ?? null,
     stockQuantity: input.stockQuantity ?? 0,
     imageUrl: input.imageUrl || null,
     ...(input.badge !== undefined && { badge: input.badge ?? null }),

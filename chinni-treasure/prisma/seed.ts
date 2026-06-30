@@ -31,6 +31,7 @@ async function seedProducts(categoryMap: Record<string, number>) {
       update: {
         name: p.name,
         price: p.price,
+        compareAtPrice: p.compareAtPrice ?? null,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
         description: p.description,
@@ -41,6 +42,7 @@ async function seedProducts(categoryMap: Record<string, number>) {
         sku: p.sku,
         name: p.name,
         price: p.price,
+        compareAtPrice: p.compareAtPrice ?? null,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
         description: p.description,

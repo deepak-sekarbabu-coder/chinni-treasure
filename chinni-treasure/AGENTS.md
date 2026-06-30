@@ -297,7 +297,8 @@ chinni-treasure/
 │       ├── lib/                      # Lib module tests (12 files)
 │       ├── mocks/                    # Shared mock implementations (prisma.ts)
 │       └── utils/                    # Test utilities (api-test.ts)
-├── proxy.ts                          # Next.js middleware (JWT admin protection)
+├── middleware.ts                      # Re-exports proxy.ts (Next.js middleware entry)
+├── proxy.ts                          # Middleware logic (JWT admin route protection)
 ├── prisma.config.ts                  # Prisma defineConfig
 ├── vitest.config.ts                  # Vitest test configuration
 └── package.json
