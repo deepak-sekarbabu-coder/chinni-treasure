@@ -47,6 +47,10 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
         image: p.imageUrl,
         stock: p.stockQuantity,
       });
+      if (addResult === "max_one") {
+        showToast(`Max 1 Qty per user for ${p.name}`, "info");
+        return;
+      }
       if (addResult === "max_reached") {
         showToast(`Maximum available quantity reached for ${p.name} (${p.stockQuantity})`, "info");
         return;

@@ -91,8 +91,8 @@ export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuant
                         className="btn-secondary qty-btn"
                         onClick={() => onUpdateQuantity(item.productId, 1)}
                         disabled={item.quantity >= item.stock}
-                        title={item.quantity >= item.stock ? `Maximum available quantity reached (${item.stock} in stock)` : "Increase quantity"}
-                        aria-label={item.quantity >= item.stock ? `Maximum quantity reached for ${item.name}` : `Increase quantity for ${item.name}`}
+                        title={item.quantity >= item.stock ? (item.stock === 1 ? "Max 1 Qty per user" : `Maximum available quantity reached (${item.stock} in stock)`) : "Increase quantity"}
+                        aria-label={item.quantity >= item.stock ? (item.stock === 1 ? `Max 1 Qty per user for ${item.name}` : `Maximum quantity reached for ${item.name}`) : `Increase quantity for ${item.name}`}
                       >
                         +
                       </button>
@@ -104,6 +104,11 @@ export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuant
                         ✕
                       </button>
                     </div>
+                    {item.quantity >= item.stock && item.stock === 1 && (
+                      <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
+                        Max 1 Qty per user
+                      </p>
+                    )}
                     {item.quantity >= item.stock && item.stock > 1 && (
                       <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
                         Max available quantity reached ({item.stock} in stock)

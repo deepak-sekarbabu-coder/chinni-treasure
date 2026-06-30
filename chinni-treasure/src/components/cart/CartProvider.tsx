@@ -28,9 +28,9 @@ interface CartContextType {
     price: number;
     image: string;
     stock: number;
-  }) => "added" | "max_reached" | "out_of_stock";
+  }) => "added" | "max_reached" | "max_one" | "out_of_stock";
   removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, delta: number) => "updated" | "max_reached" | "removed" | "unchanged";
+  updateQuantity: (productId: string, delta: number) => "updated" | "max_reached" | "max_one" | "removed" | "unchanged";
   clearCart: () => void;
   getTotal: () => number;
   getCount: () => number;
@@ -91,12 +91,12 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   const addItem = useCallback(
     (product: { id: string; name: string; price: number; image: string; stock: number }) => {
       if (product.stock <= 0) return "out_of_stock" as const;
-      let result: "added" | "max_reached" = "added";
+      let result: "added" | "max_reached" | "max_one" = "added";
       setItems((prev) => {
         const existing = prev.find((i) => i.productId === product.id);
         if (existing) {
           if (existing.quantity >= product.stock) {
-            result = "max_reached";
+            result = product.stock === 1 ? "max_one" : "max_reached";
             return prev;
           }
           return prev.map((i) =>
@@ -126,7 +126,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
 
   const updateQuantity = useCallback(
     (productId: string, delta: number) => {
-      let result: "updated" | "max_reached" | "removed" | "unchanged" = "unchanged";
+      let result: "updated" | "max_reached" | "max_one" | "removed" | "unchanged" = "unchanged";
       setItems((prev) =>
         prev
           .map((i) => {
@@ -137,7 +137,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
               return null;
             }
             if (newQty > i.stock) {
-              result = "max_reached";
+              result = i.stock === 1 ? "max_one" : "max_reached";
               return i;
             }
             result = "updated";
