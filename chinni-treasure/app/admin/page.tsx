@@ -30,7 +30,7 @@ export default function AdminPage() {
   const {
     authenticated, authLoading, ready,
     statusFilter, currentPage, productPage, activeTab,
-    statsQuery, ordersQuery, productsQuery,
+    statsQuery, ordersQuery, productsQuery, categoriesQuery,
     orders, totalPages, products, productTotalPages,
     stats, chartData, productSales, selectedOrder,
     ordersController, catalogueController, headerActions,
@@ -88,6 +88,8 @@ export default function AdminPage() {
             loadingProductId={catalogueController.loadingProductId}
             productPage={productPage}
             productTotalPages={productTotalPages}
+            categories={categoriesQuery.data ?? []}
+            categoriesLoading={categoriesQuery.isLoading}
             onToggleForm={catalogueController.toggleProductForm}
             onFormChange={catalogueController.onFormChange}
             onSave={catalogueController.handleProductSave}

@@ -206,6 +206,15 @@ export const ProductInputSchema = z.object({
   images: z.array(ProductImageInputSchema).optional(),
 });
 
+export const CategorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+  displayOrder: z.number(),
+});
+
+export const CategoriesResponseSchema = z.array(CategorySchema);
+
 export const ApiErrorSchema = z.object({
   error: z.string().optional(),
   message: z.string().optional(),
@@ -233,3 +242,5 @@ export type UpdateOrderStatusInput = z.infer<
 export type ProductInput = z.infer<typeof ProductInputSchema>;
 export type ProductImage = z.infer<typeof ProductImageSchema>;
 export type ProductImageInput = z.infer<typeof ProductImageInputSchema>;
+export type Category = z.infer<typeof CategorySchema>;
+export type CategoriesResponse = z.infer<typeof CategoriesResponseSchema>;

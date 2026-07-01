@@ -23,6 +23,9 @@ export const queryKeys = {
     catalogue: (page: number, limit: number) =>
       [...queryKeys.products.catalogues(), { page, limit }] as const,
   },
+  categories: {
+    all: () => [...queryKeys.all, "categories"] as const,
+  },
   track: {
     all: () => [...queryKeys.all, "track"] as const,
     search: (params: { orderId?: string; phone?: string }) =>

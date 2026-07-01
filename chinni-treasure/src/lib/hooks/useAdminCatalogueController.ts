@@ -135,7 +135,7 @@ export function useAdminCatalogueController(options?: { onAfterSave?: () => void
         stockQuantity,
         imageUrl: productForm.imageUrl || undefined,
         badge: productForm.badge || null,
-        categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : 1,
+        categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
         images: productForm.images.length > 0
           ? productForm.images.map((img) => ({
             url: img.url,

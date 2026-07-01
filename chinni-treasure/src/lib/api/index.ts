@@ -1,6 +1,7 @@
 import { apiFetch } from "./client";
 import {
   AuthMeResponseSchema,
+  CategoriesResponseSchema,
   CreateOrderInputSchema,
   OrderSchema,
   OrdersResponseSchema,
@@ -11,6 +12,7 @@ import {
   TrackOrdersResponseSchema,
   UpdateOrderStatusInputSchema,
   type AuthMeResponse,
+  type CategoriesResponse,
   type CreateOrderInput,
   type Order,
   type OrdersResponse,
@@ -156,6 +158,13 @@ export function deleteProduct(productId: string, signal?: AbortSignal) {
 
 export async function logout(signal?: AbortSignal) {
   await apiFetch<void>("/api/auth/logout", { method: "POST", signal });
+}
+
+export function fetchCategories(signal?: AbortSignal) {
+  return apiFetch<CategoriesResponse>("/api/categories", {
+    signal,
+    schema: CategoriesResponseSchema,
+  });
 }
 
 export function exportToExcel() {

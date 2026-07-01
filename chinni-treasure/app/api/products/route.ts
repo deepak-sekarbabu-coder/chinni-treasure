@@ -99,7 +99,7 @@ function buildCreateData(input: CreateProductInput) {
   return {
     sku: input.sku || undefined,
     name: sanitize(input.name),
-    categoryId: input.categoryId ?? 1,
+    categoryId: input.categoryId ?? null,
     description: input.description ? sanitize(input.description) : null,
     price: input.price,
     compareAtPrice: input.compareAtPrice ?? null,

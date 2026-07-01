@@ -5,6 +5,7 @@ import { queryKeys } from "@/src/lib/query-keys";
 import {
   fetchAuthMe,
   fetchCatalogueProducts,
+  fetchCategories,
   fetchOrders,
   fetchProducts,
   fetchStats,
@@ -62,6 +63,15 @@ export function useCatalogueProducts(page: number, initialData?: ProductsRespons
     initialData: page === 1 ? initialData : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,
+  });
+}
+
+export function useAdminCategories(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.categories.all(),
+    queryFn: ({ signal }) => fetchCategories(signal),
+    enabled,
+    staleTime: 300_000,
   });
 }
 

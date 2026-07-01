@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { AdminTabKey } from "@/src/components/admin/AdminTabs";
 import {
   ADMIN_PAGE_SIZES,
+  useAdminCategories,
   useAdminOrders,
   useAdminProducts,
   useAdminStats,
@@ -22,6 +23,8 @@ export function useAdminPageState() {
   const [productPage, setProductPage] = useState(1);
   const [activeTab, setActiveTab] = useState<AdminTabKey>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  const categoriesQuery = useAdminCategories(authenticated);
 
   const statsQuery = useAdminStats(authenticated);
   const ordersQuery = useAdminOrders(
@@ -69,6 +72,7 @@ export function useAdminPageState() {
     statsQuery,
     ordersQuery,
     productsQuery,
+    categoriesQuery,
     orders,
     totalPages,
     products,

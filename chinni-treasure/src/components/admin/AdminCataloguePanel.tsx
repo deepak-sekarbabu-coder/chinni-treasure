@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import type { Product } from "@/src/lib/api/schemas";
+import type { Category, Product } from "@/src/lib/api/schemas";
 
 export interface ProductFormData {
   id: string;
@@ -37,6 +37,8 @@ interface Props {
   loadingProductId: string | null;
   productPage: number;
   productTotalPages: number;
+  categories: Category[];
+  categoriesLoading: boolean;
   onToggleForm: () => void;
   onFormChange: (form: ProductFormData) => void;
   onSave: (e: React.FormEvent) => Promise<void>;
@@ -55,6 +57,8 @@ export default function AdminCataloguePanel({
   loadingProductId,
   productPage,
   productTotalPages,
+  categories,
+  categoriesLoading,
   onToggleForm,
   onFormChange,
   onSave,
@@ -76,7 +80,7 @@ export default function AdminCataloguePanel({
         </div>
       )}
 
-      <ProductForm showForm={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} setFormField={setFormField} onFormChange={onFormChange} onSave={onSave} onToggleForm={onToggleForm} />
+      <ProductForm showForm={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} categories={categories} categoriesLoading={categoriesLoading} setFormField={setFormField} onFormChange={onFormChange} onSave={onSave} onToggleForm={onToggleForm} />
 
       <div className="admin-product-table-wrap">
         <table className="admin-table">
@@ -189,11 +193,13 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
   );
 }
 
-function ProductForm({ showForm, formClosing, productForm, productLoading, setFormField, onFormChange, onSave, onToggleForm }: {
+function ProductForm({ showForm, formClosing, productForm, productLoading, categories, categoriesLoading, setFormField, onFormChange, onSave, onToggleForm }: {
   showForm: boolean;
   formClosing: boolean;
   productForm: ProductFormData;
   productLoading: boolean;
+  categories: Category[];
+  categoriesLoading: boolean;
   setFormField: (field: keyof ProductFormData, value: string) => void;
   onFormChange: (form: ProductFormData) => void;
   onSave: (e: React.FormEvent) => Promise<void>;
@@ -299,6 +305,13 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, setFo
               <div className="form-group">
                 <label>Stock Quantity</label>
                 <input type="number" min="0" value={productForm.stockQuantity} onChange={(e) => setFormField("stockQuantity", e.target.value)} className="input-cream" />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select value={productForm.categoryId} onChange={(e) => setFormField("categoryId", e.target.value)} className="input-cream" disabled={categoriesLoading}>
+                  <option value="">{categoriesLoading ? "Loading..." : "None"}</option>
+                  {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
+                </select>
               </div>
               <div className="form-group">
                 <label>Badge</label>
