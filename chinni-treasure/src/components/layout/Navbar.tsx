@@ -12,19 +12,16 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
-  const [showAdmin, setShowAdmin] = useState(false);
   const { items, removeItem, getTotal, getCount } = useCart();
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
+  const showAdmin = useSyncExternalStore(
+    () => () => { },
+    () => window.location.hostname === "chinnitreasure.vercel.app" || window.location.hostname === "localhost",
+    () => false,
+  );
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      setShowAdmin(hostname === "chinnitreasure.vercel.app" || hostname === "localhost");
-    }
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);

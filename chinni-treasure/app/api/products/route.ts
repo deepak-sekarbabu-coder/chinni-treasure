@@ -5,7 +5,7 @@ import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { getCached, setCache, clearCache } from "@/src/lib/products-cache";
 import { z } from "zod";
-import { ProductBadge } from "@prisma/client";
+import { Prisma, ProductBadge } from "@prisma/client";
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -99,7 +99,7 @@ function buildCreateData(input: CreateProductInput) {
   return {
     sku: input.sku || undefined,
     name: sanitize(input.name),
-    categoryId: input.categoryId || null,
+    categoryId: input.categoryId ?? 1,
     description: input.description ? sanitize(input.description) : null,
     price: input.price,
     compareAtPrice: input.compareAtPrice ?? null,
@@ -154,6 +154,12 @@ export async function POST(request: Request) {
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Failed to create product:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        const target = (error.meta?.target as string[])?.join(", ") || "field";
+        return NextResponse.json({ error: `A product with this ${target} already exists` }, { status: 409 });
+      }
+    }
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }
 }
