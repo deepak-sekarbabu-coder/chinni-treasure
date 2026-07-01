@@ -24,7 +24,9 @@ export function useAdminPageState() {
   const [activeTab, setActiveTab] = useState<AdminTabKey>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  const categoriesQuery = useAdminCategories(authenticated);
+  const isCatalogueTab = activeTab === "catalogue";
+
+  const categoriesQuery = useAdminCategories(authenticated && isCatalogueTab);
 
   const statsQuery = useAdminStats(authenticated);
   const ordersQuery = useAdminOrders(
@@ -33,7 +35,7 @@ export function useAdminPageState() {
   );
   const productsQuery = useAdminProducts(
     { page: productPage, limit: PRODUCTS_PER_PAGE, isActive: "all" },
-    authenticated,
+    authenticated && isCatalogueTab,
   );
 
   const orders = useMemo(() => ordersQuery.data?.orders ?? [], [ordersQuery.data?.orders]);

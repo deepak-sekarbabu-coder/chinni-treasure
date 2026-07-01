@@ -17,6 +17,7 @@ export default function ProductImageGallery({ images, productName }: Props) {
     });
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
     const lightboxRef = useRef<HTMLDivElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -46,6 +47,10 @@ export default function ProductImageGallery({ images, productName }: Props) {
         const prev = (selectedIndex - 1 + images.length) % images.length;
         goToImage(prev);
     }, [selectedIndex, images.length, isTransitioning, goToImage]);
+
+    const handleImageError = useCallback((index: number) => {
+        setFailedImages((prev) => new Set(prev).add(index));
+    }, []);
 
     // Keyboard navigation + lightbox close
     useEffect(() => {
@@ -92,14 +97,19 @@ export default function ProductImageGallery({ images, productName }: Props) {
                     aria-label={`View ${productName} - Image ${selectedIndex + 1} full size`}
                     type="button"
                 >
-                    <Image
-                        src={selectedImage.url}
-                        alt={`${productName} - Image ${selectedIndex + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className={`gallery-main-img ${isTransitioning ? "fade" : ""}`}
-                        priority
-                    />
+                    {failedImages.has(selectedIndex) ? (
+                        <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0 }}>Image unavailable</div>
+                    ) : (
+                        <Image
+                            src={selectedImage.url}
+                            alt={`${productName} - Image ${selectedIndex + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className={`gallery-main-img ${isTransitioning ? "fade" : ""}`}
+                            priority
+                            onError={() => handleImageError(selectedIndex)}
+                        />
+                    )}
                 </button>
 
                 {/* Navigation Arrows */}
@@ -149,13 +159,18 @@ export default function ProductImageGallery({ images, productName }: Props) {
                             aria-label={`View image ${idx + 1}${image.isPrimary ? " (primary)" : ""}`}
                             type="button"
                         >
-                            <Image
-                                src={image.url}
-                                alt={`${productName} thumbnail ${idx + 1}`}
-                                fill
-                                sizes="80px"
-                                className="gallery-thumb-img"
-                            />
+                            {failedImages.has(idx) ? (
+                                <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0, fontSize: 10 }}>N/A</div>
+                            ) : (
+                                <Image
+                                    src={image.url}
+                                    alt={`${productName} thumbnail ${idx + 1}`}
+                                    fill
+                                    sizes="80px"
+                                    className="gallery-thumb-img"
+                                    onError={() => handleImageError(idx)}
+                                />
+                            )}
                         </button>
                     ))}
                 </div>
@@ -206,14 +221,19 @@ export default function ProductImageGallery({ images, productName }: Props) {
 
                         {/* Image */}
                         <div className="lightbox-image-wrapper">
-                            <Image
-                                src={selectedImage.url}
-                                alt={`${productName} - Image ${selectedIndex + 1}`}
-                                fill
-                                sizes="90vw"
-                                className="lightbox-image"
-                                priority
-                            />
+                            {failedImages.has(selectedIndex) ? (
+                                <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0 }}>Image unavailable</div>
+                            ) : (
+                                <Image
+                                    src={selectedImage.url}
+                                    alt={`${productName} - Image ${selectedIndex + 1}`}
+                                    fill
+                                    sizes="90vw"
+                                    className="lightbox-image"
+                                    priority
+                                    onError={() => handleImageError(selectedIndex)}
+                                />
+                            )}
                         </div>
 
                         {/* Next Button */}

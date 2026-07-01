@@ -1,7 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import StockBadge from "./StockBadge";
+
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";
 
 export interface ProductImageData {
   id: string;
@@ -37,10 +42,11 @@ export default function ProductCard({
   priority = false,
 }: Props) {
   // Use primary image from images array, fall back to imageUrl
+  const [imgFailed, setImgFailed] = useState(false);
   const primaryImage =
     product.images?.find((img) => img.isPrimary)?.url ||
     product.imageUrl ||
-    "/placeholder.svg";
+    PLACEHOLDER_SVG;
 
   const isOutOfStock = product.stockQuantity <= 0;
 
@@ -53,13 +59,14 @@ export default function ProductCard({
       <Link href={`/catalogue/${product.id}`} className="product-card-image-link">
         <div className="product-card-image">
           <Image
-            src={primaryImage}
+            src={imgFailed ? PLACEHOLDER_SVG : primaryImage}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="product-card-img"
             loading={priority ? "eager" : "lazy"}
             priority={priority}
+            onError={() => setImgFailed(true)}
           />
           {product.badge && !isOutOfStock && (
             <span className="product-card-badge">{product.badge}</span>

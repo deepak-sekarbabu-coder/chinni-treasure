@@ -27,6 +27,15 @@ const BADGE_OPTIONS = [
   { value: "luxury", label: "Luxury" },
 ];
 
+function isValidImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 interface Props {
   showForm: boolean;
   formClosing: boolean;
@@ -144,11 +153,12 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
 }) {
   const isDeleting = loadingProductId === product.id;
   const primaryImage = product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <tr className={`product-table-row ${isDeleting ? "removing" : ""}`}>
       <td>
-        {primaryImage ? (
-          <Image src={primaryImage} alt={product.name} width={40} height={50} className="product-img" />
+        {primaryImage && !imgFailed ? (
+          <Image src={primaryImage} alt={product.name} width={40} height={50} className="product-img" onError={() => setImgFailed(true)} />
         ) : (
           <div className="product-img-placeholder" />
         )}
@@ -208,10 +218,17 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
   const [newImageUrl, setNewImageUrl] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editUrl, setEditUrl] = useState("");
+  const [imageUrlError, setImageUrlError] = useState("");
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
   const addImage = () => {
-    if (!newImageUrl.trim()) return;
     const url = newImageUrl.trim();
+    if (!url) return;
+    if (!isValidImageUrl(url)) {
+      setImageUrlError("Please enter a valid HTTP or HTTPS URL.");
+      return;
+    }
+    setImageUrlError("");
     const isFirst = productForm.images.length === 0;
     onFormChange({
       ...productForm,
@@ -234,6 +251,14 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
     if (updated.length > 0 && !updated.some((img) => img.isPrimary)) {
       updated[0].isPrimary = true;
     }
+    setFailedImages((prev) => {
+      const next = new Set<number>();
+      for (const i of prev) {
+        if (i < index) next.add(i);
+        else if (i > index) next.add(i - 1);
+      }
+      return next;
+    });
     onFormChange({ ...productForm, images: updated });
   };
 
@@ -269,12 +294,26 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
   const saveEditImage = (index: number) => {
     const trimmed = editUrl.trim();
     if (!trimmed) return;
+    if (!isValidImageUrl(trimmed)) {
+      setImageUrlError("Please enter a valid HTTP or HTTPS URL.");
+      return;
+    }
+    setImageUrlError("");
     const updated = productForm.images.map((img, i) =>
       i === index ? { ...img, url: trimmed } : img,
     );
+    setFailedImages((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
     onFormChange({ ...productForm, images: updated });
     setEditingIndex(null);
     setEditUrl("");
+  };
+
+  const handleImageError = (index: number) => {
+    setFailedImages((prev) => new Set(prev).add(index));
   };
 
   return (
@@ -336,7 +375,7 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
                     <input
                       type="url"
                       value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      onChange={(e) => { setNewImageUrl(e.target.value); setImageUrlError(""); }}
                       className="input-cream"
                       placeholder="Enter image URL..."
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
@@ -345,13 +384,18 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
                       Add
                     </button>
                   </div>
+                  {imageUrlError && <p className="text-danger text-sm mt-4">{imageUrlError}</p>}
 
                   {productForm.images.length > 0 ? (
                     <div className="image-grid-preview">
                       {productForm.images.map((img, idx) => (
                         <div key={idx} className={`image-preview-card ${img.isPrimary ? "primary" : ""} ${editingIndex === idx ? "editing" : ""}`}>
                           <div className="image-preview-thumb">
-                            <Image src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" />
+                            {failedImages.has(idx) ? (
+                              <div className="product-img-placeholder" style={{ width: 80, height: 80 }} title="Image failed to load" />
+                            ) : (
+                              <Image src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" onError={() => handleImageError(idx)} />
+                            )}
                           </div>
                           <div className="image-preview-info">
                             <span className="image-preview-order">#{idx + 1}</span>
