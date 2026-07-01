@@ -15,6 +15,7 @@ export interface ProductFormData {
   imageUrl: string;
   badge: string;
   categoryId: string;
+  isActive: boolean;
   images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
 }
 
@@ -103,6 +104,7 @@ export default function AdminCataloguePanel({
               <th>Stock</th>
               <th>Badge</th>
               <th>Images</th>
+              <th>Active</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -132,8 +134,10 @@ function SkeletonRows() {
       <td><div className="skeleton-text skeleton-text-name" /></td>
       <td><div className="skeleton-text skeleton-text-sku" /></td>
       <td><div className="skeleton-text skeleton-text-price" /></td>
+      <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td><div className="skeleton-text skeleton-text-stock" /></td>
       <td><div className="skeleton-text skeleton-text-badge" /></td>
+      <td><div className="skeleton-text" style={{ width: "30px" }} /></td>
       <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td>
         <div className="table-actions">
@@ -188,6 +192,11 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
       <td>
         <span className="text-muted text-xs">
           {product.images?.length || (product.imageUrl ? 1 : 0)}
+        </span>
+      </td>
+      <td className="active-cell">
+        <span className={`status-badge ${product.isActive ? "delivered" : "rejected"}`}>
+          {product.isActive ? "Active" : "Inactive"}
         </span>
       </td>
       <td>
@@ -344,6 +353,18 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
               <div className="form-group">
                 <label>Stock Quantity</label>
                 <input type="number" min="0" value={productForm.stockQuantity} onChange={(e) => setFormField("stockQuantity", e.target.value)} className="input-cream" />
+              </div>
+              <div className="form-group toggle-form-group">
+                <label>Active Status</label>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={productForm.isActive}
+                    onChange={(e) => onFormChange({ ...productForm, isActive: e.target.checked })}
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-label">{productForm.isActive ? "Active" : "Inactive"}</span>
+                </label>
               </div>
               <div className="form-group">
                 <label>Category</label>

@@ -203,6 +203,7 @@ export const ProductInputSchema = z.object({
   imageUrl: z.string().optional(),
   badge: z.string().nullable().optional(),
   categoryId: z.coerce.number().int().positive().nullable().optional(),
+  isActive: z.boolean().optional(),
   images: z.array(ProductImageInputSchema).optional(),
 });
 
