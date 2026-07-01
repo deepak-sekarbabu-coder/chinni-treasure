@@ -47,7 +47,7 @@ export default function ProductDetailsContent({ product }: Props) {
                 id: product.id,
                 name: product.name,
                 price: Number(product.price),
-                image: product.imageUrl,
+                image: product.imageUrl ?? "",
                 stock: product.stockQuantity,
             });
             if (result === "max_one") {

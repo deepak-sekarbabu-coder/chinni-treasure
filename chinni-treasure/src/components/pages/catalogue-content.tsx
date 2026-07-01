@@ -44,7 +44,7 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
         id: p.id,
         name: p.name,
         price: Number(p.price),
-        image: p.imageUrl,
+        image: p.imageUrl ?? "",
         stock: p.stockQuantity,
       });
       if (addResult === "max_one") {

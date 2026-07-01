@@ -15,8 +15,8 @@ export interface ProductData {
   name: string;
   price: number;
   compareAtPrice?: number | null;
-  imageUrl: string;
-  description: string;
+  imageUrl: string | null;
+  description: string | null;
   category: { name: string } | null;
   stockQuantity: number;
   badge: string | null;
