@@ -16,6 +16,7 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  preload: false,
 });
 
 const albert = Albert_Sans({
@@ -23,6 +24,7 @@ const albert = Albert_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  preload: false,
 });
 
 const pinyon = Pinyon_Script({
