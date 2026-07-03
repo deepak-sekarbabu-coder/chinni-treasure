@@ -56,11 +56,11 @@ export function useAdminProducts(params: ProductsQueryParams, enabled = true) {
   });
 }
 
-export function useCatalogueProducts(page: number, initialData?: ProductsResponse) {
+export function useCatalogueProducts(page: number, limit: number = CATALOGUE_PAGE_SIZE, search?: string, initialData?: ProductsResponse) {
   return useQuery({
-    queryKey: queryKeys.products.catalogue(page, CATALOGUE_PAGE_SIZE),
-    queryFn: ({ signal }) => fetchCatalogueProducts(page, CATALOGUE_PAGE_SIZE, signal),
-    initialData: page === 1 ? initialData : undefined,
+    queryKey: queryKeys.products.catalogue(page, limit, search),
+    queryFn: ({ signal }) => fetchCatalogueProducts(page, limit, search, signal),
+    initialData: page === 1 && !search ? initialData : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,
   });

@@ -76,11 +76,13 @@ export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal)
   });
 }
 
-export function fetchCatalogueProducts(page: number = 1, limit: number = 6, signal?: AbortSignal) {
+export function fetchCatalogueProducts(page: number = 1, limit: number = 6, search?: string, signal?: AbortSignal) {
   // Defensive: ensure page and limit are valid numbers
   const safePage = typeof page === "number" && Number.isFinite(page) && page >= 1 ? page : 1;
   const safeLimit = typeof limit === "number" && Number.isFinite(limit) && limit >= 1 ? limit : 6;
-  return apiFetch<ProductsResponse>(`/api/products?page=${safePage}&limit=${safeLimit}`, {
+  const params = new URLSearchParams({ page: String(safePage), limit: String(safeLimit) });
+  if (search) params.set("search", search);
+  return apiFetch<ProductsResponse>(`/api/products?${params.toString()}`, {
     signal,
     schema: ProductsResponseSchema,
   });

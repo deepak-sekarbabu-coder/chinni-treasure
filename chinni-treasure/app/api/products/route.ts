@@ -39,9 +39,14 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit;
 
     const isActiveParam = searchParams.get("isActive");
-    const where = isActiveParam === "all" ? {} : { isActive: true };
+    const searchQuery = searchParams.get("search") || "";
+    const where: Prisma.ProductWhereInput = isActiveParam === "all" ? {} : { isActive: true };
 
-    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}`;
+    if (searchQuery) {
+      where.sku = { contains: searchQuery, mode: "insensitive" };
+    }
+
+    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}`;
     const cached = getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {

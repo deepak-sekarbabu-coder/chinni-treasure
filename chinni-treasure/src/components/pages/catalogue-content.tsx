@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ProductCard from "@/src/components/ui/ProductCard";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
+import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
-
-const CATALOGUE_PAGE_SIZE = 6;
 
 interface Props {
   initialProducts: CatalogueProduct[];
@@ -21,14 +20,26 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
   const { addItem } = useCart();
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const catalogueQuery = useCatalogueProducts(currentPage, {
-    products: initialProducts as ProductsResponse["products"],
-    total: initialTotal,
-    page: currentPage,
-    limit: CATALOGUE_PAGE_SIZE,
-    totalPages: initialTotalPages,
-  });
+  const pageSize = useResponsivePageSize();
+
+  // Transform SSR data to match the current page size (avoids flash on mobile)
+  const initialData = useMemo(() => {
+    const slicedProducts =
+      pageSize !== 6
+        ? (initialProducts as ProductsResponse["products"]).slice(0, pageSize)
+        : (initialProducts as ProductsResponse["products"]);
+    return {
+      products: slicedProducts,
+      total: initialTotal,
+      page: currentPage,
+      limit: pageSize,
+      totalPages: Math.max(1, Math.ceil(initialTotal / pageSize)),
+    };
+  }, [pageSize, initialProducts, initialTotal, currentPage]);
+
+  const catalogueQuery = useCatalogueProducts(currentPage, pageSize, searchQuery || undefined, initialData);
 
   const products: CatalogueProduct[] = catalogueQuery.data?.products ?? initialProducts;
   const totalPages = catalogueQuery.data?.totalPages ?? initialTotalPages;
@@ -69,6 +80,11 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  }, []);
+
   return (
     <div style={{ paddingTop: "72px" }}>
       <section className="catalogue-hero">
@@ -87,6 +103,17 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
           title="Our Collection"
           description="Discover our complete selection of artisan-crafted luxury goods. Each item is carefully selected for its exceptional quality and timeless appeal."
         />
+
+        <div className="catalogue-search">
+          <input
+            type="text"
+            className="catalogue-search-input"
+            placeholder="Search by product code..."
+            value={searchQuery}
+            onChange={handleSearch}
+            aria-label="Search products by code"
+          />
+        </div>
 
         {loading && products.length === 0 ? (
           <LoadingSpinner />
