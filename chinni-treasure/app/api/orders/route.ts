@@ -6,7 +6,7 @@ import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod";
-import { INDIAN_STATES } from "@/src/lib/constants";
+import { INDIAN_STATES, calcShippingCost } from "@/src/lib/constants";
 
 const CreateOrderSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
           subtotal += Number(product.price) * item.quantity;
         }
 
-        const shippingCost = 0;
+        const shippingCost = calcShippingCost(subtotal, stateCode);
         const totalAmount = subtotal + shippingCost;
 
         const created = await tx.order.create({

@@ -111,3 +111,17 @@ export const INDIAN_CITIES: Record<string, string[]> = {
   UT: ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Kashipur", "Rishikesh", "Mussoorie", "Almora", "Nainital", "Uttarkashi", "Chamoli", "Tehri Garhwal", "Pithoragarh", "Champawat", "Bageshwar", "Udham Singh Nagar"],
   WB: ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Barrackpore", "Kamarhati", "Halisahar", "Naihati", "Bhatpara", "Ghusuri", "Chandannagar", "Rishra", "Serampore", "Titagarh", "Bally", "Uluberia", "Shrirampore", "Konnagar", "Amta", "Uttarpara Kotrung", "Belgharia"],
 } as const;
+
+export const TAMIL_NADU_STATE_CODE = "TN";
+export const FREE_SHIPPING_THRESHOLD = 599;
+export const SHIPPING_CHARGES = {
+  WITHIN_TAMIL_NADU: 150,
+  OUTSIDE_TAMIL_NADU: 200,
+} as const;
+
+export function calcShippingCost(subtotal: number, stateCode: string): number {
+  if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
+  return stateCode === TAMIL_NADU_STATE_CODE
+    ? SHIPPING_CHARGES.WITHIN_TAMIL_NADU
+    : SHIPPING_CHARGES.OUTSIDE_TAMIL_NADU;
+}

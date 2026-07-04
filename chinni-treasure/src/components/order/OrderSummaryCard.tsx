@@ -16,11 +16,13 @@ interface CartItem {
 interface Props {
   items: CartItem[];
   total: number;
+  shippingCost: number;
+  grandTotal: number;
   onRemove: (id: string) => void;
   onUpdateQuantity: (id: string, delta: number) => void;
 }
 
-export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuantity }: Props) {
+export default function OrderSummaryCard({ items, total, shippingCost, grandTotal, onRemove, onUpdateQuantity }: Props) {
   const [summaryOpen, setSummaryOpen] = useState(true);
 
   return (
@@ -119,20 +121,26 @@ export default function OrderSummaryCard({ items, total, onRemove, onUpdateQuant
               ))}
             </div>
 
-            <div className="order-summary-totals">
-              <div className="order-summary-total-row">
-                <span>Subtotal</span>
-                <span>₹{total.toFixed(2)}</span>
+              <div className="order-summary-totals">
+                <div className="order-summary-total-row">
+                  <span>Subtotal</span>
+                  <span>₹{total.toFixed(2)}</span>
+                </div>
+                <div className="order-summary-total-row">
+                  <span>Shipping</span>
+                  {shippingCost < 0 ? (
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>
+                  ) : shippingCost === 0 ? (
+                    <span className="order-summary-free-shipping">Free</span>
+                  ) : (
+                    <span>₹{shippingCost.toFixed(2)}</span>
+                  )}
+                </div>
+                <div className="order-summary-grand-total">
+                  <span>Total</span>
+                  <span>₹{grandTotal.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="order-summary-total-row">
-                <span>Shipping</span>
-                <span className="order-summary-free-shipping">Free</span>
-              </div>
-              <div className="order-summary-grand-total">
-                <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
-              </div>
-            </div>
           </>
         )}
       </div>
