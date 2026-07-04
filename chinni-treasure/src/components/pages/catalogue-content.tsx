@@ -14,13 +14,14 @@ interface Props {
   initialProducts: CatalogueProduct[];
   initialTotal: number;
   initialTotalPages: number;
+  initialSearch?: string;
 }
 
-export default function CatalogueContent({ initialProducts, initialTotal, initialTotalPages }: Props) {
+export default function CatalogueContent({ initialProducts, initialTotal, initialTotalPages, initialSearch = "" }: Props) {
   const { addItem } = useCart();
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   const pageSize = useResponsivePageSize();
 

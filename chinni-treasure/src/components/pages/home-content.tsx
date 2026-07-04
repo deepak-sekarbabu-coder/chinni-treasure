@@ -1,6 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
 
 export default function HomeContent() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const q = searchQuery.trim();
+      if (q) {
+        router.push(`/catalogue?search=${encodeURIComponent(q)}`);
+      } else {
+        router.push("/catalogue");
+      }
+    },
+    [searchQuery, router],
+  );
+
   return (
     <>
       {/* Hero Section */}
@@ -21,6 +41,32 @@ export default function HomeContent() {
             <span>⏳Limited Batch Drops⏳</span>
             <span>🎁Concierge Support🎁</span>
           </div>
+          
+          <form className="hero-search" onSubmit={handleSearch}>
+            <div className="hero-search-container">
+              <div className="search-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+              </div>
+              <input
+                type="text"
+                className="hero-search-input"
+                placeholder="Search by product code..."
+                aria-label="Search products"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button className="hero-search-button" type="submit" aria-label="Search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12,5 19,12 12,19"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+
           <div className="hero-actions">
             <Link href="/catalogue" className="btn btn-primary">
               Explore Collection

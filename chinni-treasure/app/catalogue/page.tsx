@@ -25,7 +25,9 @@ export const metadata: Metadata = {
 
 const CATALOGUE_PAGE_SIZE = 6;
 
-export default async function CataloguePage() {
+export default async function CataloguePage(props: { searchParams: Promise<{ search?: string }> }) {
+  const searchParams = await props.searchParams;
+  const initialSearch = searchParams.search || "";
   let products: Array<{
     id: string;
     name: string;
@@ -100,6 +102,7 @@ export default async function CataloguePage() {
         initialProducts={products}
         initialTotal={total}
         initialTotalPages={totalPages}
+        initialSearch={initialSearch}
       />
     </>
   );
