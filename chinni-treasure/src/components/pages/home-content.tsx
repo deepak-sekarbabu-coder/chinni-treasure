@@ -41,13 +41,13 @@ export default function HomeContent() {
             <span>⏳Limited Batch Drops⏳</span>
             <span>🎁Concierge Support🎁</span>
           </div>
-          
+
           <form className="hero-search" onSubmit={handleSearch}>
             <div className="hero-search-container">
               <div className="search-icon" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
                 </svg>
               </div>
               <input
@@ -60,8 +60,8 @@ export default function HomeContent() {
               />
               <button className="hero-search-button" type="submit" aria-label="Search">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                  <polyline points="12,5 19,12 12,19"/>
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12,5 19,12 12,19" />
                 </svg>
               </button>
             </div>
@@ -96,7 +96,7 @@ export default function HomeContent() {
               </div>
               <div>
                 <strong>100%</strong>
-                <span>Free Shipping on all orders</span>
+                <span>Enjoy free shipping on all orders above ₹599</span>
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function HomeContent() {
         <div className="features-grid" role="list">
           {[
             { icon: "\u2726", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
-            { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders. Delivered within 5-7 business days." },
+            { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders above ₹599. Delivered within 5-7 business days." },
             { icon: "\u25c8", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
             { icon: "\u2662", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
           ].map((f, i) => (

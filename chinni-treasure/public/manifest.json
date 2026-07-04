@@ -1,7 +1,7 @@
 {
   "name": "Chinni Treasure — Little Love",
   "short_name": "Chinni Treasure",
-  "description": "Discover our curated collection of artisan-crafted luxury goods. Enjoy free shipping on all orders.",
+  "description": "Discover our curated collection of artisan-crafted luxury goods. Enjoy free shipping on all orders above ₹599",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf8f5",
