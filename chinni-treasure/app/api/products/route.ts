@@ -17,6 +17,7 @@ const CreateProductSchema = z.object({
   stockQuantity: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional(),
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
+  isActive: z.boolean().optional(),
   images: z
     .array(
       z.object({
@@ -97,6 +98,7 @@ type CreateProductInput = {
   stockQuantity?: number;
   imageUrl?: string;
   badge?: ProductBadge | null;
+  isActive?: boolean;
   images?: Array<{ url: string; isPrimary?: boolean; displayOrder?: number }>;
 };
 
@@ -111,6 +113,7 @@ function buildCreateData(input: CreateProductInput) {
     stockQuantity: input.stockQuantity ?? 0,
     imageUrl: input.imageUrl || null,
     ...(input.badge !== undefined && { badge: input.badge ?? null }),
+    ...(input.isActive !== undefined && { isActive: input.isActive }),
   };
 }
 
