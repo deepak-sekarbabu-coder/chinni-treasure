@@ -16,6 +16,7 @@ import type {
   Order,
   Product,
   ProductInput,
+  ProductsResponse,
   UpdateOrderStatusInput,
 } from "@/src/lib/api/schemas";
 
@@ -25,6 +26,56 @@ function invalidateAdminQueries(queryClient: ReturnType<typeof useQueryClient>) 
     queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() }),
     queryClient.invalidateQueries({ queryKey: queryKeys.products.all() }),
   ]);
+}
+
+function patchProductListCache(queryClient: ReturnType<typeof useQueryClient>, product: Product) {
+  const productListQueries = queryClient.getQueriesData<ProductsResponse>({
+    queryKey: queryKeys.products.lists(),
+  });
+
+  for (const [queryKey, previousData] of productListQueries) {
+    if (!previousData?.products) continue;
+
+    const productIndex = previousData.products.findIndex((item) => item.id === product.id);
+    const nextProducts = previousData.products.map((item) => (item.id === product.id ? product : item));
+
+    if (productIndex === -1) {
+      queryClient.setQueryData(queryKey, {
+        ...previousData,
+        products: [product, ...previousData.products],
+      });
+      continue;
+    }
+
+    queryClient.setQueryData(queryKey, {
+      ...previousData,
+      products: nextProducts,
+    });
+  }
+
+  const catalogueQueries = queryClient.getQueriesData<{ products: Product[] }>({
+    queryKey: queryKeys.products.catalogues(),
+  });
+
+  for (const [queryKey, previousData] of catalogueQueries) {
+    if (!previousData?.products) continue;
+
+    const catalogueIndex = previousData.products.findIndex((item) => item.id === product.id);
+    const nextProducts = previousData.products.map((item) => (item.id === product.id ? product : item));
+
+    if (catalogueIndex === -1) {
+      queryClient.setQueryData(queryKey, {
+        ...previousData,
+        products: [product, ...previousData.products],
+      });
+      continue;
+    }
+
+    queryClient.setQueryData(queryKey, {
+      ...previousData,
+      products: nextProducts,
+    });
+  }
 }
 
 export function useUpdateOrderStatus() {
@@ -39,7 +90,10 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation<Product, Error, ProductInput>({
     mutationFn: (input) => createProduct(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.all() }),
+    onSuccess: (product) => {
+      patchProductListCache(queryClient, product);
+      return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
+    },
   });
 }
 
@@ -47,7 +101,10 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation<Product, Error, { productId: string; input: ProductInput }>({
     mutationFn: ({ productId, input }) => updateProduct(productId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.all() }),
+    onSuccess: (product) => {
+      patchProductListCache(queryClient, product);
+      return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
+    },
   });
 }
 
@@ -55,7 +112,29 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
     mutationFn: (productId) => deleteProduct(productId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.all() }),
+    onSuccess: async (_data, productId) => {
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.products.lists() },
+        (previousData: ProductsResponse | undefined) => {
+          if (!previousData?.products) return previousData;
+          return {
+            ...previousData,
+            products: previousData.products.filter((item) => item.id !== productId),
+          };
+        },
+      );
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.products.catalogues() },
+        (previousData: { products: Product[] } | undefined) => {
+          if (!previousData?.products) return previousData;
+          return {
+            ...previousData,
+            products: previousData.products.filter((item) => item.id !== productId),
+          };
+        },
+      );
+      return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
+    },
   });
 }
 
