@@ -1,0 +1,50 @@
+# Dependencies
+
+node_modules
+.npm
+
+# Build output (rebuilt inside container)
+
+.next
+
+# Coverage
+
+coverage
+
+# Git
+
+.git
+.gitignore
+
+# IDE
+
+.vscode
+.idea
+
+# Environment files (never bake secrets into image)
+
+.env
+.env.*
+!.env.example
+
+# Documentation
+
+README.md
+docs/
+graphify-out/
+
+# Test files
+
+vitest.config.ts
+src/__tests__
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Docker files
+
+docker-compose.yml
+.dockerignore
+Dockerfile

@@ -1,6 +1,6 @@
 # Chinni Treasure — Improvement Tracker
 
-> Last updated: 2026-06-27 | Project: chinni-treasure | Docs validated against live codebase
+> Last updated: 2026-07-12 | Project: chinni-treasure | Docs validated against live codebase
 
 ---
 
@@ -8,9 +8,10 @@
 
 | Status | Count |
 |--------|-------|
-| Fixed | 15 |
-| Open | 4 |
-| Deferred | 3 |
+| Fixed | 14 |
+| Mitigated | 1 |
+| Open | 6 |
+| Deferred | 1 |
 
 ---
 
@@ -87,3 +88,4 @@
 | 2026-06-20 | `f8eef9b` | #21 Rate limiter eviction, #22 Remove postcss config |
 | 2026-06-20 | `8b901f7` | #18 UUID order numbers |
 | 2026-06-20 | `ec0302b` | #17 Startup env validation |
+| 2026-07-12 | feature work | Razorpay Standard Checkout (replaces PhonePe), `compareAtPrice` discounts, product & category `isActive` toggles, category management, Vercel Analytics, gallery, dynamic product `generateMetadata`, OOS handling |

@@ -11,8 +11,9 @@ import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES, INDIAN_CITIES, calcShippingCost, FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
-import { buildUpiPaymentUrl } from "@/src/lib/upi";
-import { QRCodeCanvas } from "qrcode.react";
+import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
+import { loadRazorpayScript } from "@/src/lib/razorpay";
+import type { RazorpayResponse } from "@/src/types/razorpay";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
@@ -28,6 +29,7 @@ interface OrderForm {
   transactionId: string;
   notes: string;
   acceptedTerms: boolean;
+  paymentMethod: "razorpay" | "manual";
 }
 
 const STEP_LABELS = ["Personal Details", "Delivery Details", "Payment & Review"] as const;
@@ -46,7 +48,6 @@ const VALIDATION_RULES: ValidationRule[] = [
   { field: "city", step: 2, test: (f) => !f.city.trim() ? "City is required" : undefined },
   { field: "state", step: 2, test: (f) => !f.state ? "State/UT is required" : undefined },
   { field: "zipCode", step: 2, test: (f) => !f.zipCode.trim() ? "PIN code is required" : f.zipCode.replace(/\D/g, "").length !== 6 ? "Enter a valid 6-digit PIN code" : undefined },
-  { field: "transactionId", step: 3, test: (f) => !f.transactionId.trim() ? "Transaction ID is required" : undefined },
   { field: "acceptedTerms", step: 3, test: (f) => !f.acceptedTerms ? "You must accept the terms and conditions" : undefined },
 ];
 
@@ -144,18 +145,28 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors, i
   );
 }
 
-function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: {
+function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, onRazorpayPay, processing }: {
   form: OrderForm;
   errors: Record<string, string>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setForm: React.Dispatch<React.SetStateAction<OrderForm>>;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   total: number;
+  onRazorpayPay: () => void;
+  processing: boolean;
 }) {
   const [policyOpen, setPolicyOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const upiLink = buildUpiPaymentUrl("9499011029@ibl", "CHINNI TREASURE", total > 0 ? total : undefined);
-  const upiFallbackUrl = "https://pay.google.com/about/upi/";
+
+  function selectPaymentMethod(method: "razorpay" | "manual") {
+    setForm((prev) => ({ ...prev, paymentMethod: method }));
+    if (errors.transactionId) {
+      setErrors((prev) => {
+        const n = { ...prev };
+        delete n.transactionId;
+        return n;
+      });
+    }
+  }
 
   return (
     <>
@@ -195,109 +206,75 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
         </div>
       </fieldset>
       <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Bank Transfer Details</legend>
-        <div className="bank-details-card">
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Account Name</span>
-            <span className="bank-detail-value">CHINNI TREASURE</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Account Number</span>
-            <span className="bank-detail-value">452689137194</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">Bank &amp; Branch</span>
-            <span className="bank-detail-value">State Bank of India — Madambakkam</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">IFSC Code</span>
-            <span className="bank-detail-value">SBIN0021634</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">MICR Code</span>
-            <span className="bank-detail-value">600002379</span>
-          </div>
-          <div className="bank-detail-row">
-            <span className="bank-detail-label">UPI ID</span>
-            <span
-              className="bank-detail-value bank-upi-link"
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-                if (typeof window === "undefined") return;
-                navigator.clipboard.writeText("9499011029@ibl").then(() => {
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }).catch(() => {
-                  // Fallback: select the text
-                  const selection = window.getSelection();
-                  const range = document.createRange();
-                  const el = document.getElementById("upi-id-text");
-                  if (el) {
-                    range.selectNodeContents(el);
-                    selection?.removeAllRanges();
-                    selection?.addRange(range);
-                  }
-                });
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigator.clipboard.writeText("9499011029@ibl").then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  });
-                }
-              }}
-              style={{ cursor: "pointer" }}
+        <legend className="order-legend">Payment Method</legend>
+        <div className="payment-method-selector" role="radiogroup" aria-label="Payment method">
+          <label className={`payment-method-option${form.paymentMethod === "razorpay" ? " selected" : ""}`}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="razorpay"
+              checked={form.paymentMethod === "razorpay"}
+              onChange={() => selectPaymentMethod("razorpay")}
+            />
+            <span className="payment-method-name">Razorpay</span>
+            <span className="payment-method-desc">Card, UPI, Netbanking &amp; Wallets</span>
+          </label>
+          <label className={`payment-method-option${form.paymentMethod === "manual" ? " selected" : ""}`}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="manual"
+              checked={form.paymentMethod === "manual"}
+              onChange={() => selectPaymentMethod("manual")}
+            />
+            <span className="payment-method-name">Bank Transfer</span>
+            <span className="payment-method-desc">Bank Details</span>
+          </label>
+        </div>
+
+        {form.paymentMethod === "razorpay" ? (
+          <div className="razorpay-payment-block">
+            <p className="razorpay-payment-hint">
+              You&apos;ll be redirected to Razorpay&apos;s secure checkout to complete your payment of{" "}
+              <strong>₹{total.toFixed(2)}</strong>. After successful payment, your order will be placed automatically.
+            </p>
+            <button
+              type="button"
+              className="razorpay-pay-btn"
+              onClick={onRazorpayPay}
+              disabled={processing || total <= 0}
             >
-              <span id="upi-id-text">9499011029@ibl</span>
-              <span className="upi-open-hint">{copied ? "Copied!" : "Tap to copy"}</span>
-            </span>
+              {processing ? "Redirecting to Razorpay..." : `Pay ₹${total.toFixed(2)} securely with Razorpay`}
+            </button>
+            <p className="razorpay-secure-note">🔒 Secured by Razorpay. We never store your card details.</p>
           </div>
-          <p className="bank-details-hint">Make your payment via NEFT/IMPS/UPI and enter the transaction reference ID below.</p>
-          <div className="bank-qr-code">
-            {total > 0 ? (
-              <a
-                href={upiLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(event) => {
-                  if (typeof window === "undefined") return;
-                  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
-                  if (!isMobile) {
-                    event.preventDefault();
-                    window.open(upiFallbackUrl, "_blank", "noopener,noreferrer");
-                  }
-                }}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none" }}
-              >
-                <span className="bank-qr-label">Scan to pay ₹{total.toFixed(2)} via UPI</span>
-                <QRCodeCanvas
-                  value={upiLink}
-                  size={200}
-                  level="H"
-                  bgColor="#FFFFFF"
-                  fgColor="#1A1A1A"
-                  includeMargin
-                />
-              </a>
-            ) : (
-              <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "40px 0" }}>
-                Add items to your cart to see the payment QR code.
-              </p>
-            )}
-          </div>
-        </div>
-      </fieldset>
-      <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Payment Details</legend>
-        <div className="form-group">
-          <label htmlFor="transactionId">Transaction ID <span className="required">*</span></label>
-          <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="Enter your payment transaction/reference ID" autoComplete="off" aria-describedby={errors.transactionId ? "transactionId-error" : undefined} aria-invalid={!!errors.transactionId} />
-          {errors.transactionId && <span id="transactionId-error" className="form-error visible">{errors.transactionId}</span>}
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "6px", display: "block" }}>Share your payment transaction ID after completing the transfer. Our team will verify and process your order.</span>
-        </div>
+        ) : (
+          <>
+            <div className="bank-details-card">
+              <div className="bank-detail-row">
+                <span className="bank-detail-label">Account Name</span>
+                <span className="bank-detail-value">CHINNI TREASURE</span>
+              </div>
+              <div className="bank-detail-row">
+                <span className="bank-detail-label">Account Number</span>
+                <span className="bank-detail-value">452689137194</span>
+              </div>
+              <div className="bank-detail-row">
+                <span className="bank-detail-label">Bank &amp; Branch</span>
+                <span className="bank-detail-value">State Bank of India — Madambakkam</span>
+              </div>
+              <div className="bank-detail-row">
+                <span className="bank-detail-label">IFSC Code</span>
+                <span className="bank-detail-value">SBIN0021634</span>
+              </div>
+              <div className="bank-detail-row">
+                <span className="bank-detail-label">MICR Code</span>
+                <span className="bank-detail-value">600002379</span>
+              </div>
+              <p className="bank-details-hint">Make your payment via NEFT/IMPS.</p>
+            </div>
+          </>
+        )}
       </fieldset>
       <fieldset className="order-fieldset step-fade-in">
         <legend className="order-legend">Additional Notes</legend>
@@ -311,12 +288,14 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total }: 
   );
 }
 
-function StepNavigation({ currentStep, submitting, total, onNext, onPrev }: {
+function StepNavigation({ currentStep, submitting, total, onNext, onPrev, isRazorpay, onRazorpayPay }: {
   currentStep: number;
   submitting: boolean;
   total: number;
   onNext: () => void;
   onPrev: () => void;
+  isRazorpay: boolean;
+  onRazorpayPay: () => void;
 }) {
   return (
     <div className="step-navigation">
@@ -325,6 +304,10 @@ function StepNavigation({ currentStep, submitting, total, onNext, onPrev }: {
       )}
       {currentStep < 3 ? (
         <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
+      ) : isRazorpay ? (
+        <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onRazorpayPay} disabled={submitting}>
+          {submitting ? "Processing..." : `Pay ₹${total.toFixed(2)} with Razorpay`}
+        </button>
       ) : (
         <button type="submit" className="btn btn-dark step-nav-btn step-nav-next" disabled={submitting}>
           {submitting ? "Placing Order..." : `Place Order — ₹${total.toFixed(2)}`}
@@ -334,11 +317,13 @@ function StepNavigation({ currentStep, submitting, total, onNext, onPrev }: {
   );
 }
 
-function StickyCheckoutBar({ currentStep, submitting, total, onNext }: {
+function StickyCheckoutBar({ currentStep, submitting, total, onNext, isRazorpay, onRazorpayPay }: {
   currentStep: number;
   submitting: boolean;
   total: number;
   onNext: () => void;
+  isRazorpay: boolean;
+  onRazorpayPay: () => void;
 }) {
   return (
     <div className="sticky-checkout-bar" aria-label="Checkout summary bar">
@@ -349,6 +334,10 @@ function StickyCheckoutBar({ currentStep, submitting, total, onNext }: {
         </div>
         {currentStep < 3 ? (
           <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
+        ) : isRazorpay ? (
+          <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onRazorpayPay} disabled={submitting}>
+            {submitting ? "Processing..." : `Pay ₹${total.toFixed(2)}`}
+          </button>
         ) : (
           <button type="submit" form="order-form" className="btn btn-dark sticky-checkout-btn" disabled={submitting}>
             {submitting ? "Placing Order..." : `Place Order — ₹${total.toFixed(2)}`}
@@ -366,7 +355,7 @@ export default function OrderPage() {
   const placeOrder = usePlaceOrder();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<OrderForm>({
     fullName: "",
     email: "",
     phone: "",
@@ -378,9 +367,11 @@ export default function OrderPage() {
     transactionId: "",
     notes: "",
     acceptedTerms: false,
+    paymentMethod: "razorpay",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCustomCity, setIsCustomCity] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
 
   const total = getTotal();
@@ -435,11 +426,122 @@ export default function OrderPage() {
     return runValidation(form);
   }
 
+  function getErrorMessage(err: unknown): string {
+    return err instanceof ApiError
+      ? err.message
+      : err instanceof Error
+        ? err.message
+        : "Something went wrong";
+  }
+
+  const orderPayload = {
+    items: items.map((i) => ({ id: i.productId, quantity: i.quantity })),
+    customerName: form.fullName.trim(),
+    customerEmail: form.email.trim(),
+    customerPhone: form.phone.trim(),
+    addressLine1: form.address.trim(),
+    addressLine2: form.addressLine2.trim() || undefined,
+    city: form.city.trim(),
+    stateCode: form.state,
+    postalCode: form.zipCode.trim(),
+    customerNotes: form.notes.trim() || undefined,
+  };
+
+  async function handleRazorpayPayment() {
+    if (items.length === 0) {
+      showToast("Your cart is empty", "error");
+      return;
+    }
+    const errs = validateAll();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    if (grandTotal <= 0) {
+      showToast("Cart total must be greater than zero", "error");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        throw new Error("Razorpay is not configured on this site");
+      }
+
+      const Razorpay = await loadRazorpayScript();
+      const createdOrder = await createRazorpayOrder({
+        amount: Math.round(grandTotal * 100),
+        currency: "INR",
+        receipt: `CT-${Date.now()}`,
+      });
+
+      const options = {
+        key: razorpayKey,
+        amount: createdOrder.amount,
+        currency: createdOrder.currency,
+        name: "CHINNI TREASURE",
+        description: "Order Payment",
+        order_id: createdOrder.order_id,
+        prefill: {
+          name: form.fullName.trim(),
+          email: form.email.trim(),
+          contact: form.phone.trim(),
+        },
+        theme: { color: "#1A1A1A" },
+        handler: async (response: RazorpayResponse) => {
+          try {
+            const verification = await verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (!verification.ok) {
+              showToast("Payment verification failed. Please contact support.", "error");
+              setProcessing(false);
+              return;
+            }
+            const order = await placeOrder.mutateAsync({
+              ...orderPayload,
+              transactionId: response.razorpay_payment_id,
+            });
+            clearCart();
+            showToast("Payment successful! Order placed.", "success");
+            router.push(`/confirmation/${order.id}`);
+          } catch (err) {
+            showToast(getErrorMessage(err), "error");
+            setProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            showToast("Payment cancelled. You can try again.", "info");
+            setProcessing(false);
+          },
+        },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", (response: { error?: { description?: string } }) => {
+        showToast(`Payment failed: ${response.error?.description ?? "Please try again."}`, "error");
+        setProcessing(false);
+      });
+      rzp.open();
+    } catch (err: unknown) {
+      showToast(getErrorMessage(err), "error");
+      setProcessing(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (items.length === 0) {
       showToast("Your cart is empty", "error");
+      return;
+    }
+
+    if (form.paymentMethod === "razorpay") {
+      await handleRazorpayPayment();
       return;
     }
 
@@ -449,28 +551,14 @@ export default function OrderPage() {
 
     try {
       const order = await placeOrder.mutateAsync({
-        items: items.map((i) => ({ id: i.productId, quantity: i.quantity })),
-        customerName: form.fullName.trim(),
-        customerEmail: form.email.trim(),
-        customerPhone: form.phone.trim(),
-        addressLine1: form.address.trim(),
-        addressLine2: form.addressLine2.trim() || undefined,
-        city: form.city.trim(),
-        stateCode: form.state,
-        postalCode: form.zipCode.trim(),
+        ...orderPayload,
         transactionId: form.transactionId.trim(),
-        customerNotes: form.notes.trim() || undefined,
       });
       clearCart();
       showToast("Order placed successfully!", "success");
       router.push(`/confirmation/${order.id}`);
     } catch (err: unknown) {
-      const message = err instanceof ApiError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : "Something went wrong";
-      showToast(message, "error");
+      showToast(getErrorMessage(err), "error");
     }
   }
 
@@ -503,14 +591,16 @@ export default function OrderPage() {
             <div className="order-form-fields">
               {currentStep === 1 && <PersonalDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} />}
               {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} isCustomCity={isCustomCity} setIsCustomCity={setIsCustomCity} />}
-              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} total={grandTotal} />}
+              {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} total={grandTotal} onRazorpayPay={handleRazorpayPayment} processing={processing} />}
 
               <StepNavigation
                 currentStep={currentStep}
-                submitting={placeOrder.isPending}
+                submitting={form.paymentMethod === "razorpay" ? processing : placeOrder.isPending}
                 total={grandTotal}
                 onNext={goToNextStep}
                 onPrev={goToPrevStep}
+                isRazorpay={form.paymentMethod === "razorpay"}
+                onRazorpayPay={handleRazorpayPayment}
               />
             </div>
           </form>
@@ -531,9 +621,11 @@ export default function OrderPage() {
       {items.length > 0 && (
         <StickyCheckoutBar
           currentStep={currentStep}
-          submitting={placeOrder.isPending}
+          submitting={form.paymentMethod === "razorpay" ? processing : placeOrder.isPending}
           total={grandTotal}
           onNext={goToNextStep}
+          isRazorpay={form.paymentMethod === "razorpay"}
+          onRazorpayPay={handleRazorpayPayment}
         />
       )}
     </div>

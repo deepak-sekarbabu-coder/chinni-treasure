@@ -1,5 +1,7 @@
 > **Generated:** ~June 20, 2026 | **Snapshot report** — reflects codebase state at that date. Metrics will drift as the codebase evolves.
 
+> ⚠️ **HISTORICAL SNAPSHOT — NOT CURRENT.** This report was generated against a much earlier codebase. As of **July 12, 2026**, 50+ commits have landed since this snapshot, including the Razorpay migration (replacing PhonePe), `compareAtPrice` discounts, product/category `isActive` toggles, category management, Vercel Analytics, gallery, dynamic product `generateMetadata`, OOS handling, and the `app/globals.css` → 26-file CSS decomposition under `app/styles/`. All complexity, duplication, and dead-code metrics below are **stale** and must be regenerated with `fallow` before being relied upon.
+
 ## Fallow: 10 issues found
 
 ### Unused exports (8)
@@ -20,7 +22,6 @@
 
 - `pg`
 - `sharp`
-
 
 ## Fallow: 15 clone groups found (2.5% duplication)
 
@@ -350,4 +351,3 @@
 [Full metric reference](https://docs.fallow.tools/explanations/metrics)
 
 </details>
-

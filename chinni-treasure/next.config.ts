@@ -22,7 +22,7 @@ const CORS_HEADERS = [
 const nextConfig: NextConfig = {
   output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
-  allowedDevOrigins: ["127.0.0.1"],
+  allowedDevOrigins: ['192.168.1.6'],
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,

@@ -89,64 +89,7 @@
     line-height: 1.5;
 }
 
-.bank-qr-code {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px dashed var(--cream);
-    text-decoration: none;
-}
 
-.bank-qr-code img,
-.bank-qr-code canvas {
-    border-radius: 8px;
-    border: 2px solid var(--cream);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.bank-qr-code:active img,
-.bank-qr-code:active canvas {
-    transform: scale(0.97);
-}
-
-.bank-qr-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-}
-
-.bank-upi-link {
-    color: var(--gold-dark);
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-flex;
-    flex-direction: column;
-    gap: 2px;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.bank-upi-link:hover {
-    color: var(--gold);
-}
-
-.upi-open-hint {
-    font-size: 0.65rem;
-    font-weight: 400;
-    color: var(--gold);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-    .bank-qr-code img,
-    .bank-qr-code canvas {
-        transition: none;
-    }
-}
 
 /* Order Summary Sidebar */
 .order-summary-sidebar {
@@ -322,4 +265,128 @@
     line-height: 1.7;
     margin-bottom: 32px;
     max-width: 400px;
+}
+
+/* ===== PAYMENT METHOD SELECTOR ===== */
+.payment-method-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.payment-method-option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--cream);
+    border-radius: 4px;
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-method-option:hover {
+    border-color: var(--gold);
+}
+
+.payment-method-option.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold);
+}
+
+.payment-method-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.payment-method-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--near-black);
+}
+
+.payment-method-desc {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ===== RAZORPAY PAYMENT BLOCK ===== */
+.razorpay-payment-block {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--cream);
+}
+
+.razorpay-payment-hint {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.razorpay-payment-hint strong {
+    color: var(--near-black);
+}
+
+.razorpay-pay-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 24px;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #fff;
+    background: var(--near-black);
+    border: 1px solid var(--near-black);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+    min-height: 48px;
+}
+
+.razorpay-pay-btn:hover:not(:disabled) {
+    background: var(--gold-dark);
+    border-color: var(--gold-dark);
+}
+
+.razorpay-pay-btn:active:not(:disabled) {
+    transform: scale(0.99);
+}
+
+.razorpay-pay-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.razorpay-secure-note {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 12px 0 0;
+}
+
+@media (max-width: 600px) {
+    .payment-method-selector {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .payment-method-option,
+    .razorpay-pay-btn {
+        transition: none;
+    }
 }

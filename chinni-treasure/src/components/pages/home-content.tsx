@@ -3,8 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
+import RecentlyAddedProducts from "./RecentlyAddedProducts";
+import type { ProductData } from "@/src/components/ui/ProductCard";
 
-export default function HomeContent() {
+interface Props {
+  recentProducts?: ProductData[];
+}
+
+export default function HomeContent({ recentProducts }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -107,6 +113,9 @@ export default function HomeContent() {
         </div>
       </section>
 
+      {/* Recently Added Products */}
+      <RecentlyAddedProducts initialProducts={recentProducts} />
+
       {/* Features */}
       <section
         className="features"
@@ -122,7 +131,7 @@ export default function HomeContent() {
           {[
             { icon: "\u2726", title: "Premium Quality", desc: "Every product is crafted from the finest materials with exceptional attention to detail." },
             { icon: "\u27a4", title: "Free Shipping", desc: "Enjoy complimentary express shipping on all orders above ₹599. Delivered within 5-7 business days." },
-            { icon: "\u25c8", title: "Secure Payment", desc: "Share your transaction ID after payment. Our team will verify and process your order promptly." },
+            { icon: "\u25c8", title: "Secure Payment", desc: "Pay easily via Razorpay or direct bank transfer." },
             { icon: "\u2662", title: "Premium Support", desc: "Dedicated concierge service to assist you with every step of your purchase journey." },
           ].map((f, i) => (
             <div key={i} className="feature-item" role="listitem">

@@ -176,7 +176,7 @@ export const CreateOrderInputSchema = z.object({
     .string()
     .length(2, "State code must be 2 characters"),
   postalCode: z.string().regex(/^\d{6}$/, "Postal code must be 6 digits"),
-  transactionId: z.string().min(1, "Transaction ID is required"),
+  transactionId: z.string().optional(),
   customerNotes: z.string().optional(),
 });
 
@@ -237,6 +237,34 @@ export type ProductSales = z.infer<typeof ProductSalesSchema>;
 export type StatsResponse = z.infer<typeof StatsResponseSchema>;
 export type AuthMeResponse = z.infer<typeof AuthMeResponseSchema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
+
+export const CreateRazorpayOrderInputSchema = z.object({
+  amount: z.number().int().positive(),
+  currency: z.string().length(3).default("INR"),
+  receipt: z.string().optional(),
+});
+export type CreateRazorpayOrderInput = z.infer<typeof CreateRazorpayOrderInputSchema>;
+
+export const CreateRazorpayOrderResponseSchema = z.object({
+  order_id: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+});
+export type CreateRazorpayOrderResponse = z.infer<typeof CreateRazorpayOrderResponseSchema>;
+
+export const VerifyRazorpayPaymentInputSchema = z.object({
+  razorpay_order_id: z.string().min(1),
+  razorpay_payment_id: z.string().min(1),
+  razorpay_signature: z.string().min(1),
+});
+export type VerifyRazorpayPaymentInput = z.infer<typeof VerifyRazorpayPaymentInputSchema>;
+
+export const VerifyRazorpayPaymentResponseSchema = z.object({
+  ok: z.boolean(),
+  order_id: z.string().optional(),
+  payment_id: z.string().optional(),
+});
+export type VerifyRazorpayPaymentResponse = z.infer<typeof VerifyRazorpayPaymentResponseSchema>;
 export type UpdateOrderStatusInput = z.infer<
   typeof UpdateOrderStatusInputSchema
 >;

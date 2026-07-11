@@ -10,8 +10,13 @@ function requireEnv(name: string, fallback?: string): string {
 }
 
 export const env = {
-  DATABASE_URL: requireEnv("DATABASE_URL"),
-  JWT_SECRET: requireEnv("JWT_SECRET", process.env.NODE_ENV !== "production" ? "dev-secret" : undefined),
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ALLOWED_ORIGIN: process.env.ALLOWED_ORIGIN || "*",
+  get DATABASE_URL() { return requireEnv("DATABASE_URL"); },
+  get JWT_SECRET() { return requireEnv("JWT_SECRET", process.env.NODE_ENV !== "production" ? "dev-secret" : undefined); },
+  get NEXT_PUBLIC_SITE_URL() { return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"; },
+  get ALLOWED_ORIGIN() { return process.env.ALLOWED_ORIGIN || "*"; },
+
+  // Razorpay (server-only secret; public key exposed via NEXT_PUBLIC_ prefix)
+  get RAZORPAY_KEY_ID() { return requireEnv("RAZORPAY_KEY_ID"); },
+  get RAZORPAY_KEY_SECRET() { return requireEnv("RAZORPAY_KEY_SECRET"); },
+  get NEXT_PUBLIC_RAZORPAY_KEY_ID() { return process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || requireEnv("RAZORPAY_KEY_ID"); },
 } as const;

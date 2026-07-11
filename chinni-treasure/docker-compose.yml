@@ -1,0 +1,46 @@
+services:
+  # ---- PostgreSQL Database ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: chinni-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chinni_treasure
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chinni_treasure"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---- Next.js App ----
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_RAZORPAY_KEY_ID=${NEXT_PUBLIC_RAZORPAY_KEY_ID}
+        - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+    container_name: chinni-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/chinni_treasure"
+      JWT_SECRET: "dev-secret-change-in-production"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      ALLOWED_ORIGIN: "*"
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.local
+
+volumes:
+  pgdata:

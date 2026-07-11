@@ -11,9 +11,15 @@ import {
   StatsResponseSchema,
   TrackOrdersResponseSchema,
   UpdateOrderStatusInputSchema,
+  CreateRazorpayOrderInputSchema,
+  CreateRazorpayOrderResponseSchema,
+  VerifyRazorpayPaymentInputSchema,
+  VerifyRazorpayPaymentResponseSchema,
   type AuthMeResponse,
   type CategoriesResponse,
   type CreateOrderInput,
+  type CreateRazorpayOrderInput,
+  type CreateRazorpayOrderResponse,
   type Order,
   type OrdersResponse,
   type Product,
@@ -22,6 +28,8 @@ import {
   type StatsResponse,
   type TrackOrdersResponse,
   type UpdateOrderStatusInput,
+  type VerifyRazorpayPaymentInput,
+  type VerifyRazorpayPaymentResponse,
 } from "./schemas";
 
 export async function fetchAuthMe(signal?: AbortSignal): Promise<AuthMeResponse> {
@@ -171,4 +179,24 @@ export function fetchCategories(signal?: AbortSignal) {
 
 export function exportToExcel() {
   return apiFetch<Blob>("/api/export", { responseType: "blob" });
+}
+
+export function createRazorpayOrder(input: CreateRazorpayOrderInput, signal?: AbortSignal) {
+  const parsed = CreateRazorpayOrderInputSchema.parse(input);
+  return apiFetch<CreateRazorpayOrderResponse>("/api/create-order", {
+    method: "POST",
+    body: parsed,
+    signal,
+    schema: CreateRazorpayOrderResponseSchema,
+  });
+}
+
+export function verifyRazorpayPayment(input: VerifyRazorpayPaymentInput, signal?: AbortSignal) {
+  const parsed = VerifyRazorpayPaymentInputSchema.parse(input);
+  return apiFetch<VerifyRazorpayPaymentResponse>("/api/verify-payment", {
+    method: "POST",
+    body: parsed,
+    signal,
+    schema: VerifyRazorpayPaymentResponseSchema,
+  });
 }

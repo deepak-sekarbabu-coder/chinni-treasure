@@ -1,6 +1,6 @@
 # Codebase Architectural Gaps & Technical Debt
 
-> **Last validated:** June 27, 2026 — Metrics refreshed against current codebase.
+> **Last validated:** July 12, 2026 — Gaps and statuses re-validated against current codebase.
 
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 
@@ -23,12 +23,13 @@ None currently identified.
 ## 3. Minor Gaps (Improvement / Best Practice)
 
 * **Incomplete Testing Coverage**
-  * **Issue:** Unit tests are strong for utilities, isolated components, and API routes, but complex multi-step UI workflows (like the checkout process) and integration tests are less thoroughly tested.
-  * **Recommendation:** Implement higher-level integration or E2E tests covering critical user journeys.
+  * **Issue:** Unit and integration tests are strong — 26 test files under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@playwright/test` is now a dev dependency (E2E groundwork), but no Playwright suite or `playwright.config` exists yet.
+  * **Recommendation:** Implement E2E tests with Playwright covering critical user journeys (browse → checkout → payment, admin order advancement).
 
-* **Lack of Dynamic Metadata**
-  * **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`, but individual product and category pages lack dynamic `generateMetadata` functions in Next.js, impacting search engine visibility for dynamic content.
-  * **Recommendation:** Implement dynamic `generateMetadata` functions for all pages that render dynamic content from the database.
+* **Lack of Dynamic Metadata** (Partially Resolved)
+  * **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`. Product detail pages (`app/catalogue/[id]/page.tsx`) now implement dynamic `generateMetadata` sourced from the database; category/listing pages (`app/catalogue/page.tsx`) still lack it, limiting search visibility for browsable collections.
+  * **Resolution:** Dynamic product-detail metadata added (SEO work, July 2026). Category/listing pages remain pending.
+  * **Recommendation:** Add `generateMetadata` to `app/catalogue/page.tsx` and any other dynamic listing pages.
 
 * **In-Memory Cache Not Shared Across Serverless Instances**
   * **Issue:** The in-memory cache (`src/lib/cache.ts`, `src/lib/products-cache.ts`) works in development but won't persist across serverless function invocations on Vercel.

@@ -1,6 +1,6 @@
 # Chinni Treasure — Little Love
 
-> **Last validated against codebase:** June 27, 2026 — All tokens, fonts, breakpoints, and component patterns confirmed current.
+> **Last validated against codebase:** July 12, 2026 — Tokens, fonts, breakpoints, and component patterns re-validated against current code (`app/styles/variables.css`).
 
 ## Register
 
@@ -85,7 +85,7 @@ palette is the visual equivalent: precious, grounded, light.
 | `--font-serif` | Cormorant Garamond | Headings, brand voice, prices |
 | `--font-sans` | Albert Sans | Body, labels, buttons, admin UI |
 | `--font-script` | Pinyon Script | Decorative brand taglines, accents |
-| `--text-muted` | #707070 | Secondary labels, metadata |
+| `--text-muted` | #6d6d6d | Secondary labels, metadata |
 
 **Spacing** targets a 1-4-9 rhythm: 4px micro, 16px component gap, 36px+
 section break. In practice, the stylesheet defines a broader utility set

@@ -29,6 +29,7 @@
 
 /* Page-Specific */
 @import "./styles/hero.css";
+@import "./styles/recently-added.css";
 @import "./styles/products.css";
 @import "./styles/features.css";
 @import "./styles/track.css";

@@ -1,6 +1,6 @@
 {
   "name": "chinni-treasure",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,9 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "format": "eslint --fix",
+    "clean": "node -e \"const{rmSync}=require('fs');['.next','.turbo','node_modules'].forEach(d=>{try{rmSync(d,{recursive:true,force:true});console.log('Removed '+d)}catch{}})\"",
+    "clean:cache": "node -e \"const{rmSync}=require('fs');['.next','.turbo'].forEach(d=>{try{rmSync(d,{recursive:true,force:true});console.log('Removed '+d)}catch{}})\"",
+    "fresh": "npm run clean && npm install",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:seed": "npx tsx prisma/seed.ts",
@@ -18,7 +21,10 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "setup": "npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts"
+    "setup": "npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts",
+    "podman:build": "podman compose build",
+    "podman:up": "podman compose up -d",
+    "podman:down": "podman compose down"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -35,7 +41,7 @@
     "jspdf": "^4.2.1",
     "next": "^16.2.6",
     "pg": "^8.21.0",
-    "qrcode.react": "^4.2.0",
+    "razorpay": "^2.9.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",

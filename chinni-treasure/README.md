@@ -11,8 +11,24 @@
 - **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
 - **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching
 - **Validation:** Zod schemas for checkout, cart, and API input/output validation
+- **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual bank-transfer fallback
+- **Analytics:** Vercel Analytics (`@vercel/analytics`) for privacy-friendly traffic insights
+- **Markdown:** `react-markdown` for rendering rich product/legal content
 - **Export:** ExcelJS for admin data export; jsPDF for invoice generation
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
+
+---
+
+## Feature Highlights
+
+- **Artisan catalogue** with categories, rich product descriptions, multiple product images, and discount display (MRP `compareAtPrice` struck through against the selling price)
+- **Guest + authenticated shopping** with a persistent cart (React Context + `localStorage` + cookie sync for server-side access)
+- **Razorpay payments** via Standard Checkout (redirect) with server-side HMAC-SHA256 signature verification, plus a manual bank-transfer fallback
+- **Multi-step checkout** with delivery form, address validation, shipping calculation, and a confirmation page with a downloadable PDF invoice
+- **Admin dashboard** with order management, catalogue CRUD, category management, status advancement, Excel export, and charts
+- **Order tracking** portal and shareable confirmation pages
+- **Accessibility-first** UI: skip links, ARIA attributes, focus trapping, and `prefers-reduced-motion` / `prefers-contrast` support
+- **Production hardening**: CSRF/origin validation, rate-limited admin login, DOMPurify sanitization, Zod validation, serializable inventory transactions, and optimistic-concurrency order updates
 
 ---
 
@@ -67,9 +83,21 @@ DATABASE_URL=postgresql://youruser:yourpassword@localhost:5432/chinni_treasure
 
 # JWT Secret (change in production!)
 JWT_SECRET=your-secure-random-secret-key
+
+# Public site URL (used for metadata, sitemap, and absolute links)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# CORS — comma-separated list of allowed origins for API requests
+ALLOWED_ORIGIN=http://localhost:3000
+
+# Razorpay (Standard Checkout) — the server-only secret MUST never be exposed to the client
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
+# Public Razorpay key exposed to the browser (prefixed NEXT_PUBLIC_)
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 ```
 
-> **Note:** The `.env` file includes example Vercel Postgres variables for production deployment. For local development, only `DATABASE_URL` and `JWT_SECRET` are needed. Vercel auto-injects the `POSTGRES_*` variables when you attach a Postgres database.
+> **Note:** The `.env` file includes example Vercel Postgres variables for production deployment. For local development, `DATABASE_URL`, `JWT_SECRET`, and the Razorpay variables are required. Vercel auto-injects the `POSTGRES_*` variables when you attach a Postgres database. Set `ALLOWED_ORIGIN` and `NEXT_PUBLIC_SITE_URL` to your production domain in the Vercel dashboard.
 
 ### 5. Run Database Setup
 
@@ -132,6 +160,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run prisma:seed` | Seed the database with sample data |
 | `npm run setup` | Full setup: generate client + push schema + seed data |
 | `npx prisma studio` | Open Prisma Studio (GUI for database management) |
+| `npm run podman:build` | Build the container image via `podman compose build` |
+| `npm run podman:up` | Build (if needed) and start all services in detached mode |
+| `npm run podman:down` | Stop and remove the containers |
 
 ---
 
@@ -152,14 +183,17 @@ chinni-treasure/
 │   │   │   ├── login/route.ts        # Admin login (rate-limited)
 │   │   │   ├── logout/route.ts       # Admin logout
 │   │   │   └── me/route.ts           # Current session check
+│   │   ├── categories/route.ts       # List active categories (cached)
+│   │   ├── create-order/route.ts     # Create a Razorpay order (Standard Checkout)
 │   │   ├── docs/route.ts             # OpenAPI spec endpoint
 │   │   ├── orders/
-│   │   │   ├── route.ts              # Order CRUD (with pagination)
+│   │   │   ├── route.ts              # Create order (public) + list (admin, paginated)
 │   │   │   └── [id]/route.ts         # Single order retrieval
 │   │   │   └── [id]/status/route.ts  # Order status update (versioned)
 │   │   ├── products/
 │   │   │   ├── route.ts              # Product CRUD (with pagination)
 │   │   │   └── [id]/route.ts         # Single product update/delete
+│   │   ├── verify-payment/route.ts   # Verify Razorpay payment signature (HMAC-SHA256)
 │   │   ├── export/route.ts           # Excel export endpoint
 │   │   ├── stats/route.ts            # Dashboard statistics (cached)
 │   │   └── track/route.ts            # Order tracking (cached)
@@ -286,6 +320,7 @@ chinni-treasure/
 │   │   ├── env.ts                    # Environment variable validation (requireEnv)
 │   │   ├── openapi-spec.ts           # OpenAPI 3.0 specification document
 │   │   ├── prisma.ts                 # Prisma client singleton (global caching)
+│   │   ├── razorpay.ts               # Loads the Razorpay Standard Checkout script (browser)
 │   │   ├── products-cache.ts         # Product-specific cache wrapper
 │   │   ├── query-keys.ts             # React Query key factory
 │   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts)
@@ -298,6 +333,7 @@ chinni-treasure/
 │   │   └── utils/                    # Test helper utilities
 │   ├── types/
 │   │   ├── cart.ts                   # CartItem interface
+│   │   ├── razorpay.d.ts             # Razorpay response/constructor types
 │   │   └── index.ts                  # Re-exports
 │   └── __tests__/
 │       ├── api/                      # API route handler tests (10 files)
@@ -355,6 +391,11 @@ Add these under **Environment Variables**:
 |---|---|---|
 | `DATABASE_URL` | Your production PostgreSQL connection string | Production, Preview, Development |
 | `JWT_SECRET` | A secure random string (e.g. `openssl rand -base64 32`) | Production, Preview, Development |
+| `RAZORPAY_KEY_ID` | Your Razorpay Key ID (e.g. `rzp_live_xxx`) | Production, Preview, Development |
+| `RAZORPAY_KEY_SECRET` | Your Razorpay Key Secret (server-only, never exposed) | Production, Preview, Development |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Your Razorpay Key ID exposed to the browser | Production, Preview, Development |
+| `NEXT_PUBLIC_SITE_URL` | Your production site URL (e.g. `https://chinni-treasure.vercel.app`) | Production, Preview, Development |
+| `ALLOWED_ORIGIN` | Comma-separated allowed origins (e.g. `https://your-domain.com`) | Production, Preview, Development |
 
 > If you're attaching a Vercel Postgres database, its variables (`POSTGRES_URL`, etc.) are auto-injected under **Environment Variables — Automatically** after step 5.
 
@@ -448,6 +489,7 @@ rejected (stock restored)
 - Stock is deducted on order placement and restored if rejected
 - **Optimistic concurrency control** via a `version` field prevents conflicting status updates
 - Order creation uses **serializable transaction isolation** for inventory integrity
+- Payments are captured via **Razorpay Standard Checkout** (or a manual bank-transfer fallback); the gateway `transactionId` is stored on the order for reconciliation
 
 ---
 
@@ -462,7 +504,10 @@ rejected (stock restored)
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
 | DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
-| POST | `/api/orders` | Place new order (serializable transaction) | No |
+| GET | `/api/categories` | List active categories (cached) | No |
+| POST | `/api/orders` | Place new order (serializable transaction; captures `transactionId` from Razorpay or manual payment) | No |
+| POST | `/api/create-order` | Create a Razorpay order for Standard Checkout | No |
+| POST | `/api/verify-payment` | Verify Razorpay payment signature (HMAC-SHA256) | No |
 | GET | `/api/orders` | List orders with pagination (admin) | Yes |
 | GET | `/api/orders/[id]` | Get order with items & status history | No |
 | PATCH | `/api/orders/[id]/status` | Update order status (with versioning) | Yes |
@@ -513,6 +558,9 @@ npm run test:coverage # With coverage report
 | `isomorphic-dompurify` | Server-side XSS sanitization |
 | `exceljs` | Data export to Excel |
 | `sharp` | Image processing |
+| `razorpay` | Razorpay Standard Checkout payment gateway |
+| `@vercel/analytics` | Privacy-friendly Vercel Analytics |
+| `react-markdown` | Markdown rendering for product/legal content |
 
 ---
 
