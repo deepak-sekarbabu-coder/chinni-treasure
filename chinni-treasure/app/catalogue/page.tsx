@@ -51,7 +51,11 @@ export default async function CataloguePage(props: { searchParams: Promise<{ sea
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },
         },
-        orderBy: [{ stockQuantity: "desc" }, { createdAt: "asc" }],
+        orderBy: [
+          { stockQuantity: "desc" },
+          { createdAt: "desc" },
+          { id: "desc" },
+        ],
         take: CATALOGUE_PAGE_SIZE,
         skip: 0,
       }),

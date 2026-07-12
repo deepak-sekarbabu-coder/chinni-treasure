@@ -62,7 +62,11 @@ export async function GET(request: Request) {
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },
         },
-        orderBy: [{ stockQuantity: "desc" }, { createdAt: "desc" }],
+        orderBy: [
+          { stockQuantity: "desc" },
+          { createdAt: "desc" },
+          { id: "desc" },
+        ],
         skip,
         take: limit,
       }),
