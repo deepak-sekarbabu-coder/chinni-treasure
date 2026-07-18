@@ -343,6 +343,33 @@
     margin-bottom: 0;
 }
 
+/* ── Product Form Modal ── */
+.product-form-modal {
+    max-width: 760px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.product-form-modal .modal-header {
+    flex-shrink: 0;
+}
+
+.product-form-modal .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 24px 36px 36px;
+}
+
+.product-form-modal .product-form-footer {
+    margin-top: 8px;
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+}
+
 .product-form-inner {
     animation: revealUp 0.35s var(--ease-out) both;
 }

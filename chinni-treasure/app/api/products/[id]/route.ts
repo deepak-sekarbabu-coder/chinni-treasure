@@ -91,9 +91,21 @@ export async function PUT(
       }
     }
 
+    // Avoid unique-constraint collisions when the SKU is unchanged:
+    // only include `sku` in the update payload when it actually differs
+    // from the current product's value.
+    const existing = await prisma.product.findUnique({
+      where: { id },
+      select: { sku: true },
+    });
+    const updateData = buildUpdateData(productFields as Record<string, unknown>) as Record<string, unknown>;
+    if (updateData.sku !== undefined && existing && updateData.sku === existing.sku) {
+      delete updateData.sku;
+    }
+
     const product = await prisma.product.update({
       where: { id },
-      data: buildUpdateData(productFields as Record<string, unknown>) as Parameters<typeof prisma.product.update>[0]["data"],
+      data: updateData as Parameters<typeof prisma.product.update>[0]["data"],
       include: {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
@@ -108,6 +120,12 @@ export async function PUT(
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         const target = (error.meta?.target as string[])?.join(", ") || "field";
+        if (target.includes("sku")) {
+          return NextResponse.json(
+            { error: "A product with this SKU already exists. Please use a unique SKU or leave it blank." },
+            { status: 409 },
+          );
+        }
         return NextResponse.json({ error: `A product with this ${target} already exists` }, { status: 409 });
       }
       if (error.code === "P2025") {
