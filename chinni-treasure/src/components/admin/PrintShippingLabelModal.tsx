@@ -10,6 +10,19 @@ interface Props {
   onClose: () => void;
 }
 
+const COURIER_OPTIONS = [
+  "Delhivery Pvt Ltd",
+  "Blue Dart Express",
+  "DTDC Express",
+  "FedEx India",
+  "India Post",
+  "Ekart Logistics",
+  "Xpress Bees",
+  "Ecom Express",
+  "Shadowfax",
+  "Other",
+];
+
 interface ProductRow {
   orderId: string;      // Product Code / SKU
   styleCode: string;    // Product Description / Style
@@ -57,6 +70,8 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
   const [awbNumber, setAwbNumber] = useState(order.trackingId || "");
   const [paymentAmount, setPaymentAmount] = useState(order.totalAmount || 0);
   const [courierName, setCourierName] = useState("Delhivery Pvt Ltd");
+  const [courierSelect, setCourierSelect] = useState("Delhivery Pvt Ltd");
+  const [courierCustom, setCourierCustom] = useState("");
   const [paymentMode, setPaymentMode] = useState("Prepaid");
   const [recipientName, setRecipientName] = useState(order.customerName || "");
   const [recipientPhone, setRecipientPhone] = useState(order.customerPhone || "");
@@ -74,6 +89,8 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setAwbNumber(order.trackingId || "");
     setPaymentAmount(order.totalAmount || 0);
     setCourierName("Delhivery Pvt Ltd");
+    setCourierSelect("Delhivery Pvt Ltd");
+    setCourierCustom("");
     setPaymentMode("Prepaid");
     setRecipientName(order.customerName || "");
     setRecipientPhone(order.customerPhone || "");
@@ -106,6 +123,8 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setAwbNumber("");
     setPaymentAmount(0);
     setCourierName("");
+    setCourierSelect("");
+    setCourierCustom("");
     setPaymentMode("Prepaid");
     setRecipientName("");
     setRecipientPhone("");
@@ -312,11 +331,36 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
             <div className="control-row">
               <div className="control-group">
                 <label>Courier Name</label>
-                <input
-                  type="text"
-                  value={courierName}
-                  onChange={(e) => setCourierName(e.target.value)}
-                />
+                <select
+                  value={courierSelect}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCourierSelect(val);
+                    if (val !== "Other") {
+                      setCourierName(val);
+                      setCourierCustom("");
+                    } else {
+                      setCourierName(courierCustom);
+                    }
+                  }}
+                >
+                  <option value="">Select courier...</option>
+                  {COURIER_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {courierSelect === "Other" && (
+                  <input
+                    type="text"
+                    value={courierCustom}
+                    onChange={(e) => {
+                      setCourierCustom(e.target.value);
+                      setCourierName(e.target.value);
+                    }}
+                    placeholder="Enter courier name"
+                    style={{ marginTop: "6px" }}
+                  />
+                )}
               </div>
               <div className="control-group">
                 <label>Payment Mode</label>
