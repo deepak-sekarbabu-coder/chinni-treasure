@@ -56,7 +56,7 @@ export const OrdersResponseSchema = z.object({
   totalPages: z.number(),
 });
 
-export const TrackOrderResultSchema = z.object({
+const TrackOrderResultSchema = z.object({
   id: z.string(),
   orderNumber: z.string(),
   status: OrderStatusSchema,
@@ -69,7 +69,7 @@ export const TrackOrderResultSchema = z.object({
 
 export const TrackOrdersResponseSchema = z.array(TrackOrderResultSchema);
 
-export const ProductImageSchema = z.object({
+const ProductImageSchema = z.object({
   id: z.string(),
   url: z.string(),
   isPrimary: z.boolean(),
@@ -102,7 +102,7 @@ export const ProductsResponseSchema = z.object({
   totalPages: z.number(),
 });
 
-export const CatalogueProductSchema = z.object({
+const CatalogueProductSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.coerce.number(),
@@ -115,12 +115,12 @@ export const CatalogueProductSchema = z.object({
   images: z.array(ProductImageSchema).optional(),
 });
 
-export const CatalogueProductsResponseSchema = z.union([
+const CatalogueProductsResponseSchema = z.union([
   z.object({ products: z.array(CatalogueProductSchema) }),
   z.array(CatalogueProductSchema),
 ]);
 
-export const StatsSchema = z.object({
+const StatsSchema = z.object({
   totalOrders: z.number(),
   pendingOrders: z.number(),
   approvedOrders: z.number(),
@@ -131,13 +131,13 @@ export const StatsSchema = z.object({
   totalRevenue: z.number(),
 });
 
-export const ChartPointSchema = z.object({
+const ChartPointSchema = z.object({
   date: z.string(),
   orders: z.number(),
   revenue: z.number(),
 });
 
-export const ProductSalesSchema = z.object({
+const ProductSalesSchema = z.object({
   productName: z.string(),
   quantity: z.number(),
   revenue: z.number(),
@@ -199,7 +199,7 @@ export const UpdateTrackingInputSchema = z.object({
   trackingId: z.string().min(1, "Tracking ID is required"),
 });
 
-export const ProductImageInputSchema = z.object({
+const ProductImageInputSchema = z.object({
   url: z.string().min(1, "Image URL is required"),
   isPrimary: z.boolean().optional().default(false),
   displayOrder: z.number().int().min(0).optional().default(0),
@@ -219,7 +219,7 @@ export const ProductInputSchema = z.object({
   images: z.array(ProductImageInputSchema).optional(),
 });
 
-export const CategorySchema = z.object({
+const CategorySchema = z.object({
   id: z.number(),
   name: z.string(),
   slug: z.string(),
@@ -272,7 +272,7 @@ export const UpdateCategorySchema = z.object({
 
 // ---- Latest product per active category ----
 
-export const LatestCategoryProductSchema = z.object({
+const LatestCategoryProductSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.coerce.number(),

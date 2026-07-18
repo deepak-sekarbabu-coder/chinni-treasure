@@ -112,9 +112,9 @@ export const INDIAN_CITIES: Record<string, string[]> = {
   WB: ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Barrackpore", "Kamarhati", "Halisahar", "Naihati", "Bhatpara", "Ghusuri", "Chandannagar", "Rishra", "Serampore", "Titagarh", "Bally", "Uluberia", "Shrirampore", "Konnagar", "Amta", "Uttarpara Kotrung", "Belgharia"],
 } as const;
 
-export const TAMIL_NADU_STATE_CODE = "TN";
+const TAMIL_NADU_STATE_CODE = "TN";
 export const FREE_SHIPPING_THRESHOLD = 599;
-export const SHIPPING_CHARGES = {
+const SHIPPING_CHARGES = {
   WITHIN_TAMIL_NADU: 150,
   OUTSIDE_TAMIL_NADU: 200,
 } as const;
