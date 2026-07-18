@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type OrderStatus, type AdminRole, type ProductBadge } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import ExcelJS from "exceljs";
@@ -105,7 +105,7 @@ async function main() {
         compareAtPrice: null,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
-        badge: p.badge as any,
+        badge: p.badge as ProductBadge | null,
         isActive: p.isActive,
         createdAt: p.createdAt ?? undefined,
         updatedAt: p.updatedAt ?? undefined,
@@ -115,7 +115,29 @@ async function main() {
 
   // --- Orders ---
   const orderSheet = wb.getWorksheet("Orders")!;
-  const orders: any[] = [];
+  const orders: {
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    stateCode: string;
+    postalCode: string;
+    countryCode: string;
+    status: string;
+    trackingId: string | null;
+    subtotal: number;
+    shippingCost: number;
+    totalAmount: number;
+    transactionId: string | null;
+    customerNotes: string | null;
+    adminNotes: string | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  }[] = [];
   orderSheet.eachRow((row, i) => {
     if (i === 1) return;
     orders.push({
@@ -157,7 +179,7 @@ async function main() {
         stateCode: o.stateCode,
         postalCode: o.postalCode,
         countryCode: o.countryCode,
-        status: o.status,
+        status: o.status as OrderStatus,
         trackingId: o.trackingId,
         subtotal: o.subtotal,
         shippingCost: o.shippingCost,
@@ -173,7 +195,15 @@ async function main() {
 
   // --- Order Items ---
   const itemSheet = wb.getWorksheet("Order Items")!;
-  const items: any[] = [];
+  const items: {
+    id: string;
+    orderId: string;
+    productId: string | null;
+    productName: string;
+    unitPrice: number;
+    quantity: number;
+    createdAt: Date | null;
+  }[] = [];
   itemSheet.eachRow((row, i) => {
     if (i === 1) return;
     items.push({
@@ -203,7 +233,13 @@ async function main() {
 
   // --- Order Status History ---
   const histSheet = wb.getWorksheet("Order Status History")!;
-  const history: any[] = [];
+  const history: {
+    id: string;
+    orderId: string;
+    status: string;
+    notes: string | null;
+    createdAt: Date | null;
+  }[] = [];
   histSheet.eachRow((row, i) => {
     if (i === 1) return;
     history.push({
@@ -220,7 +256,7 @@ async function main() {
       data: {
         id: h.id,
         orderId: h.orderId,
-        status: h.status,
+        status: h.status as OrderStatus,
         notes: h.notes,
         createdAt: h.createdAt ?? undefined,
       },
@@ -229,7 +265,16 @@ async function main() {
 
   // --- Admins ---
   const adminSheet = wb.getWorksheet("Admins")!;
-  const admins: any[] = [];
+  const admins: {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    lastLoginAt: Date | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  }[] = [];
   adminSheet.eachRow((row, i) => {
     if (i === 1) return;
     admins.push({
@@ -251,7 +296,7 @@ async function main() {
         username: a.username,
         email: a.email,
         passwordHash: "IMPORTED_SEE_PRODUCTION",
-        role: a.role as any,
+        role: a.role as AdminRole,
         isActive: a.isActive,
         lastLoginAt: a.lastLoginAt,
         createdAt: a.createdAt ?? undefined,

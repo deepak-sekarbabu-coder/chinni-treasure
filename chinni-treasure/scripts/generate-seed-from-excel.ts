@@ -53,15 +53,9 @@ async function main() {
     imageUrl: string | null;
     description: string | null;
     badge: string | null;
-    isActive: boolean;
   }[] = [];
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
-    const catId = row.getCell(4).value ? parseNum(row.getCell(4).value) : null;
-    const cat = categories.find((c) => {
-      // Match by display order since Excel has category ID
-      return false; // We'll map below
-    });
     products.push({
       sku: String(row.getCell(2).value || ""),
       name: String(row.getCell(3).value || ""),
@@ -73,7 +67,6 @@ async function main() {
         ? String(row.getCell(6).value)
         : null,
       badge: row.getCell(10).value ? String(row.getCell(10).value) : null,
-      isActive: parseBool(row.getCell(11).value),
     });
   });
 
