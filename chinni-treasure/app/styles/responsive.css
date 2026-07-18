@@ -2,9 +2,6 @@
 
 /* ── 1024px+ Desktop ── */
 @media (min-width: 769px) {
-    .hero-actions .btn.btn-primary {
-        margin-top: -10px;
-    }
 }
 
 @media (min-width: 1024px) {
