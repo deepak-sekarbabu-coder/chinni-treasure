@@ -41,6 +41,8 @@ export async function GET(request: Request) {
 
     const isActiveParam = searchParams.get("isActive");
     const searchQuery = searchParams.get("search") || "";
+    const rawCategoryId = searchParams.get("categoryId");
+    const categoryId = rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined;
     const where: Prisma.ProductWhereInput = isActiveParam === "all"
       ? { deletedAt: null }
       : { isActive: true, deletedAt: null };
@@ -49,7 +51,11 @@ export async function GET(request: Request) {
       where.sku = { contains: searchQuery, mode: "insensitive" };
     }
 
-    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}`;
+    if (categoryId && Number.isFinite(categoryId)) {
+      where.categoryId = categoryId;
+    }
+
+    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}`;
     const cached = getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {

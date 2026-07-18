@@ -10,18 +10,34 @@ import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
 
+interface CategoryOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 interface Props {
   initialProducts: CatalogueProduct[];
   initialTotal: number;
   initialTotalPages: number;
   initialSearch?: string;
+  initialCategories?: CategoryOption[];
+  initialCategoryId?: number;
 }
 
-export default function CatalogueContent({ initialProducts, initialTotal, initialTotalPages, initialSearch = "" }: Props) {
+export default function CatalogueContent({
+  initialProducts,
+  initialTotal,
+  initialTotalPages,
+  initialSearch = "",
+  initialCategories = [],
+  initialCategoryId,
+}: Props) {
   const { addItem } = useCart();
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(initialCategoryId);
 
   const pageSize = useResponsivePageSize();
 
@@ -40,7 +56,7 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
     };
   }, [pageSize, initialProducts, initialTotal, currentPage]);
 
-  const catalogueQuery = useCatalogueProducts(currentPage, pageSize, searchQuery || undefined, initialData);
+  const catalogueQuery = useCatalogueProducts(currentPage, pageSize, searchQuery || undefined, initialData, selectedCategory);
 
   const products: CatalogueProduct[] = catalogueQuery.data?.products ?? initialProducts;
   const totalPages = catalogueQuery.data?.totalPages ?? initialTotalPages;
@@ -86,6 +102,12 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
     setCurrentPage(1);
   }, []);
 
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSelectedCategory(value ? Number.parseInt(value, 10) : undefined);
+    setCurrentPage(1);
+  }, []);
+
   return (
     <div style={{ paddingTop: "72px" }}>
       <section className="catalogue-hero">
@@ -114,6 +136,26 @@ export default function CatalogueContent({ initialProducts, initialTotal, initia
             onChange={handleSearch}
             aria-label="Search products by code"
           />
+        </div>
+
+        <div className="catalogue-filter">
+          <label htmlFor="catalogue-category-filter" className="catalogue-filter-label">
+            Filter by category
+          </label>
+          <select
+            id="catalogue-category-filter"
+            className="catalogue-filter-select"
+            value={selectedCategory ? String(selectedCategory) : ""}
+            onChange={handleCategoryChange}
+            aria-label="Filter products by category"
+          >
+            <option value="">All Categories</option>
+            {initialCategories.map((cat) => (
+              <option key={cat.id} value={String(cat.id)}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {loading && products.length === 0 ? (

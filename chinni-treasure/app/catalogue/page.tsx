@@ -25,9 +25,20 @@ export const metadata: Metadata = {
 
 const CATALOGUE_PAGE_SIZE = 6;
 
-export default async function CataloguePage(props: { searchParams: Promise<{ search?: string }> }) {
+interface CategoryOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export default async function CataloguePage(props: {
+  searchParams: Promise<{ search?: string; category?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const initialSearch = searchParams.search || "";
+  const initialCategoryId = searchParams.category ? Number.parseInt(searchParams.category, 10) : undefined;
+  const validCategoryId = initialCategoryId && Number.isFinite(initialCategoryId) ? initialCategoryId : undefined;
+
   let products: Array<{
     id: string;
     name: string;
@@ -43,10 +54,28 @@ export default async function CataloguePage(props: { searchParams: Promise<{ sea
   let total = 0;
   let totalPages = 1;
 
+  const where = {
+    isActive: true,
+    deletedAt: null,
+    ...(validCategoryId ? { categoryId: validCategoryId } : {}),
+  };
+
+  let categories: CategoryOption[] = [];
+  try {
+    const found = await prisma.category.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true },
+      orderBy: { displayOrder: "asc" },
+    });
+    categories = found.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+  } catch (err) {
+    console.error("Failed to fetch categories:", err);
+  }
+
   try {
     const [data, count] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true, deletedAt: null },
+        where,
         include: {
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },
@@ -59,7 +88,7 @@ export default async function CataloguePage(props: { searchParams: Promise<{ sea
         take: CATALOGUE_PAGE_SIZE,
         skip: 0,
       }),
-      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where }),
     ]);
     products = data.map((p) => ({
       id: p.id,
@@ -107,6 +136,8 @@ export default async function CataloguePage(props: { searchParams: Promise<{ sea
         initialTotal={total}
         initialTotalPages={totalPages}
         initialSearch={initialSearch}
+        initialCategories={categories}
+        initialCategoryId={validCategoryId}
       />
     </>
   );

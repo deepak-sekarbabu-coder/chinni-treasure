@@ -20,8 +20,8 @@ export const queryKeys = {
     list: (params: { page: number; limit: number; isActive?: string }) =>
       [...queryKeys.products.lists(), params] as const,
     catalogues: () => [...queryKeys.products.all(), "catalogue"] as const,
-    catalogue: (page: number, limit: number, search?: string) =>
-      [...queryKeys.products.catalogues(), { page, limit, search: search || "" }] as const,
+    catalogue: (page: number, limit: number, search?: string, categoryId?: number) =>
+      [...queryKeys.products.catalogues(), { page, limit, search: search || "", categoryId: categoryId ?? null }] as const,
   },
   categories: {
     all: () => [...queryKeys.all, "categories"] as const,
