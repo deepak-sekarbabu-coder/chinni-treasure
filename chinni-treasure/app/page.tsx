@@ -32,7 +32,7 @@ export default async function HomePage() {
 
   try {
     const data = await prisma.product.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: null },
       include: {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },

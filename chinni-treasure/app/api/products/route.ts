@@ -41,7 +41,9 @@ export async function GET(request: Request) {
 
     const isActiveParam = searchParams.get("isActive");
     const searchQuery = searchParams.get("search") || "";
-    const where: Prisma.ProductWhereInput = isActiveParam === "all" ? {} : { isActive: true };
+    const where: Prisma.ProductWhereInput = isActiveParam === "all"
+      ? { deletedAt: null }
+      : { isActive: true, deletedAt: null };
 
     if (searchQuery) {
       where.sku = { contains: searchQuery, mode: "insensitive" };

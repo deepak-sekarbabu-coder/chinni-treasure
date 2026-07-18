@@ -56,7 +56,7 @@ export default async function ProductDetailsPage({ params }: Props) {
         },
     });
 
-    if (!product || !product.isActive) {
+    if (!product || !product.isActive || product.deletedAt) {
         notFound();
     }
 

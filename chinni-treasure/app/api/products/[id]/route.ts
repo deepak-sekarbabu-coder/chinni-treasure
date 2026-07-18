@@ -135,7 +135,7 @@ export async function DELETE(
     const { id } = await params;
     await prisma.product.update({
       where: { id },
-      data: { isActive: false },
+      data: { deletedAt: new Date() },
     });
 
     clearCache();

@@ -46,7 +46,7 @@ export default async function CataloguePage(props: { searchParams: Promise<{ sea
   try {
     const [data, count] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true },
+        where: { isActive: true, deletedAt: null },
         include: {
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },

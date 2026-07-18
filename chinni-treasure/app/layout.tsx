@@ -113,7 +113,7 @@ export default async function RootLayout({
     if (cookieItems.length > 0) {
       const productIds = cookieItems.map((i) => i.productId);
       const products = await prisma.product.findMany({
-        where: { id: { in: productIds }, isActive: true },
+        where: { id: { in: productIds }, isActive: true, deletedAt: null },
         select: { id: true, name: true, price: true, imageUrl: true, stockQuantity: true },
       });
       const productMap = new Map(products.map((p) => [p.id, p]));

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
       : 8;
 
     const products = await prisma.product.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: null },
       include: {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
