@@ -22,9 +22,9 @@ export default function TrackOrderCard({ order, onClick }: Props) {
           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>
             Order ID
           </span>
-          <h4 style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", marginTop: "4px" }}>
+          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", marginTop: "4px" }}>
             {order.orderNumber}
-          </h4>
+          </h2>
         </div>
         <StatusBadge status={order.status} />
       </div>

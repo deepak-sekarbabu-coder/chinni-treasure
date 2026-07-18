@@ -94,7 +94,7 @@ export default function AdminOrdersPanel({
                 <div className="order-card-header">
                   <div>
                     <div className="order-card-label">Order ID</div>
-                    <h4 className="order-card-number">{order.orderNumber}</h4>
+                    <h3 className="order-card-number">{order.orderNumber}</h3>
                   </div>
                   <StatusBadge status={order.status} />
                 </div>

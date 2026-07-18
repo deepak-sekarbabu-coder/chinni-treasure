@@ -329,9 +329,9 @@ function ProductForm({ showForm, formClosing, productForm, productLoading, categ
     <div className={`product-form-wrapper ${showForm ? "open" : ""} ${formClosing ? "closing" : ""}`}>
       <div className="product-form-inner">
         <div className="admin-stat-card text-left">
-          <h3 className="font-serif mb-20">
+          <h2 className="font-serif mb-20">
             {productForm.id ? "Edit Product" : "Add New Product"}
-          </h3>
+          </h2>
           <form onSubmit={onSave}>
             <div className="admin-product-form-grid">
               <div className="form-group">

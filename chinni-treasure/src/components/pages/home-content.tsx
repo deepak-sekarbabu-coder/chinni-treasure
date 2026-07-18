@@ -138,7 +138,7 @@ export default function HomeContent({ recentProducts }: Props) {
               <div className="feature-icon" aria-hidden="true">
                 {f.icon}
               </div>
-              <h4>{f.title}</h4>
+              <h3>{f.title}</h3>
               <p>{f.desc}</p>
             </div>
           ))}

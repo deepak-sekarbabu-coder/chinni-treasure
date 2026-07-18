@@ -43,7 +43,7 @@ function OrdersChart({ data }: { data: ChartPoint[] }) {
   const maxOrders = Math.max(...data.map((d) => d.orders), 1);
   return (
     <div className="admin-stat-card text-left">
-      <h3 className="font-serif mb-16">Orders (Last 30 Days)</h3>
+      <h2 className="font-serif mb-16">Orders (Last 30 Days)</h2>
       <div className="chart-scroll">
         {data.map((d) => (
           <div key={d.date} className="chart-row">
@@ -63,7 +63,7 @@ function TopProductsChart({ data }: { data: ProductSales[] }) {
   const maxQty = Math.max(...data.map((p) => p.quantity), 1);
   return (
     <div className="admin-stat-card text-left">
-      <h3 className="font-serif mb-16">Top Products</h3>
+      <h2 className="font-serif mb-16">Top Products</h2>
       <div className="chart-scroll">
         {data.slice(0, 10).map((p, i) => (
           <div key={`${p.productName}-${i}`} className="chart-row">

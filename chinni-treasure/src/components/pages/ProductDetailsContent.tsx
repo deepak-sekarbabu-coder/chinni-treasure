@@ -109,7 +109,7 @@ export default function ProductDetailsContent({ product }: Props) {
                     )}
 
                     <div className="product-details-description">
-                        <h3>Description</h3>
+                        <h2>Description</h2>
                         <div className="product-description-markdown">
                             <ReactMarkdown>{product.description}</ReactMarkdown>
                         </div>
