@@ -29,6 +29,21 @@ const CreateProductSchema = z.object({
     .optional(),
 });
 
+const SORT_OPTIONS = {
+  newest: [{ createdAt: "desc" as const }],
+  oldest: [{ createdAt: "asc" as const }],
+  "name-asc": [{ name: "asc" as const }],
+  "name-desc": [{ name: "desc" as const }],
+  "price-asc": [{ price: "asc" as const }],
+  "price-desc": [{ price: "desc" as const }],
+  "stock-desc": [{ stockQuantity: "desc" as const }],
+  "stock-asc": [{ stockQuantity: "asc" as const }],
+  "sku-asc": [{ sku: "asc" as const }],
+  "sku-desc": [{ sku: "desc" as const }],
+} as const;
+
+type SortKey = keyof typeof SORT_OPTIONS;
+
 // GET /api/products — List products (optionally paginated)
 export async function GET(request: Request) {
   try {
@@ -43,19 +58,30 @@ export async function GET(request: Request) {
     const searchQuery = searchParams.get("search") || "";
     const rawCategoryId = searchParams.get("categoryId");
     const categoryId = rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined;
+    const badgeFilter = searchParams.get("badge") || "";
+    const sortParam = (searchParams.get("sort") || "newest") as SortKey;
+    const sort = SORT_OPTIONS[sortParam] ?? SORT_OPTIONS.newest;
+
     const where: Prisma.ProductWhereInput = isActiveParam === "all"
       ? { deletedAt: null }
       : { isActive: true, deletedAt: null };
 
     if (searchQuery) {
-      where.sku = { contains: searchQuery, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: searchQuery, mode: "insensitive" } },
+        { sku: { contains: searchQuery, mode: "insensitive" } },
+      ];
     }
 
     if (categoryId && Number.isFinite(categoryId)) {
       where.categoryId = categoryId;
     }
 
-    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}`;
+    if (badgeFilter && badgeFilter !== "all") {
+      where.badge = badgeFilter as ProductBadge;
+    }
+
+    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
     const cached = getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {
@@ -70,11 +96,7 @@ export async function GET(request: Request) {
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },
         },
-        orderBy: [
-          { stockQuantity: "desc" },
-          { createdAt: "desc" },
-          { id: "desc" },
-        ],
+        orderBy: [...sort, { id: "desc" }],
         skip,
         take: limit,
       }),

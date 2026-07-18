@@ -1,6 +1,6 @@
 # Chinni Treasure — Little Love
 
-> **Last validated against codebase:** July 12, 2026 — Tokens, fonts, breakpoints, and component patterns re-validated against current code (`app/styles/variables.css`).
+> **Last validated against codebase:** July 18, 2026 — Tokens, fonts, breakpoints, and component patterns re-validated against current code (`app/styles/variables.css`).
 
 ## Register
 

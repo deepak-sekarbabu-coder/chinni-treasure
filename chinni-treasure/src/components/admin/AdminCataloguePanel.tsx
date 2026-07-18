@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { Category, Product } from "@/src/lib/api/schemas";
+import type { ProductFilters } from "@/app/admin/useAdminPageState";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
 
 export interface ProductFormData {
@@ -32,6 +33,9 @@ interface Props {
   productTotalPages: number;
   categories: Category[];
   categoriesLoading: boolean;
+  filters: ProductFilters;
+  onFilterChange: (updates: Partial<ProductFilters>) => void;
+  onFilterReset: () => void;
   onToggleForm: () => void;
   onFormChange: (form: ProductFormData) => void;
   onSave: (e: React.FormEvent) => Promise<void>;
@@ -51,7 +55,10 @@ export default function AdminCataloguePanel({
   productPage,
   productTotalPages,
   categories,
-  categoriesLoading,
+  categoriesLoading: _categoriesLoading,
+  filters,
+  onFilterChange,
+  onFilterReset,
   onToggleForm,
   onFormChange,
   onSave,
@@ -59,6 +66,15 @@ export default function AdminCataloguePanel({
   onRequestDelete,
   onPageChange,
 }: Props) {
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onFilterChange({ search: e.target.value });
+    },
+    [onFilterChange],
+  );
+
+  const hasActiveFilters = filters.search || filters.categoryId || filters.badge !== "all" || filters.sort !== "newest";
+
   return (
     <div id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue">
       <div className="product-form-actions">
@@ -67,7 +83,72 @@ export default function AdminCataloguePanel({
         </button>
       </div>
 
-      <ProductFormModal open={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} categories={categories} categoriesLoading={categoriesLoading} onFormChange={onFormChange} onSave={onSave} onClose={onToggleForm} />
+      <ProductFormModal open={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} categories={categories} categoriesLoading={_categoriesLoading} onFormChange={onFormChange} onSave={onSave} onClose={onToggleForm} />
+
+      <div className="admin-catalogue-filters">
+        <div className="admin-catalogue-search">
+          <input
+            type="text"
+            className="admin-catalogue-search-input"
+            placeholder="Search by name or SKU..."
+            value={filters.search}
+            onChange={handleSearchChange}
+            aria-label="Search products"
+          />
+        </div>
+
+        <div className="admin-catalogue-filter-group">
+          <select
+            className="admin-catalogue-select"
+            value={filters.categoryId}
+            onChange={(e) => onFilterChange({ categoryId: e.target.value ? Number(e.target.value) : "" })}
+            aria-label="Filter by category"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select
+            className="admin-catalogue-select"
+            value={filters.badge}
+            onChange={(e) => onFilterChange({ badge: e.target.value })}
+            aria-label="Filter by badge"
+          >
+            <option value="all">All Badges</option>
+            <option value="bestseller">Bestseller</option>
+            <option value="new">New</option>
+            <option value="premium">Premium</option>
+            <option value="limited">Limited</option>
+            <option value="luxury">Luxury</option>
+          </select>
+
+          <select
+            className="admin-catalogue-select"
+            value={filters.sort}
+            onChange={(e) => onFilterChange({ sort: e.target.value })}
+            aria-label="Sort products"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="stock-desc">Stock: High → Low</option>
+            <option value="stock-asc">Stock: Low → High</option>
+            <option value="sku-asc">Code: A–Z</option>
+            <option value="sku-desc">Code: Z–A</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button className="btn btn-secondary btn-sm" onClick={onFilterReset}>
+              Clear Filters
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="admin-product-table-wrap">
         <table className="admin-table">
@@ -88,6 +169,12 @@ export default function AdminCataloguePanel({
           <tbody>
             {productsLoading ? (
               <SkeletonRows />
+            ) : products.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="empty-state">
+                  No products match your filters.
+                </td>
+              </tr>
             ) : (
               products.map((p) => (
                 <ProductRow key={p.id} product={p} loadingProductId={loadingProductId} onEdit={onEdit} onRequestDelete={onRequestDelete} />

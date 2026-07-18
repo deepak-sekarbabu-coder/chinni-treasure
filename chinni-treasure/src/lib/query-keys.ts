@@ -17,7 +17,7 @@ export const queryKeys = {
   products: {
     all: () => [...queryKeys.all, "products"] as const,
     lists: () => [...queryKeys.products.all(), "list"] as const,
-    list: (params: { page: number; limit: number; isActive?: string }) =>
+    list: (params: { page: number; limit: number; isActive?: string; search?: string; categoryId?: number; badge?: string; sort?: string }) =>
       [...queryKeys.products.lists(), params] as const,
     catalogues: () => [...queryKeys.products.all(), "catalogue"] as const,
     catalogue: (page: number, limit: number, search?: string, categoryId?: number) =>

@@ -16,6 +16,15 @@ import { useAdminSession } from "@/src/lib/hooks/useAdminSession";
 const PRODUCTS_PER_PAGE = ADMIN_PAGE_SIZES.products;
 const ITEMS_PER_PAGE = ADMIN_PAGE_SIZES.orders;
 
+export interface ProductFilters {
+  search: string;
+  categoryId: number | "";
+  badge: string;
+  sort: string;
+}
+
+const DEFAULT_FILTERS: ProductFilters = { search: "", categoryId: "", badge: "all", sort: "newest" };
+
 export function useAdminPageState() {
   const { authenticated, authLoading, ready } = useAdminSession();
 
@@ -24,6 +33,7 @@ export function useAdminPageState() {
   const [productPage, setProductPage] = useState(1);
   const [activeTab, setActiveTab] = useState<AdminTabKey>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [productFilters, setProductFilters] = useState<ProductFilters>(DEFAULT_FILTERS);
 
   const isCatalogueTab = activeTab === "catalogue";
 
@@ -36,7 +46,15 @@ export function useAdminPageState() {
     authenticated,
   );
   const productsQuery = useAdminProducts(
-    { page: productPage, limit: PRODUCTS_PER_PAGE, isActive: "all" },
+    {
+      page: productPage,
+      limit: PRODUCTS_PER_PAGE,
+      isActive: "all",
+      search: productFilters.search || undefined,
+      categoryId: typeof productFilters.categoryId === "number" ? productFilters.categoryId : undefined,
+      badge: productFilters.badge !== "all" ? productFilters.badge : undefined,
+      sort: productFilters.sort,
+    },
     authenticated && isCatalogueTab,
   );
 
@@ -55,11 +73,20 @@ export function useAdminPageState() {
   const clearSelectedOrder = useCallback(() => setSelectedOrderId(null), []);
   const handleProductSaved = useCallback(
     (wasCreate: boolean) => {
-      // On edit, keep the user on their current page; only jump to page 1 for new products.
       if (wasCreate) setProductPage(1);
     },
     [],
   );
+
+  const handleProductFilterChange = useCallback((updates: Partial<ProductFilters>) => {
+    setProductFilters((prev) => ({ ...prev, ...updates }));
+    setProductPage(1);
+  }, []);
+
+  const handleProductFilterReset = useCallback(() => {
+    setProductFilters(DEFAULT_FILTERS);
+    setProductPage(1);
+  }, []);
 
   const ordersController = useAdminOrdersController(orders, clearSelectedOrder);
   const catalogueController = useAdminCatalogueController({ onAfterSave: handleProductSaved });
@@ -80,6 +107,7 @@ export function useAdminPageState() {
     productPage,
     activeTab,
     selectedOrderId,
+    productFilters,
     statsQuery,
     ordersQuery,
     productsQuery,
@@ -102,5 +130,7 @@ export function useAdminPageState() {
     setSelectedOrderId,
     clearSelectedOrder,
     handleStatusFilterChange,
+    handleProductFilterChange,
+    handleProductFilterReset,
   };
 }

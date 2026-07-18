@@ -4,29 +4,31 @@
 
 ## Tech Stack
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React 19)
-- **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into 26 component-specific files under `app/styles/`, orchestrating via `@import` statements in the entry point.
-- **Authentication:** JWT-based admin auth (stored in httpOnly `session` cookie)
-- **State Management:** React Context + `localStorage` (`luxe_cart`) for guest cart persistence; cookie-based cart for server-side access
-- **Server State:** React Query (`@tanstack/react-query`) for client-side data fetching with caching
-- **Validation:** Zod schemas for checkout, cart, and API input/output validation
-- **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual bank-transfer fallback
-- **Analytics:** Vercel Analytics (`@vercel/analytics`) for privacy-friendly traffic insights
-- **Markdown:** `react-markdown` for rendering rich product/legal content
-- **Export:** ExcelJS for admin data export; jsPDF for invoice generation
+- **Framework:** [Next.js 16.2.6](https://nextjs.org/) (App Router, React 19.2.4)
+- **Database:** PostgreSQL with [Prisma ORM 7.8.0](https://www.prisma.io/) via `@prisma/adapter-pg`
+- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into **29 component-specific files** under `app/styles/`, orchestrated via `@import` statements in the entry point.
+- **Authentication:** JWT-based admin auth stored in an `HttpOnly` `session` cookie
+- **State Management:** React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
+- **Server State:** React Query (`@tanstack/react-query` v5.101.0) for client-side caching and data fetch orchestration
+- **Validation:** Zod v4.4.3 for checkout, cart, and API request/response validation
+- **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual UPI/bank-transfer fallback
+- **Analytics:** Vercel Analytics (`@vercel/analytics` v2.0.1) for privacy-friendly traffic insights
+- **Markdown:** `react-markdown` v10.1.0 for rendering rich product/legal content
+- **Export:** ExcelJS v4.4.0 for admin data export; jsPDF v4.2.1 for invoice generation
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
+- **Testing:** Vitest v4.1.7 with @testing-library/react v16.3.2 and jsdom
 
 ---
 
 ## Feature Highlights
 
-- **Artisan catalogue** with categories, rich product descriptions, multiple product images, and discount display (MRP `compareAtPrice` struck through against the selling price)
+- **Artisan catalogue** with categories, rich product descriptions, **multiple product images with primary image support**, and discount display (MRP `compareAtPrice` struck through against the selling price)
 - **Guest + authenticated shopping** with a persistent cart (React Context + `localStorage` + cookie sync for server-side access)
-- **Razorpay payments** via Standard Checkout (redirect) with server-side HMAC-SHA256 signature verification, plus a manual bank-transfer fallback
-- **Multi-step checkout** with delivery form, address validation, shipping calculation, and a confirmation page with a downloadable PDF invoice
-- **Admin dashboard** with order management, catalogue CRUD, category management, status advancement, Excel export, and charts
-- **Order tracking** portal and shareable confirmation pages
+- **Razorpay payments** via Standard Checkout with server-side HMAC-SHA256 signature verification, plus a manual UPI/bank-transfer fallback
+- **Multi-step checkout** with delivery form, Indian address validation (states, PIN codes), shipping calculation, and a confirmation page with a downloadable PDF invoice
+- **Admin dashboard** with order management, catalogue CRUD, **category management** (create/edit/delete/toggle active, display order), status advancement, Excel export, and pure-CSS charts
+- **Category browsing** with dedicated `/category/[slug]` pages, paginated/sortable listings, and a homepage "Latest in Every Category" section showing the newest in-stock product per active category
+- **Order tracking** portal and shareable confirmation pages (by Order ID or customer phone number)
 - **Accessibility-first** UI: skip links, ARIA attributes, focus trapping, and `prefers-reduced-motion` / `prefers-contrast` support
 - **Production hardening**: CSRF/origin validation, rate-limited admin login, DOMPurify sanitization, Zod validation, serializable inventory transactions, and optimistic-concurrency order updates
 
@@ -218,7 +220,7 @@ chinni-treasure/
 │   ├── loading.tsx                   # Root loading state
 │   ├── not-found.tsx                 # Root 404
 │   ├── sitemap.ts                    # Dynamic sitemap generation
-│   ├── styles/                       # Decomposed modular CSS files (26 files)
+│   ├── styles/                       # Decomposed modular CSS files (**29 files**)
 │   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
 │   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
 │   │   ├── keyframes.css             # All @keyframes animations
@@ -244,16 +246,22 @@ chinni-treasure/
 │   │   ├── loading.css               # Loading spinners, skeletons, shimmer
 │   │   ├── utility.css               # Utility classes (flex, spacing, text helpers)
 │   │   ├── responsive.css            # Shared responsive breakpoints
-│   │   └── accessibility.css         # prefers-reduced-motion, contrast, print
+│   │   ├── accessibility.css         # prefers-reduced-motion, contrast, print
+│   │   ├── **latest-category.css**   # Homepage "Latest in Every Category" section
+│   │   ├── **gallery.css**           # Product image gallery
+│   │   └── **breadcrumbs.css**       # Breadcrumb navigation
 │   ├── globals.css                   # Entry point — 48 lines of @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (Navbar, Footer, Providers, fonts)
 │   └── page.tsx                      # Homepage (server component)
 ├── prisma/
-│   ├── schema.prisma                 # Database schema (6 models + 3 enums)
-│   ├── seed.ts                       # Database seeder (6 products + 4 categories + admin)
+│   ├── schema.prisma                 # Database schema (**7 models + 3 enums**)
+│   ├── seed.ts                       # Database seeder (**6 products + 5 categories + admin**)
 │   └── migrations/                   # Database migration history
 ├── scripts/
-│   └── export-to-excel.ts            # Excel export utility
+│   ├── export-to-excel.ts            # Excel export utility
+│   ├── **generate-seed-from-excel.ts**  # Generate seed data from Excel
+│   ├── **import-production.ts**      # Import production data
+│   └── **repro-catalogue.ts**        # Reproduce catalogue issues
 ├── src/
 │   ├── components/
 │   │   ├── cart/
@@ -267,12 +275,13 @@ chinni-treasure/
 │   │   │   └── __tests__/
 │   │   ├── admin/
 │   │   │   ├── AdminCataloguePanel.tsx  # Product CRUD form + table
+│   │   │   ├── AdminCategoriesPanel.tsx # Category CRUD form + table
 │   │   │   ├── AdminChartsSection.tsx   # Revenue & sales charts (Chart.js)
 │   │   │   ├── AdminDeleteConfirm.tsx   # Delete confirmation modal
 │   │   │   ├── AdminHeader.tsx          # Admin header with export/logout
 │   │   │   ├── AdminOrdersPanel.tsx     # Orders table with filters
 │   │   │   ├── AdminStatsGrid.tsx       # Dashboard stats cards
-│   │   │   ├── AdminTabs.tsx            # Tab navigation (Orders/Catalogue)
+│   │   │   ├── AdminTabs.tsx            # Tab navigation (Orders/Catalogue/Categories)
 │   │   │   └── AdminTrackingModal.tsx   # Tracking ID input modal
 │   │   ├── order/
 │   │   │   ├── CheckoutProgress.tsx     # Multi-step progress indicator
@@ -284,6 +293,8 @@ chinni-treasure/
 │   │   │   └── TrackOrderCard.tsx       # Track order result card
 │   │   ├── pages/
 │   │   │   ├── home-content.tsx         # Client homepage hero + features
+│   │   │   ├── **category-content.tsx** # Category page content component
+│   │   │   ├── **LatestInEveryCategory.tsx** # Homepage category carousel
 │   │   │   └── catalogue-content.tsx    # Client catalogue with cart interactions
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx        # React Query provider
@@ -504,7 +515,12 @@ rejected (stock restored)
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
 | DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
-| GET | `/api/categories` | List active categories (cached) | No |
+| GET | `/api/categories` | List active categories (cached); `?includeInactive=true` for admin | No |
+| POST | `/api/categories` | Create category (auto-generates slug) | Yes |
+| PUT | `/api/categories/[id]` | Update category | Yes |
+| DELETE | `/api/categories/[id]` | Delete category (blocked if active products exist) | Yes |
+| GET | `/api/categories/latest` | Latest in-stock product per active category (homepage) | No |
+| GET | `/api/category/[slug]/products` | Paginated, sortable product listing for a category | No |
 | POST | `/api/orders` | Place new order (serializable transaction; captures `transactionId` from Razorpay or manual payment) | No |
 | POST | `/api/create-order` | Create a Razorpay order for Standard Checkout | No |
 | POST | `/api/verify-payment` | Verify Razorpay payment signature (HMAC-SHA256) | No |

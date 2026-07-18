@@ -1,9 +1,9 @@
 "use client";
 
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
-import { slugify } from "@/src/lib/utils";
 import type { Category } from "@/src/lib/api/schemas";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
+import CategoryFormModal from "@/src/components/admin/CategoryFormModal";
 
 const BADGE_ACTIVE = "delivered";
 const BADGE_INACTIVE = "rejected";
@@ -51,85 +51,21 @@ export default function AdminCategoriesPanel({
 
   return (
     <div id="panel-categories" role="tabpanel" aria-labelledby="tab-categories">
-      {!showForm && (
-        <div className="product-form-actions">
-          <button className="btn btn-primary product-add-btn" onClick={onToggleForm}>
-            + Add Category
-          </button>
-        </div>
-      )}
-
-      <div className={`product-form-wrapper ${showForm ? "open" : ""} ${formClosing ? "closing" : ""}`}>
-        <div className="product-form-inner">
-          <div className="admin-stat-card text-left">
-            <h2 className="font-serif mb-20">
-              {form.id !== null ? "Edit Category" : "Add New Category"}
-            </h2>
-            <form onSubmit={onSave}>
-              <div className="admin-product-form-grid">
-                <div className="form-group">
-                  <label>Name *</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => onFormChange({ ...form, name: e.target.value })}
-                    required
-                    className="input-cream"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Slug (auto if empty)</label>
-                  <input
-                    type="text"
-                    value={form.slug}
-                    onChange={(e) => onFormChange({ ...form, slug: slugify(e.target.value) })}
-                    placeholder="e.g. bangles"
-                    className="input-cream"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Display Order</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.displayOrder}
-                    onChange={(e) => onFormChange({ ...form, displayOrder: e.target.value })}
-                    className="input-cream"
-                  />
-                </div>
-                <div className="form-group toggle-form-group">
-                  <label>Active</label>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={form.isActive}
-                      onChange={(e) => onFormChange({ ...form, isActive: e.target.checked })}
-                    />
-                    <span className="toggle-slider"></span>
-                    <span className="toggle-label">{form.isActive ? "Active" : "Inactive"}</span>
-                  </label>
-                </div>
-                <div className="form-group full-width">
-                  <label>Description</label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => onFormChange({ ...form, description: e.target.value })}
-                    className="input-cream"
-                  />
-                </div>
-              </div>
-              <div className="modal-actions">
-                <button type="submit" className="btn btn-primary" disabled={productLoading}>
-                  {productLoading ? "Saving..." : form.id !== null ? "Update Category" : "Create Category"}
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={onToggleForm}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      <div className="product-form-actions">
+        <button className="btn btn-primary product-add-btn" onClick={onToggleForm}>
+          + Add Category
+        </button>
       </div>
+
+      <CategoryFormModal
+        open={showForm}
+        formClosing={formClosing}
+        form={form}
+        productLoading={productLoading}
+        onFormChange={onFormChange}
+        onSave={onSave}
+        onClose={onToggleForm}
+      />
 
       <div className="admin-product-table-wrap">
         <table className="admin-table">

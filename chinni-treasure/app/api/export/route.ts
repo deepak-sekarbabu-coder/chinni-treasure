@@ -90,7 +90,15 @@ const catColumns: ColumnDef<{ id: number; name: string; slug: string; descriptio
   { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
 ];
 
-const prodColumns: ColumnDef<{ id: string; sku: string | null; name: string; categoryId: number | null; category: { name: string } | null; description: string | null; price: unknown; stockQuantity: number; imageUrl: string | null; badge: string | null; isActive: boolean; createdAt: Date; updatedAt: Date }>[] = [
+type ProductRow = {
+  id: string; sku: string | null; name: string; categoryId: number | null;
+  category: { name: string } | null; description: string | null; price: unknown;
+  stockQuantity: number; imageUrl: string | null; badge: string | null;
+  isActive: boolean; createdAt: Date; updatedAt: Date;
+  images: { id: string; url: string; isPrimary: boolean; displayOrder: number }[];
+};
+
+const prodColumns: ColumnDef<ProductRow>[] = [
   { header: "ID", key: "id", width: 36 },
   { header: "SKU", key: "sku", width: 15 },
   { header: "Name", key: "name", width: 40 },
@@ -104,6 +112,15 @@ const prodColumns: ColumnDef<{ id: string; sku: string | null; name: string; cat
   { header: "Is Active", key: "isActive", width: 12, format: formatBool },
   { header: "Created At", key: "createdAt", width: 20, format: formatDate },
   { header: "Updated At", key: "updatedAt", width: 20, format: formatDate },
+];
+
+const imgColumns: ColumnDef<{ id: string; productId: string; url: string; isPrimary: boolean; displayOrder: number; createdAt: Date }>[] = [
+  { header: "ID", key: "id", width: 36 },
+  { header: "Product ID", key: "productId", width: 36 },
+  { header: "URL", key: "url", width: 60 },
+  { header: "Is Primary", key: "isPrimary", width: 12, format: formatBool },
+  { header: "Display Order", key: "displayOrder", width: 15 },
+  { header: "Created At", key: "createdAt", width: 20, format: formatDate },
 ];
 
 const orderColumns: ColumnDef<{ id: string; orderNumber: string; customerName: string; customerEmail: string; customerPhone: string; addressLine1: string; addressLine2: string | null; city: string; stateCode: string; postalCode: string; countryCode: string; status: string; trackingId: string | null; subtotal: unknown; shippingCost: unknown; totalAmount: unknown; transactionId: string | null; customerNotes: string | null; adminNotes: string | null; createdAt: Date; updatedAt: Date }>[] = [
@@ -171,9 +188,11 @@ export async function GET() {
     workbook.creator = "Chinni Treasure";
     workbook.created = new Date();
 
-    const [categories, products, admins] = await Promise.all([
+    const [categories, products, productImages, admins] = await Promise.all([
       prisma.category.findMany({ orderBy: { displayOrder: "asc" } }),
-      prisma.product.findMany({ include: { category: true } }),
+      prisma.product.findMany({ include: { category: true, images: { orderBy: { displayOrder: "asc" } } } }),
+      batchedFetch((args) =>
+        prisma.productImage.findMany({ orderBy: { createdAt: "asc" }, ...args })),
       prisma.admin.findMany({ orderBy: { createdAt: "asc" } }),
     ]);
 
@@ -182,6 +201,9 @@ export async function GET() {
 
     const prodSheet = createSheet(workbook, "Products", prodColumns);
     addRows(prodSheet, products, prodColumns);
+
+    const imgSheet = createSheet(workbook, "Product Images", imgColumns);
+    addRows(imgSheet, productImages, imgColumns);
 
     await Promise.all([
       addBatchedSheet(workbook, "Orders", orderColumns, (args) =>

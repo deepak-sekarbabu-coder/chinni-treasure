@@ -1,6 +1,6 @@
 # Codebase Architectural Gaps & Technical Debt
 
-> **Last validated:** July 12, 2026 — Gaps and statuses re-validated against current codebase.
+> **Last validated:** July 18, 2026 — Gaps and statuses re-validated against current codebase.
 
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 

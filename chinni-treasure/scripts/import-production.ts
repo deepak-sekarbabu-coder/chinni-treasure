@@ -113,6 +113,43 @@ async function main() {
     });
   }
 
+  // --- Product Images ---
+  const imgSheet = wb.getWorksheet("Product Images");
+  const productImages: {
+    id: string;
+    productId: string;
+    url: string;
+    isPrimary: boolean;
+    displayOrder: number;
+    createdAt: Date | null;
+  }[] = [];
+  if (imgSheet) {
+    imgSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      productImages.push({
+        id: String(row.getCell(1).value || ""),
+        productId: String(row.getCell(2).value || ""),
+        url: String(row.getCell(3).value || ""),
+        isPrimary: parseBool(row.getCell(4).value),
+        displayOrder: parseNum(row.getCell(5).value),
+        createdAt: parseDate(row.getCell(6).value),
+      });
+    });
+  }
+  console.log(`Importing ${productImages.length} product images...`);
+  for (const img of productImages) {
+    await prisma.productImage.create({
+      data: {
+        id: img.id,
+        productId: img.productId,
+        url: img.url,
+        isPrimary: img.isPrimary,
+        displayOrder: img.displayOrder,
+        createdAt: img.createdAt ?? undefined,
+      },
+    });
+  }
+
   // --- Orders ---
   const orderSheet = wb.getWorksheet("Orders")!;
   const orders: {
@@ -308,6 +345,7 @@ async function main() {
   console.log("Import complete!");
   console.log(`  Categories: ${categories.length}`);
   console.log(`  Products: ${products.length}`);
+  console.log(`  Product Images: ${productImages.length}`);
   console.log(`  Orders: ${orders.length}`);
   console.log(`  Order Items: ${items.length}`);
   console.log(`  Status History: ${history.length}`);

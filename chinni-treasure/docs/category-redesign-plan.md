@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-18
 **Author:** Implementation planning pass (pre-code)
-**Status:** Draft for review — no code written yet.
+**Status:** ✅ **IMPLEMENTED** — All features shipped as of July 2026. This document is preserved for historical reference.
 
 ---
 

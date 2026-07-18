@@ -26,16 +26,17 @@ Chinni Treasure is a luxury e-commerce storefront built on Next.js 16, React 19,
 
 ### Technical Stack
 
-- Framework: Next.js 16 with the App Router and React 19
-- Database: PostgreSQL with Prisma ORM via `@prisma/adapter-pg`
-- Styling: Modular raw CSS under `app/styles/` with custom CSS variables and no Tailwind usage
+- Framework: Next.js 16.2.6 with the App Router and React 19.2.4
+- Database: PostgreSQL with Prisma ORM 7.8.0 via `@prisma/adapter-pg`
+- Styling: Modular raw CSS under `app/styles/` (29 files) with custom CSS variables and no Tailwind usage
 - State management: React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
-- Server state: React Query for client-side caching and data fetch orchestration
+- Server state: React Query (`@tanstack/react-query` v5.101.0) for client-side caching and data fetch orchestration
 - Authentication: JWT-based admin auth stored in an `HttpOnly` `session` cookie
-- Validation: Zod for checkout, cart, and API request/response validation
+- Validation: Zod v4.4.3 for checkout, cart, and API request/response validation
 - Payments: Razorpay Standard Checkout plus manual UPI/bank transfer flows
 - Utility stack: `dayjs`, `exceljs`, `jspdf`, `qrcode.react`, `sharp`, `react-markdown`
 - Analytics: Vercel Analytics
+- Testing: Vitest v4.1.7 with @testing-library/react v16.3.2 and jsdom
 
 ---
 
@@ -46,6 +47,7 @@ Chinni Treasure is a luxury e-commerce storefront built on Next.js 16, React 19,
 The storefront is designed to support:
 
 - Product discovery and stock-aware cart interactions
+- **Category-based browsing** with dedicated `/category/[slug]` pages (paginated, sortable, SEO-friendly) and a homepage "Latest in Every Category" section
 - Checkout with strict Indian address and phone/PIN validation
 - Online payment via Razorpay or manual payment fallback
 - Order tracking by order ID or customer phone number
@@ -57,6 +59,7 @@ The admin experience is responsible for:
 
 - Secure login and authenticated access to protected admin routes
 - Catalogue CRUD operations with validation and active/inactive state management
+- **Category CRUD operations** with validation, display order, and active/inactive state management
 - Revenue and order analytics rendered through pure CSS charts
 - Order lifecycle updates with explicit status rules:
 
@@ -139,6 +142,7 @@ chinni-treasure/
 │   ├── admin/                  # Protected admin UI and admin state hook
 │   ├── api/                    # Server API handlers for products, orders, auth, payment, stats, and tracking
 │   ├── catalogue/              # Product listing and product detail pages
+│   ├── category/               # Category browsing pages (/category/[slug])
 │   ├── confirmation/           # Order confirmation pages
 │   ├── docs/                   # API docs viewer
 │   ├── order/                  # Checkout flow
@@ -198,6 +202,9 @@ Use the following npm scripts during development and maintenance:
 | `RAZORPAY_KEY_ID` | Razorpay API key ID | Yes, for payments |
 | `RAZORPAY_KEY_SECRET` | Razorpay API key secret | Yes, for payments |
 | `JWT_SECRET` | Secret for admin session JWT signing | Yes |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL (metadata, sitemap, absolute links) | Yes |
+| `ALLOWED_ORIGIN` | Comma-separated list of allowed CORS origins | Yes |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay key exposed to the browser | Yes, for payments |
 
 ---
 

@@ -88,6 +88,37 @@ async function main() {
       : "";
   });
 
+  // Build product ID to additional images mapping from Product Images sheet
+  const productImagesByProductId: Record<string, string[]> = {};
+  const imgSheet = wb.getWorksheet("Product Images");
+  if (imgSheet) {
+    const imgRows: { productId: string; url: string; isPrimary: boolean; displayOrder: number }[] = [];
+    imgSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      imgRows.push({
+        productId: String(row.getCell(2).value || ""),
+        url: String(row.getCell(3).value || ""),
+        isPrimary: parseBool(row.getCell(4).value),
+        displayOrder: parseNum(row.getCell(5).value),
+      });
+    });
+    // Sort by displayOrder and group by productId
+    imgRows.sort((a, b) => a.displayOrder - b.displayOrder);
+    for (const img of imgRows) {
+      if (!productImagesByProductId[img.productId]) {
+        productImagesByProductId[img.productId] = [];
+      }
+      productImagesByProductId[img.productId].push(img.url);
+    }
+  }
+
+  // Map product IDs for lookup
+  const prodIdByRow: Record<number, string> = {};
+  prodSheet.eachRow((row, i) => {
+    if (i === 1) return;
+    prodIdByRow[i] = String(row.getCell(1).value || "");
+  });
+
   // Output as TypeScript
   const output = `import type { ProductBadge } from "@prisma/client";
 
@@ -107,11 +138,15 @@ export interface SeedProduct {
 }
 
 export const SEED_PRODUCTS: SeedProduct[] = ${JSON.stringify(
-    products.map((p) => ({
-      ...p,
-      compareAtPrice: null,
-      additionalImages: p.imageUrl ? [p.imageUrl] : [],
-    })),
+    products.map((p, i) => {
+      const pid = prodIdByRow[i + 2] || "";
+      const imgs = productImagesByProductId[pid];
+      return {
+        ...p,
+        compareAtPrice: null,
+        additionalImages: imgs && imgs.length > 0 ? imgs : (p.imageUrl ? [p.imageUrl] : []),
+      };
+    }),
     null,
     2,
   )};

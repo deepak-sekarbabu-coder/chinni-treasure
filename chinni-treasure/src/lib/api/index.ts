@@ -82,6 +82,10 @@ export interface ProductsQueryParams {
   page: number;
   limit: number;
   isActive?: "all" | "active";
+  search?: string;
+  categoryId?: number;
+  badge?: string;
+  sort?: string;
 }
 
 export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal) {
@@ -90,6 +94,10 @@ export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal)
     limit: String(params.limit),
   });
   if (params.isActive) search.set("isActive", params.isActive);
+  if (params.search) search.set("search", params.search);
+  if (params.categoryId && Number.isFinite(params.categoryId)) search.set("categoryId", String(params.categoryId));
+  if (params.badge && params.badge !== "all") search.set("badge", params.badge);
+  if (params.sort && params.sort !== "newest") search.set("sort", params.sort);
   return apiFetch<ProductsResponse>(`/api/products?${search.toString()}`, {
     signal,
     schema: ProductsResponseSchema,

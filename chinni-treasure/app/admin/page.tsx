@@ -33,12 +33,14 @@ export default function AdminPage() {
   const {
     authenticated, authLoading, ready,
     statusFilter, currentPage, productPage, activeTab,
+    productFilters,
     statsQuery, ordersQuery, productsQuery, categoriesQuery,
     orders, totalPages, products, productTotalPages,
     stats, chartData, productSales, selectedOrder,
     ordersController, catalogueController, categoriesController, headerActions,
     setActiveTab, setCurrentPage, setProductPage, setSelectedOrderId,
     clearSelectedOrder, handleStatusFilterChange,
+    handleProductFilterChange, handleProductFilterReset,
   } = useAdminPageState();
 
   if (authLoading || !ready || !authenticated) {
@@ -93,6 +95,9 @@ export default function AdminPage() {
             productTotalPages={productTotalPages}
             categories={categoriesQuery.data ?? []}
             categoriesLoading={categoriesQuery.isLoading}
+            filters={productFilters}
+            onFilterChange={handleProductFilterChange}
+            onFilterReset={handleProductFilterReset}
             onToggleForm={catalogueController.toggleProductForm}
             onFormChange={catalogueController.onFormChange}
             onSave={catalogueController.handleProductSave}

@@ -74,7 +74,7 @@ async function exportToExcel() {
 
   // 2. Export Products
   const products = await prisma.product.findMany({
-    include: { category: true }
+    include: { category: true, images: { orderBy: { displayOrder: 'asc' } } }
   });
   createSheet(workbook, 'Products', products, [
     { header: 'ID', key: 'id', width: 36 },
@@ -90,6 +90,19 @@ async function exportToExcel() {
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
     { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
     { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+  ]);
+
+  // 2b. Export Product Images
+  const productImages = await prisma.productImage.findMany({
+    orderBy: { createdAt: 'asc' }
+  });
+  createSheet(workbook, 'Product Images', productImages, [
+    { header: 'ID', key: 'id', width: 36 },
+    { header: 'Product ID', key: 'productId', width: 36 },
+    { header: 'URL', key: 'url', width: 60 },
+    { header: 'Is Primary', key: 'isPrimary', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Display Order', key: 'displayOrder', width: 15 },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
   ]);
 
   // 3. Export Orders
@@ -181,7 +194,7 @@ async function exportToExcel() {
   await workbook.xlsx.writeFile(filepath);
   console.log(`Export completed successfully!`);
   console.log(`File saved at: ${filepath}`);
-  console.log(`Sheets created: Categories, Products, Orders, Order Items, Order Status History, Admins, ID Lookup`);
+  console.log(`Sheets created: Categories, Products, Product Images, Orders, Order Items, Order Status History, Admins, ID Lookup`);
 }
 
 // Run the export
