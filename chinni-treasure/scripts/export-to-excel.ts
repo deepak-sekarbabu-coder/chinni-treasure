@@ -84,6 +84,7 @@ async function exportToExcel() {
     { header: 'Category Name', key: 'category', width: 25, format: (v: unknown) => (v as { name?: string } | null)?.name ?? '' },
     { header: 'Description', key: 'description', width: 50 },
     { header: 'Price', key: 'price', width: 12, format: (v: unknown) => String(v) },
+    { header: 'Compare At Price', key: 'compareAtPrice', width: 18, format: (v: unknown) => v ? String(v) : '' },
     { header: 'Stock Quantity', key: 'stockQuantity', width: 18 },
     { header: 'Image URL', key: 'imageUrl', width: 50 },
     { header: 'Badge', key: 'badge', width: 15 },

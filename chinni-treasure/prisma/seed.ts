@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OrderStatus } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { SEED_CATEGORIES, SEED_PRODUCTS } from "./seed-data";
+import { SEED_CATEGORIES, SEED_PRODUCTS, SEED_ORDERS } from "./seed-data";
 
 const adapter = new PrismaPg({ connectionString: process.env["DATABASE_URL"] });
 const prisma = new PrismaClient({ adapter });
@@ -24,7 +24,8 @@ async function seedCategories() {
   return { categories, categoryMap };
 }
 
-async function seedProducts(categoryMap: Record<string, number>) {
+async function seedProducts(categoryMap: Record<string, number>): Promise<Record<string, string>> {
+  const skuMap: Record<string, string> = {};
   for (const p of SEED_PRODUCTS) {
     const product = await prisma.product.upsert({
       where: { sku: p.sku },
@@ -50,8 +51,8 @@ async function seedProducts(categoryMap: Record<string, number>) {
         categoryId: categoryMap[p.categorySlug] || null,
       },
     });
+    skuMap[p.sku] = product.id;
 
-    // Create product images (upsert to handle re-seeding)
     const seenUrls = new Set<string>();
     for (let i = 0; i < p.additionalImages.length; i++) {
       const url = p.additionalImages[i];
@@ -73,6 +74,7 @@ async function seedProducts(categoryMap: Record<string, number>) {
       }
     }
   }
+  return skuMap;
 }
 
 async function seedAdmin() {
@@ -89,14 +91,85 @@ async function seedAdmin() {
   });
 }
 
+async function seedOrders(skuMap: Record<string, string>) {
+  for (const o of SEED_ORDERS) {
+    const order = await prisma.order.upsert({
+      where: { orderNumber: o.orderNumber },
+      update: {
+        customerName: o.customerName,
+        customerEmail: o.customerEmail,
+        customerPhone: o.customerPhone,
+        addressLine1: o.addressLine1,
+        addressLine2: o.addressLine2,
+        city: o.city,
+        stateCode: o.stateCode,
+        postalCode: o.postalCode,
+        countryCode: o.countryCode,
+        status: o.status as OrderStatus,
+        trackingId: o.trackingId,
+        subtotal: o.subtotal,
+        shippingCost: o.shippingCost,
+        totalAmount: o.totalAmount,
+        transactionId: o.transactionId,
+        customerNotes: o.customerNotes,
+        adminNotes: o.adminNotes,
+      },
+      create: {
+        orderNumber: o.orderNumber,
+        customerName: o.customerName,
+        customerEmail: o.customerEmail,
+        customerPhone: o.customerPhone,
+        addressLine1: o.addressLine1,
+        addressLine2: o.addressLine2,
+        city: o.city,
+        stateCode: o.stateCode,
+        postalCode: o.postalCode,
+        countryCode: o.countryCode,
+        status: o.status as OrderStatus,
+        trackingId: o.trackingId,
+        subtotal: o.subtotal,
+        shippingCost: o.shippingCost,
+        totalAmount: o.totalAmount,
+        transactionId: o.transactionId,
+        customerNotes: o.customerNotes,
+        adminNotes: o.adminNotes,
+      },
+    });
+
+    for (const item of o.items) {
+      await prisma.orderItem.create({
+        data: {
+          orderId: order.id,
+          productId: skuMap[item.productSku] || null,
+          productName: item.productName,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        },
+      });
+    }
+
+    for (const h of o.statusHistory) {
+      await prisma.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: h.status as OrderStatus,
+          notes: h.notes,
+        },
+      });
+    }
+  }
+}
+
 async function main() {
   const { categories, categoryMap } = await seedCategories();
-  await seedProducts(categoryMap);
+  const skuMap = await seedProducts(categoryMap);
+  await seedOrders(skuMap);
   await seedAdmin();
 
   console.log("Seed completed successfully!");
   console.log(`  - ${categories.length} categories created`);
   console.log(`  - ${SEED_PRODUCTS.length} products created`);
+  console.log(`  - ${SEED_ORDERS.length} orders created`);
   console.log(`  - Admin user created (admin / admin123)`);
 }
 

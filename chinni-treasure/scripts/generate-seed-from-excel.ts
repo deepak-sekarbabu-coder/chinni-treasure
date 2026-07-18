@@ -16,9 +16,18 @@ function parseBool(val: unknown): boolean {
   return false;
 }
 
+function parseDate(val: unknown): string | null {
+  if (!val) return null;
+  if (val instanceof Date) return val.toISOString();
+  const str = String(val).trim();
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 async function main() {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile("chinni-treasure-export-2026-07-18.xlsx");
+  await wb.xlsx.readFile("exports/chinni-treasure-export-2026-07-18T18-38-36.xlsx");
 
   // --- Categories ---
   const catSheet = wb.getWorksheet("Categories")!;
@@ -44,11 +53,29 @@ async function main() {
 
   // --- Products ---
   const prodSheet = wb.getWorksheet("Products")!;
+  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number };
+  function buildProductColMap(): ProductColMap {
+    const header = prodSheet.getRow(1);
+    const idx: Record<string, number> = {};
+    header.eachCell((cell, col) => { idx[String(cell.value).toLowerCase().trim()] = col; });
+    return {
+      sku: idx["sku"] || 2,
+      name: idx["name"] || 3,
+      description: idx["description"] || 6,
+      price: idx["price"] || 7,
+      compareAtPrice: idx["compare at price"] || null,
+      stockQuantity: idx["stock quantity"] || (idx["image url"] ? idx["image url"] - 1 : 8),
+      imageUrl: idx["image url"] || (idx["badge"] ? idx["badge"] - 1 : 9),
+      badge: idx["badge"] || 10,
+    };
+  }
+  const prodCol = buildProductColMap();
   const products: {
     sku: string;
     name: string;
     categorySlug: string;
     price: number;
+    compareAtPrice: number | null;
     stockQuantity: number;
     imageUrl: string | null;
     description: string | null;
@@ -56,17 +83,17 @@ async function main() {
   }[] = [];
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
+    const comparePrice = prodCol.compareAtPrice ? row.getCell(prodCol.compareAtPrice).value : null;
     products.push({
-      sku: String(row.getCell(2).value || ""),
-      name: String(row.getCell(3).value || ""),
-      categorySlug: "", // Will be filled
-      price: parseNum(row.getCell(7).value),
-      stockQuantity: parseNum(row.getCell(8).value),
-      imageUrl: row.getCell(9).value ? String(row.getCell(9).value) : null,
-      description: row.getCell(6).value
-        ? String(row.getCell(6).value)
-        : null,
-      badge: row.getCell(10).value ? String(row.getCell(10).value) : null,
+      sku: String(row.getCell(prodCol.sku).value || ""),
+      name: String(row.getCell(prodCol.name).value || ""),
+      categorySlug: "",
+      price: parseNum(row.getCell(prodCol.price).value),
+      compareAtPrice: comparePrice ? parseNum(comparePrice) : null,
+      stockQuantity: parseNum(row.getCell(prodCol.stockQuantity).value),
+      imageUrl: row.getCell(prodCol.imageUrl).value ? String(row.getCell(prodCol.imageUrl).value) : null,
+      description: row.getCell(prodCol.description).value ? String(row.getCell(prodCol.description).value) : null,
+      badge: row.getCell(prodCol.badge).value ? String(row.getCell(prodCol.badge).value) : null,
     });
   });
 
@@ -102,7 +129,6 @@ async function main() {
         displayOrder: parseNum(row.getCell(5).value),
       });
     });
-    // Sort by displayOrder and group by productId
     imgRows.sort((a, b) => a.displayOrder - b.displayOrder);
     for (const img of imgRows) {
       if (!productImagesByProductId[img.productId]) {
@@ -112,12 +138,154 @@ async function main() {
     }
   }
 
-  // Map product IDs for lookup
+  // Build product ID to SKU mapping, and product name to SKU mapping (fallback)
+  const prodIdToSku: Record<string, string> = {};
   const prodIdByRow: Record<number, string> = {};
+  const prodNameToSku: Record<string, string> = {};
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
-    prodIdByRow[i] = String(row.getCell(1).value || "");
+    const id = String(row.getCell(1).value || "");
+    const sku = String(row.getCell(2).value || "");
+    const name = String(row.getCell(3).value || "").toLowerCase().trim();
+    prodIdToSku[id] = sku;
+    prodIdByRow[i] = id;
+    prodNameToSku[name] = sku;
   });
+
+  // --- Orders ---
+  const orderSheet = wb.getWorksheet("Orders");
+  const orders: {
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    stateCode: string;
+    postalCode: string;
+    countryCode: string;
+    status: string;
+    trackingId: string | null;
+    subtotal: number;
+    shippingCost: number;
+    totalAmount: number;
+    transactionId: string | null;
+    customerNotes: string | null;
+    adminNotes: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+  }[] = [];
+  if (orderSheet) {
+    orderSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      orders.push({
+        orderNumber: String(row.getCell(2).value || ""),
+        customerName: String(row.getCell(3).value || ""),
+        customerEmail: String(row.getCell(4).value || ""),
+        customerPhone: String(row.getCell(5).value || ""),
+        addressLine1: String(row.getCell(6).value || ""),
+        addressLine2: row.getCell(7).value ? String(row.getCell(7).value) : null,
+        city: String(row.getCell(8).value || ""),
+        stateCode: String(row.getCell(9).value || ""),
+        postalCode: String(row.getCell(10).value || ""),
+        countryCode: String(row.getCell(11).value || "IN"),
+        status: String(row.getCell(12).value || "pending"),
+        trackingId: row.getCell(13).value ? String(row.getCell(13).value) : null,
+        subtotal: parseNum(row.getCell(14).value),
+        shippingCost: parseNum(row.getCell(15).value),
+        totalAmount: parseNum(row.getCell(16).value),
+        transactionId: row.getCell(17).value ? String(row.getCell(17).value) : null,
+        customerNotes: row.getCell(18).value ? String(row.getCell(18).value) : null,
+        adminNotes: row.getCell(19).value ? String(row.getCell(19).value) : null,
+        createdAt: parseDate(row.getCell(20).value),
+        updatedAt: parseDate(row.getCell(21).value),
+      });
+    });
+  }
+
+  // --- Order Items ---
+  const oiSheet = wb.getWorksheet("Order Items");
+  const orderItems: {
+    orderNumber: string;
+    productSku: string;
+    productName: string;
+    unitPrice: number;
+    quantity: number;
+    createdAt: string | null;
+  }[] = [];
+  if (oiSheet) {
+    let orderIdx = 0;
+    oiSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      const prodId = String(row.getCell(3).value || "");
+      const prodName = String(row.getCell(4).value || "");
+      let sku = prodIdToSku[prodId] || "";
+      // Fallback: try matching by product name
+      if (!sku) {
+        sku = prodNameToSku[prodName.toLowerCase().trim()] || "";
+      }
+      orderItems.push({
+        orderNumber: orders[orderIdx]?.orderNumber || "",
+        productSku: sku,
+        productName: prodName,
+        unitPrice: parseNum(row.getCell(5).value),
+        quantity: parseNum(row.getCell(6).value),
+        createdAt: parseDate(row.getCell(7).value),
+      });
+      orderIdx++;
+    });
+  }
+
+  // --- Order Status History ---
+  const oshSheet = wb.getWorksheet("Order Status History");
+  const orderStatusHistory: {
+    orderNumber: string;
+    status: string;
+    notes: string | null;
+    createdAt: string | null;
+  }[] = [];
+  if (oshSheet) {
+    // Build order ID to order number mapping from Orders sheet
+    const orderIdToNumber: Record<string, string> = {};
+    orderSheet?.eachRow((row, i) => {
+      if (i === 1) return;
+      orderIdToNumber[String(row.getCell(1).value || "")] = String(row.getCell(2).value || "");
+    });
+
+    oshSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      const orderId = String(row.getCell(2).value || "");
+      orderStatusHistory.push({
+        orderNumber: orderIdToNumber[orderId] || "",
+        status: String(row.getCell(3).value || ""),
+        notes: row.getCell(4).value ? String(row.getCell(4).value) : null,
+        createdAt: parseDate(row.getCell(5).value),
+      });
+    });
+  }
+
+  // --- Admins ---
+  const adminSheet = wb.getWorksheet("Admins");
+  const admins: {
+    username: string;
+    email: string;
+    passwordHash: string;
+    role: string;
+    isActive: boolean;
+  }[] = [];
+  if (adminSheet) {
+    adminSheet.eachRow((row, i) => {
+      if (i === 1) return;
+      admins.push({
+        username: String(row.getCell(2).value || ""),
+        email: String(row.getCell(3).value || ""),
+        passwordHash: String(row.getCell(4).value || ""),
+        role: String(row.getCell(5).value || "admin"),
+        isActive: parseBool(row.getCell(6).value),
+      });
+    });
+  }
 
   // Output as TypeScript
   const output = `import type { ProductBadge } from "@prisma/client";
@@ -143,10 +311,52 @@ export const SEED_PRODUCTS: SeedProduct[] = ${JSON.stringify(
       const imgs = productImagesByProductId[pid];
       return {
         ...p,
-        compareAtPrice: null,
         additionalImages: imgs && imgs.length > 0 ? imgs : (p.imageUrl ? [p.imageUrl] : []),
       };
     }),
+    null,
+    2,
+  )};
+
+export interface SeedOrderItem {
+  productSku: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  createdAt: string | null;
+}
+
+export interface SeedOrder {
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  stateCode: string;
+  postalCode: string;
+  countryCode: string;
+  status: string;
+  trackingId: string | null;
+  subtotal: number;
+  shippingCost: number;
+  totalAmount: number;
+  transactionId: string | null;
+  customerNotes: string | null;
+  adminNotes: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  items: SeedOrderItem[];
+  statusHistory: { status: string; notes: string | null; createdAt: string | null }[];
+}
+
+export const SEED_ORDERS: SeedOrder[] = ${JSON.stringify(
+    orders.map((o) => ({
+      ...o,
+      items: orderItems.filter((i) => i.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
+      statusHistory: orderStatusHistory.filter((h) => h.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
+    })),
     null,
     2,
   )};
@@ -157,6 +367,10 @@ export const SEED_PRODUCTS: SeedProduct[] = ${JSON.stringify(
   console.log("Generated prisma/seed-data.ts");
   console.log(`  Categories: ${categories.length}`);
   console.log(`  Products: ${products.length}`);
+  console.log(`  Orders: ${orders.length}`);
+  console.log(`  Order Items: ${orderItems.length}`);
+  console.log(`  Order Status History: ${orderStatusHistory.length}`);
+  console.log(`  Admins: ${admins.length}`);
 }
 
 main().catch(console.error);

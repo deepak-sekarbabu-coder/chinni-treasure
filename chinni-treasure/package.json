@@ -16,6 +16,8 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "npx tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
+    "export:excel": "npx tsx scripts/export-to-excel.ts",
+    "seed:from-excel": "npx tsx scripts/generate-seed-from-excel.ts",
     "postinstall": "prisma generate",
     "test": "vitest",
     "test:run": "vitest run",
