@@ -11,6 +11,7 @@ import {
   StatsResponseSchema,
   TrackOrdersResponseSchema,
   UpdateOrderStatusInputSchema,
+  UpdateTrackingInputSchema,
   CreateRazorpayOrderInputSchema,
   CreateRazorpayOrderResponseSchema,
   VerifyRazorpayPaymentInputSchema,
@@ -28,6 +29,7 @@ import {
   type StatsResponse,
   type TrackOrdersResponse,
   type UpdateOrderStatusInput,
+  type UpdateTrackingInput,
   type VerifyRazorpayPaymentInput,
   type VerifyRazorpayPaymentResponse,
 } from "./schemas";
@@ -128,6 +130,20 @@ export function updateOrderStatus(
 ) {
   const parsed = UpdateOrderStatusInputSchema.parse(input);
   return apiFetch<Order>(`/api/orders/${orderId}/status`, {
+    method: "PATCH",
+    body: parsed,
+    signal,
+    schema: OrderSchema,
+  });
+}
+
+export function updateTrackingId(
+  orderId: string,
+  input: UpdateTrackingInput,
+  signal?: AbortSignal,
+) {
+  const parsed = UpdateTrackingInputSchema.parse(input);
+  return apiFetch<Order>(`/api/orders/${orderId}/tracking`, {
     method: "PATCH",
     body: parsed,
     signal,

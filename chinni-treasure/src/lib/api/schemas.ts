@@ -195,6 +195,10 @@ export const UpdateOrderStatusInputSchema = z.object({
   expectedVersion: z.number().int().optional(),
 });
 
+export const UpdateTrackingInputSchema = z.object({
+  trackingId: z.string().min(1, "Tracking ID is required"),
+});
+
 export const ProductImageInputSchema = z.object({
   url: z.string().min(1, "Image URL is required"),
   isPrimary: z.boolean().optional().default(false),
@@ -276,6 +280,7 @@ export type VerifyRazorpayPaymentResponse = z.infer<typeof VerifyRazorpayPayment
 export type UpdateOrderStatusInput = z.infer<
   typeof UpdateOrderStatusInputSchema
 >;
+export type UpdateTrackingInput = z.infer<typeof UpdateTrackingInputSchema>;
 export type ProductInput = z.infer<typeof ProductInputSchema>;
 export type ProductImage = z.infer<typeof ProductImageSchema>;
 export type ProductImageInput = z.infer<typeof ProductImageInputSchema>;

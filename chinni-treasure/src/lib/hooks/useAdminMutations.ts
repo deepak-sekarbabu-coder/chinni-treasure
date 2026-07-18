@@ -10,6 +10,7 @@ import {
   logout,
   updateOrderStatus,
   updateProduct,
+  updateTrackingId,
 } from "@/src/lib/api";
 import type {
   CreateOrderInput,
@@ -18,6 +19,7 @@ import type {
   ProductInput,
   ProductsResponse,
   UpdateOrderStatusInput,
+  UpdateTrackingInput,
 } from "@/src/lib/api/schemas";
 
 function invalidateAdminQueries(queryClient: ReturnType<typeof useQueryClient>) {
@@ -82,6 +84,14 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation<Order, Error, { orderId: string; input: UpdateOrderStatusInput }>({
     mutationFn: ({ orderId, input }) => updateOrderStatus(orderId, input),
+    onSuccess: () => invalidateAdminQueries(queryClient),
+  });
+}
+
+export function useUpdateTrackingId() {
+  const queryClient = useQueryClient();
+  return useMutation<Order, Error, { orderId: string; trackingId: string }>({
+    mutationFn: ({ orderId, trackingId }) => updateTrackingId(orderId, { trackingId }),
     onSuccess: () => invalidateAdminQueries(queryClient),
   });
 }

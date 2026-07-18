@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
-import { useUpdateOrderStatus } from "@/src/lib/hooks/useAdminMutations";
+import { useUpdateOrderStatus, useUpdateTrackingId } from "@/src/lib/hooks/useAdminMutations";
 import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
 import { extractApiErrorMessage } from "@/src/lib/utils";
 import type { Order } from "@/src/lib/api/schemas";
@@ -17,6 +17,7 @@ const CLOSED_TRACKING: TrackingModalState = { orderId: "", open: false };
 export function useAdminOrdersController(orders: Order[], onClearSelection: () => void) {
   const { showToast } = useToast();
   const updateStatus = useUpdateOrderStatus();
+  const updateTracking = useUpdateTrackingId();
   const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
   const [trackingModal, setTrackingModal] = useState<TrackingModalState>(CLOSED_TRACKING);
 
@@ -98,6 +99,19 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
     setTrackingModal(CLOSED_TRACKING);
   }, []);
 
+  const handleUpdateTracking = useCallback(
+    async (orderId: string, trackingId: string) => {
+      try {
+        await updateTracking.mutateAsync({ orderId, trackingId });
+        showToast("Tracking ID updated successfully", "success");
+      } catch (err) {
+        showToast(extractApiErrorMessage(err, "Failed to update tracking ID"), "error");
+        throw err;
+      }
+    },
+    [updateTracking, showToast],
+  );
+
   return {
     advancingOrderId,
     trackingModal,
@@ -106,5 +120,6 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
     handleReject,
     handleTrackingSubmit,
     closeTrackingModal,
+    handleUpdateTracking,
   };
 }

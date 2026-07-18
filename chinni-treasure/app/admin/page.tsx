@@ -108,6 +108,7 @@ export default function AdminPage() {
           onAdvance={ordersController.handleAdvance}
           onReject={ordersController.handleReject}
           isTransitioning={ordersController.isTransitioning}
+          onUpdateTracking={ordersController.handleUpdateTracking}
         />
       )}
 

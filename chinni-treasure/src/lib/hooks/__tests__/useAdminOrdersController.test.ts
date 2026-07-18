@@ -3,16 +3,18 @@ import { renderHook, act } from "@testing-library/react";
 
 vi.mock("@/src/lib/hooks/useAdminMutations", () => ({
   useUpdateOrderStatus: vi.fn(),
+  useUpdateTrackingId: vi.fn(),
 }));
 
 vi.mock("@/src/components/ui/ToastProvider", () => ({
   useToast: () => ({ showToast: vi.fn() }),
 }));
 
-import { useUpdateOrderStatus } from "@/src/lib/hooks/useAdminMutations";
+import { useUpdateOrderStatus, useUpdateTrackingId } from "@/src/lib/hooks/useAdminMutations";
 import { useAdminOrdersController } from "../useAdminOrdersController";
 
 const mockUseUpdateOrderStatus = vi.mocked(useUpdateOrderStatus);
+const mockUseUpdateTrackingId = vi.mocked(useUpdateTrackingId);
 
 function makeMutation(overrides: Partial<{ isPending: boolean; mutateAsync: ReturnType<typeof vi.fn> }> = {}) {
   return {
@@ -48,6 +50,7 @@ describe("useAdminOrdersController", () => {
   beforeEach(() => {
     mutateAsync = vi.fn().mockResolvedValue({});
     mockUseUpdateOrderStatus.mockReturnValue(makeMutation({ mutateAsync }));
+    mockUseUpdateTrackingId.mockReturnValue(makeMutation({ mutateAsync: vi.fn().mockResolvedValue({}) }));
   });
 
   it("advances to packaging without opening the tracking modal", async () => {

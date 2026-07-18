@@ -17,11 +17,26 @@ interface Props {
   onAdvance?: (id: string) => void;
   onReject?: (id: string) => void;
   isTransitioning?: boolean;
+  onUpdateTracking?: (orderId: string, trackingId: string) => Promise<void>;
 }
 
-export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning }: Props) {
+export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning, onUpdateTracking }: Props) {
   const trapRef = useFocusTrap(true);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isEditingTracking, setIsEditingTracking] = useState(false);
+  const [editTrackingValue, setEditTrackingValue] = useState(order.trackingId || "");
+  const [savingTracking, setSavingTracking] = useState(false);
+
+  const handleTrackingSave = async () => {
+    if (!editTrackingValue.trim() || !onUpdateTracking) return;
+    setSavingTracking(true);
+    try {
+      await onUpdateTracking(order.id, editTrackingValue.trim());
+      setIsEditingTracking(false);
+    } finally {
+      setSavingTracking(false);
+    }
+  };
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -103,17 +118,67 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             </div>
           </div>
 
-          {(order.status === "shipped" || order.status === "delivered") && order.trackingId && (
+          {(order.status === "shipped" || order.status === "delivered") && (
             <div className="modal-section">
               <h3>
                 <span className="section-icon">🚚</span> Tracking Information
+                {showActions && !isEditingTracking && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setEditTrackingValue(order.trackingId || "");
+                      setIsEditingTracking(true);
+                    }}
+                    disabled={isTransitioning || savingTracking}
+                    style={{ marginLeft: "auto", fontSize: "12px", padding: "4px 12px" }}
+                  >
+                    {order.trackingId ? "Edit" : "Add Tracking"}
+                  </button>
+                )}
               </h3>
-              <div className="modal-info-item">
-                <div className="label">Courier Tracking ID</div>
-                <div className="value" style={{ fontFamily: "monospace", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "1px", color: "#c9a96e" }}>
-                  {order.trackingId}
+              {isEditingTracking ? (
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "8px" }}>
+                  <input
+                    type="text"
+                    value={editTrackingValue}
+                    onChange={(e) => setEditTrackingValue(e.target.value)}
+                    placeholder="Enter courier tracking ID"
+                    className="input-cream"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && editTrackingValue.trim()) {
+                        handleTrackingSave();
+                      } else if (e.key === "Escape") {
+                        setIsEditingTracking(false);
+                      }
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    className="btn btn-success"
+                    onClick={handleTrackingSave}
+                    disabled={!editTrackingValue.trim() || savingTracking}
+                    style={{ fontSize: "12px", padding: "6px 14px" }}
+                  >
+                    {savingTracking ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setIsEditingTracking(false)}
+                    disabled={savingTracking}
+                    style={{ fontSize: "12px", padding: "6px 14px" }}
+                  >
+                    Cancel
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="modal-info-item">
+                  <div className="label">Courier Tracking ID</div>
+                  <div className="value" style={{ fontFamily: "monospace", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "1px", color: "#c9a96e" }}>
+                    {order.trackingId || "Not set"}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
