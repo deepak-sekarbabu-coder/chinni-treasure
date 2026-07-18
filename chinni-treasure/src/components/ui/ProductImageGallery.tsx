@@ -3,6 +3,10 @@
 import Image from "next/image";
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { ProductImageData } from "./ProductCard";
+import {
+  PRODUCT_IMAGE_QUALITY,
+  BLUR_PLACEHOLDER,
+} from "@/src/lib/images";
 
 interface Props {
     images: ProductImageData[];
@@ -106,6 +110,9 @@ export default function ProductImageGallery({ images, productName }: Props) {
                             fill
                             sizes="(max-width: 768px) 100vw, 50vw"
                             className={`gallery-main-img ${isTransitioning ? "fade" : ""}`}
+                            quality={PRODUCT_IMAGE_QUALITY}
+                            placeholder="blur"
+                            blurDataURL={BLUR_PLACEHOLDER}
                             priority
                             onError={() => handleImageError(selectedIndex)}
                         />
@@ -168,6 +175,9 @@ export default function ProductImageGallery({ images, productName }: Props) {
                                     fill
                                     sizes="80px"
                                     className="gallery-thumb-img"
+                                    quality={PRODUCT_IMAGE_QUALITY}
+                                    placeholder="blur"
+                                    blurDataURL={BLUR_PLACEHOLDER}
                                     onError={() => handleImageError(idx)}
                                 />
                             )}
@@ -230,6 +240,9 @@ export default function ProductImageGallery({ images, productName }: Props) {
                                     fill
                                     sizes="90vw"
                                     className="lightbox-image"
+                                    quality={PRODUCT_IMAGE_QUALITY}
+                                    placeholder="blur"
+                                    blurDataURL={BLUR_PLACEHOLDER}
                                     priority
                                     onError={() => handleImageError(selectedIndex)}
                                 />

@@ -75,6 +75,8 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                     alt={item.name}
                     width={60}
                     height={70}
+                    sizes="60px"
+                    quality={85}
                     className="order-summary-item-img"
                   />
                   <div className="order-summary-item-info">

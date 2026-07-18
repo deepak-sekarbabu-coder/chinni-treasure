@@ -69,6 +69,7 @@ export default function Navbar() {
               width={64}
               height={64}
               loading="eager"
+              quality={85}
               className="brand-logo-image"
             />
           </div>

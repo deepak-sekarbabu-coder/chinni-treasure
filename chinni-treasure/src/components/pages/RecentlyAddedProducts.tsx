@@ -4,6 +4,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ProductData } from "@/src/components/ui/ProductCard";
+import {
+  PRODUCT_IMAGE_QUALITY,
+  BLUR_PLACEHOLDER,
+} from "@/src/lib/images";
 
 const PLACEHOLDER_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";
@@ -126,6 +130,9 @@ export default function RecentlyAddedProducts({ initialProducts }: Props) {
                           alt={product.name}
                           fill
                           sizes="(max-width: 480px) 200px, (max-width: 768px) 220px, (max-width: 1024px) 280px, 25vw"
+                          quality={PRODUCT_IMAGE_QUALITY}
+                          placeholder="blur"
+                          blurDataURL={BLUR_PLACEHOLDER}
                           loading={i < 4 ? "eager" : "lazy"}
                           priority={i < 4}
                         />
