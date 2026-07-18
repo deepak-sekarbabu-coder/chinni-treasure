@@ -1,40 +1,11 @@
-import HomeContent from "@/src/components/pages/home-content";
+import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import type { Metadata } from "next";
 
-export const revalidate = 60;
-
-export const metadata: Metadata = {
-  title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
-  description:
-    "Discover handcrafted luxury goods at Chinni Treasure. Shop artisan-crafted leather accessories, silk scarves, and premium gifts with free shipping across India.",
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
-    description:
-      "Discover handcrafted luxury goods at Chinni Treasure. Shop artisan-crafted leather accessories, silk scarves, and premium gifts with free shipping across India.",
-    url: "/",
-  },
-};
-
-export default async function HomePage() {
-  let latestCategories: Array<{
-    category: { id: number; name: string; slug: string };
-    product: {
-      id: string;
-      name: string;
-      price: number;
-      compareAtPrice?: number | null;
-      imageUrl: string | null;
-      description: string | null;
-      stockQuantity: number;
-      badge: string | null;
-      images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
-    };
-  }> = [];
-
+// GET /api/categories/latest
+// Returns the newest in-stock, active product for every active category.
+// Uses a single nested query (one DB round trip) with `take: 1` per category
+// relation to avoid N+1 queries as the number of categories grows.
+export async function GET() {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
@@ -44,7 +15,11 @@ export default async function HomePage() {
         name: true,
         slug: true,
         products: {
-          where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
+          where: {
+            isActive: true,
+            deletedAt: null,
+            stockQuantity: { gt: 0 },
+          },
           orderBy: { createdAt: "desc" },
           take: 1,
           select: {
@@ -70,7 +45,9 @@ export default async function HomePage() {
       },
     });
 
-    latestCategories = categories
+    // Filter out categories that have no eligible product, and map to the
+    // requested { category, product } envelope.
+    const payload = categories
       .filter((c) => c.products.length > 0)
       .map((c) => {
         const [product] = c.products;
@@ -96,13 +73,17 @@ export default async function HomePage() {
           },
         };
       });
-  } catch (err) {
-    console.error("Failed to fetch latest category products:", err);
-  }
 
-  return (
-    <HomeContent
-      latestCategories={latestCategories}
-    />
-  );
+    return NextResponse.json(payload, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch latest category products:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch latest category products" },
+      { status: 500 },
+    );
+  }
 }

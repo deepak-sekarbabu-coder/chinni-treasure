@@ -13,6 +13,9 @@ const AdminOrdersPanel = dynamic(() => import("@/src/components/admin/AdminOrder
 const AdminCataloguePanel = dynamic(() => import("@/src/components/admin/AdminCataloguePanel"), {
   ssr: false,
 });
+const AdminCategoriesPanel = dynamic(() => import("@/src/components/admin/AdminCategoriesPanel"), {
+  ssr: false,
+});
 const AdminChartsSection = dynamic(() => import("@/src/components/admin/AdminChartsSection"), {
   ssr: false,
 });
@@ -33,7 +36,7 @@ export default function AdminPage() {
     statsQuery, ordersQuery, productsQuery, categoriesQuery,
     orders, totalPages, products, productTotalPages,
     stats, chartData, productSales, selectedOrder,
-    ordersController, catalogueController, headerActions,
+    ordersController, catalogueController, categoriesController, headerActions,
     setActiveTab, setCurrentPage, setProductPage, setSelectedOrderId,
     clearSelectedOrder, handleStatusFilterChange,
   } = useAdminPageState();
@@ -96,6 +99,28 @@ export default function AdminPage() {
             onEdit={catalogueController.editProduct}
             onRequestDelete={catalogueController.requestProductDelete}
             onPageChange={setProductPage}
+          />
+        )}
+
+        {activeTab === "categories" && (
+          <AdminCategoriesPanel
+            showForm={categoriesController.showForm}
+            formClosing={categoriesController.formClosing}
+            form={categoriesController.form}
+            productLoading={categoriesController.productLoading}
+            categories={categoriesQuery.data ?? []}
+            categoriesLoading={categoriesQuery.isLoading}
+            deleteConfirm={categoriesController.deleteConfirm}
+            loadingCategoryId={categoriesController.loadingCategoryId}
+            togglePendingId={categoriesController.togglePendingId}
+            onToggleForm={categoriesController.toggleForm}
+            onFormChange={categoriesController.onFormChange}
+            onSave={categoriesController.handleSave}
+            onEdit={categoriesController.editCategory}
+            onRequestDelete={categoriesController.requestDelete}
+            onCancelDelete={categoriesController.closeDeleteConfirm}
+            onConfirmDelete={categoriesController.handleDeleteConfirmed}
+            onToggleActive={categoriesController.handleToggleActive}
           />
         )}
       </section>

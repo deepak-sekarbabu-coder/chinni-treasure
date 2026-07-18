@@ -2,6 +2,11 @@ import { apiFetch } from "./client";
 import {
   AuthMeResponseSchema,
   CategoriesResponseSchema,
+  CategoryDetailSchema,
+  CategoryProductsResponseSchema,
+  CreateCategorySchema,
+  LatestCategoriesResponseSchema,
+  UpdateCategorySchema,
   CreateOrderInputSchema,
   OrderSchema,
   OrdersResponseSchema,
@@ -18,7 +23,12 @@ import {
   VerifyRazorpayPaymentResponseSchema,
   type AuthMeResponse,
   type CategoriesResponse,
+  type CategoryDetail,
+  type CategoryProductsResponse,
+  type CreateCategoryInput,
   type CreateOrderInput,
+  type LatestCategoriesResponse,
+  type UpdateCategoryInput,
   type CreateRazorpayOrderInput,
   type CreateRazorpayOrderResponse,
   type Order,
@@ -186,10 +196,71 @@ export async function logout(signal?: AbortSignal) {
   await apiFetch<void>("/api/auth/logout", { method: "POST", signal });
 }
 
-export function fetchCategories(signal?: AbortSignal) {
-  return apiFetch<CategoriesResponse>("/api/categories", {
+export function fetchCategories(signal?: AbortSignal, includeInactive = false) {
+  const qs = includeInactive ? "?includeInactive=true" : "";
+  return apiFetch<CategoriesResponse>(`/api/categories${qs}`, {
     signal,
     schema: CategoriesResponseSchema,
+  });
+}
+
+export function fetchLatestCategories(signal?: AbortSignal) {
+  return apiFetch<LatestCategoriesResponse>("/api/categories/latest", {
+    signal,
+    schema: LatestCategoriesResponseSchema,
+  });
+}
+
+export interface CategoryProductsParams {
+  page?: number;
+  limit?: number;
+  sort?: "newest" | "price-asc" | "price-desc";
+}
+
+export function fetchCategoryProducts(
+  slug: string,
+  params: CategoryProductsParams = {},
+  signal?: AbortSignal,
+) {
+  const search = new URLSearchParams();
+  if (params.page && params.page > 1) search.set("page", String(params.page));
+  if (params.limit) search.set("limit", String(params.limit));
+  if (params.sort && params.sort !== "newest") search.set("sort", params.sort);
+  const qs = search.toString();
+  return apiFetch<CategoryProductsResponse>(
+    `/api/category/${encodeURIComponent(slug)}/products${qs ? `?${qs}` : ""}`,
+    { signal, schema: CategoryProductsResponseSchema },
+  );
+}
+
+export function createCategory(input: CreateCategoryInput, signal?: AbortSignal) {
+  const parsed = CreateCategorySchema.parse(input);
+  return apiFetch<CategoryDetail>("/api/categories", {
+    method: "POST",
+    body: parsed,
+    signal,
+    schema: CategoryDetailSchema,
+  });
+}
+
+export function updateCategory(
+  id: number,
+  input: UpdateCategoryInput,
+  signal?: AbortSignal,
+) {
+  const parsed = UpdateCategorySchema.parse(input);
+  return apiFetch<CategoryDetail>(`/api/categories/${id}`, {
+    method: "PUT",
+    body: parsed,
+    signal,
+    schema: CategoryDetailSchema,
+  });
+}
+
+export function deleteCategory(id: number, signal?: AbortSignal) {
+  return apiFetch<{ success: boolean }>(`/api/categories/${id}`, {
+    method: "DELETE",
+    signal,
   });
 }
 

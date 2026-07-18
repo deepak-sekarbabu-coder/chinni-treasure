@@ -25,6 +25,13 @@ export const queryKeys = {
   },
   categories: {
     all: () => [...queryKeys.all, "categories"] as const,
+    lists: () => [...queryKeys.categories.all(), "list"] as const,
+    list: (includeInactive?: boolean) =>
+      [...queryKeys.categories.lists(), { includeInactive: !!includeInactive }] as const,
+    detail: (id: number) => [...queryKeys.categories.all(), "detail", id] as const,
+    latest: () => [...queryKeys.categories.all(), "latest"] as const,
+    products: (slug: string, page: number, sort?: string) =>
+      [...queryKeys.categories.all(), "products", slug, { page, sort: sort || "newest" }] as const,
   },
   track: {
     all: () => [...queryKeys.all, "track"] as const,

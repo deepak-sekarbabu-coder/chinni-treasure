@@ -224,9 +224,85 @@ export const CategorySchema = z.object({
   name: z.string(),
   slug: z.string(),
   displayOrder: z.number(),
+  isActive: z.boolean().optional(),
+  description: z.string().nullable().optional(),
+  productCount: z.number().optional(),
 });
 
 export const CategoriesResponseSchema = z.array(CategorySchema);
+
+// Full category shape returned by admin management + detail endpoints.
+export const CategoryDetailSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable().optional(),
+  displayOrder: z.number(),
+  isActive: z.boolean(),
+  productCount: z.number().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const CreateCategorySchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be kebab-case (lowercase, digits, hyphens)")
+    .optional(),
+  description: z.string().max(2000).optional().nullable(),
+  displayOrder: z.coerce.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const UpdateCategorySchema = z.object({
+  name: z.string().min(1, "Name is required").max(100).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be kebab-case (lowercase, digits, hyphens)")
+    .optional(),
+  description: z.string().max(2000).optional().nullable(),
+  displayOrder: z.coerce.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
+});
+
+// ---- Latest product per active category ----
+
+export const LatestCategoryProductSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  price: z.coerce.number(),
+  compareAtPrice: z.coerce.number().nullable().optional(),
+  imageUrl: z.string().nullable(),
+  description: z.string().nullable(),
+  stockQuantity: z.number(),
+  badge: z.string().nullable(),
+  images: z.array(ProductImageSchema).optional(),
+});
+
+export const LatestCategorySectionSchema = z.object({
+  category: z.object({
+    id: z.number(),
+    name: z.string(),
+    slug: z.string(),
+  }),
+  product: LatestCategoryProductSchema,
+});
+
+export const LatestCategoriesResponseSchema = z.array(LatestCategorySectionSchema);
+
+export const CategoryProductsResponseSchema = z.object({
+  category: CategoryDetailSchema,
+  products: z.array(ProductSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+});
 
 export const ApiErrorSchema = z.object({
   error: z.string().optional(),
@@ -286,3 +362,10 @@ export type ProductImage = z.infer<typeof ProductImageSchema>;
 export type ProductImageInput = z.infer<typeof ProductImageInputSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoriesResponse = z.infer<typeof CategoriesResponseSchema>;
+export type CategoryDetail = z.infer<typeof CategoryDetailSchema>;
+export type CreateCategoryInput = z.infer<typeof CreateCategorySchema>;
+export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>;
+export type LatestCategoryProduct = z.infer<typeof LatestCategoryProductSchema>;
+export type LatestCategorySection = z.infer<typeof LatestCategorySectionSchema>;
+export type LatestCategoriesResponse = z.infer<typeof LatestCategoriesResponseSchema>;
+export type CategoryProductsResponse = z.infer<typeof CategoryProductsResponseSchema>;

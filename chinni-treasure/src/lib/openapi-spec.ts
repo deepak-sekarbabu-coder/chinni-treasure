@@ -18,6 +18,10 @@ export const openApiSpec = {
     { name: "Orders", description: "Order placement, listing, and status management" },
     { name: "Tracking", description: "Public order tracking by order ID or phone" },
     { name: "Analytics", description: "Admin dashboard statistics" },
+    {
+      name: "Categories",
+      description: "Category management and category-based product listings",
+    },
   ],
   paths: {
     "/api/auth/login": {
@@ -125,6 +129,211 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/categories": {
+      get: {
+        tags: ["Categories"],
+        summary: "List categories",
+        operationId: "listCategories",
+        parameters: [
+          {
+            name: "includeInactive",
+            in: "query",
+            required: false,
+            schema: { type: "boolean" },
+            description: "When true (admin), returns all categories with product counts.",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Array of categories",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "integer" },
+                      name: { type: "string" },
+                      slug: { type: "string" },
+                      displayOrder: { type: "integer" },
+                      isActive: { type: "boolean" },
+                      description: { type: "string", nullable: true },
+                      productCount: { type: "integer" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "500": { description: "Server error" },
+        },
+      },
+      post: {
+        tags: ["Categories"],
+        summary: "Create a category (admin)",
+        operationId: "createCategory",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["name"],
+                properties: {
+                  name: { type: "string", minLength: 1, maxLength: 100 },
+                  slug: {
+                    type: "string",
+                    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                    description: "Kebab-case slug. Auto-generated from name if omitted.",
+                  },
+                  description: { type: "string", nullable: true },
+                  displayOrder: { type: "integer", minimum: 0 },
+                  isActive: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Category created" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "409": { description: "Slug already exists" },
+        },
+      },
+    },
+    "/api/categories/latest": {
+      get: {
+        tags: ["Categories"],
+        summary: "Latest eligible product per active category",
+        operationId: "latestPerCategory",
+        description:
+          "Returns the newest in-stock, active product for every active category. Uses a single nested query to avoid N+1.",
+        responses: {
+          "200": {
+            description: "Array of { category, product } envelopes",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      category: {
+                        type: "object",
+                        properties: {
+                          id: { type: "integer" },
+                          name: { type: "string" },
+                          slug: { type: "string" },
+                        },
+                      },
+                      product: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "500": { description: "Server error" },
+        },
+      },
+    },
+    "/api/categories/{id}": {
+      put: {
+        tags: ["Categories"],
+        summary: "Update a category (admin)",
+        operationId: "updateCategory",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "integer" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  slug: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+                  description: { type: "string", nullable: true },
+                  displayOrder: { type: "integer", minimum: 0 },
+                  isActive: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Category updated" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Category not found" },
+          "409": { description: "Slug already exists" },
+        },
+      },
+      delete: {
+        tags: ["Categories"],
+        summary: "Delete a category (admin)",
+        operationId: "deleteCategory",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "integer" } },
+        ],
+        responses: {
+          "200": {
+            description: "Category deleted",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { success: { type: "boolean" } } },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Category not found" },
+          "409": { description: "Category has active products and cannot be deleted" },
+        },
+      },
+    },
+    "/api/category/{slug}/products": {
+      get: {
+        tags: ["Categories"],
+        summary: "List active products in a category",
+        operationId: "categoryProducts",
+        parameters: [
+          { name: "slug", in: "path", required: true, schema: { type: "string" } },
+          { name: "page", in: "query", required: false, schema: { type: "integer", minimum: 1 } },
+          { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 60 } },
+          {
+            name: "sort",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["newest", "price-asc", "price-desc"] },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated products for the category",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    category: { type: "object" },
+                    products: { type: "array", items: { type: "object" } },
+                    total: { type: "integer" },
+                    page: { type: "integer" },
+                    limit: { type: "integer" },
+                    totalPages: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "Category not found or inactive" },
+          "500": { description: "Server error" },
         },
       },
     },

@@ -49,7 +49,7 @@ async function main() {
   await prisma.admin.deleteMany();
 
   // --- Categories ---
-  const catSheet = wb.getWorksheet("Categories");
+  const catSheet = wb.getWorksheet("Categories")!;
   const categories: { id: number; name: string; slug: string; description: string | null; displayOrder: number; isActive: boolean }[] = [];
   catSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -68,7 +68,7 @@ async function main() {
   }
 
   // --- Products ---
-  const prodSheet = wb.getWorksheet("Products");
+  const prodSheet = wb.getWorksheet("Products")!;
   const products: {
     id: string; sku: string | null; name: string; categoryId: number | null;
     description: string | null; price: number; stockQuantity: number;
@@ -114,7 +114,7 @@ async function main() {
   }
 
   // --- Orders ---
-  const orderSheet = wb.getWorksheet("Orders");
+  const orderSheet = wb.getWorksheet("Orders")!;
   const orders: any[] = [];
   orderSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -172,7 +172,7 @@ async function main() {
   }
 
   // --- Order Items ---
-  const itemSheet = wb.getWorksheet("Order Items");
+  const itemSheet = wb.getWorksheet("Order Items")!;
   const items: any[] = [];
   itemSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -202,7 +202,7 @@ async function main() {
   }
 
   // --- Order Status History ---
-  const histSheet = wb.getWorksheet("Order Status History");
+  const histSheet = wb.getWorksheet("Order Status History")!;
   const history: any[] = [];
   histSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -228,7 +228,7 @@ async function main() {
   }
 
   // --- Admins ---
-  const adminSheet = wb.getWorksheet("Admins");
+  const adminSheet = wb.getWorksheet("Admins")!;
   const admins: any[] = [];
   adminSheet.eachRow((row, i) => {
     if (i === 1) return;

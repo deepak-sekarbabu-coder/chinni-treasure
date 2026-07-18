@@ -6,13 +6,15 @@ import {
   fetchAuthMe,
   fetchCatalogueProducts,
   fetchCategories,
+  fetchCategoryProducts,
   fetchOrders,
   fetchProducts,
   fetchStats,
+  type CategoryProductsParams,
   type OrdersQueryParams,
   type ProductsQueryParams,
 } from "@/src/lib/api";
-import type { ProductsResponse } from "@/src/lib/api/schemas";
+import type { ProductsResponse, CategoryProductsResponse } from "@/src/lib/api/schemas";
 
 const ITEMS_PER_PAGE = 10;
 const PRODUCTS_PER_PAGE = 12;
@@ -66,12 +68,29 @@ export function useCatalogueProducts(page: number, limit: number = CATALOGUE_PAG
   });
 }
 
-export function useAdminCategories(enabled = true) {
+export function useAdminCategories(enabled = true, includeInactive = false) {
   return useQuery({
-    queryKey: queryKeys.categories.all(),
-    queryFn: ({ signal }) => fetchCategories(signal),
+    queryKey: queryKeys.categories.list(includeInactive),
+    queryFn: ({ signal }) => fetchCategories(signal, includeInactive),
     enabled,
     staleTime: 300_000,
+  });
+}
+
+export function useCategoryProducts(
+  slug: string,
+  page: number,
+  limit: number = CATALOGUE_PAGE_SIZE,
+  sort: CategoryProductsParams["sort"] = "newest",
+  initialData?: CategoryProductsResponse,
+) {
+  return useQuery({
+    queryKey: queryKeys.categories.products(slug, page, sort),
+    queryFn: ({ signal }) =>
+      fetchCategoryProducts(slug, { page, limit, sort }, signal),
+    initialData: page === 1 ? initialData : undefined,
+    placeholderData: (previousData) => previousData,
+    staleTime: 30_000,
   });
 }
 

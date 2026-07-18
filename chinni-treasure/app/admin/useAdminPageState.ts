@@ -8,6 +8,7 @@ import {
   useAdminStats,
 } from "@/src/lib/hooks/useAdminData";
 import { useAdminCatalogueController } from "@/src/lib/hooks/useAdminCatalogueController";
+import { useAdminCategoriesController } from "@/src/lib/hooks/useAdminCategoriesController";
 import { useAdminHeaderActions } from "@/src/lib/hooks/useAdminHeaderActions";
 import { useAdminOrdersController } from "@/src/lib/hooks/useAdminOrdersController";
 import { useAdminSession } from "@/src/lib/hooks/useAdminSession";
@@ -26,7 +27,8 @@ export function useAdminPageState() {
 
   const isCatalogueTab = activeTab === "catalogue";
 
-  const categoriesQuery = useAdminCategories(authenticated && isCatalogueTab);
+  // Admin needs the full category list (including inactive) for management + product form.
+  const categoriesQuery = useAdminCategories(authenticated, true);
 
   const statsQuery = useAdminStats(authenticated);
   const ordersQuery = useAdminOrders(
@@ -55,6 +57,7 @@ export function useAdminPageState() {
 
   const ordersController = useAdminOrdersController(orders, clearSelectedOrder);
   const catalogueController = useAdminCatalogueController({ onAfterSave: handleProductSaved });
+  const categoriesController = useAdminCategoriesController();
   const headerActions = useAdminHeaderActions();
 
   const handleStatusFilterChange = useCallback((key: string) => {
@@ -85,6 +88,7 @@ export function useAdminPageState() {
     selectedOrder,
     ordersController,
     catalogueController,
+    categoriesController,
     headerActions,
     setActiveTab,
     setCurrentPage,

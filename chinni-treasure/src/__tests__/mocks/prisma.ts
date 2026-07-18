@@ -38,7 +38,14 @@ export function createMockPrisma() {
     },
     category: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+      updateMany: vi.fn(),
     },
+    $transaction: vi.fn(),
     $transaction: vi.fn(),
   };
 }

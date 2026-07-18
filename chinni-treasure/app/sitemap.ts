@@ -56,5 +56,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sitemap generated without product entries on failure
   }
 
+  try {
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { displayOrder: "asc" },
+    });
+
+    for (const category of categories) {
+      entries.push({
+        url: `${BASE_URL}/category/${category.slug}`,
+        lastModified: category.updatedAt,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
+    }
+  } catch {
+    // Sitemap generated without category entries on failure
+  }
+
   return entries;
 }

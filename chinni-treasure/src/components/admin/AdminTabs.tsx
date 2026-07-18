@@ -1,6 +1,6 @@
 "use client";
 
-export type AdminTabKey = "orders" | "catalogue";
+export type AdminTabKey = "orders" | "catalogue" | "categories";
 
 interface TabDefinition<K extends string> {
   key: K;
@@ -11,6 +11,7 @@ interface TabDefinition<K extends string> {
 const TABS: readonly TabDefinition<AdminTabKey>[] = [
   { key: "orders", label: "Orders", icon: "\u{1F4CB}" },
   { key: "catalogue", label: "Catalogue", icon: "\u{1F4E6}" },
+  { key: "categories", label: "Categories", icon: "\u{1F3F7}" },
 ];
 
 interface Props {

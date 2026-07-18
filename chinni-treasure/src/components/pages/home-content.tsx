@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
-import RecentlyAddedProducts from "./RecentlyAddedProducts";
-import type { ProductData } from "@/src/components/ui/ProductCard";
+import LatestInEveryCategory from "./LatestInEveryCategory";
+import type { LatestCategoriesResponse } from "@/src/lib/api/schemas";
 
 interface Props {
-  recentProducts?: ProductData[];
+  latestCategories?: LatestCategoriesResponse;
 }
 
-export default function HomeContent({ recentProducts }: Props) {
+export default function HomeContent({ latestCategories }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -113,8 +113,8 @@ export default function HomeContent({ recentProducts }: Props) {
         </div>
       </section>
 
-      {/* Recently Added Products */}
-      <RecentlyAddedProducts initialProducts={recentProducts} />
+      {/* Latest in Every Category */}
+      <LatestInEveryCategory initialSections={latestCategories} />
 
       {/* Features */}
       <section

@@ -3,21 +3,27 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/src/lib/query-keys";
 import {
+  createCategory,
   createOrder,
   createProduct,
+  deleteCategory,
   deleteProduct,
   exportToExcel,
   logout,
+  updateCategory,
   updateOrderStatus,
   updateProduct,
   updateTrackingId,
 } from "@/src/lib/api";
 import type {
+  CategoryDetail,
+  CreateCategoryInput,
   CreateOrderInput,
   Order,
   Product,
   ProductInput,
   ProductsResponse,
+  UpdateCategoryInput,
   UpdateOrderStatusInput,
   UpdateTrackingInput,
 } from "@/src/lib/api/schemas";
@@ -167,5 +173,53 @@ export function useExportToExcel() {
 export function usePlaceOrder() {
   return useMutation<Order, Error, CreateOrderInput>({
     mutationFn: (input) => createOrder(input),
+  });
+}
+
+function invalidateCategoryQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.categories.all() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.products.all() }),
+  ]);
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation<CategoryDetail, Error, CreateCategoryInput>({
+    mutationFn: (input) => createCategory(input),
+    onSuccess: () => invalidateCategoryQueries(queryClient),
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    CategoryDetail,
+    Error,
+    { id: number; input: UpdateCategoryInput }
+  >({
+    mutationFn: ({ id, input }) => updateCategory(id, input),
+    onSuccess: () => invalidateCategoryQueries(queryClient),
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation<{ success: boolean }, Error, number>({
+    mutationFn: (id) => deleteCategory(id),
+    onSuccess: () => invalidateCategoryQueries(queryClient),
+  });
+}
+
+export function useToggleCategoryActive() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    CategoryDetail,
+    Error,
+    { id: number; isActive: boolean }
+  >({
+    mutationFn: ({ id, isActive }) =>
+      updateCategory(id, { isActive }),
+    onSuccess: () => invalidateCategoryQueries(queryClient),
   });
 }
