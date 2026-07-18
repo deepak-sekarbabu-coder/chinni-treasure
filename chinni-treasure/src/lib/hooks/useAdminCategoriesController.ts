@@ -8,7 +8,7 @@ import {
   useToggleCategoryActive,
   useUpdateCategory,
 } from "@/src/lib/hooks/useAdminMutations";
-import { extractApiErrorMessage } from "@/src/lib/utils";
+import { extractApiErrorMessage, slugify } from "@/src/lib/utils";
 import type { Category } from "@/src/lib/api/schemas";
 
 export interface CategoryFormState {
@@ -114,7 +114,7 @@ export function useAdminCategoriesController() {
       }
       const payload = {
         name: form.name.trim(),
-        slug: form.slug.trim() || undefined,
+        slug: form.slug.trim() ? slugify(form.slug) : undefined,
         description: form.description.trim() || undefined,
         displayOrder: parseInt(form.displayOrder) || 0,
         isActive: form.isActive,

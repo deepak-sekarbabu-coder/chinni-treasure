@@ -251,6 +251,8 @@
     border: 1px solid rgba(212, 175, 55, 0.3);
     box-shadow: 0 14px 44px rgba(0, 0, 0, 0.35);
     padding: 26px;
+    border-radius: 16px;
+    overflow: hidden;
 }
 
 .hero-story-label {

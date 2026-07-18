@@ -10,3 +10,16 @@ export function extractApiErrorMessage(err: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+/**
+ * Convert an arbitrary string into a URL-safe kebab-case slug.
+ * Lowercases, replaces non-alphanumeric runs with hyphens, and trims edges.
+ */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100);
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import { slugify } from "@/src/lib/utils";
 import type { Category } from "@/src/lib/api/schemas";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 
@@ -81,7 +82,7 @@ export default function AdminCategoriesPanel({
                   <input
                     type="text"
                     value={form.slug}
-                    onChange={(e) => onFormChange({ ...form, slug: e.target.value })}
+                    onChange={(e) => onFormChange({ ...form, slug: slugify(e.target.value) })}
                     placeholder="e.g. bangles"
                     className="input-cream"
                   />
