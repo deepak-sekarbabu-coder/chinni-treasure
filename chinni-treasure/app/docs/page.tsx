@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "API Documentation — Chinni Treasure",
   description:
     "Interactive API documentation for the Chinni Treasure platform. Browse endpoints, schemas, and authentication details.",
+  alternates: {
+    canonical: "/docs",
+  },
 };
 
 type Schema = {

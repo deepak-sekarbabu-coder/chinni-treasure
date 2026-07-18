@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
   description:
     "Discover handcrafted luxury goods at Chinni Treasure. Shop artisan-crafted leather accessories, silk scarves, and premium gifts with free shipping across India.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Chinni Treasure — Little Love | Artisan-Crafted Luxury Goods",
     description:
@@ -38,7 +41,7 @@ export default async function HomePage() {
         images: { orderBy: { displayOrder: "asc" } },
       },
       orderBy: { createdAt: "desc" },
-      take: 12,
+      take: 6,
     });
 
     recentProducts = data.map((p) => ({

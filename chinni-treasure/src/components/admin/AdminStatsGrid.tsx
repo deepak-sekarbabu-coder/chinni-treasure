@@ -22,7 +22,7 @@ function buildStatTiles(stats: Stats) {
     {
       label: "Revenue",
       value: `₹${REVENUE_FORMAT.format(Number(stats.totalRevenue))}`,
-      color: "var(--gold-dark)",
+      color: "var(--gold-deep)",
     },
   ];
 }

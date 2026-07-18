@@ -39,7 +39,7 @@ export default function RecentlyAddedProducts({ initialProducts }: Props) {
   useEffect(() => {
     if (initialProducts) return;
     const controller = new AbortController();
-    fetch("/api/products/recent?limit=12", {
+    fetch("/api/products/recent?limit=6", {
       signal: controller.signal,
       cache: "no-cache",
     })

@@ -37,7 +37,12 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
-    deviceSizes: [640, 768, 1024, 1280, 1536],
+    // Tuned for the actual rendered sizes used across the site:
+    // - Product cards / gallery main images render at ~542px wide on desktop,
+    //   so a 550 breakpoint avoids serving the oversized 768px variant that
+    //   Lighthouse flagged (~504 KiB of avoidable bytes).
+    // - 384 remains for thumbnails and the lightbox on small screens.
+    deviceSizes: [384, 550, 640, 768, 1024, 1280, 1536],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/webp"],
     qualities: [75, 85],

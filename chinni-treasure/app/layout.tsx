@@ -16,7 +16,8 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  preload: false,
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const albert = Albert_Sans({
@@ -24,7 +25,8 @@ const albert = Albert_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  preload: false,
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const pinyon = Pinyon_Script({
@@ -32,7 +34,9 @@ const pinyon = Pinyon_Script({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
-  preload: false,
+  preload: true,
+  adjustFontFallback: true,
+  fallback: ["cursive"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
@@ -54,9 +58,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Chinni Treasure",
-  },
-  alternates: {
-    canonical: "/",
   },
   openGraph: {
     type: "website",

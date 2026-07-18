@@ -104,7 +104,7 @@
 }
 
 .modal-section h3 .section-icon {
-    color: var(--gold-dark);
+    color: var(--gold-deep);
     font-size: 0.9rem;
 }
 
@@ -199,7 +199,7 @@
     background: var(--white);
     border-radius: 50%;
     font-size: 0.8rem;
-    color: var(--gold-dark);
+    color: var(--gold-deep);
     font-weight: 700;
     border: 1px solid rgba(212, 175, 55, 0.2);
     margin-top: 2px;
@@ -322,7 +322,7 @@
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--font-serif);
-    color: var(--gold-dark);
+    color: var(--gold-deep);
 }
 
 /* ── Delete confirm box (Admin) ── */

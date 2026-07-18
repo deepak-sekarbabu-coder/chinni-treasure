@@ -18,7 +18,7 @@
 
 .status-badge.approved {
     background: rgba(46, 204, 113, 0.1);
-    color: var(--success);
+    color: #1e7e34;
 }
 
 .status-badge.packaging {
@@ -28,7 +28,7 @@
 
 .status-badge.shipped {
     background: rgba(155, 89, 182, 0.1);
-    color: #9b59b6;
+    color: #6f3a8f;
 }
 
 .status-badge.delivered {

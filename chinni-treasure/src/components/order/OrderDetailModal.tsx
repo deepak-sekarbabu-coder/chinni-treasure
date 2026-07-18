@@ -89,7 +89,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             {order.transactionId && (
               <div className="modal-info-item" style={{ marginBottom: "16px" }}>
                 <div className="label">Transaction ID</div>
-                <div className="value" style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.5px", color: "var(--gold-dark)" }}>
+                <div className="value" style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.5px", color: "var(--gold-deep)" }}>
                   {order.transactionId}
                 </div>
               </div>

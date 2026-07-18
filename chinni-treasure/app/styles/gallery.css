@@ -241,7 +241,7 @@
     font-family: var(--font-serif);
     font-size: 1.8rem;
     font-weight: 600;
-    color: var(--gold-dark);
+    color: var(--gold-deep);
     margin-bottom: 16px;
     overflow-wrap: anywhere;
 }
@@ -526,7 +526,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--gold-dark);
+    color: var(--gold-deep);
     background: rgba(212, 175, 55, 0.1);
     padding: 2px 6px;
     border-radius: 2px;

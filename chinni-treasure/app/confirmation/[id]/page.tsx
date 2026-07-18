@@ -5,14 +5,24 @@ import type { Metadata } from "next";
 
 export const revalidate = 30;
 
-export const metadata: Metadata = {
-  title: "Order Confirmation — Chinni Treasure",
-  description:
-    "Your order has been placed successfully. View your order details and tracking information.",
-};
-
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    title: "Order Confirmation — Chinni Treasure",
+    description:
+      "Your order has been placed successfully. View your order details and tracking information.",
+    alternates: {
+      canonical: `/confirmation/${id}`,
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
 }
 
 export default async function ConfirmationPage({ params }: Props) {

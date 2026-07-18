@@ -192,7 +192,7 @@
     font-family: var(--font-serif);
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--gold-dark);
+    color: var(--gold-deep);
 }
 
 /* ── Chart Rows ── */
@@ -600,7 +600,7 @@
 }
 
 .form-group .toggle-switch input:checked~.toggle-label {
-    color: var(--gold-dark);
+    color: var(--gold-deep);
 }
 
 /* ── Toggle in product form ── */
