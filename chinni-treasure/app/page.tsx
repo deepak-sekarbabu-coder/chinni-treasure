@@ -32,13 +32,13 @@ export default async function HomePage() {
 
   try {
     const data = await prisma.product.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
       include: {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
       },
       orderBy: { createdAt: "desc" },
-      take: 8,
+      take: 12,
     });
 
     recentProducts = data.map((p) => ({
