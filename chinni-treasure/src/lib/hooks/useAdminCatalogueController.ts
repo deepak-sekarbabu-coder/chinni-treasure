@@ -75,7 +75,7 @@ function productToFormState(product: Product): ProductFormState {
   };
 }
 
-export function useAdminCatalogueController(options?: { onAfterSave?: () => void }) {
+export function useAdminCatalogueController(options?: { onAfterSave?: (wasCreate: boolean) => void }) {
   const { showToast } = useToast();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -156,7 +156,7 @@ export function useAdminCatalogueController(options?: { onAfterSave?: () => void
           await createProduct.mutateAsync(payload);
           showToast(`Product "${productForm.name}" created successfully`, "success");
         }
-        onAfterSave?.();
+        onAfterSave?.(!isEdit);
         closeProductForm();
       } catch (err) {
         console.error("Failed to save product:", err);

@@ -53,7 +53,13 @@ export function useAdminPageState() {
   );
 
   const clearSelectedOrder = useCallback(() => setSelectedOrderId(null), []);
-  const handleProductSaved = useCallback(() => setProductPage(1), []);
+  const handleProductSaved = useCallback(
+    (wasCreate: boolean) => {
+      // On edit, keep the user on their current page; only jump to page 1 for new products.
+      if (wasCreate) setProductPage(1);
+    },
+    [],
+  );
 
   const ordersController = useAdminOrdersController(orders, clearSelectedOrder);
   const catalogueController = useAdminCatalogueController({ onAfterSave: handleProductSaved });

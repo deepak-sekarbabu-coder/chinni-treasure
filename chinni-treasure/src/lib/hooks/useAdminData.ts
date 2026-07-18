@@ -17,7 +17,7 @@ import {
 import type { ProductsResponse, CategoryProductsResponse } from "@/src/lib/api/schemas";
 
 const ITEMS_PER_PAGE = 10;
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 5;
 const CATALOGUE_PAGE_SIZE = 6;
 
 export function useAuthMe(enabled = true) {
