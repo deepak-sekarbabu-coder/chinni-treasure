@@ -14,6 +14,14 @@ const OrderItemSchema = z.object({
   productName: z.string(),
   unitPrice: z.coerce.number(),
   quantity: z.number(),
+  productId: z.string().nullable().optional(),
+  product: z
+    .object({
+      sku: z.string().nullable().optional(),
+      compareAtPrice: z.coerce.number().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const OrderSchema = z.object({

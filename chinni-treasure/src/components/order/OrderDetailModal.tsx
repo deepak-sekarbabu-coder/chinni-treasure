@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
   ORDER_STATUS_FLOW,
@@ -8,6 +8,7 @@ import {
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
+import PrintShippingLabelModal from "@/src/components/admin/PrintShippingLabelModal";
 
 interface Props {
   order: Partial<Order> & TrackOrderResult;
@@ -20,6 +21,7 @@ interface Props {
 
 export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning }: Props) {
   const trapRef = useFocusTrap(true);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -211,10 +213,25 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
                   Reject Order
                 </button>
               )}
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowPrintModal(true)}
+                disabled={isTransitioning}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                🖨️ Print Shipping Label
+              </button>
             </div>
           )}
         </div>
       </div>
+      {showPrintModal && (
+        <PrintShippingLabelModal
+          order={order}
+          isOpen={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
     </div>
   );
 }
