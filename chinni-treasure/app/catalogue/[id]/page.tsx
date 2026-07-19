@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import ProductDetailsContent from "@/src/components/pages/ProductDetailsContent";
 import JsonLd from "@/src/components/ui/JsonLd";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
@@ -11,13 +12,23 @@ interface Props {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
 
+const getProductById = unstable_cache(
+    async (id: string) =>
+        prisma.product.findUnique({
+            where: { id },
+            include: {
+                category: { select: { name: true } },
+                images: { orderBy: { displayOrder: "asc" } },
+            },
+        }),
+    ["product-by-id"],
+    { revalidate: 60 },
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const { id } = await params;
-        const product = await prisma.product.findUnique({
-            where: { id },
-            include: { category: { select: { name: true } } },
-        });
+        const product = await getProductById(id);
         if (!product) return { title: "Product Not Found — Chinni Treasure" };
         return {
             title: `${product.name} — Chinni Treasure`,
@@ -48,13 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailsPage({ params }: Props) {
     const { id } = await params;
 
-    const product = await prisma.product.findUnique({
-        where: { id },
-        include: {
-            category: { select: { name: true } },
-            images: { orderBy: { displayOrder: "asc" } },
-        },
-    });
+    const product = await getProductById(id);
 
     if (!product || !product.isActive || product.deletedAt) {
         notFound();

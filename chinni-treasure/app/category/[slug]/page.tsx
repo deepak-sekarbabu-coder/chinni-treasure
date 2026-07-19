@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -13,25 +14,32 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.
 
 export const revalidate = 60;
 
-export async function generateStaticParams() {
-  try {
-    const categories = await prisma.category.findMany({
-      where: { isActive: true },
-      select: { slug: true },
-    });
-    return categories.map((c) => ({ slug: c.slug }));
-  } catch {
-    return [];
-  }
+// Return empty array so no category pages are pre-rendered at build time.
+// Pages are rendered on first visit (ISR) and cached with revalidate=60.
+// dynamicParams defaults to true, so any slug still works on-demand.
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return [];
 }
+
+/**
+ * Cached category lookup shared by generateMetadata and the page component
+ * to avoid duplicate DB queries per request (each query holds a pool slot
+ * and the Nhost free-tier limit is ~5 connections total).
+ */
+const getCategoryBySlug = unstable_cache(
+  async (slug: string) =>
+    prisma.category.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true, description: true, isActive: true },
+    }),
+  ["category-by-slug"],
+  { revalidate: 60, tags: ["categories"] },
+);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      select: { name: true, description: true },
-    });
+    const category = await getCategoryBySlug(slug);
     if (!category) return { title: "Category Not Found — Chinni Treasure" };
     const title = `${category.name} — Chinni Treasure`;
     const description =
@@ -83,10 +91,7 @@ export default async function CategoryPage({ params }: Props) {
   let totalPages = 1;
 
   try {
-    const found = await prisma.category.findUnique({
-      where: { slug },
-      select: { id: true, name: true, slug: true, description: true, isActive: true },
-    });
+    const found = await getCategoryBySlug(slug);
 
     if (!found || !found.isActive) {
       notFound();

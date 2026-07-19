@@ -8,9 +8,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Maximum number of times to retry a query that fails with query_wait_timeout. */
-const MAX_QUERY_RETRIES = 1;
-/** Wait 250 ms before retrying (short enough for most transient backlogs). */
-const RETRY_DELAY_MS = 250;
+const MAX_QUERY_RETRIES = 2;
+/** Wait before retrying — start short, doubles each attempt. */
+const RETRY_DELAY_MS = 300;
 
 /**
  * Prisma / `@prisma/adapter-pg` throws DriverAdapterError with
@@ -39,30 +39,34 @@ function wrapClient(client: PrismaClient): PrismaClient {
     get(target, prop: string | symbol) {
       const original = (target as unknown as Record<string | symbol, unknown>)[prop];
 
-      // Only wrap async (thenable) methods — leave getters, symbols,
-      // plain values untouched.
-      if (
-        typeof original === "function" &&
-        original.constructor.name === "AsyncFunction"
-      ) {
-        return async (...args: unknown[]) => {
-          let lastError: unknown;
-          for (let attempt = 0; attempt <= MAX_QUERY_RETRIES; attempt++) {
+      // Wrap every callable method so retry logic covers Prisma delegate
+      // methods (findUnique, findMany, etc.) which are plain functions
+      // returning thenables, not AsyncFunction instances.
+      if (typeof original === "function") {
+        return (...args: unknown[]) => {
+          const invoke = (attempt: number): unknown => {
             try {
-              return await original.apply(target, args);
-            } catch (err) {
-              lastError = err;
-              if (isQueryWaitTimeout(err) && attempt < MAX_QUERY_RETRIES) {
-                console.warn(
-                  `[prisma-retry] query_wait_timeout on attempt ${attempt + 1}, retrying…`,
-                );
-                await sleep(RETRY_DELAY_MS);
-                continue;
+              const result = original.apply(target, args);
+              // If the call returns a thenable, attach catch-based retry
+              // so we intercept query_wait_timeout without altering the
+              // return type.
+              if (result && typeof (result as { then?: unknown }).then === "function") {
+                return (result as Promise<unknown>).catch((err: unknown) => {
+                  if (isQueryWaitTimeout(err) && attempt < MAX_QUERY_RETRIES) {
+                    console.warn(
+                      `[prisma-retry] query_wait_timeout on attempt ${attempt + 1}/${MAX_QUERY_RETRIES + 1}, retrying in ${RETRY_DELAY_MS * (attempt + 1)} ms…`,
+                    );
+                    return sleep(RETRY_DELAY_MS * (attempt + 1)).then(() => invoke(attempt + 1));
+                  }
+                  throw err;
+                });
               }
+              return result;
+            } catch (err) {
               throw err;
             }
-          }
-          throw lastError;
+          };
+          return invoke(0);
         };
       }
 
@@ -74,19 +78,20 @@ function wrapClient(client: PrismaClient): PrismaClient {
 function createPool() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
-    // No idle connections — in serverless every connection counts.
-    // With min:0, allowExitOnIdle can actually drain the pool and
-    // let the runtime exit cleanly between invocations.
+    // In serverless we want the pool to fully drain so the process can
+    // exit cleanly between invocations.  min:0 + allowExitOnIdle lets
+    // the runtime release all connections when idle.
     min: 1,
     // Use all available Nhost free-tier connections (limit is ~5
     // across all services).  Running at 3 was causing pool exhaustion
     // and query_wait_timeout errors under moderate concurrency.
-    max: 5,
-    // Give more time for the initial TCP + TLS handshake to Nhost.
-    connectionTimeoutMillis: 30_000,
+    max: 3,
+    // Give enough time for the initial TCP + TLS handshake but fail
+    // fast if the database is genuinely unreachable.
+    connectionTimeoutMillis: 10_000,
     // Release idle connections promptly — serverless functions are
     // short-lived so there's no benefit to holding connections open.
-    idleTimeoutMillis: 30_000,
+    idleTimeoutMillis: 10_000,
     // Let the pool fully release when idle so the process can exit
     // cleanly in serverless environments.
     allowExitOnIdle: true,

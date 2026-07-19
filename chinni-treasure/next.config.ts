@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
   generateEtags: true,
+  // Give slow database queries more time during static page generation.
+  staticPageGenerationTimeout: 120,
   experimental: {
     optimizePackageImports: ["jspdf", "exceljs"],
   },
