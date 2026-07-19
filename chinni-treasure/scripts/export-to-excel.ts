@@ -1,6 +1,7 @@
 // fallow-ignore-file unused-file
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import * as Excel from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,7 +10,12 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 30_000,
+  idleTimeoutMillis: 30_000,
+});
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const headerStyle = {
@@ -205,4 +211,5 @@ exportToExcel()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

@@ -67,6 +67,8 @@ model Product {
   @@index([badge])
   // Composite index for "latest product per active category" and category listing queries
   @@index([categoryId, isActive, createdAt])
+  @@index([isActive, deletedAt, stockQuantity])
+  @@index([isActive, deletedAt, name])
   @@map("products")
 }
 
