@@ -112,7 +112,7 @@ export default async function CategoryPage({ params }: Props) {
           category: { select: { name: true } },
           images: { orderBy: { displayOrder: "asc" } },
         },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        orderBy: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
         take: CATEGORY_PAGE_SIZE,
         skip: 0,
       }),

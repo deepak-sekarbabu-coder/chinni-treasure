@@ -7,9 +7,9 @@ const MAX_LIMIT = 60;
 type SortKey = "newest" | "price-asc" | "price-desc";
 
 const SORT_MAP: Record<SortKey, Prisma.ProductOrderByWithRelationInput[]> = {
-  newest: [{ createdAt: "desc" }, { id: "desc" }],
-  "price-asc": [{ price: "asc" }, { id: "asc" }],
-  "price-desc": [{ price: "desc" }, { id: "desc" }],
+  newest: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+  "price-asc": [{ stockQuantity: "desc" }, { price: "asc" }, { id: "asc" }],
+  "price-desc": [{ stockQuantity: "desc" }, { price: "desc" }, { id: "desc" }],
 };
 
 // GET /api/category/[slug]/products
