@@ -93,7 +93,7 @@ const catColumns: ColumnDef<{ id: number; name: string; slug: string; descriptio
 type ProductRow = {
   id: string; sku: string | null; name: string; categoryId: number | null;
   category: { name: string } | null; description: string | null; price: unknown;
-  stockQuantity: number; imageUrl: string | null; badge: string | null;
+  compareAtPrice: unknown; stockQuantity: number; imageUrl: string | null; badge: string | null;
   isActive: boolean; createdAt: Date; updatedAt: Date;
   images: { id: string; url: string; isPrimary: boolean; displayOrder: number }[];
 };
@@ -106,6 +106,7 @@ const prodColumns: ColumnDef<ProductRow>[] = [
   { header: "Category Name", key: "category", width: 25, format: (v) => ((v as { name?: string } | null)?.name ?? "") },
   { header: "Description", key: "description", width: 50 },
   { header: "Price", key: "price", width: 12, format: formatString },
+  { header: "Compare At Price", key: "compareAtPrice", width: 18, format: (v) => (v ? String(v) : "") },
   { header: "Stock Quantity", key: "stockQuantity", width: 18 },
   { header: "Image URL", key: "imageUrl", width: 50 },
   { header: "Badge", key: "badge", width: 15 },

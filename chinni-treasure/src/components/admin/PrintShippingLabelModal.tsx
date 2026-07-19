@@ -134,85 +134,96 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setProducts([{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
   };
 
-  // Dynamically insert and clean up page-size print styles while the modal is open
-  useEffect(() => {
-    if (isOpen) {
-      const styleEl = document.createElement("style");
-      styleEl.id = "shipping-label-print-style";
-      styleEl.innerHTML = `
-        @page {
-          size: 4in 6in;
-          margin: 0;
-        }
-        @media print {
-          body {
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
+  // Collect all shipping label CSS rules from the page stylesheets
+  const getLabelCSS = (): string => {
+    const labelSelectors = [
+      ".label-container", ".label-header", ".label-body", ".main-section",
+      ".pack-date", ".title", ".logo-small", ".courier-row", ".courier-cell",
+      ".payment-cell", ".mode-label", ".mode-value", ".id-row", ".id-cell",
+      ".ship-to-row", ".section-label", ".sold-by-row", ".sold-by-cell",
+      ".through-cell", ".logo-through", ".products-header", ".products-body",
+      ".product-row", ".col-sno", ".col-products", ".col-detail", ".col-price",
+      ".col-qty", ".col-qty-val", ".price-original", ".price-discounted",
+      ".handle-care", ".barcode-section", ".awb-text-block", ".awb-heading",
+      ".awb-label",
+    ];
+    const rules: string[] = [];
+    try {
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            if (rule instanceof CSSStyleRule) {
+              const sel = rule.selectorText || "";
+              if (labelSelectors.some((s) => sel.includes(s))) {
+                rules.push(rule.cssText);
+              }
+            }
           }
-          /* Hide the parent dashboard and all other modals */
-          body > *:not(.print-label-overlay-active) {
-            display: none !important;
-          }
-          /* Ensure the overlay takes up the whole printing page */
-          .print-label-overlay-active {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 4in !important;
-            height: 6in !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-            display: block !important;
-            z-index: 999999 !important;
-            overflow: hidden !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          .print-label-modal-box {
-            width: 4in !important;
-            height: 6in !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-            display: block !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          /* Hide editor controls panel entirely */
-          .print-label-editor-panel {
-            display: none !important;
-          }
-          /* Style the preview container to fill exactly 4in x 6in */
-          .print-label-preview-panel {
-            width: 4in !important;
-            height: 6in !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          .label-container {
-            width: 4in !important;
-            height: 6in !important;
-            box-shadow: none !important;
-            margin: 0 !important;
-            border: 1px solid #000 !important;
-            page-break-inside: avoid !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-          }
-        }
-      `;
-      document.head.appendChild(styleEl);
-      return () => {
-        const el = document.getElementById("shipping-label-print-style");
-        if (el) {
-          document.head.removeChild(el);
-        }
-      };
+        } catch { /* cross-origin sheet, skip */ }
+      }
+    } catch { /* ignore */ }
+    return rules.join("\n");
+  };
+
+  // Print the label in a new popup window containing only the label content
+  const handlePrint = () => {
+    const labelEl = document.getElementById("labelContainer");
+    if (!labelEl) return;
+
+    const labelHTML = labelEl.innerHTML;
+    const labelCSS = getLabelCSS();
+
+    const printWindow = window.open("", "_blank", "width=400,height=600");
+    if (!printWindow) {
+      alert("Please allow popups to print the label.");
+      return;
     }
-  }, [isOpen]);
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Shipping Label</title>
+<style>
+  @page {
+    size: 4in 6in;
+    margin: 0;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .label-container {
+    width: 4in;
+    height: 6in;
+    background: white;
+    color: black;
+    padding: 0;
+    border: 2px solid #000;
+    position: relative;
+    overflow: hidden;
+    font-size: 11px;
+    font-family: Arial, sans-serif;
+    line-height: 1.2;
+  }
+  ${labelCSS}
+</style>
+</head>
+<body>
+${labelHTML}
+</body>
+</html>`);
+    printWindow.document.close();
+    // Wait for images / barcode SVG to render before printing
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 500);
+  };
 
   // Generate Barcode on AWB change
   useEffect(() => {
@@ -252,7 +263,7 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setProducts(updated.length > 0 ? updated : [{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
   };
 
-  return (
+  const labelContent = (
     <div className="modal-overlay active print-label-overlay-active" onClick={(e) => { e.stopPropagation(); onClose(); }}>
       <div
         className="print-label-modal-box"
@@ -513,7 +524,7 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
           <div
             className="form-section actions-section"
           >
-            <button className="btn" onClick={() => window.print()}>
+            <button className="btn" onClick={handlePrint}>
               🖨 Print Label
             </button>
             <button className="btn btn-secondary" onClick={resetToOrderData}>
@@ -723,4 +734,6 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
       </div>
     </div>
   );
+
+  return labelContent;
 }
