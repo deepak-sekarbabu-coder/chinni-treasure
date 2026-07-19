@@ -10,18 +10,24 @@ const globalForPrisma = globalThis as unknown as {
 function createPool() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
-    // Keep pool size within Nhost's free-tier connection pooler limits
-    // (typically 5 concurrent connections).
-    min: 2,
-    max: 5,
+    // No idle connections — in serverless every connection counts.
+    // With min:0, allowExitOnIdle can actually drain the pool and
+    // let the runtime exit cleanly between invocations.
+    min: 0,
+    // Cap at 3 concurrent connections per serverless invocation.
+    // Nhost free-tier allows ~5 total; leaving headroom for other
+    // services (Hasura, auth, storage) avoids pool exhaustion.
+    max: 3,
+    // Fail fast if the server can't hand us a connection within 10 s.
     connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: 30_000,
-    // Rotate connections periodically to guard against memory/resource
-    // leaks in long-running server processes.
-    maxUses: 7_500,
+    // Release idle connections promptly — serverless functions are
+    // short-lived so there's no benefit to holding connections open.
+    idleTimeoutMillis: 10_000,
+    // Let the pool fully release when idle so the process can exit
+    // cleanly in serverless environments.
+    allowExitOnIdle: true,
   });
 
-  // Surface pool-level errors without crashing the process.
   pool.on("error", (err) => {
     console.error("[prisma-pool] Unexpected pool error:", err);
   });
