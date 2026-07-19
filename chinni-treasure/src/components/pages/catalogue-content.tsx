@@ -162,6 +162,11 @@ export default function CatalogueContent({
           <LoadingSpinner />
         ) : (
           <>
+            {loading && (
+              <div className="catalogue-loading-bar-wrapper">
+                <div className="catalogue-loading-bar" />
+              </div>
+            )}
             <div className="products-grid" role="list" aria-label="Product list">
               {products.length === 0 ? (
                 <p style={{ textAlign: "center", color: "var(--text-muted)", gridColumn: "1 / -1", padding: "60px 0" }}>

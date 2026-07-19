@@ -6,8 +6,6 @@ import Footer from "@/src/components/layout/Footer";
 import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartProvider";
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
-import { getCartFromCookies } from "@/src/lib/cart-cookie";
-import { prisma } from "@/src/lib/prisma";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -109,34 +107,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let initialItems: CartItemDisplay[] = [];
-  try {
-    const cookieItems = await getCartFromCookies();
-    if (cookieItems.length > 0) {
-      const productIds = cookieItems.map((i) => i.productId);
-      const products = await prisma.product.findMany({
-        where: { id: { in: productIds }, isActive: true, deletedAt: null },
-        select: { id: true, name: true, price: true, imageUrl: true, stockQuantity: true },
-      });
-      const productMap = new Map(products.map((p) => [p.id, p]));
-      initialItems = cookieItems
-        .map((ci) => {
-          const p = productMap.get(ci.productId);
-          if (!p) return null;
-          return {
-            productId: p.id,
-            name: p.name,
-            price: Number(p.price),
-            quantity: ci.quantity,
-            image: p.imageUrl,
-            stock: p.stockQuantity,
-          };
-        })
-        .filter((x): x is CartItemDisplay => x !== null);
-    }
-  } catch {
-    // Cart SSR hydration failed silently — cart will hydrate from localStorage on client
-  }
+  // Cart is hydrated on the client by CartProvider (localStorage / cookie) in a
+  // useEffect. Reading cookies() here would force every page (including static
+  // ISR pages like /category/[slug]) to become dynamic at request time.
+  const initialItems: CartItemDisplay[] = [];
 
   const organizationSchema = {
     "@context": "https://schema.org",

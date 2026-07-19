@@ -456,3 +456,40 @@
     line-height: 1.4;
     max-width: 200px;
 }
+
+/* ── Catalogue Loading Bar ── */
+.catalogue-loading-bar-wrapper {
+    position: relative;
+    min-height: 40px;
+}
+
+.catalogue-loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.catalogue-loading-bar::after {
+    content: "";
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--gold);
+    animation: catalogueBarSlide 1s ease-in-out infinite;
+}
+
+@keyframes catalogueBarSlide {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(350%);
+    }
+}
