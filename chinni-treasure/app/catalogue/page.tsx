@@ -62,35 +62,34 @@ export default async function CataloguePage(props: {
 
   let categories: CategoryOption[] = [];
   try {
-    const found = await prisma.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, slug: true },
-      orderBy: { displayOrder: "asc" },
-    });
-    categories = found.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
-  } catch (err) {
-    console.error("Failed to fetch categories:", err);
-  }
-
-  try {
-    const [data, count] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: { select: { name: true } },
-          images: { orderBy: { displayOrder: "asc" } },
-        },
-        orderBy: [
-          { stockQuantity: "desc" },
-          { createdAt: "desc" },
-          { id: "desc" },
-        ],
-        take: CATALOGUE_PAGE_SIZE,
-        skip: 0,
-      }),
-      prisma.product.count({ where }),
+    const [categoriesData, [productsData, count]] = await Promise.all([
+      prisma.category
+        .findMany({
+          where: { isActive: true },
+          select: { id: true, name: true, slug: true },
+          orderBy: { displayOrder: "asc" },
+        })
+        .then((found) => found.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))),
+      Promise.all([
+        prisma.product.findMany({
+          where,
+          include: {
+            category: { select: { name: true } },
+            images: { orderBy: { displayOrder: "asc" } },
+          },
+          orderBy: [
+            { stockQuantity: "desc" },
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
+          take: CATALOGUE_PAGE_SIZE,
+          skip: 0,
+        }),
+        prisma.product.count({ where }),
+      ]),
     ]);
-    products = data.map((p) => ({
+    categories = categoriesData;
+    products = productsData.map((p) => ({
       id: p.id,
       name: p.name,
       price: Number(p.price),
@@ -110,7 +109,7 @@ export default async function CataloguePage(props: {
     total = count;
     totalPages = Math.max(1, Math.ceil(count / CATALOGUE_PAGE_SIZE));
   } catch (err) {
-    console.error("Failed to fetch products:", err);
+    console.error("Failed to fetch catalogue data:", err);
   }
 
   const breadcrumbSchema = {
