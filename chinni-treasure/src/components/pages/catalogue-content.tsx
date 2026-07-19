@@ -159,7 +159,7 @@ export default function CatalogueContent({
           </select>
         </div>
 
-        {loading ? (
+        {loading && products.length === 0 ? (
           <LoadingSpinner />
         ) : (
           <>
