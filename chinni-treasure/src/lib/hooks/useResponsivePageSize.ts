@@ -9,10 +9,12 @@ const MOBILE_BREAKPOINT = "(max-width: 768px)";
 /**
  * Returns a page size that adapts to the viewport width.
  * Returns `3` on mobile (≤768px) and `6` on desktop.
- * Uses `window.matchMedia` for SSR-safe, breakpoint-consistent detection.
+ * Defaults to MOBILE_PAGE_SIZE during SSR so the initial server render
+ * matches mobile viewports — avoiding a costly CLS shift when 3 cards
+ * are removed during client hydration.
  */
 export function useResponsivePageSize(): number {
-    const [pageSize, setPageSize] = useState(DESKTOP_PAGE_SIZE);
+    const [pageSize, setPageSize] = useState(MOBILE_PAGE_SIZE);
 
     useEffect(() => {
         const mql = window.matchMedia(MOBILE_BREAKPOINT);
