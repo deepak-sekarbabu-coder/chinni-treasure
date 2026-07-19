@@ -134,12 +134,44 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setProducts([{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
   };
 
+  // Collect all shipping label CSS rules from the page stylesheets
+  const getLabelCSS = (): string => {
+    const labelSelectors = [
+      ".label-container", ".label-header", ".label-body", ".main-section",
+      ".pack-date", ".title", ".logo-small", ".courier-row", ".courier-cell",
+      ".payment-cell", ".mode-label", ".mode-value", ".id-row", ".id-cell",
+      ".ship-to-row", ".section-label", ".sold-by-row", ".sold-by-cell",
+      ".through-cell", ".logo-through", ".products-header", ".products-body",
+      ".product-row", ".col-sno", ".col-products", ".col-detail", ".col-price",
+      ".col-qty", ".col-qty-val", ".price-original", ".price-discounted",
+      ".handle-care", ".barcode-section", ".awb-text-block", ".awb-heading",
+      ".awb-label",
+    ];
+    const rules: string[] = [];
+    try {
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            if (rule instanceof CSSStyleRule) {
+              const sel = rule.selectorText || "";
+              if (labelSelectors.some((s) => sel.includes(s))) {
+                rules.push(rule.cssText);
+              }
+            }
+          }
+        } catch { /* cross-origin sheet, skip */ }
+      }
+    } catch { /* ignore */ }
+    return rules.join("\n");
+  };
+
   // Print the label in a new popup window containing only the label content
   const handlePrint = () => {
     const labelEl = document.getElementById("labelContainer");
     if (!labelEl) return;
 
     const labelHTML = labelEl.innerHTML;
+    const labelCSS = getLabelCSS();
 
     const printWindow = window.open("", "_blank", "width=400,height=600");
     if (!printWindow) {
@@ -147,285 +179,10 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
       return;
     }
 
-    // Full CSS embedded directly so the print window always renders correctly
-    const labelCSS = `
-/* ── Label Layout Styles ── */
-.label-container {
-  width: 4in;
-  height: 6in;
-  background: white;
-  color: black;
-  margin: 0 auto;
-  padding: 0;
-  border: 2px solid #000;
-  position: relative;
-  overflow: hidden;
-  font-size: 11px;
-  font-family: 'Arial', sans-serif;
-  line-height: 1.2;
-}
-.label-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 8px;
-  border-bottom: 2px solid #000;
-  background: #fff;
-  color: black;
-}
-.label-header .pack-date { font-size: 10px; color: black; }
-.label-header .title {
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  color: black;
-}
-.logo-small { max-height: 25px; max-width: 80px; vertical-align: middle; margin-right: 5px; }
-.label-body {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - 30px);
-  background: white;
-  color: black;
-}
-.main-section { flex-grow: 1; display: flex; flex-direction: column; }
-.courier-row {
-  display: flex;
-  border-bottom: 1px solid #000;
-  background: white;
-  color: black;
-}
-.courier-cell {
-  flex-grow: 1;
-  padding: 3px 6px;
-  font-weight: bold;
-  font-size: 11px;
-  border-right: 1px solid #000;
-  color: black;
-  display: flex;
-  align-items: center;
-}
-.payment-cell {
-  width: 130px;
-  padding: 3px 6px;
-  text-align: center;
-  font-weight: bold;
-  color: black;
-}
-.payment-cell .mode-label { font-size: 9px; text-transform: uppercase; color: black; }
-.payment-cell .mode-value { font-size: 10px; color: black; }
-.id-row {
-  display: flex;
-  border-bottom: 1px solid #000;
-  background: white;
-  color: black;
-}
-.id-cell {
-  flex: 1;
-  padding: 2px 6px;
-  border-right: 1px solid #000;
-  font-size: 10px;
-  color: black;
-}
-.id-cell:last-child { border-right: none; }
-.id-cell strong { font-size: 10px; color: black; }
-.ship-to-row {
-  padding: 4px 6px;
-  border-bottom: 1px solid #000;
-  background: white;
-  color: black;
-  text-align: left;
-}
-.ship-to-row .section-label {
-  font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 2px;
-  color: black;
-}
-.ship-to-row .content { font-size: 12px; line-height: 1.4; color: black; }
-.ship-to-row .content .name { font-weight: bold; font-size: 14px; color: black; }
-.ship-to-row .content .pincode { font-weight: bold; font-size: 13px; color: black; }
-.sold-by-row {
-  display: flex;
-  border-bottom: 1px solid #000;
-  background: white;
-  color: black;
-}
-.sold-by-cell { flex: 2; padding: 4px 8px; text-align: left; color: black; }
-.sold-by-cell .section-label {
-  font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 2px;
-  color: black;
-}
-.sold-by-cell .content { font-size: 11px; line-height: 1.4; color: black; }
-.sold-by-cell .content .company { font-weight: bold; font-size: 12px; color: black; }
-.through-cell {
-  flex: 1;
-  padding: 4px 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: white;
-  border-left: 1px solid #000;
-}
-.logo-through {
-  max-height: 100%;
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  display: block;
-  object-fit: contain;
-}
-.products-header {
-  display: flex;
-  border-bottom: 1px solid #000;
-  background: #fff;
-  color: black;
-}
-.products-header .col-products {
-  flex-grow: 1;
-  padding: 3px 6px;
-  font-weight: bold;
-  font-size: 10px;
-  border-right: 1px solid #000;
-  color: black;
-}
-.products-header .col-qty {
-  width: 40px;
-  padding: 3px 6px;
-  font-weight: bold;
-  font-size: 10px;
-  text-align: center;
-  color: black;
-}
-.products-header .col-price {
-  width: 100px;
-  padding: 3px 6px;
-  font-weight: bold;
-  font-size: 10px;
-  text-align: center;
-  border-right: 1px solid #000;
-  color: black;
-}
-.products-body { flex-grow: 1; background: white; color: black; }
-.products-body .product-row {
-  display: flex;
-  border-bottom: 1px solid #000;
-  background: white;
-  color: black;
-}
-.products-body .col-sno {
-  width: 30px;
-  padding: 3px 6px;
-  font-weight: bold;
-  border-right: 1px solid #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: black;
-}
-.products-body .col-detail {
-  flex-grow: 1;
-  padding: 3px 6px;
-  font-size: 10px;
-  border-right: 1px solid #000;
-  color: black;
-  text-align: left;
-  display: flex;
-  align-items: center;
-}
-.products-body .col-qty-val {
-  width: 40px;
-  padding: 3px 6px;
-  font-size: 10px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: black;
-}
-.products-body .col-price {
-  width: 100px;
-  padding: 3px 6px;
-  font-size: 9px;
-  border-right: 1px solid #000;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.3;
-  color: black;
-}
-.products-body .col-price .price-original {
-  text-decoration: line-through;
-  color: #888;
-  font-size: 8px;
-}
-.products-body .col-price .price-discounted {
-  font-weight: bold;
-  color: #000;
-  font-size: 10px;
-}
-.handle-care {
-  text-align: center;
-  font-weight: bold;
-  font-size: 11px;
-  padding: 4px 0;
-  border-top: 2px solid #000;
-  background: #fff;
-  letter-spacing: 1px;
-  color: #000;
-}
-.barcode-section {
-  border-top: 2px solid #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  position: relative;
-  overflow: hidden;
-  min-height: 50px;
-  background: white;
-  color: black;
-}
-.awb-text-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
-.awb-heading {
-  font-size: 9px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #333;
-}
-.awb-label {
-  font-size: 11px;
-  font-weight: bold;
-  text-align: center;
-  word-break: break-all;
-  line-height: 1.1;
-  padding: 1px 0 0 0;
-  margin: 0;
-  white-space: nowrap;
-  color: black;
-}
-`;
-
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Shipping Label</title>
 <style>
   @page {
@@ -439,6 +196,19 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     background: white;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+  .label-container {
+    width: 4in;
+    height: 6in;
+    background: white;
+    color: black;
+    padding: 0;
+    border: 2px solid #000;
+    position: relative;
+    overflow: hidden;
+    font-size: 11px;
+    font-family: Arial, sans-serif;
+    line-height: 1.2;
   }
   ${labelCSS}
 </style>

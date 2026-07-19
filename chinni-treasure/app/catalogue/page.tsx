@@ -62,33 +62,31 @@ export default async function CataloguePage(props: {
 
   let categories: CategoryOption[] = [];
   try {
-    const [categoriesData, [productsData, count]] = await Promise.all([
-      prisma.category
-        .findMany({
-          where: { isActive: true },
-          select: { id: true, name: true, slug: true },
-          orderBy: { displayOrder: "asc" },
-        })
-        .then((found) => found.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))),
-      Promise.all([
-        prisma.product.findMany({
-          where,
-          include: {
-            category: { select: { name: true } },
-            images: { orderBy: { displayOrder: "asc" } },
-          },
-          orderBy: [
-            { stockQuantity: "desc" },
-            { createdAt: "desc" },
-            { id: "desc" },
-          ],
-          take: CATALOGUE_PAGE_SIZE,
-          skip: 0,
-        }),
-        prisma.product.count({ where }),
-      ]),
-    ]);
+    const categoriesData = await prisma.category
+      .findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, slug: true },
+        orderBy: { displayOrder: "asc" },
+      })
+      .then((found) => found.map((c) => ({ id: c.id, name: c.name, slug: c.slug })));
     categories = categoriesData;
+
+    const productsData = await prisma.product.findMany({
+      where,
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
+      orderBy: [
+        { stockQuantity: "desc" },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
+      take: CATALOGUE_PAGE_SIZE,
+      skip: 0,
+    });
+    const count = await prisma.product.count({ where });
+
     products = productsData.map((p) => ({
       id: p.id,
       name: p.name,

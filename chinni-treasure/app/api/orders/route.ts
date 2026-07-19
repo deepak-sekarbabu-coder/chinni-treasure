@@ -51,16 +51,16 @@ export async function GET(request: Request) {
   try {
     const where = status ? { status: status as OrderStatus } : {};
 
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        include: { items: { include: { product: true } } },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.order.count({ where }),
-    ]);
+    // Sequential queries to avoid saturating Nhost's pooler with
+    // concurrent connections.
+    const orders = await prisma.order.findMany({
+      where,
+      include: { items: { include: { product: true } } },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    });
+    const total = await prisma.order.count({ where });
 
     return NextResponse.json({
       orders,

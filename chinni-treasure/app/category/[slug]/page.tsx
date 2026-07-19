@@ -110,19 +110,17 @@ export default async function CategoryPage({ params }: Props) {
       deletedAt: null,
     };
 
-    const [data, count] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: { select: { name: true } },
-          images: { orderBy: { displayOrder: "asc" } },
-        },
-        orderBy: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
-        take: CATEGORY_PAGE_SIZE,
-        skip: 0,
-      }),
-      prisma.product.count({ where }),
-    ]);
+    const data = await prisma.product.findMany({
+      where,
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
+      orderBy: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      take: CATEGORY_PAGE_SIZE,
+      skip: 0,
+    });
+    const count = await prisma.product.count({ where });
 
     products = data.map((p) => ({
       id: p.id,

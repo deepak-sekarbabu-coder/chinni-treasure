@@ -89,19 +89,19 @@ export async function GET(request: Request) {
       });
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: { select: { name: true } },
-          images: { orderBy: { displayOrder: "asc" } },
-        },
-        orderBy: [{ stockQuantity: "desc" }, ...sort, { id: "desc" }],
-        skip,
-        take: limit,
-      }),
-      prisma.product.count({ where }),
-    ]);
+    // Sequential queries to avoid saturating Nhost's pooler with
+    // concurrent connections.
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        category: { select: { name: true } },
+        images: { orderBy: { displayOrder: "asc" } },
+      },
+      orderBy: [{ stockQuantity: "desc" }, ...sort, { id: "desc" }],
+      skip,
+      take: limit,
+    });
+    const total = await prisma.product.count({ where });
 
     const payload = {
       products,
