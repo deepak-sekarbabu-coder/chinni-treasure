@@ -25,9 +25,22 @@ function parseDate(val: unknown): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+function extractUrl(val: unknown): string | null {
+  if (!val) return null;
+  if (typeof val === "string") return val.trim() || null;
+  if (typeof val === "object" && val !== null) {
+    const obj = val as Record<string, unknown>;
+    const url = (obj.hyperlink || obj.text || "").toString().trim();
+    return url || null;
+  }
+  return null;
+}
+
 async function main() {
+  const filePath = process.argv[2] || "exports/chinni-treasure-export-2026-07-18T18-45-09.xlsx";
+  console.log(`Reading from: ${filePath}`);
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile("exports/chinni-treasure-export-2026-07-18T18-38-36.xlsx");
+  await wb.xlsx.readFile(filePath);
 
   // --- Categories ---
   const catSheet = wb.getWorksheet("Categories")!;
@@ -91,7 +104,7 @@ async function main() {
       price: parseNum(row.getCell(prodCol.price).value),
       compareAtPrice: comparePrice ? parseNum(comparePrice) : null,
       stockQuantity: parseNum(row.getCell(prodCol.stockQuantity).value),
-      imageUrl: row.getCell(prodCol.imageUrl).value ? String(row.getCell(prodCol.imageUrl).value) : null,
+      imageUrl: extractUrl(row.getCell(prodCol.imageUrl).value),
       description: row.getCell(prodCol.description).value ? String(row.getCell(prodCol.description).value) : null,
       badge: row.getCell(prodCol.badge).value ? String(row.getCell(prodCol.badge).value) : null,
     });
@@ -122,12 +135,15 @@ async function main() {
     const imgRows: { productId: string; url: string; isPrimary: boolean; displayOrder: number }[] = [];
     imgSheet.eachRow((row, i) => {
       if (i === 1) return;
-      imgRows.push({
-        productId: String(row.getCell(2).value || ""),
-        url: String(row.getCell(3).value || ""),
-        isPrimary: parseBool(row.getCell(4).value),
-        displayOrder: parseNum(row.getCell(5).value),
-      });
+      const url = extractUrl(row.getCell(3).value);
+      if (url) {
+        imgRows.push({
+          productId: String(row.getCell(2).value || ""),
+          url,
+          isPrimary: parseBool(row.getCell(4).value),
+          displayOrder: parseNum(row.getCell(5).value),
+        });
+      }
     });
     imgRows.sort((a, b) => a.displayOrder - b.displayOrder);
     for (const img of imgRows) {

@@ -126,13 +126,13 @@ npx prisma migrate dev --name init
 Populate the database with sample products and an admin user:
 
 ```bash
-npm run prisma:seed
+npm run db:seed
 ```
 
 The seed script creates:
 
-- **4 categories** (Accessories, Apparel, Watches, Home)
-- **6 artisan products** (Leather Wallet, Silk Scarf, Handcrafted Timepiece, Crystal Perfume Bottle, Italian Leather Belt, Cashmere Throw Blanket) with pricing and stock
+- **4 categories** (Accessories, Bangles, Bracelets, Jewellery Organizer)
+- **20 products** with pricing, stock, images, and descriptions
 - **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
 
 ### 7. Start the Development Server
@@ -153,18 +153,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run build` | Build the application for production |
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint across the project |
+| `npm run lint:fix` | Run ESLint with auto-fix |
 | `npm run typecheck` | Run TypeScript type checking (`tsc --noEmit`) |
 | `npm test` | Run tests in watch mode (Vitest) |
 | `npm run test:run` | Run tests once (Vitest) |
 | `npm run test:coverage` | Run tests with coverage report |
-| `npm run prisma:generate` | Generate the Prisma client |
-| `npm run prisma:push` | Push the Prisma schema to the database |
-| `npm run prisma:seed` | Seed the database with sample data |
-| `npm run setup` | Full setup: generate client + push schema + seed data |
-| `npx prisma studio` | Open Prisma Studio (GUI for database management) |
-| `npm run podman:build` | Build the container image via `podman compose build` |
-| `npm run podman:up` | Build (if needed) and start all services in detached mode |
-| `npm run podman:down` | Stop and remove the containers |
+| `npm run db:generate` | Generate the Prisma client |
+| `npm run db:push` | Push the Prisma schema to the database |
+| `npm run db:seed` | Seed the database with sample data |
+| `npm run db:studio` | Open Prisma Studio (GUI for database management) |
+| `npm run db:setup` | Full setup: generate client + push schema + seed data |
+| `npm run data:export` | Export database data to Excel |
+| `npm run data:import` | Generate seed data from Excel export |
+| `npm run clean` | Remove `.next`, `.turbo`, and `node_modules` |
+| `npm run clean:cache` | Remove `.next` and `.turbo` only |
+| `npm run clean:all` | Clean and reinstall dependencies |
+| `npm run compose:build` | Build container images |
+| `npm run compose:up` | Start container services in detached mode |
+| `npm run compose:down` | Stop and remove containers |
 
 ---
 

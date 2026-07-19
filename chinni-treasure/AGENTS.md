@@ -180,19 +180,23 @@ Use the following npm scripts during development and maintenance:
 | `npm start` | Start the production server |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Run ESLint with auto-fix |
-| `npm run format` | Run the formatter/eslint fix pass |
 | `npm run typecheck` | Run TypeScript validation (`tsc --noEmit`) |
 | `npm test` | Run Vitest in watch mode |
 | `npm run test:run` | Run Vitest once |
 | `npm run test:coverage` | Run Vitest with coverage |
-| `npm run setup` | Generate Prisma client, push schema, and seed the database |
+| `npm run db:generate` | Generate the Prisma client |
+| `npm run db:push` | Push the Prisma schema to PostgreSQL |
+| `npm run db:seed` | Seed the database |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:setup` | Generate Prisma client, push schema, and seed the database |
+| `npm run data:export` | Export data to Excel |
+| `npm run data:import` | Generate seed data from Excel |
 | `npm run clean` | Remove `.next`, `.turbo`, and `node_modules` |
 | `npm run clean:cache` | Remove `.next` and `.turbo` only |
-| `npm run fresh` | Clean and reinstall dependencies |
-| `npm run prisma:generate` | Generate the Prisma client |
-| `npm run prisma:push` | Push the Prisma schema to PostgreSQL |
-| `npm run prisma:seed` | Seed the database |
-| `npm run prisma:studio` | Open Prisma Studio |
+| `npm run clean:all` | Clean and reinstall dependencies |
+| `npm run compose:build` | Build container images |
+| `npm run compose:up` | Start container services |
+| `npm run compose:down` | Stop container services |
 
 ### Required Environment Variables
 

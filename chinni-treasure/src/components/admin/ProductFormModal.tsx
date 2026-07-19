@@ -257,8 +257,8 @@ export default function ProductFormModal({
                       {productForm.images.map((img, idx) => (
                         <div key={idx} className={`image-preview-card ${img.isPrimary ? "primary" : ""} ${editingIndex === idx ? "editing" : ""}`}>
                           <div className="image-preview-thumb">
-                            {failedImages.has(idx) ? (
-                              <div className="product-img-placeholder" style={{ width: 80, height: 80 }} title="Image failed to load" />
+                            {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
+                              <div className="product-img-placeholder" style={{ width: 80, height: 80 }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
                             ) : (
                               <Image src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" onError={() => handleImageError(idx)} />
                             )}

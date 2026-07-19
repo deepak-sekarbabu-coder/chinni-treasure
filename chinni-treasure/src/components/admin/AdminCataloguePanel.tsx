@@ -222,10 +222,11 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
   const isDeleting = loadingProductId === product.id;
   const primaryImage = product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
   const [imgFailed, setImgFailed] = useState(false);
+  const hasValidImage = primaryImage && !imgFailed && /^https?:\/\//.test(primaryImage);
   return (
     <tr className={`product-table-row ${isDeleting ? "removing" : ""}`}>
       <td>
-        {primaryImage && !imgFailed ? (
+        {hasValidImage ? (
           <Image src={primaryImage} alt={product.name} width={40} height={50} className="product-img" onError={() => setImgFailed(true)} />
         ) : (
           <div className="product-img-placeholder" />
