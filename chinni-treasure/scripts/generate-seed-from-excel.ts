@@ -154,9 +154,9 @@ async function main() {
     }
   }
 
-  // Build product ID to SKU mapping, and product name to SKU mapping (fallback)
+  // Build product SKU to images and product name to SKU mappings
   const prodIdToSku: Record<string, string> = {};
-  const prodIdByRow: Record<number, string> = {};
+  const prodSkuToImages: Record<string, string[]> = {};
   const prodNameToSku: Record<string, string> = {};
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -164,7 +164,9 @@ async function main() {
     const sku = String(row.getCell(2).value || "");
     const name = String(row.getCell(3).value || "").toLowerCase().trim();
     prodIdToSku[id] = sku;
-    prodIdByRow[i] = id;
+    if (productImagesByProductId[id]) {
+      prodSkuToImages[sku] = productImagesByProductId[id];
+    }
     prodNameToSku[name] = sku;
   });
 
@@ -322,14 +324,10 @@ export interface SeedProduct {
 }
 
 export const SEED_PRODUCTS: SeedProduct[] = ${JSON.stringify(
-    products.map((p, i) => {
-      const pid = prodIdByRow[i + 2] || "";
-      const imgs = productImagesByProductId[pid];
-      return {
-        ...p,
-        additionalImages: imgs && imgs.length > 0 ? imgs : (p.imageUrl ? [p.imageUrl] : []),
-      };
-    }),
+    products.map((p) => ({
+      ...p,
+      additionalImages: prodSkuToImages[p.sku] || (p.imageUrl ? [p.imageUrl] : []),
+    })),
     null,
     2,
   )};

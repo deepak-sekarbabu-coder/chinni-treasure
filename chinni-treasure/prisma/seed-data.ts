@@ -76,14 +76,14 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     "description": "# Golden Luxe Pearl Clutch\n\n## 🛍️ Product Details\n- **Price:** 1650 Rs  \n- **Color:** Gold\n\n## Features\n-  A front flap closure, premium stone details on handle, handcrafted beadwork, detachable chain, soft premium fabric inside, metallic gold tone finish at the back.\n\n## ✨ Description\n- A Luxurious clutch in a glam look embellished with premium pearls & stone details.\n- A structured rectangular shape, & a semicircular handle intricated with stone details that makes it standout as a statement.\n- Suits for bridesmaid, wedding, luxury occasion, festive & cocktail party.\n- Spacious yet compact size, easy to carry for events and functions.\n\n## 💎 Why Choose This Treasure?\n- Luxury clutch offered in a cost-effective range.\n- Crafted with meticulous attention.\n- Intricately embellished with premium pearls and stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.\n- Premium gold finish and spacious to keep your things safe.",
     "badge": "luxury",
     "additionalImages": [
-      "https://i.imgur.gg/YGmcHhj-IMG_20260705_163627.jpg",
+      "https://i.imgur.gg/bqwaNy5-IMG_20260705_163714.jpg",
+      "https://i.imgur.gg/2prDVur-IMG_20260705_163620.jpg",
+      "https://i.imgur.gg/CaSUkND-IMG_20260705_163606.jpg",
       "https://i.imgur.gg/asnOI23-IMG_20260705_163534.jpg",
       "https://i.imgur.gg/TbMHSBd-IMG_20260705_163729.jpg",
       "https://i.imgur.gg/2ZTQdJt-IMG_20260705_163538.jpg",
       "https://i.imgur.gg/uMICzTw-IMG_20260705_163602.jpg",
-      "https://i.imgur.gg/CaSUkND-IMG_20260705_163606.jpg",
-      "https://i.imgur.gg/2prDVur-IMG_20260705_163620.jpg",
-      "https://i.imgur.gg/bqwaNy5-IMG_20260705_163714.jpg"
+      "https://i.imgur.gg/YGmcHhj-IMG_20260705_163627.jpg"
     ]
   },
   {
@@ -97,12 +97,12 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     "description": "# Golden Eagle Glam Clutch\n\n## 🛍️ Product Details\n- **Price:** 2050 Rs  \n- **Color:** Gold\n\n## ✨ Features\n- Decorative lock, detachable gold chain, premium quality gold frame, metallic gold finish handle, designer gold fabric at the back.\n\n## ✨ Description\n- A Luxurious clutch in a glam look crafted with meticulous premium stone embellishment details.\n- A Structured rectangular shape & a gold toned frame that makes it stand out as a statement.\n- Suits for luxury occasions, wedding, festive & bridesmaid.\n- Premium shining stonework for a rich look.\n- Spacious yet compact size, easy to carry for events and functions.\n\n## 💎 Why Choose This Treasure?\n- Luxury clutch offered in a cost-effective range.\n- Crafted with meticulous attention.\n- Intricately embellished with premium stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.\n- Premium gold finish and spacious to keep your things safe.",
     "badge": "luxury",
     "additionalImages": [
-      "https://i.imgur.gg/98usj1m-IMG_20260703_111740.jpg",
+      "https://i.imgur.gg/eggPVAF-IMG_20260703_111828.jpg",
       "https://i.imgur.gg/gPhThze-IMG_20260705_155515.jpg",
       "https://i.imgur.gg/POeQ3vJ-IMG_20260705_155729.jpg",
       "https://i.imgur.gg/Jvbv8Gz-WhatsApp_Image_2026-07-05_at_8.23.26_PM.jpeg",
       "https://i.imgur.gg/bpVrzo4-WhatsApp_Image_2026-07-05_at_8.23.27_PM_(1).jpeg",
-      "https://i.imgur.gg/H8if62Z-WhatsApp_Image_2026-07-05_at_8.23.28_PM_(1).jpeg",
+      "https://i.imgur.gg/PixsRI1-WhatsApp_Image_2026-07-05_at_8.23.28_PM.jpeg",
       "https://i.imgur.gg/PixsRI1-WhatsApp_Image_2026-07-05_at_8.23.28_PM.jpeg",
       "https://i.imgur.gg/Bh5sBSk-WhatsApp_Image_2026-07-05_at_8.23.29_PM_(1).jpeg",
       "https://i.imgur.gg/ccy2N6u-WhatsApp_Image_2026-07-05_at_8.23.29_PM.jpeg"
@@ -120,12 +120,12 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     "badge": "luxury",
     "additionalImages": [
       "https://i.imgur.gg/dEvA4vE-IMG_20260705_165128.jpg",
-      "https://i.imgur.gg/hGBHf4O-IMG_20260705_170657.jpg",
-      "https://i.imgur.gg/y7bKdkd-IMG_20260705_170706.jpg",
-      "https://i.imgur.gg/Fcae0PT-IMG_20260705_170717.jpg",
-      "https://i.imgur.gg/6Dk9y30-IMG_20260705_170727.jpg",
       "https://i.imgur.gg/XQ1WDRG-IMG_20260705_170804.jpg",
-      "https://i.imgur.gg/Pca7Qx0-IMG_20260705_170818.jpg"
+      "https://i.imgur.gg/y7bKdkd-IMG_20260705_170706.jpg",
+      "https://i.imgur.gg/ExV2tjL-IMG_20260705_170653.jpg",
+      "https://i.imgur.gg/6Dk9y30-IMG_20260705_170727.jpg",
+      "https://i.imgur.gg/hGBHf4O-IMG_20260705_170657.jpg",
+      "https://i.imgur.gg/Fcae0PT-IMG_20260705_170717.jpg"
     ]
   },
   {
