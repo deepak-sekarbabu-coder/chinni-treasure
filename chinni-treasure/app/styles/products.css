@@ -298,6 +298,23 @@
     outline-offset: 2px;
 }
 
+.catalogue-search-input--loading {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    animation: searchPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes searchPulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.08);
+    }
+}
+
 /* ── Catalogue Category Filter ── */
 .catalogue-filter {
     display: flex;

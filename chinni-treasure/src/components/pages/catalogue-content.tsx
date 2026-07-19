@@ -130,11 +130,12 @@ export default function CatalogueContent({
         <div className="catalogue-search">
           <input
             type="text"
-            className="catalogue-search-input"
+            className={`catalogue-search-input${loading ? " catalogue-search-input--loading" : ""}`}
             placeholder="Search by product code..."
             value={searchQuery}
             onChange={handleSearch}
             aria-label="Search products by code"
+            readOnly={loading}
           />
         </div>
 
