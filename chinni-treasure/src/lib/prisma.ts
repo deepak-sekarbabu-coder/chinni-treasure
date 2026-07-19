@@ -8,15 +8,8 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPool() {
-  const url = new URL(env.DATABASE_URL);
-
-  // Enforce a statement timeout to prevent long-running queries from
-  // blocking the connection pool (PgBouncer on Nhost may or may not
-  // honour this — harmless if ignored).
-  url.searchParams.set("statement_timeout", "15000");
-
   const pool = new Pool({
-    connectionString: url.toString(),
+    connectionString: env.DATABASE_URL,
     // Keep pool size within Nhost's free-tier connection pooler limits
     // (typically 5 concurrent connections).
     min: 2,
