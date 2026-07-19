@@ -22,48 +22,54 @@ export async function GET() {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [
-      totalOrders,
-      pendingOrders,
-      approvedOrders,
-      packagingOrders,
-      shippedOrders,
-      deliveredOrders,
-      rejectedOrders,
-      totalRevenue,
-      recentOrders,
-      salesByProduct,
-    ] = await Promise.all([
-      prisma.order.count(),
-      prisma.order.count({ where: { status: "pending" } }),
-      prisma.order.count({ where: { status: "approved" } }),
-      prisma.order.count({ where: { status: "packaging" } }),
-      prisma.order.count({ where: { status: "shipped" } }),
-      prisma.order.count({ where: { status: "delivered" } }),
-      prisma.order.count({ where: { status: "rejected" } }),
-      prisma.order.aggregate({ _sum: { totalAmount: true } }),
-      prisma.order.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
-        select: { totalAmount: true, createdAt: true },
-      }),
-      prisma.orderItem.groupBy({
-        by: ["productName"],
-        _sum: { quantity: true, unitPrice: true },
-        _count: true,
-        orderBy: { _sum: { unitPrice: "desc" } },
-      }),
-    ]);
+    // Single raw SQL query for all counts and revenue (1 round-trip instead of 8)
+    type StatsRow = {
+      total_orders: bigint;
+      pending_orders: bigint;
+      approved_orders: bigint;
+      packaging_orders: bigint;
+      shipped_orders: bigint;
+      delivered_orders: bigint;
+      rejected_orders: bigint;
+      total_revenue: bigint | null;
+    };
+
+    const [raw] = await prisma.$queryRaw<StatsRow[]>`
+      SELECT
+        (SELECT COUNT(*) FROM orders) AS total_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'pending') AS pending_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'approved') AS approved_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'packaging') AS packaging_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'shipped') AS shipped_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'delivered') AS delivered_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'rejected') AS rejected_orders,
+        (SELECT COALESCE(SUM(total_amount), 0) FROM orders) AS total_revenue
+    `;
+
+    // Recent orders for chart data (last 30 days)
+    const recentOrders = await prisma.order.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: { totalAmount: true, createdAt: true },
+    });
+
+    // Product sales data
+    const salesByProduct = await prisma.orderItem.groupBy({
+      by: ["productName"],
+      _sum: { quantity: true, unitPrice: true },
+      _count: true,
+      orderBy: { _sum: { unitPrice: "desc" } },
+    });
 
     // ---- Stats ----
     const stats = {
-      totalOrders,
-      pendingOrders,
-      approvedOrders,
-      packagingOrders,
-      shippedOrders,
-      deliveredOrders,
-      rejectedOrders,
-      totalRevenue: Number(totalRevenue._sum.totalAmount ?? 0),
+      totalOrders: Number(raw.total_orders),
+      pendingOrders: Number(raw.pending_orders),
+      approvedOrders: Number(raw.approved_orders),
+      packagingOrders: Number(raw.packaging_orders),
+      shippedOrders: Number(raw.shipped_orders),
+      deliveredOrders: Number(raw.delivered_orders),
+      rejectedOrders: Number(raw.rejected_orders),
+      totalRevenue: Number(raw.total_revenue ?? 0),
     };
 
     // ---- Chart data: last 30 days ----

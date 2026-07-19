@@ -46,7 +46,7 @@ export function createMockPrisma() {
       updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
-    $transaction: vi.fn(),
+    $queryRaw: vi.fn(),
   };
 }
 

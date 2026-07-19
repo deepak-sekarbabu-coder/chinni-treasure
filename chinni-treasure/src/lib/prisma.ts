@@ -14,13 +14,19 @@ function createPool() {
     connectionString: url.toString(),
     // Keep pool size within Nhost's free-tier connection pooler limits
     // (typically 5 concurrent connections).
-    min: 2,
+    // No idle connections on Vercel serverless — each cold-start instance
+    // would waste Nhost pooler slots with persistent connections.
+    min: 0,
     max: 5,
-    connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: 30_000,
+    // Increased timeout for Nhost pooler + Vercel cold-start SSL handshake.
+    connectionTimeoutMillis: 20_000,
+    idleTimeoutMillis: 60_000,
     // Rotate connections periodically to guard against memory/resource
     // leaks in long-running server processes.
     maxUses: 7_500,
+    // TCP keepalive to detect dead connections faster.
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 30_000,
   });
 
   // Surface pool-level errors without crashing the process.
