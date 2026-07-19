@@ -103,7 +103,6 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/Jvbv8Gz-WhatsApp_Image_2026-07-05_at_8.23.26_PM.jpeg",
       "https://i.imgur.gg/bpVrzo4-WhatsApp_Image_2026-07-05_at_8.23.27_PM_(1).jpeg",
       "https://i.imgur.gg/PixsRI1-WhatsApp_Image_2026-07-05_at_8.23.28_PM.jpeg",
-      "https://i.imgur.gg/PixsRI1-WhatsApp_Image_2026-07-05_at_8.23.28_PM.jpeg",
       "https://i.imgur.gg/Bh5sBSk-WhatsApp_Image_2026-07-05_at_8.23.29_PM_(1).jpeg",
       "https://i.imgur.gg/ccy2N6u-WhatsApp_Image_2026-07-05_at_8.23.29_PM.jpeg"
     ]
@@ -170,6 +169,25 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     ]
   },
   {
+    "sku": "0014",
+    "name": "Multicolor Bangles (set of 36 pcs)",
+    "categorySlug": "accessories",
+    "price": 860,
+    "compareAtPrice": 999,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/GUQy7if-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(1).jpeg",
+    "description": "# Multicolor Bangles (Set of 36pcs)\n\n## 🛍️ Product Details\n- **Price:** 860 Rs  \n- **Color:** Multicolor\n- **Material:** Glass & Metal type \n- **Size:** 2/4  \n\n## ✨ Description\n- Crafted with meticulous attention to each bangle.\n- Intricately embraced with kundan, beads and stone details.\n- Exceptional craftmanship to create a bold and eye-catching look.\n\n## 💎 Why Choose This?\n- Premium bangles set offered in a cost-effective range.\n- Perfect for festive occasions or weddings.\n- Unique Premium collection & rare to find in other social platforms.",
+    "badge": "premium",
+    "additionalImages": [
+      "https://i.imgur.gg/GUQy7if-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(1).jpeg",
+      "https://i.imgur.gg/gqTsAet-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(2).jpeg",
+      "https://i.imgur.gg/ypHfOHC-WhatsApp_Image_2026-07-02_at_10.08.35_AM.jpeg",
+      "https://i.imgur.gg/WUITdsU-WhatsApp_Image_2026-07-02_at_10.08.36_AM_(1).jpeg",
+      "https://i.imgur.gg/uwVOgxs-WhatsApp_Image_2026-07-02_at_10.08.36_AM_(2).jpeg",
+      "https://i.imgur.gg/pOMvqal-WhatsApp_Image_2026-07-02_at_10.08.36_AM.jpeg"
+    ]
+  },
+  {
     "sku": "0007",
     "name": "Regal Pearl Clutch",
     "categorySlug": "accessories",
@@ -205,7 +223,6 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/ijVSnwz-IMG_20260705_175110.jpg",
       "https://i.imgur.gg/RkvX1Vq-IMG_20260705_175128.jpg",
       "https://i.imgur.gg/A5B6juf-IMG_20260705_175157.jpg",
-      "https://i.imgur.gg/aabhIRs-IMG_20260705_175203.jpg",
       "https://i.imgur.gg/aabhIRs-IMG_20260705_175203.jpg",
       "https://i.imgur.gg/qGxLZtT-IMG_20260705_175212.jpg",
       "https://i.imgur.gg/jPcQ4gh-IMG_20260705_175234.jpg"
@@ -306,25 +323,6 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/5bKICFV-white-jewelry-box-open-empty.jpg",
       "https://i.imgur.gg/guiu1cH-white-jewelry-box-open-mirror.jpg",
       "https://i.imgur.gg/1nSpFtz-red-jewelry-box-with-bangles.jpg"
-    ]
-  },
-  {
-    "sku": "0014",
-    "name": "Multicolor Bangles (set of 36 pcs)",
-    "categorySlug": "accessories",
-    "price": 860,
-    "compareAtPrice": 999,
-    "stockQuantity": 1,
-    "imageUrl": "https://i.imgur.gg/GUQy7if-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(1).jpeg",
-    "description": "# Multicolor Bangles (Set of 36pcs)\n\n## 🛍️ Product Details\n- **Price:** 860 Rs  \n- **Color:** Multicolor\n- **Material:** Glass & Metal type \n- **Size:** 2/4  \n\n## ✨ Description\n- Crafted with meticulous attention to each bangle.\n- Intricately embraced with kundan, beads and stone details.\n- Exceptional craftmanship to create a bold and eye-catching look.\n\n## 💎 Why Choose This?\n- Premium bangles set offered in a cost-effective range.\n- Perfect for festive occasions or weddings.\n- Unique Premium collection & rare to find in other social platforms.",
-    "badge": "premium",
-    "additionalImages": [
-      "https://i.imgur.gg/GUQy7if-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(1).jpeg",
-      "https://i.imgur.gg/gqTsAet-WhatsApp_Image_2026-07-02_at_10.08.35_AM_(2).jpeg",
-      "https://i.imgur.gg/ypHfOHC-WhatsApp_Image_2026-07-02_at_10.08.35_AM.jpeg",
-      "https://i.imgur.gg/WUITdsU-WhatsApp_Image_2026-07-02_at_10.08.36_AM_(1).jpeg",
-      "https://i.imgur.gg/uwVOgxs-WhatsApp_Image_2026-07-02_at_10.08.36_AM_(2).jpeg",
-      "https://i.imgur.gg/pOMvqal-WhatsApp_Image_2026-07-02_at_10.08.36_AM.jpeg"
     ]
   },
   {
@@ -455,6 +453,43 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/bNAjV9b-IMG_20260705_191809.jpg",
       "https://i.imgur.gg/nxdD83r-IMG_20260705_191816.jpg"
     ]
+  },
+  {
+    "sku": "0027",
+    "name": "Sparkle Pearly Nose Ring With Velvet Box",
+    "categorySlug": "accessories",
+    "price": 299,
+    "compareAtPrice": 399,
+    "stockQuantity": 2,
+    "imageUrl": "https://i.imgur.gg/QHQ7a99-IMG_20260705_184343.jpg",
+    "description": "# Sparkle Pearly Nose Ring With Velvet Box\n\n## 🛍️ Product Details\n- **Price:** 299Rs  \n- **Color:** Multicolor(Green,Pink & White) with Pearl & Gold\n- **Qty:** 1\n\n## ✨ Features\n- 18K Gold plated, Non-piercing, Screw lock mechanism, Skin-friendly, Premium white stones with pearl, Nickel free, Premium Velvet Box for thoughtful gift.\n\n## ✨ Description\n- Crafted with premium 18K gold plating and it radiates a luxurious shine that complements both festive & bridal attire.\n- The adjustable screw clip mechanism provides a secure & comfortable fit.\n- Its light weight, durable & safe for all the skin types.\n- Perfect for weddings, festivals, function & events.\n- Comes with a premium velvet box & great for thoughtful gift to any special occasions.\n\n## 💎 Why Choose This Treasure?\n- Luxury offered in a cost-effective range.\n- Crafted with meticulous attention.\n- Intricately embellished with premium stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.\n- Premium gold finish and skin safe.",
+    "badge": "premium",
+    "additionalImages": [
+      "https://i.imgur.gg/QHQ7a99-IMG_20260705_184343.jpg",
+      "https://i.imgur.gg/VWK6567-IMG_20260705_184408.jpg",
+      "https://i.imgur.gg/cTTnInx-IMG_20260705_184410.jpg",
+      "https://i.imgur.gg/qgM3FJ0-IMG_20260705_184505.jpg",
+      "https://i.imgur.gg/pXNqmWF-IMG_20260705_184736.jpg"
+    ]
+  },
+  {
+    "sku": "0026",
+    "name": "Sparkling nose ring with velvet box",
+    "categorySlug": "accessories",
+    "price": 299,
+    "compareAtPrice": 399,
+    "stockQuantity": 2,
+    "imageUrl": "https://i.imgur.gg/qnCxxtg-IMG_20260705_185427.jpg",
+    "description": "# Sparkling nose ring with velvet box\n\n## 🛍️ Product Details\n- **Price:** 299Rs  \n- **Color:** White stone with Gold\n- **Qty:** 1\n\n## ✨ Features\n- 18K Gold plated, Non-piercing, Screw lock mechanism, Skin-friendly, Premium white stone, Nickel free, Premium Velvet Box for thoughtful gift.\n\n## ✨ Description\n- Crafted with premium 18K gold plating and it radiates a luxurious shine that complements both festive & bridal attire.\n- The adjustable screw clip mechanism provides a secure & comfortable fit.\n- Its light weight, durable & safe for all the skin types.\n- Perfect for weddings, festivals, function & events.\n- Comes with a premium velvet box & great for thoughtful gift to any special occasions.\n\n## 💎 Why Choose This Treasure?\n- Luxury offered in a cost-effective range.\n- Crafted with meticulous attention.\n- Intricately embellished with premium stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.\n- Premium gold finish and skin safe.",
+    "badge": "premium",
+    "additionalImages": [
+      "https://i.imgur.gg/qnCxxtg-IMG_20260705_185427.jpg",
+      "https://i.imgur.gg/hmr14Xj-IMG_20260705_185433.jpg",
+      "https://i.imgur.gg/rwnr3Up-IMG_20260705_185442.jpg",
+      "https://i.imgur.gg/lDRsUWc-IMG_20260705_185409.jpg",
+      "https://i.imgur.gg/5Nt43pN-IMG_20260705_185412.jpg",
+      "https://i.imgur.gg/PACRVWj-IMG_20260705_185415.jpg"
+    ]
   }
 ];
 
@@ -504,44 +539,44 @@ export const SEED_ORDERS: SeedOrder[] = [
     "postalCode": "600090",
     "countryCode": "IN",
     "status": "shipped",
-    "trackingId": "SRSP7452869877",
+    "trackingId": "2827792570832",
     "subtotal": 449,
     "shippingCost": 150,
     "totalAmount": 599,
     "transactionId": "pay_TDkY1cBs9hjhQa",
     "customerNotes": null,
     "adminNotes": null,
-    "createdAt": "2026-07-15T05:14:50.000Z",
-    "updatedAt": "2026-07-15T23:58:57.000Z",
+    "createdAt": "2026-07-19T05:24:20.022Z",
+    "updatedAt": null,
     "items": [
       {
         "productSku": "0020",
         "productName": "Regal Green Set",
         "unitPrice": 449,
         "quantity": 1,
-        "createdAt": "2026-07-15T05:14:50.000Z"
+        "createdAt": "2026-07-19T05:24:20.029Z"
       }
     ],
     "statusHistory": [
       {
         "status": "pending",
         "notes": "Order placed",
-        "createdAt": "2026-07-15T05:14:50.000Z"
+        "createdAt": "2026-07-19T05:24:20.036Z"
       },
       {
         "status": "approved",
         "notes": "Status changed to approved",
-        "createdAt": "2026-07-15T05:42:03.000Z"
+        "createdAt": "2026-07-19T05:24:20.042Z"
       },
       {
         "status": "packaging",
         "notes": "Status changed to packaging",
-        "createdAt": "2026-07-15T05:42:23.000Z"
+        "createdAt": "2026-07-19T05:24:20.047Z"
       },
       {
         "status": "shipped",
         "notes": "Status changed to shipped",
-        "createdAt": "2026-07-15T23:58:57.000Z"
+        "createdAt": "2026-07-19T05:24:20.052Z"
       }
     ]
   }

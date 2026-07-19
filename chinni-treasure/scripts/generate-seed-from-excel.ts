@@ -37,7 +37,26 @@ function extractUrl(val: unknown): string | null {
 }
 
 async function main() {
-  const filePath = process.argv[2] || "exports/chinni-treasure-export-2026-07-18T18-45-09.xlsx";
+  // Auto-discover the latest export file if no path provided
+  let filePath = process.argv[2];
+  if (!filePath) {
+    const { readdirSync, existsSync } = await import("fs");
+    const { join } = await import("path");
+    const exportsDir = join(process.cwd(), "exports");
+    if (existsSync(exportsDir)) {
+      const files = readdirSync(exportsDir)
+        .filter(f => f.startsWith("chinni-treasure-export-") && f.endsWith(".xlsx"))
+        .sort()
+        .reverse();
+      if (files.length > 0) {
+        filePath = join(exportsDir, files[0]);
+      }
+    }
+    if (!filePath) {
+      console.error("No export file found. Run 'npm run data:export' first.");
+      process.exit(1);
+    }
+  }
   console.log(`Reading from: ${filePath}`);
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(filePath);
@@ -236,8 +255,8 @@ async function main() {
     let orderIdx = 0;
     oiSheet.eachRow((row, i) => {
       if (i === 1) return;
-      const prodId = String(row.getCell(3).value || "");
-      const prodName = String(row.getCell(4).value || "");
+      const prodId = String(row.getCell(4).value || "");
+      const prodName = String(row.getCell(5).value || "");
       let sku = prodIdToSku[prodId] || "";
       // Fallback: try matching by product name
       if (!sku) {
@@ -247,9 +266,9 @@ async function main() {
         orderNumber: orders[orderIdx]?.orderNumber || "",
         productSku: sku,
         productName: prodName,
-        unitPrice: parseNum(row.getCell(5).value),
-        quantity: parseNum(row.getCell(6).value),
-        createdAt: parseDate(row.getCell(7).value),
+        unitPrice: parseNum(row.getCell(6).value),
+        quantity: parseNum(row.getCell(7).value),
+        createdAt: parseDate(row.getCell(8).value),
       });
       orderIdx++;
     });
@@ -276,9 +295,9 @@ async function main() {
       const orderId = String(row.getCell(2).value || "");
       orderStatusHistory.push({
         orderNumber: orderIdToNumber[orderId] || "",
-        status: String(row.getCell(3).value || ""),
-        notes: row.getCell(4).value ? String(row.getCell(4).value) : null,
-        createdAt: parseDate(row.getCell(5).value),
+        status: String(row.getCell(4).value || ""),
+        notes: row.getCell(5).value ? String(row.getCell(5).value) : null,
+        createdAt: parseDate(row.getCell(6).value),
       });
     });
   }
@@ -288,7 +307,6 @@ async function main() {
   const admins: {
     username: string;
     email: string;
-    passwordHash: string;
     role: string;
     isActive: boolean;
   }[] = [];
@@ -298,9 +316,8 @@ async function main() {
       admins.push({
         username: String(row.getCell(2).value || ""),
         email: String(row.getCell(3).value || ""),
-        passwordHash: String(row.getCell(4).value || ""),
-        role: String(row.getCell(5).value || "admin"),
-        isActive: parseBool(row.getCell(6).value),
+        role: String(row.getCell(4).value || "admin"),
+        isActive: parseBool(row.getCell(5).value),
       });
     });
   }

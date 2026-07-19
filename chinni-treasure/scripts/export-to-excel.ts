@@ -68,8 +68,8 @@ async function exportToExcel() {
     { header: 'Description', key: 'description', width: 40 },
     { header: 'Display Order', key: 'displayOrder', width: 15 },
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 2. Export Products
@@ -89,8 +89,8 @@ async function exportToExcel() {
     { header: 'Image URL', key: 'imageUrl', width: 50 },
     { header: 'Badge', key: 'badge', width: 15 },
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 2b. Export Product Images
@@ -103,7 +103,7 @@ async function exportToExcel() {
     { header: 'URL', key: 'url', width: 60 },
     { header: 'Is Primary', key: 'isPrimary', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
     { header: 'Display Order', key: 'displayOrder', width: 15 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 3. Export Orders
@@ -130,8 +130,7 @@ async function exportToExcel() {
     { header: 'Transaction ID', key: 'transactionId', width: 30 },
     { header: 'Customer Notes', key: 'customerNotes', width: 40 },
     { header: 'Admin Notes', key: 'adminNotes', width: 40 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 4. Export Order Items
@@ -146,7 +145,7 @@ async function exportToExcel() {
     { header: 'Product Name', key: 'productName', width: 40 },
     { header: 'Unit Price', key: 'unitPrice', width: 12, format: (v: unknown) => String(v) },
     { header: 'Quantity', key: 'quantity', width: 10 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 5. Export Order Status History
@@ -160,7 +159,7 @@ async function exportToExcel() {
     { header: 'Order Number', key: 'order', width: 20, format: (v: unknown) => (v as { orderNumber?: string } | null)?.orderNumber ?? '' },
     { header: 'Status', key: 'status', width: 15 },
     { header: 'Notes', key: 'notes', width: 50 },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 6. Export Admins
@@ -173,9 +172,9 @@ async function exportToExcel() {
     { header: 'Email', key: 'email', width: 35 },
     { header: 'Role', key: 'role', width: 15 },
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
-    { header: 'Last Login At', key: 'lastLoginAt', width: 20, format: (v: unknown) => v ? (v as Date).toLocaleString() : 'Never' },
-    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
-    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toLocaleString() },
+    { header: 'Last Login At', key: 'lastLoginAt', width: 20, format: (v: unknown) => v ? (v as Date).toISOString() : 'Never' },
+    { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // Add a "Lookup" sheet with ID mappings for easy reference
