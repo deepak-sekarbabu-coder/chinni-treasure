@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import JsBarcode from "jsbarcode";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
 
 interface Props {
@@ -225,10 +224,16 @@ ${labelHTML}
     }, 500);
   };
 
-  // Generate Barcode on AWB change
+  // Generate Barcode on AWB change. jsbarcode (~100KB+) is imported lazily so
+  // it stays out of the admin order panel's initial bundle and only loads when
+  // a shipping label modal actually renders a barcode.
   useEffect(() => {
-    if (awbNumber && awbNumber.trim().length > 0 && barcodeRef.current) {
+    if (!awbNumber || awbNumber.trim().length === 0 || !barcodeRef.current) return;
+    let cancelled = false;
+    (async () => {
       try {
+        const JsBarcode = (await import("jsbarcode")).default;
+        if (cancelled || !barcodeRef.current) return;
         JsBarcode(barcodeRef.current, awbNumber.trim(), {
           format: "CODE128",
           width: 1.5,
@@ -239,7 +244,10 @@ ${labelHTML}
       } catch (err) {
         console.error("Barcode generation failed:", err);
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [awbNumber, products]); // re-run if products list or AWB changes and DOM updates
 
   if (!isOpen) return null;

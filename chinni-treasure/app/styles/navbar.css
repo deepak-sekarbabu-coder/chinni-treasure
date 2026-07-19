@@ -39,8 +39,9 @@
     font-family: var(--font-serif);
     font-size-adjust: 0.48;
     font-size: 1.3rem;
-    color: var(--gold);
     line-height: 1.2;
+    min-height: calc(1.3rem * 1.2);
+    color: var(--gold);
     display: inline-flex;
     align-items: center;
     gap: 12px;

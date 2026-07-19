@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
   // Give slow database queries more time during static page generation.
   staticPageGenerationTimeout: 120,
   experimental: {
-    optimizePackageImports: ["jspdf", "exceljs"],
+    optimizePackageImports: ["jspdf", "exceljs", "react-markdown", "jsbarcode"],
   },
   images: {
     remotePatterns: [

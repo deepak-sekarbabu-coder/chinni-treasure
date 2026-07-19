@@ -17,6 +17,7 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
   preload: true,
   adjustFontFallback: true,
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
 const albert = Albert_Sans({
@@ -26,6 +27,7 @@ const albert = Albert_Sans({
   display: "swap",
   preload: true,
   adjustFontFallback: true,
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
 });
 
 const pinyon = Pinyon_Script({
@@ -33,9 +35,11 @@ const pinyon = Pinyon_Script({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
-  preload: true,
+  // Decorative script font used only in the footer logo — not needed for
+  // first paint. Disabling preload keeps its woff2 off the critical path.
+  preload: false,
   adjustFontFallback: true,
-  fallback: ["cursive"],
+  fallback: ["Brush Script MT", "cursive"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";

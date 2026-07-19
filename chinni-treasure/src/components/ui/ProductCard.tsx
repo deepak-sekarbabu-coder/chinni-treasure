@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
+import Markdown from "./Markdown";
 import StockBadge from "./StockBadge";
 import {
   PRODUCT_IMAGE_QUALITY,
@@ -96,7 +96,7 @@ export default function ProductCard({
           <h3>{product.name}</h3>
         </Link>
         <div className="product-card-description">
-          <ReactMarkdown>{product.description}</ReactMarkdown>
+          <Markdown>{product.description ?? ""}</Markdown>
         </div>
         <div className="product-card-footer">
           <span className="product-card-price">

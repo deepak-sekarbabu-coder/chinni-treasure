@@ -14,11 +14,11 @@ const baseProduct = {
 };
 
 describe("ProductCard", () => {
-  it("renders product name, price, and description", () => {
+  it("renders product name, price, and description", async () => {
     render(<ProductCard product={baseProduct} onAdd={vi.fn()} />);
     expect(screen.getByText("Silk Saree")).toBeInTheDocument();
     expect(screen.getByText("₹2499.99")).toBeInTheDocument();
-    expect(screen.getByText("Handwoven silk saree with gold embroidery")).toBeInTheDocument();
+    expect(await screen.findByText("Handwoven silk saree with gold embroidery")).toBeInTheDocument();
   });
 
   it("renders the category name", () => {
