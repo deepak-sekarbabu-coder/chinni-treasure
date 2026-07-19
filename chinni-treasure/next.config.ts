@@ -49,6 +49,26 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/apple-touch-icon-precomposed.png",
+        destination: "/apple-touch-icon.png",
+        permanent: true,
+      },
+      {
+        source: "/apple-touch-icon-120x120.png",
+        destination: "/apple-touch-icon.png",
+        permanent: true,
+      },
+      {
+        source: "/apple-touch-icon-120x120-precomposed.png",
+        destination: "/apple-touch-icon.png",
+        permanent: true,
+      },
+    ];
+  },
+
   headers() {
     return [
       {
