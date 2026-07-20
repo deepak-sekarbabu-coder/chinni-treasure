@@ -50,13 +50,32 @@ function createPool() {
 //   2. Prisma P2010 with "query_wait_timeout" (Nhost pooler queue timeout)
 
 function isRetryableConnectionError(error: unknown): boolean {
-  return (
-    (error instanceof Error &&
-      error.message.includes("timeout exceeded when trying to connect")) ||
-    (error instanceof Error &&
-      (error as { code?: string }).code === "P2010" &&
-      error.message.includes("query_wait_timeout"))
-  );
+  if (!(error instanceof Error)) return false;
+
+  // pg Pool fails to ESTABLISH a new connection within connectionTimeoutMillis.
+  if (error.message.includes("timeout exceeded when trying to connect")) return true;
+
+  // Nhost pooler queue timeout (Prisma surfaces it as a known request error).
+  if (
+    (error as { code?: string }).code === "P2010" &&
+    error.message.includes("query_wait_timeout")
+  ) {
+    return true;
+  }
+
+  // An ESTABLISHED connection was dropped mid-query (e.g. the Nhost pooler or
+  // a proxy terminated a stale/idle connection between checkout and execution).
+  // These surface as "Connection terminated due to connection timeout" with a
+  // cause of "Connection terminated unexpectedly". Retrying usually succeeds
+  // because a fresh connection is checked out of the pool.
+  if (
+    error.message.includes("Connection terminated due to connection timeout") ||
+    error.message.includes("Connection terminated unexpectedly")
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
