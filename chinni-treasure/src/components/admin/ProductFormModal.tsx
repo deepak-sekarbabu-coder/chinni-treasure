@@ -157,8 +157,6 @@ export default function ProductFormModal({
     <div
       className={`modal-overlay ${open ? "active" : ""} ${formClosing ? "closing" : ""}`}
       ref={trapRef}
-      onClick={onClose}
-      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
       aria-hidden={!open}
     >
       <div
