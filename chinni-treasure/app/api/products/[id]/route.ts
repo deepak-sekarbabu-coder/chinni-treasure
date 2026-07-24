@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
@@ -113,6 +114,7 @@ export async function PUT(
     });
 
     clearCache();
+    revalidatePath("/catalogue");
 
     return NextResponse.json(product);
   } catch (error) {
@@ -157,6 +159,7 @@ export async function DELETE(
     });
 
     clearCache();
+    revalidatePath("/catalogue");
 
     return NextResponse.json({ success: true });
   } catch (error) {
