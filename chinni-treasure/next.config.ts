@@ -39,6 +39,12 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
+    // Use a custom loader to pass remote images through without server-side
+    // optimisation.  This avoids the built-in 30 s timeout that
+    // next/image hits when the remote host (e.g. i.imgur.gg) is slow or
+    // unreachable, which was causing 500 errors on product pages.
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
     // Tuned for the actual rendered sizes used across the site:
     // - Product cards / gallery main images render at ~542px wide on desktop,
     //   so a 550 breakpoint avoids serving the oversized 768px variant that
@@ -48,7 +54,8 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/webp"],
     qualities: [75, 85],
-    minimumCacheTTL: 60,
+    // Cache optimised images for 5 minutes to reduce repeated fetches.
+    minimumCacheTTL: 300,
   },
 
   async redirects() {

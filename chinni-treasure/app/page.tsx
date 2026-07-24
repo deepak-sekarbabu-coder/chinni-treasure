@@ -58,6 +58,7 @@ export default async function HomePage() {
             badge: true,
             images: {
               orderBy: { displayOrder: "asc" },
+              take: 1,
               select: {
                 id: true,
                 url: true,
