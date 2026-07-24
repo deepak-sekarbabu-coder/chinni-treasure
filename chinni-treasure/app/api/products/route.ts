@@ -194,6 +194,8 @@ export async function POST(request: Request) {
 
     clearCache();
     revalidatePath("/catalogue");
+    revalidatePath("/");
+    revalidatePath("/category", "layout");
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

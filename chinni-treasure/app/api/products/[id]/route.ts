@@ -115,6 +115,8 @@ export async function PUT(
 
     clearCache();
     revalidatePath("/catalogue");
+    revalidatePath("/");
+    revalidatePath("/category", "layout");
 
     return NextResponse.json(product);
   } catch (error) {
@@ -160,6 +162,8 @@ export async function DELETE(
 
     clearCache();
     revalidatePath("/catalogue");
+    revalidatePath("/");
+    revalidatePath("/category", "layout");
 
     return NextResponse.json({ success: true });
   } catch (error) {
