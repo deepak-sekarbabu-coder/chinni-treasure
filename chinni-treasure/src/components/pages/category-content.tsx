@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
+import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CategoryProductsResponse, Product } from "@/src/lib/api/schemas";
@@ -165,7 +165,11 @@ export default function CategoryContent({
         </div>
 
         {loading && products.length === 0 ? (
-          <LoadingSpinner />
+          <div className="products-grid" role="list" aria-label={`${category.name} products`}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} animationDelay={i * 0.06} />
+            ))}
+          </div>
         ) : (
           <>
             <div className="products-grid" role="list" aria-label={`${category.name} products`}>

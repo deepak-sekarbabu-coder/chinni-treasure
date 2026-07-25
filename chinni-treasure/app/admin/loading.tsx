@@ -4,8 +4,10 @@ export default function AdminLoading() {
       <div className="admin-top-header">
         <div className="section admin-header-row">
           <div>
-            <div className="section-subtitle text-gold">Administrator Portal</div>
-            <h1 className="admin-heading">Dashboard</h1>
+            <div className="skeleton-text" style={{ width: "180px", height: "16px", marginBottom: "12px" }} />
+            <h1 className="admin-heading">
+              <div className="skeleton-text" style={{ width: "280px", height: "32px" }} />
+            </h1>
           </div>
         </div>
       </div>

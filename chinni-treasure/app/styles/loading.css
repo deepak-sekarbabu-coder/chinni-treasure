@@ -46,3 +46,119 @@
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
 }
+
+/* ===== SKELETON LOADING ANIMATIONS ===== */
+.skeleton-block,
+.skeleton-text {
+    background: linear-gradient(90deg,
+            var(--cream-light) 25%,
+            #e8e3d8 50%,
+            var(--cream-light) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-text {
+    height: 14px;
+    border-radius: 3px;
+    background: linear-gradient(90deg,
+            var(--cream-light) 25%,
+            #e8e3d8 50%,
+            var(--cream-light) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-text-name {
+    width: 140px;
+}
+
+.skeleton-text-sku {
+    width: 80px;
+}
+
+.skeleton-text-price {
+    width: 60px;
+}
+
+.skeleton-text-stock {
+    width: 40px;
+}
+
+.skeleton-text-badge {
+    width: 60px;
+}
+
+.skeleton-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.skeleton-grow {
+    flex: 1;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Latest category skeleton styles */
+.latest-category-skeleton-block {
+    background: #fff;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    padding-bottom: 16px;
+    animation: skeletonShimmer 1.4s infinite;
+}
+
+.latest-category-skeleton-image {
+    aspect-ratio: 3 / 4;
+    background: linear-gradient(90deg, #ece5da 25%, #f3ede3 50%, #ece5da 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s infinite;
+}
+
+.latest-category-skeleton-line {
+    height: 12px;
+    margin: 12px 16px 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #ece5da 25%, #f3ede3 50%, #ece5da 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s infinite;
+}
+
+.latest-category-skeleton-line.w-60 {
+    width: 60%;
+}
+
+.latest-category-skeleton-line.w-40 {
+    width: 40%;
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Stagger delays */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+.delay-7 { animation-delay: 0.35s; }
+.delay-8 { animation-delay: 0.4s; }
+.delay-9 { animation-delay: 0.45s; }
+.delay-10 { animation-delay: 0.5s; }

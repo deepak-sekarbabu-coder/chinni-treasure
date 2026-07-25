@@ -4,8 +4,8 @@ import { useState, useCallback, useMemo } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ProductCard from "@/src/components/ui/ProductCard";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import SectionHeader from "@/src/components/ui/SectionHeader";
+import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
@@ -160,7 +160,11 @@ export default function CatalogueContent({
         </div>
 
         {loading && products.length === 0 ? (
-          <LoadingSpinner />
+          <div className="products-grid" role="list" aria-label="Product list">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <ProductCardSkeleton key={i} animationDelay={i * 0.06} />
+            ))}
+          </div>
         ) : (
           <>
             <div className="products-grid" role="list" aria-label="Product list">
