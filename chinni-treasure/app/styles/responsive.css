@@ -123,6 +123,16 @@
         transform: translateY(0);
     }
 
+    .cart-dropdown-actions {
+        flex-direction: column;
+    }
+
+    .cart-dropdown-qty-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+    }
+
     .cart-overlay {
         display: none;
     }
@@ -612,6 +622,26 @@
     }
 
     .cart-dropdown-item-info h5 {
+        font-size: 0.8rem;
+    }
+
+    .cart-dropdown-shipping-note {
+        font-size: 0.72rem;
+    }
+
+    .cart-dropdown-total {
+        font-size: 0.88rem;
+    }
+
+    .cart-dropdown-actions .btn {
+        font-size: 0.72rem;
+        padding: 8px 10px;
+    }
+
+    .cart-dropdown-qty-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
         font-size: 0.8rem;
     }
 

@@ -12,7 +12,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
-  const { items, removeItem, getTotal, getCount } = useCart();
+  const { items, removeItem, updateQuantity, getTotal, getCount } = useCart();
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const showAdmin = useSyncExternalStore(
     () => () => { },
@@ -160,6 +160,7 @@ export default function Navbar() {
                 total={total}
                 open={cartOpen}
                 onRemove={removeItem}
+                onUpdateQuantity={updateQuantity}
                 onClose={() => { setCartOpen(false); setMenuOpen(false); }}
               />
             </div>

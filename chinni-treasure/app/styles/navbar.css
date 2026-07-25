@@ -266,6 +266,104 @@
     margin-bottom: 16px;
 }
 
+/* ── Cart Shipping Note ── */
+.cart-dropdown-shipping-note {
+    padding: 8px 0;
+    font-size: 0.78rem;
+    color: var(--gold-light);
+    text-align: center;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    margin-bottom: 12px;
+}
+
+/* ── Cart Dropdown Actions ── */
+.cart-dropdown-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.cart-dropdown-actions .btn {
+    flex: 1;
+    text-align: center;
+    font-size: 0.78rem;
+    padding: 10px 12px;
+}
+
+.cart-dropdown-view-cart {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+}
+
+.cart-dropdown-view-cart:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.cart-dropdown-checkout-btn {
+    flex: 1.2;
+}
+
+.cart-dropdown-browse-btn {
+    width: 100%;
+}
+
+/* ── Cart Dropdown Quantity Controls ── */
+.cart-dropdown-item-qty {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.cart-dropdown-qty-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    border-radius: 2px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.cart-dropdown-qty-btn:hover:not(:disabled) {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.cart-dropdown-qty-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.cart-dropdown-qty-value {
+    min-width: 24px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--cream);
+}
+
+.cart-dropdown-low-stock {
+    font-size: 0.72rem;
+    color: var(--warning);
+    margin-top: 2px;
+}
+
+.cart-dropdown-item-price {
+    font-size: 0.72rem;
+    color: var(--gold-light);
+    margin-bottom: 2px;
+}
+
 /* ── Cart Overlay ── */
 .cart-overlay {
     position: fixed;

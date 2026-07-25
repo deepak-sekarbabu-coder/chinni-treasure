@@ -157,7 +157,7 @@ describe("Navbar", () => {
     fireEvent.click(screen.getByLabelText("Shopping cart"));
 
     expect(screen.getByText("Test Product")).toBeInTheDocument();
-    expect(screen.getByText(/Qty: 1/)).toBeInTheDocument();
+    expect(screen.getByText("₹29.99 each")).toBeInTheDocument();
     expect(screen.getByLabelText("Remove Test Product from cart")).toBeInTheDocument();
   });
 
@@ -238,10 +238,15 @@ describe("Navbar", () => {
     expect(screen.getByLabelText("Shopping cart preview")).toBeInTheDocument();
   });
 
-  it("view cart & checkout link renders", () => {
-    renderNavbar();
+  it("view cart and checkout buttons render in cart dropdown", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelper />
+      </CartProvider>,
+    );
     fireEvent.click(screen.getByLabelText("Shopping cart"));
-    expect(screen.getByText("View Cart & Checkout")).toBeInTheDocument();
+    expect(screen.getByText("View Cart")).toBeInTheDocument();
+    expect(screen.getByText("Checkout")).toBeInTheDocument();
   });
 
   it("isActive returns false for non-matching paths on non-home links", () => {
@@ -260,12 +265,60 @@ describe("Navbar", () => {
     expect(document.getElementById("nav-links")?.className).toContain("active");
   });
 
-  it("view cart and checkout link closes cart and menu", () => {
-    renderNavbar();
+  it("view cart button closes cart dropdown", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelper />
+      </CartProvider>,
+    );
     fireEvent.click(screen.getByLabelText("Shopping cart"));
-    const checkoutLink = screen.getByText("View Cart & Checkout");
-    fireEvent.click(checkoutLink);
+    expect(document.querySelector(".cart-dropdown")?.className).toContain("active");
+    const viewCartBtn = screen.getByText("View Cart");
+    fireEvent.click(viewCartBtn);
     expect(document.querySelector(".cart-dropdown")?.className).not.toContain("active");
+  });
+
+  it("shipping note renders in cart dropdown when cart has items", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelper />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    expect(screen.getByText(/Free shipping/)).toBeInTheDocument();
+  });
+
+  it("quantity controls render in cart dropdown", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelper />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    expect(screen.getByLabelText("Decrease quantity of Test Product")).toBeInTheDocument();
+    expect(screen.getByLabelText("Increase quantity of Test Product")).toBeInTheDocument();
+  });
+
+  it("quantity decreases and removes item when qty reaches 0", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelper />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    const decBtn = screen.getByLabelText("Decrease quantity of Test Product");
+    fireEvent.click(decBtn);
+    expect(screen.getByText("Your cart is empty")).toBeInTheDocument();
+  });
+
+  it("low-stock warning appears when stock is 3 or fewer", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelperLowStock />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    expect(screen.getByText(/only 3 left/i)).toBeInTheDocument();
   });
 
   it("Track link closes menu", () => {
@@ -281,6 +334,15 @@ function NavbarTestHelper() {
   const { addItem } = useCart();
   React.useEffect(() => {
     addItem({ id: "prod-1", name: "Test Product", price: 29.99, image: "/test.jpg", stock: 10 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <Navbar />;
+}
+
+function NavbarTestHelperLowStock() {
+  const { addItem } = useCart();
+  React.useEffect(() => {
+    addItem({ id: "prod-1", name: "Low Stock Product", price: 49.99, image: "/test.jpg", stock: 3 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return <Navbar />;

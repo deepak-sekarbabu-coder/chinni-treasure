@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ProductCard from "../ProductCard";
 
+vi.mock("../Markdown", () => ({
+  default: ({ children }: { children: string }) => <span>{children}</span>,
+}));
+
 const baseProduct = {
   id: "prod-1",
   name: "Silk Saree",
@@ -14,11 +18,11 @@ const baseProduct = {
 };
 
 describe("ProductCard", () => {
-  it("renders product name, price, and description", async () => {
+  it("renders product name, price, and description", () => {
     render(<ProductCard product={baseProduct} onAdd={vi.fn()} />);
     expect(screen.getByText("Silk Saree")).toBeInTheDocument();
     expect(screen.getByText("₹2499.99")).toBeInTheDocument();
-    expect(await screen.findByText("Handwoven silk saree with gold embroidery")).toBeInTheDocument();
+    expect(screen.getByText("Handwoven silk saree with gold embroidery")).toBeInTheDocument();
   });
 
   it("renders the category name", () => {
