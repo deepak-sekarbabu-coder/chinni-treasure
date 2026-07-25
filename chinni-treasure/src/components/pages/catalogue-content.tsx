@@ -3,10 +3,12 @@
 import { useState, useCallback, useMemo } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import ProductCard from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
+import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
 
@@ -35,6 +37,13 @@ export default function CatalogueContent({
 }: Props) {
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const {
+    show: shippingNudgeShow,
+    newTotal: shippingNudgeTotal,
+    shippingLeft: shippingNudgeLeft,
+    trigger: triggerShippingNudge,
+    dismiss: dismissShippingNudge,
+  } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(initialCategoryId);
@@ -87,9 +96,10 @@ export default function CatalogueContent({
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
+      triggerShippingNudge(Number(p.price), 1);
       showToast(`${p.name} added to cart`, "success");
     },
-    [addItem, showToast],
+    [addItem, showToast, triggerShippingNudge],
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -121,6 +131,12 @@ export default function CatalogueContent({
         </div>
       </section>
       <section className="section catalogue-section" aria-labelledby="catalogue-heading">
+        <ShippingNudgePopup
+          show={shippingNudgeShow}
+          newTotal={shippingNudgeTotal}
+          shippingLeft={shippingNudgeLeft}
+          dismiss={dismissShippingNudge}
+        />
         <SectionHeader
           subtitle=""
           title="Our Collection"

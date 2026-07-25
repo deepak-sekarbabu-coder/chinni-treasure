@@ -4,10 +4,12 @@ import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
+import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CategoryProductsResponse, Product } from "@/src/lib/api/schemas";
 
@@ -41,6 +43,13 @@ export default function CategoryContent({
 }: Props) {
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const {
+    show: shippingNudgeShow,
+    newTotal: shippingNudgeTotal,
+    shippingLeft: shippingNudgeLeft,
+    trigger: triggerShippingNudge,
+    dismiss: dismissShippingNudge,
+  } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortKey>("newest");
 
@@ -101,9 +110,10 @@ export default function CategoryContent({
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
+      triggerShippingNudge(Number(p.price), 1);
       showToast(`${p.name} added to cart`, "success");
     },
-    [addItem, showToast],
+    [addItem, showToast, triggerShippingNudge],
   );
 
   const handlePageChange = useCallback(
@@ -140,6 +150,12 @@ export default function CategoryContent({
       </section>
 
       <section className="section catalogue-section" aria-labelledby="category-products-heading">
+        <ShippingNudgePopup
+          show={shippingNudgeShow}
+          newTotal={shippingNudgeTotal}
+          shippingLeft={shippingNudgeLeft}
+          dismiss={dismissShippingNudge}
+        />
         <SectionHeader
           subtitle=""
           title={`${category.name} Products`}

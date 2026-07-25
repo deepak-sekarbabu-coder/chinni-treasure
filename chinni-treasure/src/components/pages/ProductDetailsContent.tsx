@@ -4,9 +4,11 @@ import { useCallback, useState } from "react";
 import Markdown from "@/src/components/ui/Markdown";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import StockBadge from "@/src/components/ui/StockBadge";
 import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
 import type { ProductImageData } from "@/src/components/ui/ProductCard";
+import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 
 interface ProductDetails {
     id: string;
@@ -29,6 +31,13 @@ interface Props {
 export default function ProductDetailsContent({ product }: Props) {
     const { addItem } = useCart();
     const { showToast } = useToast();
+    const {
+        show: shippingNudgeShow,
+        newTotal: shippingNudgeTotal,
+        shippingLeft: shippingNudgeLeft,
+        trigger: triggerShippingNudge,
+        dismiss: dismissShippingNudge,
+    } = useShippingNudge();
     const [quantity, setQuantity] = useState(1);
 
     const allImages = product.images.length > 0
@@ -63,11 +72,18 @@ export default function ProductDetailsContent({ product }: Props) {
                 return;
             }
         }
+        triggerShippingNudge(Number(product.price), quantity);
         showToast(`${quantity} × ${product.name} added to cart`, "success");
-    }, [product, quantity, addItem, showToast]);
+    }, [product, quantity, addItem, showToast, triggerShippingNudge]);
 
     return (
         <div className="product-details-page">
+            <ShippingNudgePopup
+                show={shippingNudgeShow}
+                newTotal={shippingNudgeTotal}
+                shippingLeft={shippingNudgeLeft}
+                dismiss={dismissShippingNudge}
+            />
             <div className="product-details-container">
                 {/* Image Gallery */}
                 <div className="product-details-gallery">
