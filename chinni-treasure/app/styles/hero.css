@@ -245,42 +245,6 @@
     color: rgba(245, 240, 232, 0.92);
 }
 
-/* ── Hero Trust Strip ── */
-.hero-trust-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-    margin-top: 24px;
-    padding: 0;
-    border-top: 1px solid rgba(212, 175, 55, 0.15);
-    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-}
-
-.hero-trust-strip-item {
-    flex: 1 1 0;
-    min-width: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 8px;
-    color: rgba(245, 240, 232, 0.85);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    border-right: 1px solid rgba(212, 175, 55, 0.12);
-    white-space: nowrap;
-}
-
-.hero-trust-strip-item:last-child {
-    border-right: none;
-}
-
-.hero-trust-strip-icon {
-    font-size: 0.9rem;
-    line-height: 1;
-}
-
 /* ── Hero Story Card ── */
 .hero-story-card {
     background: rgba(10, 10, 10, 0.7);
