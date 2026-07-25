@@ -115,7 +115,7 @@ const CatalogueProductSchema = z.object({
   images: z.array(ProductImageSchema).optional(),
 });
 
-const CatalogueProductsResponseSchema = z.union([
+export const CatalogueProductsResponseSchema = z.union([
   z.object({ products: z.array(CatalogueProductSchema) }),
   z.array(CatalogueProductSchema),
 ]);

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { ProductImageData } from "./ProductCard";
 import {
@@ -104,7 +104,7 @@ export default function ProductImageGallery({ images, productName }: Props) {
                     {failedImages.has(selectedIndex) ? (
                         <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0 }}>Image unavailable</div>
                     ) : (
-                        <Image
+                        <FallbackImage
                             src={selectedImage.url}
                             alt={`${productName} - Image ${selectedIndex + 1}`}
                             fill
@@ -169,7 +169,7 @@ export default function ProductImageGallery({ images, productName }: Props) {
                             {failedImages.has(idx) ? (
                                 <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0, fontSize: 10 }}>N/A</div>
                             ) : (
-                                <Image
+                                <FallbackImage
                                     src={image.url}
                                     alt={`${productName} thumbnail ${idx + 1}`}
                                     fill
@@ -234,7 +234,7 @@ export default function ProductImageGallery({ images, productName }: Props) {
                             {failedImages.has(selectedIndex) ? (
                                 <div className="gallery-empty-placeholder" style={{ position: "absolute", inset: 0 }}>Image unavailable</div>
                             ) : (
-                                <Image
+                                <FallbackImage
                                     src={selectedImage.url}
                                     alt={`${productName} - Image ${selectedIndex + 1}`}
                                     fill

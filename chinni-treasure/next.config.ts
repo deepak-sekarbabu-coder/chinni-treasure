@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["jspdf", "exceljs", "react-markdown", "jsbarcode"],
   },
   images: {
+    // When the Vercel free-tier optimization quota is exhausted, set
+    // NEXT_PUBLIC_IMAGE_UNOPTIMIZED=true in .env to disable the
+    // optimizer at build time.  The FallbackImage component will
+    // automatically render plain <img> tags instead.
+    unoptimized: process.env.NEXT_PUBLIC_IMAGE_UNOPTIMIZED === "true",
     remotePatterns: [
       {
         protocol: "https",

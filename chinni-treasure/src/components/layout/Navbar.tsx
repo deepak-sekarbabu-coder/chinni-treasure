@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/components/cart/CartProvider";
 import NavCartDropdown from "@/src/components/layout/NavCartDropdown";
@@ -63,13 +63,14 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link href="/" className="nav-brand" aria-label="Chinni Treasure - Little Love home page">
           <div className="brand-logo-wrap">
-            <Image
+            <FallbackImage
               src="/images/branding/logo.png"
               alt="Chinni Treasure Little Love logo"
               width={64}
               height={64}
               loading="eager"
               quality={75}
+              unoptimized
               className="brand-logo-image"
             />
           </div>

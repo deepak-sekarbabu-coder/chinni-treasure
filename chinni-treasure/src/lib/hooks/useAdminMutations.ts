@@ -25,7 +25,6 @@ import type {
   ProductsResponse,
   UpdateCategoryInput,
   UpdateOrderStatusInput,
-  UpdateTrackingInput,
 } from "@/src/lib/api/schemas";
 
 function invalidateAdminQueries(queryClient: ReturnType<typeof useQueryClient>) {

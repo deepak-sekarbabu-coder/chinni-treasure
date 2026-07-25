@@ -323,6 +323,18 @@ async function main() {
   }
 
   // Output as TypeScript
+  const seedOrdersJson = JSON.stringify(
+    orders.map((o) => ({
+      ...o,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- orderNumber excluded from rest
+      items: orderItems.filter((i) => i.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- orderNumber excluded from rest
+      statusHistory: orderStatusHistory.filter((h) => h.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
+    })),
+    null,
+    2,
+  );
+
   const output = `import type { ProductBadge } from "@prisma/client";
 
 export const SEED_CATEGORIES = ${JSON.stringify(categories, null, 2)};
@@ -382,15 +394,7 @@ export interface SeedOrder {
   statusHistory: { status: string; notes: string | null; createdAt: string | null }[];
 }
 
-export const SEED_ORDERS: SeedOrder[] = ${JSON.stringify(
-    orders.map((o) => ({
-      ...o,
-      items: orderItems.filter((i) => i.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
-      statusHistory: orderStatusHistory.filter((h) => h.orderNumber === o.orderNumber).map(({ orderNumber, ...rest }) => rest),
-    })),
-    null,
-    2,
-  )};
+export const SEED_ORDERS: SeedOrder[] = ${seedOrdersJson};
 `;
 
   const fs = await import("fs");

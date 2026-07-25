@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useCallback, useState } from "react";
 import type { Category, Product } from "@/src/lib/api/schemas";
 import type { ProductFilters } from "@/app/admin/useAdminPageState";
@@ -227,7 +227,7 @@ function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
     <tr className={`product-table-row ${isDeleting ? "removing" : ""}`}>
       <td>
         {hasValidImage ? (
-          <Image src={primaryImage} alt={product.name} width={40} height={50} className="product-img" onError={() => setImgFailed(true)} />
+          <FallbackImage src={primaryImage} alt={product.name} width={40} height={50} className="product-img" onError={() => setImgFailed(true)} />
         ) : (
           <div className="product-img-placeholder" />
         )}

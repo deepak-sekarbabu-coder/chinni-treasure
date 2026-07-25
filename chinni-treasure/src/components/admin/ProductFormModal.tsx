@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useState } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
@@ -258,7 +258,7 @@ export default function ProductFormModal({
                             {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
                               <div className="product-img-placeholder" style={{ width: 80, height: 80 }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
                             ) : (
-                              <Image src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" onError={() => handleImageError(idx)} />
+                              <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" onError={() => handleImageError(idx)} />
                             )}
                           </div>
                           <div className="image-preview-info">

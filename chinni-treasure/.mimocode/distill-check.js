@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+import Database from 'better-sqlite3';
 const db = new Database('C:\\Users\\deepa\\.local\\share\\mimocode\\mimicode.db', { readonly: true });
 
 console.log('=== TABLES ===');

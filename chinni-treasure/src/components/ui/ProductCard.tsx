@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import Link from "next/link";
 import Markdown from "./Markdown";
 import StockBadge from "./StockBadge";
@@ -62,7 +62,7 @@ export default function ProductCard({
     >
       <Link href={`/catalogue/${product.id}`} className="product-card-image-link">
         <div className="product-card-image">
-          <Image
+          <FallbackImage
             src={imgFailed ? PLACEHOLDER_SVG : primaryImage}
             alt={product.name}
             fill

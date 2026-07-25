@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 
 interface CartItem {
   productId: string;
@@ -70,7 +70,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
             <div className="order-summary-items">
               {items.map((item) => (
                 <div key={item.productId} className="order-summary-item">
-                  <Image
+                  <FallbackImage
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
                     width={60}

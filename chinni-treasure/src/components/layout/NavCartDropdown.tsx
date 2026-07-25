@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 
 interface CartItem {
   productId: string;
@@ -32,7 +32,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onClose 
         ) : (
           items.map((item) => (
             <div key={item.productId} className="cart-dropdown-item">
-              <Image src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} sizes="50px" quality={75} />
+              <FallbackImage src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} sizes="50px" quality={75} />
               <div className="cart-dropdown-item-info">
                 <h5>{item.name}</h5>
                 <p>Qty: {item.quantity} &times; ₹{item.price.toFixed(2)}</p>

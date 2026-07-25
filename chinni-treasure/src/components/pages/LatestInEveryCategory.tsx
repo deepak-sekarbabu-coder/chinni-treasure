@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import Image from "next/image";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import Link from "next/link";
 import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER } from "@/src/lib/images";
 import { fetchLatestCategories } from "@/src/lib/api";
@@ -50,7 +50,7 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
         aria-label={`View ${product.name}`}
       >
         <div className="latest-category-card-image">
-          <Image
+          <FallbackImage
             src={imgFailed ? PLACEHOLDER_SVG : primaryImage}
             alt={product.name}
             fill

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
 
 interface Props {
@@ -570,11 +571,13 @@ ${labelHTML}
                 Packaging Date: <span id="displayPackDate">{formatDisplayDate(packDate)}</span>
               </div>
               <div className="title">
-                <img
+                <Image
                   id="labelLogoSmall"
                   className="logo-small"
                   src="/Final1.jpg"
                   alt="Chinni Treasure"
+                  width={40}
+                  height={40}
                 />
                 CHINNI TREASURE
               </div>
@@ -653,11 +656,13 @@ ${labelHTML}
                   </div>
                   <div className="through-cell">
                     <div className="content" id="displayThrough">
-                      <img
+                      <Image
                         id="labelLogoThrough"
                         className="logo-through"
                         src="/Final1.jpg"
                         alt="Chinni Treasure"
+                        width={60}
+                        height={60}
                       />
                     </div>
                   </div>
