@@ -129,3 +129,11 @@
 .input-cream {
     background: var(--cream-light);
 }
+
+/* ── Form Helper Text ── */
+.form-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.5;
+}

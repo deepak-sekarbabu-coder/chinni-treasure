@@ -3,12 +3,13 @@
 interface Step {
   number: number;
   label: string;
+  description: string;
 }
 
 const STEPS: Step[] = [
-  { number: 1, label: "Personal" },
-  { number: 2, label: "Delivery" },
-  { number: 3, label: "Payment" },
+  { number: 1, label: "Personal", description: "Who is this order for?" },
+  { number: 2, label: "Delivery", description: "Where should we send it?" },
+  { number: 3, label: "Payment", description: "Pay and confirm" },
 ];
 
 interface CheckoutProgressProps {
@@ -18,6 +19,9 @@ interface CheckoutProgressProps {
 export default function CheckoutProgress({ currentStep }: CheckoutProgressProps) {
   return (
     <div className="checkout-progress" role="navigation" aria-label="Checkout progress">
+      <div className="checkout-progress-step-label" aria-live="polite">
+        Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1]?.label}
+      </div>
       <div className={`checkout-progress-bar step-${currentStep}`}>
         {STEPS.map((step, index) => {
           const isCompleted = currentStep > step.number;
@@ -43,12 +47,10 @@ export default function CheckoutProgress({ currentStep }: CheckoutProgressProps)
                 {!isLast && <div className="checkout-step-connector" />}
               </div>
               <span className="checkout-step-label">{step.label}</span>
+              <span className="checkout-step-desc">{step.description}</span>
             </div>
           );
         })}
-      </div>
-      <div className="checkout-step-name" aria-live="polite">
-        Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1]?.label ?? ""}
       </div>
     </div>
   );

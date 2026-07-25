@@ -205,7 +205,8 @@
         background: var(--white);
         border-top: 1px solid var(--cream);
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-        padding: 12px 16px;
+        padding: 14px 16px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
         animation: slideUpBar 0.35s var(--ease-out) both;
     }
 
@@ -213,7 +214,7 @@
         display: grid;
         grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
         align-items: center;
-        gap: 12px;
+        gap: 16px;
         max-width: 1200px;
         margin: 0 auto;
     }
@@ -951,7 +952,7 @@
     }
 
     .order-fieldset {
-        padding: 16px 12px;
+        padding: 20px 16px;
     }
 
     .order-summary-card {
@@ -972,7 +973,7 @@
     }
 
     .form-group {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
 
     .form-group input,
@@ -1001,25 +1002,6 @@
     .qty-value {
         font-size: 0.75rem;
         min-width: 14px;
-    }
-
-    .sticky-checkout-bar {
-        padding: 10px 12px;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .sticky-checkout-bar-inner {
-        grid-template-columns: minmax(58px, max-content) minmax(0, 1fr);
-        gap: 8px;
-    }
-
-    .sticky-checkout-label {
-        font-size: 0.55rem;
-        letter-spacing: 0.8px;
-    }
-
-    .sticky-checkout-price {
-        font-size: 0.95rem;
     }
 
     .sticky-checkout-btn {
@@ -1067,3 +1049,5 @@
         padding: 12px;
     }
 }
+
+/* Improved mobile spacing for checkout form fields */

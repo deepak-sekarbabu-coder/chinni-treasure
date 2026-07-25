@@ -86,6 +86,7 @@ function PersonalDetailsStep({ form, errors, handleChange, setForm, setErrors }:
           <label htmlFor="phone">Phone <span className="required">*</span></label>
           <input type="tel" id="phone" name="phone" value={form.phone} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10); setForm((prev) => ({ ...prev, phone: cleaned })); if (errors.phone) setErrors((prev) => { const n = { ...prev }; delete n.phone; return n; }); }} className={errors.phone ? "error" : ""} maxLength={10} inputMode="numeric" autoComplete="tel" aria-describedby={errors.phone ? "phone-error" : undefined} aria-invalid={!!errors.phone} />
           {errors.phone && <span id="phone-error" className="form-error visible">{errors.phone}</span>}
+          {!errors.phone && <span className="form-hint">We&apos;ll use this to update you on your order</span>}
         </div>
       </div>
     </fieldset>
@@ -140,6 +141,7 @@ function DeliveryDetailsStep({ form, errors, handleChange, setForm, setErrors, i
         <label htmlFor="zipCode">PIN Code <span className="required">*</span></label>
         <input type="text" id="zipCode" name="zipCode" value={form.zipCode} onChange={(e) => { const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6); setForm((prev) => ({ ...prev, zipCode: cleaned })); if (errors.zipCode) setErrors((prev) => { const n = { ...prev }; delete n.zipCode; return n; }); }} className={errors.zipCode ? "error" : ""} maxLength={6} inputMode="numeric" autoComplete="postal-code" aria-describedby={errors.zipCode ? "zipCode-error" : undefined} aria-invalid={!!errors.zipCode} />
         {errors.zipCode && <span id="zipCode-error" className="form-error visible">{errors.zipCode}</span>}
+        {!errors.zipCode && <span className="form-hint">6-digit delivery PIN code</span>}
       </div>
     </fieldset>
   );
@@ -231,6 +233,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, on
             <span className="payment-method-desc">Bank Details</span>
           </label>
         </div>
+        <p className="form-hint">Pay securely online with Razorpay or transfer directly to our bank account. All payments are encrypted.</p>
 
         {form.paymentMethod === "razorpay" ? (
           <div className="razorpay-payment-block">
@@ -406,9 +409,23 @@ export default function OrderPage() {
     );
   }
 
+  function focusFirstError(errors: Record<string, string>) {
+    const firstErrorField = Object.keys(errors)[0];
+    if (firstErrorField) {
+      const element = document.getElementById(firstErrorField);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        (element as HTMLElement).focus();
+      }
+    }
+  }
+
   function validateStep(step: number): boolean {
     const errs = runValidation(form, step);
     setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      requestAnimationFrame(() => focusFirstError(errs));
+    }
     return Object.keys(errs).length === 0;
   }
 
@@ -454,7 +471,10 @@ export default function OrderPage() {
     }
     const errs = validateAll();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      requestAnimationFrame(() => focusFirstError(errs));
+      return;
+    }
 
     if (grandTotal <= 0) {
       showToast("Cart total must be greater than zero", "error");
@@ -547,7 +567,10 @@ export default function OrderPage() {
 
     const errs = validateAll();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      requestAnimationFrame(() => focusFirstError(errs));
+      return;
+    }
 
     try {
       const order = await placeOrder.mutateAsync({
