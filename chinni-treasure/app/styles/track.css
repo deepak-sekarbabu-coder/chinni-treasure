@@ -14,11 +14,24 @@
     text-shadow: 0 2px 16px rgba(212, 175, 55, 0.06), 0 4px 32px rgba(0, 0, 0, 0.2);
 }
 
-.order-hero p {
+.track-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 4px;
+    padding: 10px 20px;
+    margin-top: 8px;
+    font-size: 0.9rem;
     color: var(--text-muted);
-    font-size: 0.95rem;
     max-width: 500px;
-    margin: 0 auto;
+}
+
+.track-info-icon {
+    font-size: 1.1rem;
+    color: var(--gold);
+    flex-shrink: 0;
 }
 
 .track-toggle {

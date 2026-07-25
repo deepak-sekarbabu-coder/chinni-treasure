@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useCallback, useRef, useState } from "react";
+import { useToast } from "@/src/components/ui/ToastProvider";
 
 interface OrderItem {
   id: string;
@@ -259,6 +260,15 @@ async function generateInvoice(order: OrderData, logoBase64?: string | null) {
 export default function ConfirmationDetails({ order }: { order: OrderData }) {
   const logoRef = useRef<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const { showToast } = useToast();
+
+  function copyOrderId() {
+    navigator.clipboard.writeText(order.orderNumber).then(() => {
+      showToast("Order ID copied to clipboard", "success");
+    }).catch(() => {
+      showToast("Failed to copy Order ID", "error");
+    });
+  }
 
   useEffect(() => {
     fetch("/images/branding/logo.png")
@@ -336,6 +346,9 @@ export default function ConfirmationDetails({ order }: { order: OrderData }) {
       </p>
 
       <div className="confirmation-actions" style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+        <button type="button" className="btn btn-primary" onClick={copyOrderId}>
+          Copy Order ID
+        </button>
         <button type="button" className="btn btn-primary" onClick={downloadInvoice} disabled={downloading}>
           {downloading ? "Downloading..." : "Download Invoice"}
         </button>

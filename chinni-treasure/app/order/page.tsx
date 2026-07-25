@@ -392,17 +392,27 @@ export default function OrderPage() {
           <SectionHeader
             subtitle="Checkout"
             title="Your Cart is Empty"
-            description="Add some items to your cart before proceeding to checkout."
+            description="Your bag is waiting — explore our collection and find something you love."
             style={{ marginBottom: "48px" }}
           />
           <div className="empty-cart-guard">
+            <div className="empty-cart-icon" aria-hidden="true">🛍️</div>
             <p className="empty-cart-guard-text">
               Looks like you haven&apos;t added anything to your cart yet. Browse our
-              collection and add items before placing an order.
+              curated collection of artisan-crafted luxury goods and bring something
+              special home.
             </p>
-            <Link href="/catalogue" className="btn btn-dark">
-              Browse Products
-            </Link>
+            <div className="empty-cart-actions">
+              <Link href="/catalogue" className="btn btn-primary">
+                Continue Shopping
+              </Link>
+              <Link href="/" className="btn btn-secondary">
+                Back to Home
+              </Link>
+            </div>
+            <p className="empty-cart-hint">
+              Free shipping on all orders above ₹599
+            </p>
           </div>
         </section>
       </div>

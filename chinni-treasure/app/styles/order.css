@@ -258,6 +258,11 @@
     margin: 0 auto;
 }
 
+.empty-cart-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
 .empty-cart-guard-text {
     font-family: var(--font-sans);
     font-size: 1rem;
@@ -265,6 +270,21 @@
     line-height: 1.7;
     margin-bottom: 32px;
     max-width: 400px;
+}
+
+.empty-cart-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.empty-cart-hint {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 8px;
 }
 
 /* ===== PAYMENT METHOD SELECTOR ===== */

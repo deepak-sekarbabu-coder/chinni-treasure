@@ -57,7 +57,10 @@ export default function TrackPage() {
     <div style={{ paddingTop: "72px" }}>
       <section className="order-hero" aria-labelledby="track-heading">
         <h1 id="track-heading">Track Your Order</h1>
-        <p>Search by your Order ID or Phone Number to view your orders and their status.</p>
+        <div className="track-info" role="note">
+          <span className="track-info-icon" aria-hidden="true">ℹ</span>
+          <span>Search by your Order ID or Phone Number to view your orders and their status.</span>
+        </div>
       </section>
 
       <section className="section" style={{ maxWidth: "600px", margin: "0 auto" }}>
@@ -94,10 +97,11 @@ export default function TrackPage() {
                 <input
                   type="text"
                   id="track-order-id"
-                  placeholder="e.g. ORD-..."
+                  placeholder="e.g. ORD-20260725-001"
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                 />
+                <span className="form-hint">Found in your order confirmation email or invoice</span>
               </div>
             ) : (
               <div className="form-group">
@@ -110,6 +114,7 @@ export default function TrackPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 />
+                <span className="form-hint">The phone number used when placing your order</span>
               </div>
             )}
 

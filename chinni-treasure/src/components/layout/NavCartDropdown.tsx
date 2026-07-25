@@ -26,9 +26,14 @@ export default function NavCartDropdown({ items, total, open, onRemove, onClose 
       <h4>Shopping Cart</h4>
       <div className="cart-dropdown-items" id="cart-dropdown-items">
         {items.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center", padding: "24px 0" }}>
-            Your cart is empty
-          </p>
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "16px" }}>
+              Your cart is empty
+            </p>
+            <Link href="/catalogue" className="btn btn-primary" style={{ fontSize: "0.7rem", padding: "12px 24px" }} onClick={onClose}>
+              Continue Shopping
+            </Link>
+          </div>
         ) : (
           items.map((item) => (
             <div key={item.productId} className="cart-dropdown-item">
