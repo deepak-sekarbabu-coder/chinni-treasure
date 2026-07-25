@@ -92,23 +92,104 @@
     line-height: 1.2;
 }
 
+/* Enhanced: category name as a clickable link */
+.latest-category-name-link {
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+}
+
+.latest-category-name-link:hover .latest-category-name {
+    color: var(--gold-deep);
+}
+
+/* Enhanced: "Shop Category" button-style link in card header */
 .latest-category-viewall {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--gold-deep);
+    color: var(--gold-dark);
     text-decoration: none;
     white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.06);
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .latest-category-viewall:hover {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+    box-shadow: 0 2px 12px rgba(212, 175, 55, 0.25);
+}
+
+/* Section-level "View All Categories" link */
+.latest-category-viewall-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gold-deep);
+    text-decoration: none;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 999px;
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.latest-category-viewall-link:hover {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+}
+
+.latest-category-viewall-link svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+/* "Shop [Category]" link at the bottom of each card */
+.latest-category-shop-link {
+    display: block;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    text-decoration: none;
+    padding: 8px 0;
+    margin-top: auto;
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
+    transition: color var(--transition-fast);
+}
+
+.latest-category-shop-link:hover {
     color: var(--gold);
 }
+
+/* Carousel nav */
 
 .latest-category-card {
     display: flex;

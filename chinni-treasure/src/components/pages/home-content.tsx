@@ -75,11 +75,27 @@ export default function HomeContent({ latestCategories }: Props) {
 
           <div className="hero-actions">
             <Link href="/catalogue" className="btn btn-primary">
-              Explore Collection
+              Shop New Arrivals
             </Link>
-            <Link href="/track" className="btn btn-secondary">
-              Track Your Order
+            <Link href="/catalogue" className="btn btn-secondary">
+              Browse Categories
             </Link>
+          </div>
+
+          {/* Trust Strip */}
+          <div className="hero-trust-strip" aria-label="trust highlights">
+            <div className="hero-trust-strip-item">
+              <span className="hero-trust-strip-icon" aria-hidden="true">🔒</span>
+              <span>Secure Payment</span>
+            </div>
+            <div className="hero-trust-strip-item">
+              <span className="hero-trust-strip-icon" aria-hidden="true">🚚</span>
+              <span>Free Shipping Above ₹599</span>
+            </div>
+            <div className="hero-trust-strip-item">
+              <span className="hero-trust-strip-icon" aria-hidden="true">🛡️</span>
+              <span>Hassle-Free Support</span>
+            </div>
           </div>
         </div>
         <div className="hero-story" aria-hidden="true">

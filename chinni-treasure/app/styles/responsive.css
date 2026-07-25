@@ -413,6 +413,25 @@
         background: var(--gold);
         transition: border-color var(--motion-snappy), background var(--motion-snappy);
     }
+
+    /* Trust strip — stack vertically on tablet/mobile */
+    .hero-trust-strip {
+        flex-direction: column;
+        gap: 4px;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    .hero-trust-strip-item {
+        border-right: none;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        padding: 8px 0;
+        justify-content: center;
+    }
+
+    .hero-trust-strip-item:last-child {
+        border-bottom: none;
+    }
 }
 
 /* ── 640px–767px Phablet / Small Tablet ── */
@@ -534,6 +553,26 @@
 
     .hero-actions .btn {
         width: 100%;
+    }
+
+    /* Trust strip — stack vertically on small mobile */
+    .hero-trust-strip {
+        flex-direction: column;
+        gap: 2px;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    .hero-trust-strip-item {
+        border-right: none;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        padding: 6px 0;
+        justify-content: center;
+        font-size: 0.68rem;
+    }
+
+    .hero-trust-strip-item:last-child {
+        border-bottom: none;
     }
 
     .hero-scroll {

@@ -27,15 +27,21 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
   return (
     <article className="latest-category-block" aria-labelledby={`latest-cat-${category.slug}`}>
       <div className="latest-category-head">
-        <h3 id={`latest-cat-${category.slug}`} className="latest-category-name">
-          {category.name}
-        </h3>
+        <Link
+          href={`/category/${category.slug}`}
+          className="latest-category-name-link"
+          aria-label={`Browse ${category.name} products`}
+        >
+          <h3 id={`latest-cat-${category.slug}`} className="latest-category-name">
+            {category.name}
+          </h3>
+        </Link>
         <Link
           href={`/category/${category.slug}`}
           className="latest-category-viewall"
-          aria-label={`View all ${category.name} products`}
+          aria-label={`Shop all ${category.name} products`}
         >
-          View All
+          Shop Category
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12,5 19,12 12,19" />
@@ -90,8 +96,14 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
               </span>
             )}
           </div>
-          <span className="latest-category-view-product">View Product</span>
         </div>
+      </Link>
+      <Link
+        href={`/category/${category.slug}`}
+        className="latest-category-shop-link"
+        aria-label={`Shop ${category.name} products`}
+      >
+        Shop {category.name}
       </Link>
     </article>
   );
@@ -156,6 +168,13 @@ export default function LatestInEveryCategory({ initialSections }: Props) {
         </p>
         <h2>Latest in Every Category</h2>
         <p>Discover the newest treasure from each of our collections.</p>
+        <Link href="/catalogue" className="latest-category-viewall-link">
+          View All Categories
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12,5 19,12 12,19" />
+          </svg>
+        </Link>
       </div>
 
       {loading ? (
