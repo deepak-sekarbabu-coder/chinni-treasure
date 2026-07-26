@@ -77,8 +77,8 @@ export default function HomeContent({ latestCategories }: Props) {
             <Link href="/catalogue" className="btn btn-primary">
               Shop New Arrivals
             </Link>
-            <Link href="/catalogue" className="btn btn-secondary">
-              Browse Categories
+            <Link href="/track" className="btn btn-secondary">
+              Track your Order
             </Link>
           </div>
 
