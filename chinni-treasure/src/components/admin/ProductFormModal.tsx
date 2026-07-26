@@ -53,6 +53,7 @@ export default function ProductFormModal({
   const [editUrl, setEditUrl] = useState("");
   const [imageUrlError, setImageUrlError] = useState("");
   const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   function setFormField(field: keyof ProductFormData, value: string) {
     onFormChange({ ...productForm, [field]: value });
@@ -254,16 +255,29 @@ export default function ProductFormModal({
                     <div className="image-grid-preview">
                       {productForm.images.map((img, idx) => (
                         <div key={idx} className={`image-preview-card ${img.isPrimary ? "primary" : ""} ${editingIndex === idx ? "editing" : ""}`}>
-                          <div className="image-preview-thumb">
-                            {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
-                              <div className="product-img-placeholder" style={{ width: 80, height: 80 }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
-                            ) : (
-                              <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={80} height={80} className="image-preview-img" onError={() => handleImageError(idx)} />
-                            )}
-                          </div>
-                          <div className="image-preview-info">
+                          <div className="image-preview-card-header">
                             <span className="image-preview-order">#{idx + 1}</span>
-                            {img.isPrimary && <span className="image-primary-badge">Primary</span>}
+                            {img.isPrimary && <span className="image-primary-badge">★ Primary</span>}
+                          </div>
+                          <div
+                            className="image-preview-thumb"
+                            onClick={() => {
+                              if (!failedImages.has(idx) && isValidImageUrl(img.url)) {
+                                setZoomImageUrl(img.url);
+                              }
+                            }}
+                            title="Click to view high-res preview"
+                          >
+                            {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
+                              <div className="product-img-placeholder" style={{ width: "100%", height: "100%" }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
+                            ) : (
+                              <>
+                                <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={300} height={300} className="image-preview-img" onError={() => handleImageError(idx)} />
+                                <div className="image-zoom-overlay">
+                                  <span>🔍 Inspect</span>
+                                </div>
+                              </>
+                            )}
                           </div>
                           {editingIndex === idx ? (
                             <div className="image-preview-edit">
@@ -297,7 +311,7 @@ export default function ProductFormModal({
                               className={`btn btn-xs ${img.isPrimary ? "btn-gold" : "btn-secondary"}`}
                               onClick={() => setPrimary(idx)}
                               disabled={img.isPrimary || editingIndex !== null}
-                              title="Set as primary image"
+                              title={img.isPrimary ? "Primary image" : "Set as primary image"}
                             >
                               ★
                             </button>
@@ -306,18 +320,18 @@ export default function ProductFormModal({
                               className="btn btn-xs btn-secondary"
                               onClick={() => moveImage(idx, -1)}
                               disabled={idx === 0 || editingIndex !== null}
-                              title="Move up"
+                              title="Move left"
                             >
-                              ↑
+                              ←
                             </button>
                             <button
                               type="button"
                               className="btn btn-xs btn-secondary"
                               onClick={() => moveImage(idx, 1)}
                               disabled={idx === productForm.images.length - 1 || editingIndex !== null}
-                              title="Move down"
+                              title="Move right"
                             >
-                              ↓
+                              →
                             </button>
                             <button
                               type="button"
@@ -330,12 +344,12 @@ export default function ProductFormModal({
                             </button>
                             <button
                               type="button"
-                              className="btn btn-xs btn-danger"
+                              className="btn btn-xs btn-danger image-delete-btn"
                               onClick={() => removeImage(idx)}
                               disabled={editingIndex !== null}
-                              title="Remove image"
+                              title="Delete image"
                             >
-                              ✕
+                              🗑️ Delete
                             </button>
                           </div>
                         </div>
@@ -358,6 +372,20 @@ export default function ProductFormModal({
           </form>
         </div>
       </div>
+
+      {/* Lightbox / High-Res Preview Overlay */}
+      {zoomImageUrl && (
+        <div className="lightbox-overlay" onClick={() => setZoomImageUrl(null)} style={{ opacity: 1, visibility: "visible" }}>
+          <div className="lightbox-container" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="lightbox-close" onClick={() => setZoomImageUrl(null)} aria-label="Close high-res preview">
+              ✕
+            </button>
+            <div className="lightbox-image-wrapper">
+              <FallbackImage src={zoomImageUrl} alt="Full resolution product image preview" width={800} height={800} className="lightbox-image" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

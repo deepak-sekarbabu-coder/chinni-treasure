@@ -345,7 +345,7 @@
 
 /* ── Product Form Modal ── */
 .product-form-modal {
-    max-width: 760px;
+    max-width: 860px;
     max-height: 92vh;
     display: flex;
     flex-direction: column;
