@@ -1,6 +1,6 @@
 # Chinni Treasure — Improvement Tracker
 
-> Last updated: 2026-07-18 | Project: chinni-treasure | Docs validated against live codebase
+> Last updated: 2026-07-25 | Project: chinni-treasure | Docs validated against live codebase
 
 ---
 
@@ -72,9 +72,13 @@
 - **Typed API client** with Zod schemas for both input and response validation
 - **React Query** for server state with proper query key management
 - **Clean separation**: `src/lib/`, `src/components/`, `src/types/` with a typed API layer
-- **38 test files** covering API, library, components, and hooks
+- **45+ test files** covering API, library, components, and hooks
 - **Comprehensive accessibility**: skip links, ARIA labels, `prefers-reduced-motion`, `prefers-contrast`, focus management
-- **Prisma migrations** with incremental improvements (versioning, stock constraints)
+- **Prisma migrations** with incremental improvements (versioning, stock constraints, category query indexes)
+- **30 modular CSS files** under `app/styles/` with consistent CSS variable tokens
+- **Product image gallery + multi-image support** with primary image management
+- **Shipping nudge** (free-shipping threshold progress) for conversion uplift
+- **Category platform**: `/category/[slug]` pages, "Latest in Every Category" homepage section, full admin CRUD
 
 ---
 
@@ -90,3 +94,4 @@
 | 2026-06-20 | `ec0302b` | #17 Startup env validation |
 | 2026-07-12 | feature work | Razorpay Standard Checkout (replaces PhonePe), `compareAtPrice` discounts, product & category `isActive` toggles, **category management (CRUD, `/category/[slug]` pages, "Latest in Every Category" homepage section)**, Vercel Analytics, gallery, dynamic product `generateMetadata`, OOS handling |
 | 2026-07-18 | validation | Docs re-validated against live codebase; all category features confirmed implemented; gallery, breadcrumbs, latest-category CSS module confirmed |
+| 2026-07-25 | validation | Docs re-validated; CSS modules count updated to 30, test file count updated to 45+, product detail pages, shipping nudge, FallbackImage, SkeletonLoader, Markdown/JsonLd/Breadcrumbs/ProductImageGallery components, DIRECT_URL & NEXT_PUBLIC_IMAGE_UNOPTIMIZED env vars, jsbarcode for labels, Speed Insights, product/category form modals, shipping label modal |

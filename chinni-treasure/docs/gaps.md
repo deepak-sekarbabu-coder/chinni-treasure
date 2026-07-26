@@ -1,6 +1,6 @@
 # Codebase Architectural Gaps & Technical Debt
 
-> **Last validated:** July 18, 2026 — Gaps and statuses re-validated against current codebase.
+> **Last validated:** July 25, 2026 — Gaps and statuses re-validated against current codebase.
 
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 
@@ -13,7 +13,7 @@ None currently identified.
 * ~~**Monolithic Styling (`app/globals.css`)**~~
   * ~~**Issue:** The CSS file has grown to ~6,000 lines (5,987 as of last count), containing all styles for the entire application. This makes maintainability and CSS-variable management extremely difficult.~~
   * ~~**Recommendation:** Decompose the stylesheet into component-specific modules or CSS files. Adopt a consistent naming convention or consider CSS-in-JS (though Vanilla CSS is the current mandate).~~
-  * **RESOLVED (June 27, 2026):** `app/globals.css` has been decomposed from ~5,025 lines into **26 modular CSS files** under `app/styles/`. The entry point now contains only 48 lines of `@import` statements. See `app/styles/` for the full breakdown.
+  * **RESOLVED (June 27, 2026):** `app/globals.css` has been decomposed from ~5,025 lines into **30 modular CSS files** under `app/styles/`. The entry point now contains only `@import` statements. See `app/styles/` for the full breakdown.
 
 * **Inconsistent Data Fetching Patterns (Improving)**
   * **Issue:** React Query (`@tanstack/react-query`) is used for admin dashboard data fetching (orders, stats, products), but some pages still use client-side effects or server rendering for data hydration.
@@ -23,12 +23,12 @@ None currently identified.
 ## 3. Minor Gaps (Improvement / Best Practice)
 
 * **Incomplete Testing Coverage**
-  * **Issue:** Unit and integration tests are strong — 26 test files under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@playwright/test` is now a dev dependency (E2E groundwork), but no Playwright suite or `playwright.config` exists yet.
+  * **Issue:** Unit and integration tests are strong — **45+ test files** under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@testing-library/jest-dom` and `@testing-library/user-event` are dev dependencies; `@playwright/test` could be added for E2E groundwork.
   * **Recommendation:** Implement E2E tests with Playwright covering critical user journeys (browse → checkout → payment, admin order advancement).
 
-* **Lack of Dynamic Metadata** (Partially Resolved)
-  * **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`. Product detail pages (`app/catalogue/[id]/page.tsx`) now implement dynamic `generateMetadata` sourced from the database; category/listing pages (`app/catalogue/page.tsx`) still lack it, limiting search visibility for browsable collections.
-  * **Resolution:** Dynamic product-detail metadata added (SEO work, July 2026). Category/listing pages remain pending.
+* **Lack of Dynamic Metadata** (Mostly Resolved)
+  * **Issue:** Basic SEO is handled via `sitemap.ts` and `robots.txt`. Product detail pages (`app/catalogue/[id]/page.tsx`) and category pages (`app/category/[slug]/page.tsx`) implement dynamic `generateMetadata` sourced from the database. The main catalogue listing page (`app/catalogue/page.tsx`) still lacks it, limiting search visibility for browsable collections.
+  * **Resolution:** Dynamic product-detail metadata + category metadata added (SEO work, July 2026). Top-level catalogue/listing pages remain pending.
   * **Recommendation:** Add `generateMetadata` to `app/catalogue/page.tsx` and any other dynamic listing pages.
 
 * **In-Memory Cache Not Shared Across Serverless Instances**

@@ -28,15 +28,15 @@ Chinni Treasure is a luxury e-commerce storefront built on Next.js 16, React 19,
 
 - Framework: Next.js 16.2.6 with the App Router and React 19.2.4
 - Database: PostgreSQL with Prisma ORM 7.8.0 via `@prisma/adapter-pg`
-- Styling: Modular raw CSS under `app/styles/` (29 files) with custom CSS variables and no Tailwind usage
+- Styling: Modular raw CSS under `app/styles/` (30 files) with custom CSS variables and no Tailwind usage
 - State management: React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
-- Server state: React Query (`@tanstack/react-query` v5.101.0) for client-side caching and data fetch orchestration
+- Server state: React Query (`@tanstack/react-query` v5.101.0 + devtools) for client-side caching and data fetch orchestration
 - Authentication: JWT-based admin auth stored in an `HttpOnly` `session` cookie
 - Validation: Zod v4.4.3 for checkout, cart, and API request/response validation
 - Payments: Razorpay Standard Checkout plus manual UPI/bank transfer flows
-- Utility stack: `dayjs`, `exceljs`, `jspdf`, `qrcode.react`, `sharp`, `react-markdown`
-- Analytics: Vercel Analytics
-- Testing: Vitest v4.1.7 with @testing-library/react v16.3.2 and jsdom
+- Utility stack: `dayjs`, `exceljs`, `jspdf`, `jsbarcode`, `sharp`, `react-markdown`
+- Analytics: Vercel Analytics + Speed Insights
+- Testing: Vitest v4.1.7 with @testing-library/react v16.3.2, @testing-library/jest-dom, @testing-library/user-event, and jsdom
 
 ---
 
@@ -140,31 +140,34 @@ All modifications must follow these repository conventions:
 chinni-treasure/
 ├── app/                        # Next.js App Router pages and API routes
 │   ├── admin/                  # Protected admin UI and admin state hook
-│   ├── api/                    # Server API handlers for products, orders, auth, payment, stats, and tracking
-│   ├── catalogue/              # Product listing and product detail pages
+│   ├── api/                    # Server API handlers (products, orders, auth, payment, stats, tracking, categories, health)
+│   ├── catalogue/              # Product listing + product detail pages (/catalogue/[id])
 │   ├── category/               # Category browsing pages (/category/[slug])
 │   ├── confirmation/           # Order confirmation pages
 │   ├── docs/                   # API docs viewer
 │   ├── order/                  # Checkout flow
 │   ├── track/                  # Order tracking experience
-│   ├── styles/                 # Modular raw CSS files (29 files)
+│   ├── styles/                 # Modular raw CSS files (30 files)
 │   ├── globals.css             # CSS entry point that imports the modular styles
 │   └── layout.tsx              # Root layout, fonts, providers, navbar, footer
 ├── docs/                       # Project notes and implementation docs
-├── prisma/                      # Prisma schema, seed scripts, and migrations
-├── public/                      # Static assets, manifest, robots, and branding
-├── scripts/                     # One-off automation utilities
+├── prisma/                     # Prisma schema, seed scripts, and migrations (5 migrations)
+├── public/                     # Static assets, manifest, robots, and branding
+├── scripts/                    # One-off automation utilities (Excel, seed, repro)
 ├── src/
-│   ├── components/              # UI, layout, cart, order, admin, and page-level components
-│   ├── lib/                     # Auth, Prisma, cache, utilities, hooks, API schema helpers
-│   ├── types/                   # Shared TypeScript types and Razorpay SDK typings
-│   └── __tests__/               # Vitest test suites and shared test setup
-├── proxy.ts                     # Middleware for admin route protection
-├── prisma.config.ts             # Prisma config
-├── next.config.ts               # Next.js config
-├── vitest.config.ts             # Vitest config
-├── package.json                 # Project scripts and dependencies
-└── .env.example                 # Environment variable template
+│   ├── components/             # UI, layout, cart, order, admin, and page-level components
+│   ├── lib/                    # Auth, Prisma, cache, utilities, hooks, API schema helpers, images
+│   ├── types/                  # Shared TypeScript types and Razorpay SDK typings
+│   └── __tests__/              # Vitest test suites (45 test files) and shared test setup
+├── proxy.ts                    # Middleware for admin route protection (JWT verification)
+├── prisma.config.ts            # Prisma config
+├── next.config.ts              # Next.js config
+├── Dockerfile                  # Container build definition
+├── docker-compose.yml          # Podman/Compose service definition
+├── vitest.config.ts            # Vitest config
+├── eslint.config.mjs           # ESLint flat config
+├── package.json                # Project scripts and dependencies
+└── .env.example                # Environment variable template (includes DIRECT_URL, NEXT_PUBLIC_IMAGE_UNOPTIMIZED)
 ```
 
 ---
@@ -194,21 +197,24 @@ Use the following npm scripts during development and maintenance:
 | `npm run clean` | Remove `.next`, `.turbo`, and `node_modules` |
 | `npm run clean:cache` | Remove `.next` and `.turbo` only |
 | `npm run clean:all` | Clean and reinstall dependencies |
-| `npm run compose:build` | Build container images |
-| `npm run compose:up` | Start container services |
-| `npm run compose:down` | Stop container services |
+| `npm run compose:build` | Build container images (Podman) |
+| `npm run compose:up` | Start container services (Podman) |
+| `npm run compose:down` | Stop container services (Podman) |
+| `npm run fallow` | Run Fallow code quality analysis (complexity, duplication, dead code) |
 
 ### Required Environment Variables
 
 | Variable | Purpose | Required |
 | --- | --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `DATABASE_URL` | PostgreSQL connection string (used by Prisma Client at runtime) | Yes |
+| `DIRECT_URL` | Direct PostgreSQL URL (used by Prisma CLI for migrations/introspection) | Yes, for Prisma CLI |
 | `RAZORPAY_KEY_ID` | Razorpay API key ID | Yes, for payments |
 | `RAZORPAY_KEY_SECRET` | Razorpay API key secret | Yes, for payments |
 | `JWT_SECRET` | Secret for admin session JWT signing | Yes |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (metadata, sitemap, absolute links) | Yes |
 | `ALLOWED_ORIGIN` | Comma-separated list of allowed CORS origins | Yes |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay key exposed to the browser | Yes, for payments |
+| `NEXT_PUBLIC_IMAGE_UNOPTIMIZED` | Set to `true` to disable Next.js image optimization (uses plain `<img>`) | No |
 
 ---
 
