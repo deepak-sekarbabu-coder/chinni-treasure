@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 
+import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+
 interface CartItem {
   productId: string;
   name: string;
@@ -22,8 +24,19 @@ interface Props {
   onUpdateQuantity: (id: string, delta: number) => void;
 }
 
+function formatRupees(value: number) {
+  const normalized = Math.max(0, Math.round(value * 100) / 100);
+  return new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: Number.isInteger(normalized) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(normalized);
+}
+
 export default function OrderSummaryCard({ items, total, shippingCost, grandTotal, onRemove, onUpdateQuantity }: Props) {
   const [summaryOpen, setSummaryOpen] = useState(true);
+
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
+  const progressPercent = Math.min(100, Math.max(0, (total / FREE_SHIPPING_THRESHOLD) * 100));
 
   return (
     <div className="admin-stat-card order-summary-card" style={{ textAlign: "left" }}>
@@ -123,26 +136,60 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
               ))}
             </div>
 
-              <div className="order-summary-totals">
-                <div className="order-summary-total-row">
-                  <span>Subtotal</span>
-                  <span>₹{total.toFixed(2)}</span>
+            {/* Free Shipping Nudge Box during Checkout */}
+            {total < FREE_SHIPPING_THRESHOLD ? (
+              <div className="checkout-shipping-nudge-box">
+                <div className="checkout-nudge-header">
+                  <span className="checkout-nudge-icon">🚚</span>
+                  <div className="checkout-nudge-text">
+                    <p className="checkout-nudge-title">
+                      Add <strong>₹{formatRupees(remainingForFreeShipping)}</strong> more for <strong>FREE Shipping</strong>
+                    </p>
+                    <p className="checkout-nudge-sub">
+                      Subtotal ₹{formatRupees(total)} of ₹{formatRupees(FREE_SHIPPING_THRESHOLD)}
+                    </p>
+                  </div>
                 </div>
-                <div className="order-summary-total-row">
-                  <span>Shipping</span>
-                  {shippingCost < 0 ? (
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>
-                  ) : shippingCost === 0 ? (
-                    <span className="order-summary-free-shipping">Free</span>
-                  ) : (
-                    <span>₹{shippingCost.toFixed(2)}</span>
-                  )}
+                <div
+                  className="checkout-nudge-progress-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={FREE_SHIPPING_THRESHOLD}
+                  aria-valuenow={Math.min(FREE_SHIPPING_THRESHOLD, Math.round(total))}
+                  aria-valuetext={`${formatRupees(total)} of ₹${formatRupees(FREE_SHIPPING_THRESHOLD)} spent`}
+                >
+                  <div className="checkout-nudge-progress-fill" style={{ width: `${progressPercent}%` }} />
                 </div>
-                <div className="order-summary-grand-total">
-                  <span>Total</span>
-                  <span>₹{grandTotal.toFixed(2)}</span>
-                </div>
+                <Link href="/catalogue" className="btn btn-secondary btn-sm checkout-nudge-add-btn">
+                  + Add items
+                </Link>
               </div>
+            ) : (
+              <div className="checkout-free-shipping-unlocked" aria-live="polite">
+                🎉 Free shipping unlocked!
+              </div>
+            )}
+
+            <div className="order-summary-totals">
+              <div className="order-summary-total-row">
+                <span>Subtotal</span>
+                <span>₹{total.toFixed(2)}</span>
+              </div>
+              <div className="order-summary-total-row">
+                <span>Shipping</span>
+                {shippingCost < 0 ? (
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>
+                ) : shippingCost === 0 ? (
+                  <span className="order-summary-free-shipping">Free</span>
+                ) : (
+                  <span>₹{shippingCost.toFixed(2)}</span>
+                )}
+              </div>
+              <div className="order-summary-grand-total">
+                <span>Total</span>
+                <span>₹{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
           </>
         )}
       </div>

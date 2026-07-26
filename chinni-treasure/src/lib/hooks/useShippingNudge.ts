@@ -16,7 +16,6 @@ export interface ShippingNudgeState {
 
 export function useShippingNudge(): ShippingNudgeState {
   const { getTotal } = useCart();
-  const [isMobile, setIsMobile] = useState(false);
   const [show, setShow] = useState(false);
   const [newTotal, setNewTotal] = useState(0);
   const [shippingLeft, setShippingLeft] = useState(0);
@@ -25,7 +24,6 @@ export function useShippingNudge(): ShippingNudgeState {
     const mql = window.matchMedia(MOBILE_BREAKPOINT);
 
     const update = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile(e.matches);
       if (!e.matches) {
         setShow(false);
       }
@@ -43,8 +41,6 @@ export function useShippingNudge(): ShippingNudgeState {
 
   const trigger = useCallback(
     (productPrice: number, quantity: number) => {
-      if (!isMobile) return;
-
       const estimatedTotal = getTotal() + productPrice * quantity;
 
       if (estimatedTotal >= FREE_SHIPPING_THRESHOLD) {
@@ -59,7 +55,7 @@ export function useShippingNudge(): ShippingNudgeState {
       setShippingLeft(remaining);
       setShow(true);
     },
-    [getTotal, isMobile],
+    [getTotal],
   );
 
   return { show, newTotal, shippingLeft, trigger, dismiss };

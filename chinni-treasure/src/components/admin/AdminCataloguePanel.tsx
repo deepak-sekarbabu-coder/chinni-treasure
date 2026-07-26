@@ -66,6 +66,8 @@ export default function AdminCataloguePanel({
   onRequestDelete,
   onPageChange,
 }: Props) {
+  const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
+
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onFilterChange({ search: e.target.value });
@@ -95,6 +97,16 @@ export default function AdminCataloguePanel({
             onChange={handleSearchChange}
             aria-label="Search products"
           />
+          {filters.search && (
+            <button
+              type="button"
+              className="search-clear-btn"
+              onClick={() => onFilterChange({ search: "" })}
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <div className="admin-catalogue-filter-group">
@@ -150,19 +162,48 @@ export default function AdminCataloguePanel({
         </div>
       </div>
 
+      {/* Summary Bar & Active Filters */}
+      <div className="admin-catalogue-summary-bar">
+        <span className="summary-count-text">
+          Showing <strong>{products.length}</strong> product{products.length === 1 ? "" : "s"}
+        </span>
+        {hasActiveFilters && (
+          <div className="active-filter-chips">
+            {filters.search && (
+              <span className="filter-chip">
+                Search: "{filters.search}"
+                <button type="button" onClick={() => onFilterChange({ search: "" })}>✕</button>
+              </span>
+            )}
+            {filters.categoryId && (
+              <span className="filter-chip">
+                Category: {categories.find((c) => c.id === filters.categoryId)?.name || filters.categoryId}
+                <button type="button" onClick={() => onFilterChange({ categoryId: "" })}>✕</button>
+              </span>
+            )}
+            {filters.badge !== "all" && (
+              <span className="filter-chip">
+                Badge: {filters.badge}
+                <button type="button" onClick={() => onFilterChange({ badge: "all" })}>✕</button>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="admin-product-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
               <th>Image</th>
               <th>Name</th>
+              <th>Category</th>
               <th>Code</th>
-              <th>Price</th>
-              <th>MRP</th>
+              <th>Price & MRP</th>
               <th>Stock</th>
               <th>Badge</th>
-              <th>Images</th>
-              <th>Active</th>
+              <th>Gallery</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -177,7 +218,14 @@ export default function AdminCataloguePanel({
               </tr>
             ) : (
               products.map((p) => (
-                <ProductRow key={p.id} product={p} loadingProductId={loadingProductId} onEdit={onEdit} onRequestDelete={onRequestDelete} />
+                <ProductRow
+                  key={p.id}
+                  product={p}
+                  loadingProductId={loadingProductId}
+                  onEdit={onEdit}
+                  onRequestDelete={onRequestDelete}
+                  onPreviewImages={(product) => setLightboxProduct(product)}
+                />
               ))
             )}
           </tbody>
@@ -185,6 +233,14 @@ export default function AdminCataloguePanel({
       </div>
 
       <PaginationBar page={productPage} totalPages={productTotalPages} onPageChange={onPageChange} />
+
+      {/* Table Image Gallery Lightbox Modal */}
+      {lightboxProduct && (
+        <CatalogueProductLightbox
+          product={lightboxProduct}
+          onClose={() => setLightboxProduct(null)}
+        />
+      )}
     </div>
   );
 }
@@ -194,86 +250,175 @@ function SkeletonRows() {
     <tr key={`skeleton-${idx}`} className="product-table-skeleton"
       style={{ animationDelay: `${idx * 0.06}s` }}
     >
-      <td><div className="skeleton-block" style={{ width: "40px", height: "50px", borderRadius: "4px" }} /></td>
+      <td><div className="skeleton-block" style={{ width: "52px", height: "52px", borderRadius: "6px" }} /></td>
       <td><div className="skeleton-text skeleton-text-name" /></td>
+      <td><div className="skeleton-text" style={{ width: "70px" }} /></td>
       <td><div className="skeleton-text skeleton-text-sku" /></td>
       <td><div className="skeleton-text skeleton-text-price" /></td>
-      <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td><div className="skeleton-text skeleton-text-stock" /></td>
       <td><div className="skeleton-text skeleton-text-badge" /></td>
-      <td><div className="skeleton-text" style={{ width: "30px" }} /></td>
+      <td><div className="skeleton-text" style={{ width: "40px" }} /></td>
       <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td>
         <div className="table-actions">
-          <div className="skeleton-block" style={{ width: "50px", height: "28px", borderRadius: "2px" }} />
-          <div className="skeleton-block" style={{ width: "60px", height: "28px", borderRadius: "2px" }} />
+          <div className="skeleton-block" style={{ width: "50px", height: "28px", borderRadius: "4px" }} />
+          <div className="skeleton-block" style={{ width: "60px", height: "28px", borderRadius: "4px" }} />
         </div>
       </td>
     </tr>
   ));
 }
 
-function ProductRow({ product, loadingProductId, onEdit, onRequestDelete }: {
+function ProductRow({
+  product,
+  loadingProductId,
+  onEdit,
+  onRequestDelete,
+  onPreviewImages,
+}: {
   product: Product;
   loadingProductId: string | null;
   onEdit: (p: Product) => void;
   onRequestDelete: (p: Product) => void;
+  onPreviewImages: (p: Product) => void;
 }) {
   const isDeleting = loadingProductId === product.id;
   const primaryImage = product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
   const [imgFailed, setImgFailed] = useState(false);
   const hasValidImage = primaryImage && !imgFailed && /^https?:\/\//.test(primaryImage);
+
+  const priceNum = Number(product.price) || 0;
+  const compareNum = Number(product.compareAtPrice) || 0;
+  const hasDiscount = compareNum > priceNum;
+  const savingsPercent = hasDiscount ? Math.round(((compareNum - priceNum) / compareNum) * 100) : 0;
+  const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
+
   return (
     <tr className={`product-table-row ${isDeleting ? "removing" : ""}`}>
+      <td className="table-img-cell">
+        <div
+          className="table-img-wrapper"
+          onClick={() => onPreviewImages(product)}
+          title="Click to view full image gallery"
+        >
+          {hasValidImage ? (
+            <FallbackImage src={primaryImage} alt={product.name} width={52} height={52} className="product-table-img" onError={() => setImgFailed(true)} />
+          ) : (
+            <div className="product-img-placeholder" style={{ width: 52, height: 52 }} />
+          )}
+          <div className="table-img-zoom-hint">🔍</div>
+        </div>
+      </td>
+      <td className="fw-500 table-name-cell">{product.name}</td>
       <td>
-        {hasValidImage ? (
-          <FallbackImage src={primaryImage} alt={product.name} width={40} height={50} className="product-img" onError={() => setImgFailed(true)} />
+        {product.category?.name ? (
+          <span className="category-pill-badge">{product.category.name}</span>
         ) : (
-          <div className="product-img-placeholder" />
+          <span className="text-muted text-xs">—</span>
         )}
       </td>
-      <td className="fw-500">{product.name}</td>
-      <td className="font-mono text-xs text-muted">{product.sku || "—"}</td>
-      <td className="text-gold-dark fw-600">₹{Number(product.price).toFixed(2)}</td>
-      <td className="text-muted">
-        {product.compareAtPrice ? (
-          <span style={{ textDecoration: "line-through" }}>₹{Number(product.compareAtPrice).toFixed(2)}</span>
-        ) : (
-          <span className="text-muted">—</span>
+      <td className="font-mono text-xs text-muted">
+        {product.sku ? <code className="sku-code">{product.sku}</code> : "—"}
+      </td>
+      <td className="table-price-cell">
+        <div className="price-primary">₹{priceNum.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+        {hasDiscount && (
+          <div className="price-secondary">
+            <span className="price-mrp">₹{compareNum.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <span className="discount-badge">-{savingsPercent}%</span>
+          </div>
         )}
       </td>
       <td>
-        <span className={`stock-badge ${product.stockQuantity <= 0 ? "empty" : product.stockQuantity <= 3 ? "low" : "in-stock"}`}>
-          {product.stockQuantity}
+        <span className={`stock-health-badge ${product.stockQuantity <= 0 ? "out-of-stock" : product.stockQuantity <= 3 ? "low-stock" : "in-stock"}`}>
+          <span className="stock-dot" />
+          {product.stockQuantity <= 0 ? "Out of stock" : product.stockQuantity <= 3 ? `Low (${product.stockQuantity})` : `${product.stockQuantity} in stock`}
         </span>
       </td>
       <td>
         {product.badge ? (
-          <span className="status-badge pending badge-tiny">{product.badge}</span>
+          <span className={`luxury-badge badge-${product.badge.toLowerCase()}`}>
+            {product.badge}
+          </span>
         ) : (
-          <span className="text-muted">—</span>
+          <span className="text-muted text-xs">—</span>
         )}
       </td>
       <td>
-        <span className="text-muted text-xs">
-          {product.images?.length || (product.imageUrl ? 1 : 0)}
-        </span>
+        <button
+          type="button"
+          className="image-count-pill"
+          onClick={() => onPreviewImages(product)}
+          title="Click to preview gallery images"
+        >
+          🖼️ {imageCount}
+        </button>
       </td>
       <td className="active-cell">
-        <span className={`status-badge ${product.isActive ? "delivered" : "rejected"}`}>
+        <span className={`table-status-pill ${product.isActive ? "active" : "inactive"}`}>
+          <span className="status-dot" />
           {product.isActive ? "Active" : "Inactive"}
         </span>
       </td>
       <td>
         <div className="table-actions">
-          <button className="btn btn-secondary product-action-btn btn-xs" onClick={() => onEdit(product)} disabled={isDeleting}>Edit</button>
-          <button className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`} onClick={() => onRequestDelete(product)} disabled={isDeleting}>
-            {isDeleting && <span className="btn-spinner"></span>}
-            {isDeleting ? "Deleting..." : "Delete"}
+          <button className="btn btn-secondary product-action-btn btn-xs" onClick={() => onEdit(product)} disabled={isDeleting} title="Edit product">
+            ✏️ Edit
+          </button>
+          <button className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`} onClick={() => onRequestDelete(product)} disabled={isDeleting} title="Delete product">
+            {isDeleting ? "..." : "🗑️ Delete"}
           </button>
         </div>
       </td>
     </tr>
+  );
+}
+
+function CatalogueProductLightbox({ product, onClose }: { product: Product; onClose: () => void }) {
+  const images = product.images && product.images.length > 0
+    ? product.images.map((img) => img.url)
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+
+  const [activeIdx, setActiveIdx] = useState(0);
+  const currentUrl = images[activeIdx] || "";
+
+  return (
+    <div className="lightbox-overlay active" onClick={onClose} style={{ opacity: 1, visibility: "visible" }}>
+      <div className="lightbox-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <button type="button" className="lightbox-close" onClick={onClose} aria-label="Close preview">
+          ✕
+        </button>
+        <div className="catalogue-lightbox-card">
+          <div className="catalogue-lightbox-header">
+            <h3>{product.name}</h3>
+            {product.category?.name && <span className="category-pill-badge">{product.category.name}</span>}
+          </div>
+          <div className="catalogue-lightbox-main-img">
+            {currentUrl ? (
+              <FallbackImage src={currentUrl} alt={product.name} width={500} height={500} className="lightbox-image" />
+            ) : (
+              <div className="product-img-placeholder" style={{ width: 250, height: 250 }} />
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="catalogue-lightbox-thumbs">
+              {images.map((url, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`catalogue-lightbox-thumb ${idx === activeIdx ? "active" : ""}`}
+                  onClick={() => setActiveIdx(idx)}
+                >
+                  <FallbackImage src={url} alt={`Preview ${idx + 1}`} width={60} height={60} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

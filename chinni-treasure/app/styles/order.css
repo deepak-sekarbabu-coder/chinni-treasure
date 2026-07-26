@@ -243,6 +243,121 @@
     margin-top: 8px;
 }
 
+/* ===== CHECKOUT FREE SHIPPING NUDGE BANNER ===== */
+.checkout-shipping-nudge-box {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 244, 229, 0.96) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    border-left: 4px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.10);
+}
+
+.checkout-nudge-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.checkout-nudge-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.checkout-nudge-text {
+    flex: 1;
+}
+
+.checkout-nudge-title {
+    margin: 0 0 2px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--near-black);
+    line-height: 1.35;
+}
+
+.checkout-nudge-title strong {
+    color: var(--gold-deep);
+}
+
+.checkout-nudge-sub {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.checkout-nudge-progress-track {
+    height: 8px;
+    border-radius: 4px;
+    background: #ece2d1;
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.checkout-nudge-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--gold-light) 0%, var(--gold) 100%);
+    transition: width var(--motion-smooth);
+}
+
+.checkout-nudge-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+    min-height: 44px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.checkout-free-shipping-unlocked {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(46, 204, 113, 0.12);
+    border: 1px solid rgba(46, 204, 113, 0.28);
+    color: #218c4a;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+}
+
+.checkout-free-shipping-unlocked strong {
+    font-weight: 700;
+}
+
+@media (max-width: 600px) {
+    .checkout-shipping-nudge-box {
+        padding: 14px 14px 15px;
+    }
+
+    .checkout-nudge-title {
+        font-size: 0.84rem;
+    }
+
+    .checkout-nudge-add-btn {
+        font-size: 0.78rem;
+    }
+
+    .checkout-free-shipping-unlocked {
+        width: 100%;
+        font-size: 0.78rem;
+    }
+}
+
 /* ===== EMPTY CART GUARD ===== */
 .empty-cart-guard {
     display: flex;
@@ -406,7 +521,8 @@
 @media (prefers-reduced-motion: reduce) {
 
     .payment-method-option,
-    .razorpay-pay-btn {
+    .razorpay-pay-btn,
+    .checkout-nudge-progress-fill {
         transition: none;
     }
 }

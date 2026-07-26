@@ -447,6 +447,76 @@
     outline-offset: 2px;
 }
 
+.search-clear-btn {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 50%;
+    transition: color 0.2s, background 0.2s;
+}
+
+.search-clear-btn:hover {
+    color: var(--near-black);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.admin-catalogue-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+.summary-count-text {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.active-filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    background: var(--white);
+    color: var(--near-black);
+    border: 1px solid var(--gold-light);
+    border-radius: 12px;
+    padding: 3px 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.filter-chip button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.filter-chip button:hover {
+    color: var(--error);
+}
+
 .admin-catalogue-filter-group {
     display: flex;
     flex-wrap: wrap;
@@ -507,16 +577,330 @@
 }
 
 .admin-table td {
-    padding: 10px 16px;
+    padding: 12px 16px;
+    vertical-align: middle;
 }
 
 .admin-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--cream);
+    transition: background 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+    background: rgba(212, 175, 55, 0.04);
 }
 
 .table-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    align-items: center;
+}
+
+/* ── Table Cells & Badges ── */
+.table-img-cell {
+    width: 64px;
+}
+
+.table-img-wrapper {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--cream);
+    background: var(--cream-light);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table-img-wrapper:hover {
+    transform: scale(1.06);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-sm);
+}
+
+.product-table-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.table-img-zoom-hint {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.table-img-wrapper:hover .table-img-zoom-hint {
+    opacity: 1;
+}
+
+.table-name-cell {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    color: var(--near-black);
+    max-width: 220px;
+}
+
+.category-pill-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--charcoal);
+    background: var(--cream-light);
+    border: 1px solid var(--cream);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.sku-code {
+    background: var(--cream-light);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.72rem;
+}
+
+.table-price-cell {
+    white-space: nowrap;
+}
+
+.price-primary {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--gold-deep);
+}
+
+.price-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    margin-top: 2px;
+}
+
+.price-mrp {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.discount-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.stock-health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.stock-health-badge .stock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.stock-health-badge.in-stock {
+    background: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+}
+
+.stock-health-badge.in-stock .stock-dot {
+    background: #27ae60;
+}
+
+.stock-health-badge.low-stock {
+    background: rgba(243, 156, 18, 0.12);
+    color: #d35400;
+}
+
+.stock-health-badge.low-stock .stock-dot {
+    background: #e67e22;
+}
+
+.stock-health-badge.out-of-stock {
+    background: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+}
+
+.stock-health-badge.out-of-stock .stock-dot {
+    background: #e74c3c;
+}
+
+.luxury-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.luxury-badge.badge-bestseller {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-deep);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.luxury-badge.badge-new {
+    background: rgba(52, 152, 219, 0.12);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.luxury-badge.badge-premium {
+    background: rgba(155, 89, 182, 0.12);
+    color: #8e44ad;
+    border: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.luxury-badge.badge-limited {
+    background: rgba(230, 126, 34, 0.12);
+    color: #d35400;
+    border: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+.luxury-badge.badge-luxury {
+    background: rgba(44, 62, 80, 0.1);
+    color: #2c3e50;
+    border: 1px solid rgba(44, 62, 80, 0.25);
+}
+
+.image-count-pill {
+    background: var(--cream-light);
+    border: 1px solid var(--cream);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: var(--near-black);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.image-count-pill:hover {
+    background: var(--white);
+    border-color: var(--gold);
+}
+
+.table-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.table-status-pill .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.table-status-pill.active {
+    background: rgba(46, 204, 113, 0.12);
+    color: #27ae60;
+}
+
+.table-status-pill.active .status-dot {
+    background: #27ae60;
+}
+
+.table-status-pill.inactive {
+    background: rgba(149, 165, 166, 0.15);
+    color: #7f8c8d;
+}
+
+.table-status-pill.inactive .status-dot {
+    background: #95a5a6;
+}
+
+.catalogue-lightbox-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    box-shadow: 0 16px 60px rgba(0, 0, 0, 0.3);
+}
+
+.catalogue-lightbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border-bottom: 1px solid var(--cream);
+    padding-bottom: 12px;
+}
+
+.catalogue-lightbox-header h3 {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.catalogue-lightbox-main-img {
+    width: 100%;
+    max-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream-light);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.catalogue-lightbox-main-img img {
+    max-height: 400px;
+    object-fit: contain;
+}
+
+.catalogue-lightbox-thumbs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    width: 100%;
+    padding: 4px 0;
+    justify-content: center;
+}
+
+.catalogue-lightbox-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    background: var(--cream-light);
+    padding: 0;
+    transition: border-color 0.2s;
+}
+
+.catalogue-lightbox-thumb.active {
+    border-color: var(--gold);
 }
 
 /* ── Product Images ── */
