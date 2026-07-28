@@ -349,7 +349,7 @@ export default function ProductFormModal({
                               disabled={editingIndex !== null}
                               title="Delete image"
                             >
-                              🗑️ Delete
+                              🗑️
                             </button>
                           </div>
                         </div>
