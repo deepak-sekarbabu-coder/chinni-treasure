@@ -1,7 +1,7 @@
 "use client";
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
 import type { ProductFormData } from "@/src/components/admin/AdminCataloguePanel";
@@ -54,6 +54,29 @@ export default function ProductFormModal({
   const [imageUrlError, setImageUrlError] = useState("");
   const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  const ZOOM_MIN = 0.5;
+  const ZOOM_MAX = 3;
+  const ZOOM_STEP = 0.25;
+
+  const zoomIn = useCallback(() => setZoomLevel((z) => Math.min(z + ZOOM_STEP, ZOOM_MAX)), []);
+  const zoomOut = useCallback(() => setZoomLevel((z) => Math.max(z - ZOOM_STEP, ZOOM_MIN)), []);
+  const zoomReset = useCallback(() => setZoomLevel(1), []);
+
+  const handleLightboxWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoomLevel((z) => Math.min(z + ZOOM_STEP, ZOOM_MAX));
+    } else {
+      setZoomLevel((z) => Math.max(z - ZOOM_STEP, ZOOM_MIN));
+    }
+  }, []);
+
+  const openLightbox = useCallback((url: string) => {
+    setZoomImageUrl(url);
+    setZoomLevel(1);
+  }, []);
 
   function setFormField(field: keyof ProductFormData, value: string) {
     onFormChange({ ...productForm, [field]: value });
@@ -263,7 +286,7 @@ export default function ProductFormModal({
                             className="image-preview-thumb"
                             onClick={() => {
                               if (!failedImages.has(idx) && isValidImageUrl(img.url)) {
-                                setZoomImageUrl(img.url);
+                                openLightbox(img.url);
                               }
                             }}
                             title="Click to view high-res preview"
@@ -375,13 +398,27 @@ export default function ProductFormModal({
 
       {/* Lightbox / High-Res Preview Overlay */}
       {zoomImageUrl && (
-        <div className="lightbox-overlay" onClick={() => setZoomImageUrl(null)} style={{ opacity: 1, visibility: "visible" }}>
+        <div className="lightbox-overlay" onClick={() => setZoomImageUrl(null)} onWheel={handleLightboxWheel} style={{ opacity: 1, visibility: "visible" }}>
           <div className="lightbox-container" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="lightbox-close" onClick={() => setZoomImageUrl(null)} aria-label="Close high-res preview">
               ✕
             </button>
+            <div className="lightbox-zoom-controls">
+              <button type="button" className="lightbox-zoom-btn" onClick={zoomOut} disabled={zoomLevel <= ZOOM_MIN} aria-label="Zoom out" title="Zoom out">
+                −
+              </button>
+              <span className="lightbox-zoom-level">{Math.round(zoomLevel * 100)}%</span>
+              <button type="button" className="lightbox-zoom-btn" onClick={zoomIn} disabled={zoomLevel >= ZOOM_MAX} aria-label="Zoom in" title="Zoom in">
+                +
+              </button>
+              {zoomLevel !== 1 && (
+                <button type="button" className="lightbox-zoom-btn lightbox-zoom-reset" onClick={zoomReset} aria-label="Reset zoom" title="Reset zoom">
+                  Reset
+                </button>
+              )}
+            </div>
             <div className="lightbox-image-wrapper">
-              <FallbackImage src={zoomImageUrl} alt="Full resolution product image preview" width={800} height={800} className="lightbox-image" />
+              <FallbackImage src={zoomImageUrl} alt="Full resolution product image preview" width={800} height={800} className="lightbox-image" style={{ transform: `scale(${zoomLevel})`, transition: "transform 0.2s ease" }} />
             </div>
           </div>
         </div>

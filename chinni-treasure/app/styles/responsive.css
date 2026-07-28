@@ -1083,3 +1083,30 @@
 }
 
 /* Improved mobile spacing for checkout form fields */
+
+/* ── Lightbox Zoom Controls — Mobile ── */
+@media (max-width: 480px) {
+    .lightbox-zoom-controls {
+        bottom: 12px;
+        padding: 4px 8px;
+        gap: 4px;
+    }
+
+    .lightbox-zoom-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 1rem;
+    }
+
+    .lightbox-zoom-level {
+        font-size: 0.7rem;
+        min-width: 36px;
+    }
+
+    .lightbox-zoom-reset {
+        padding: 0 8px;
+        font-size: 0.6rem;
+    }
+}
