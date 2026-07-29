@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
@@ -47,6 +47,9 @@ export default function CatalogueContent({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(initialCategoryId);
+  const [pageTransitionLoading, setPageTransitionLoading] = useState(false);
+  const [pageTransitionTimedOut, setPageTransitionTimedOut] = useState(false);
+  const settledImageIdsRef = useRef<Set<string>>(new Set());
 
   const pageSize = useResponsivePageSize();
 
@@ -70,6 +73,30 @@ export default function CatalogueContent({
   const products: CatalogueProduct[] = catalogueQuery.data?.products ?? initialProducts;
   const totalPages = catalogueQuery.data?.totalPages ?? initialTotalPages;
   const loading = catalogueQuery.isFetching;
+  const targetPageReady = catalogueQuery.data?.page === currentPage;
+
+  // Never leave the customer looking at a permanent spinner if a remote image
+  // hangs. The individual card's error handler settles failed images normally.
+  useEffect(() => {
+    if (!pageTransitionLoading) return;
+    const timeoutId = window.setTimeout(() => {
+      setPageTransitionLoading(false);
+      setPageTransitionTimedOut(true);
+    }, 12000);
+    return () => window.clearTimeout(timeoutId);
+  }, [pageTransitionLoading]);
+
+  const handleImageSettled = useCallback(
+    (productId: string) => {
+      const settled = settledImageIdsRef.current;
+      if (settled.has(productId)) return;
+      settled.add(productId);
+      if (targetPageReady && settled.size >= products.length) {
+        setPageTransitionLoading(false);
+      }
+    },
+    [products.length, targetPageReady],
+  );
 
   const handleAdd = useCallback(
     (p: CatalogueProduct) => {
@@ -103,9 +130,13 @@ export default function CatalogueContent({
   );
 
   const handlePageChange = useCallback((page: number) => {
+    if (page === currentPage) return;
+    setPageTransitionTimedOut(false);
+    settledImageIdsRef.current = new Set();
+    setPageTransitionLoading(true);
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [currentPage]);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -183,7 +214,8 @@ export default function CatalogueContent({
           </div>
         ) : (
           <>
-            <div className="products-grid" role="list" aria-label="Product list">
+            <div className={`catalogue-products-stage${pageTransitionLoading ? " catalogue-products-stage--loading" : ""}`}>
+              <div className="products-grid" role="list" aria-label="Product list">
               {products.length === 0 ? (
                 <p style={{ textAlign: "center", color: "var(--text-muted)", gridColumn: "1 / -1", padding: "60px 0" }}>
                   No products available yet.
@@ -196,16 +228,31 @@ export default function CatalogueContent({
                     onAdd={handleAdd}
                     transitionDelay={idx * 0.05}
                     priority={idx < 6}
+                    loadImageImmediately={pageTransitionLoading && targetPageReady}
+                    onImageSettled={pageTransitionLoading && targetPageReady ? () => handleImageSettled(product.id) : undefined}
                   />
                 ))
               )}
+              </div>
+              {pageTransitionLoading && (
+                <div className="catalogue-page-loading" role="status" aria-live="polite">
+                  <span className="catalogue-page-spinner" aria-hidden="true" />
+                  <span>Preparing your next collection page…</span>
+                </div>
+              )}
             </div>
+
+            {pageTransitionTimedOut && (
+              <p className="catalogue-page-loading-message" role="status">
+                Some images are taking longer than expected. You can continue browsing while they finish loading.
+              </p>
+            )}
 
             {products.length > 0 && (
               <nav className="pagination-bar catalogue-pagination" aria-label="Catalogue pagination">
                 <button
                   className="btn btn-secondary btn-sm"
-                  disabled={currentPage <= 1}
+                  disabled={currentPage <= 1 || pageTransitionLoading}
                   onClick={() => handlePageChange(currentPage - 1)}
                   aria-label="Previous page"
                 >
@@ -216,6 +263,7 @@ export default function CatalogueContent({
                     key={pageNum}
                     className={`btn btn-sm ${pageNum === currentPage ? "btn-primary" : "btn-secondary"}`}
                     onClick={() => handlePageChange(pageNum)}
+                    disabled={pageTransitionLoading}
                     aria-current={pageNum === currentPage ? "page" : undefined}
                     aria-label={`Page ${pageNum}`}
                   >
@@ -224,7 +272,7 @@ export default function CatalogueContent({
                 ))}
                 <button
                   className="btn btn-secondary btn-sm"
-                  disabled={currentPage >= totalPages}
+                  disabled={currentPage >= totalPages || pageTransitionLoading}
                   onClick={() => handlePageChange(currentPage + 1)}
                   aria-label="Next page"
                 >

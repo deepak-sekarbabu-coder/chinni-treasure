@@ -473,3 +473,55 @@
     line-height: 1.4;
     max-width: 200px;
 }
+
+/* Catalogue page transitions keep the existing cards visible while the new
+   page settles, so the loading indicator never covers unrelated controls. */
+.catalogue-products-stage {
+    position: relative;
+}
+
+.catalogue-products-stage--loading .products-grid {
+    opacity: 0.62;
+    transition: opacity 180ms ease;
+}
+
+.catalogue-page-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
+    padding-top: 18px;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.catalogue-page-spinner {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+}
+
+.catalogue-page-loading-message {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .catalogue-products-stage--loading .products-grid {
+        transition: none;
+    }
+
+    .catalogue-page-spinner {
+        animation: none;
+    }
+}

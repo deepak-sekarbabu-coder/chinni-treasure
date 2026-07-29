@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import Link from "next/link";
 import Markdown from "./Markdown";
@@ -37,6 +37,8 @@ interface Props {
   onAdd: (product: ProductData) => void;
   transitionDelay?: number;
   priority?: boolean;
+  loadImageImmediately?: boolean;
+  onImageSettled?: () => void;
 }
 
 export default function ProductCard({
@@ -44,15 +46,24 @@ export default function ProductCard({
   onAdd,
   transitionDelay = 0,
   priority = false,
+  loadImageImmediately = false,
+  onImageSettled,
 }: Props) {
   // Use primary image from images array, fall back to imageUrl
   const [imgFailed, setImgFailed] = useState(false);
+  const imageSettledRef = useRef(false);
   const primaryImage =
     product.images?.find((img) => img.isPrimary)?.url ||
     product.imageUrl ||
     PLACEHOLDER_SVG;
 
   const isOutOfStock = product.stockQuantity <= 0;
+
+  const settleImage = () => {
+    if (imageSettledRef.current) return;
+    imageSettledRef.current = true;
+    onImageSettled?.();
+  };
 
   return (
     <div
@@ -71,9 +82,15 @@ export default function ProductCard({
             quality={PRODUCT_IMAGE_QUALITY}
             placeholder="blur"
             blurDataURL={BLUR_PLACEHOLDER}
-            loading={priority ? "eager" : "lazy"}
-            priority={priority}
-            onError={() => setImgFailed(true)}
+            loading={priority || loadImageImmediately ? "eager" : "lazy"}
+            priority={priority || loadImageImmediately}
+            onLoad={settleImage}
+            onError={() => {
+              setImgFailed(true);
+              // A failed image is still settled: FallbackImage will provide
+              // the placeholder and the catalogue must remain usable.
+              settleImage();
+            }}
           />
           {product.badge && !isOutOfStock && (
             <span className="product-card-badge">{product.badge}</span>
