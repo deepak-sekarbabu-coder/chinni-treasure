@@ -89,6 +89,7 @@ export const ProductSchema = z.object({
   categoryId: z.number().nullable(),
   sku: z.string().nullable(),
   isActive: z.boolean(),
+  visibleHostnames: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
   images: z.array(ProductImageSchema).optional(),
@@ -112,6 +113,7 @@ const CatalogueProductSchema = z.object({
   category: z.object({ name: z.string() }).nullable(),
   stockQuantity: z.number(),
   badge: z.string().nullable(),
+  sku: z.string().nullable(),
   images: z.array(ProductImageSchema).optional(),
 });
 
@@ -216,6 +218,7 @@ export const ProductInputSchema = z.object({
   badge: z.string().nullable().optional(),
   categoryId: z.coerce.number().int().positive().nullable().optional(),
   isActive: z.boolean().optional(),
+  visibleHostnames: z.string().optional(),
   images: z.array(ProductImageInputSchema).optional(),
 });
 

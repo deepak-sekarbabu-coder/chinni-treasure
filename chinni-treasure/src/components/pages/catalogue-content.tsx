@@ -110,6 +110,7 @@ export default function CatalogueContent({
         price: Number(p.price),
         image: p.imageUrl ?? "",
         stock: p.stockQuantity,
+        sku: p.sku ?? undefined,
       });
       if (addResult === "max_one") {
         showToast(`Max 1 Qty per user for ${p.name}`, "info");

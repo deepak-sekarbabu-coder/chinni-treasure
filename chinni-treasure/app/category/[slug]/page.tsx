@@ -2,6 +2,8 @@ import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
+import { domainFilterWhere } from "@/src/lib/domain-filter";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -104,10 +106,15 @@ export default async function CategoryPage({ params }: Props) {
       description: found.description,
     };
 
+    const headersList = await headers();
+    const hostname = headersList.get("host");
+    const domainFilter = domainFilterWhere(hostname);
+
     const where = {
       categoryId: found.id,
       isActive: true,
       deletedAt: null,
+      ...domainFilter,
     };
 
     const data = await prisma.product.findMany({

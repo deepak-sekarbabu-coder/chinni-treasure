@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
 
 const MAX_LIMIT = 60;
 
@@ -47,10 +48,14 @@ export async function GET(
       );
     }
 
+    const hostname = getHostFromRequest(request);
+    const domainFilter = domainFilterWhere(hostname);
+
     const where: Prisma.ProductWhereInput = {
       categoryId: category.id,
       isActive: true,
       deletedAt: null,
+      ...domainFilter,
     };
 
     // Sequential queries to avoid saturating Nhost's pooler with

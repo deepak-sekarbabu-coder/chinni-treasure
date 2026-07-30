@@ -247,6 +247,10 @@ export default function ProductFormModal({
                 </select>
               </div>
               <div className="form-group">
+                <label>Visible Hostnames</label>
+                <input type="text" value={productForm.visibleHostnames} onChange={(e) => setFormField("visibleHostnames", e.target.value)} className="input-cream" placeholder="Leave empty for all domains, comma-separated" />
+              </div>
+              <div className="form-group">
                 <label>Primary Image URL</label>
                 <input type="url" value={productForm.imageUrl} onChange={(e) => setFormField("imageUrl", e.target.value)} className="input-cream" placeholder="Fallback primary image URL" />
               </div>

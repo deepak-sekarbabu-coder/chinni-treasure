@@ -2,6 +2,7 @@ import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
 import ProductDetailsContent from "@/src/components/pages/ProductDetailsContent";
 import JsonLd from "@/src/components/ui/JsonLd";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
@@ -63,6 +64,17 @@ export default async function ProductDetailsPage({ params }: Props) {
 
     if (!product || !product.isActive || product.deletedAt) {
         notFound();
+    }
+
+    if (product.visibleHostnames) {
+        const headersList = await headers();
+        const hostname = headersList.get("host")?.split(":")[0]?.toLowerCase() ?? "";
+        const allowed = product.visibleHostnames
+            .split(",")
+            .map((h) => h.trim().toLowerCase());
+        if (!allowed.some((h) => hostname === h || hostname.endsWith("." + h))) {
+            notFound();
+        }
     }
 
     const price = Number(product.price);

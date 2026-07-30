@@ -378,7 +378,8 @@ export default function OrderPage() {
 
 
   const total = getTotal();
-  const shippingCost = total >= FREE_SHIPPING_THRESHOLD
+  const hasTestProduct = items.some((i) => i.sku === "0000");
+  const shippingCost = hasTestProduct || total >= FREE_SHIPPING_THRESHOLD
     ? 0
     : form.state
       ? calcShippingCost(total, form.state)

@@ -58,6 +58,7 @@ export default function ProductDetailsContent({ product }: Props) {
                 price: Number(product.price),
                 image: product.imageUrl ?? "",
                 stock: product.stockQuantity,
+                sku: product.sku ?? undefined,
             });
             if (result === "max_one") {
                 showToast(`Max 1 Qty per user for ${product.name}`, "info");

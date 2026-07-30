@@ -25,6 +25,7 @@ const UpdateProductSchema = z.object({
   imageUrl: z.string().optional().nullable(),
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
   isActive: z.boolean().optional(),
+  visibleHostnames: z.string().optional().nullable(),
   images: z.array(ImageInputSchema).optional(),
 });
 
@@ -39,6 +40,7 @@ const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
   imageUrl: (v) => v || null,
   badge: (v) => v || null,
   isActive: (v) => v,
+  visibleHostnames: (v) => v || null,
 };
 
 function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknown> {

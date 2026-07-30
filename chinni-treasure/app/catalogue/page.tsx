@@ -2,6 +2,8 @@ import { prisma } from "@/src/lib/prisma";
 import CatalogueContent from "@/src/components/pages/catalogue-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
+import { headers } from "next/headers";
+import { domainFilterWhere } from "@/src/lib/domain-filter";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -49,15 +51,21 @@ export default async function CataloguePage(props: {
     category: { name: string } | null;
     stockQuantity: number;
     badge: string | null;
+    sku: string | null;
     images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
   }> = [];
   let total = 0;
   let totalPages = 1;
 
+  const headersList = await headers();
+  const hostname = headersList.get("host");
+  const domainFilter = domainFilterWhere(hostname);
+
   const where = {
     isActive: true,
     deletedAt: null,
     ...(validCategoryId ? { categoryId: validCategoryId } : {}),
+    ...domainFilter,
   };
 
   let categories: CategoryOption[] = [];
@@ -97,6 +105,7 @@ export default async function CataloguePage(props: {
       category: p.category,
       stockQuantity: p.stockQuantity,
       badge: p.badge,
+      sku: p.sku,
       images: p.images.map((img) => ({
         id: img.id,
         url: img.url,

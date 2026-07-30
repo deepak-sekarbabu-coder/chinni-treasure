@@ -29,6 +29,7 @@ export interface ProductData {
   category: { name: string } | null;
   stockQuantity: number;
   badge: string | null;
+  sku: string | null;
   images?: ProductImageData[];
 }
 

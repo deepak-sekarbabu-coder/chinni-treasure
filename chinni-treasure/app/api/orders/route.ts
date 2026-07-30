@@ -143,7 +143,8 @@ export async function POST(request: Request) {
           subtotal += Number(product.price) * item.quantity;
         }
 
-        const shippingCost = calcShippingCost(subtotal, stateCode);
+        const hasTestProduct = products.some((p) => p.sku === "0000");
+        const shippingCost = hasTestProduct ? 0 : calcShippingCost(subtotal, stateCode);
         const totalAmount = subtotal + shippingCost;
 
         const created = await tx.order.create({

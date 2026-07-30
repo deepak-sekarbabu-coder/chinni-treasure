@@ -22,6 +22,7 @@ interface ProductFormState {
   badge: string;
   categoryId: string;
   isActive: boolean;
+  visibleHostnames: string;
   images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
 }
 
@@ -37,6 +38,7 @@ const EMPTY_PRODUCT_FORM: ProductFormState = {
   badge: "",
   categoryId: "",
   isActive: true,
+  visibleHostnames: "",
   images: [],
 };
 
@@ -67,6 +69,7 @@ function productToFormState(product: Product): ProductFormState {
     badge: product.badge || "",
     categoryId: product.categoryId ? product.categoryId.toString() : "",
     isActive: product.isActive,
+    visibleHostnames: product.visibleHostnames || "",
     images: (product.images || []).map((img) => ({
       url: img.url,
       isPrimary: img.isPrimary,
@@ -140,6 +143,7 @@ export function useAdminCatalogueController(options?: { onAfterSave?: (wasCreate
         badge: productForm.badge || null,
         categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
         isActive: productForm.isActive,
+        visibleHostnames: productForm.visibleHostnames || undefined,
         images: productForm.images.length > 0
           ? productForm.images.map((img) => ({
             url: img.url,

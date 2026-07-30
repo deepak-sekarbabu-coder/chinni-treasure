@@ -18,6 +18,7 @@ export interface ProductFormData {
   badge: string;
   categoryId: string;
   isActive: boolean;
+  visibleHostnames: string;
   images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
 }
 

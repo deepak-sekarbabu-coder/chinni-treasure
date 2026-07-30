@@ -18,6 +18,7 @@ export interface CartItemDisplay {
   quantity: number;
   image: string;
   stock: number;
+  sku?: string;
 }
 
 interface CartContextType {
@@ -28,6 +29,7 @@ interface CartContextType {
     price: number;
     image: string;
     stock: number;
+    sku?: string;
   }) => "added" | "max_reached" | "max_one" | "out_of_stock";
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, delta: number) => "updated" | "max_reached" | "max_one" | "removed" | "unchanged";
@@ -89,7 +91,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   }, [items]);
 
   const addItem = useCallback(
-    (product: { id: string; name: string; price: number; image: string; stock: number }) => {
+    (product: { id: string; name: string; price: number; image: string; stock: number; sku?: string }) => {
       if (product.stock <= 0) return "out_of_stock" as const;
       let result: "added" | "max_reached" | "max_one" = "added";
       setItems((prev) => {
@@ -112,6 +114,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
             quantity: 1,
             image: product.image,
             stock: product.stock,
+            sku: product.sku,
           },
         ];
       });

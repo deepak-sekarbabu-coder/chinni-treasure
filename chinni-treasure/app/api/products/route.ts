@@ -7,6 +7,7 @@ import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { getCached, setCache, clearCache } from "@/src/lib/products-cache";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
+import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -19,6 +20,7 @@ const CreateProductSchema = z.object({
   imageUrl: z.string().optional(),
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
   isActive: z.boolean().optional(),
+  visibleHostnames: z.string().optional(),
   images: z
     .array(
       z.object({
@@ -63,9 +65,12 @@ export async function GET(request: Request) {
     const sortParam = (searchParams.get("sort") || "newest") as SortKey;
     const sort = SORT_OPTIONS[sortParam] ?? SORT_OPTIONS.newest;
 
+    const hostname = getHostFromRequest(request);
+    const domainFilter = domainFilterWhere(hostname);
+
     const where: Prisma.ProductWhereInput = isActiveParam === "all"
-      ? { deletedAt: null }
-      : { isActive: true, deletedAt: null };
+      ? { deletedAt: null, ...domainFilter }
+      : { isActive: true, deletedAt: null, ...domainFilter };
 
     if (searchQuery) {
       where.OR = [
@@ -134,6 +139,7 @@ type CreateProductInput = {
   imageUrl?: string;
   badge?: ProductBadge | null;
   isActive?: boolean;
+  visibleHostnames?: string;
   images?: Array<{ url: string; isPrimary?: boolean; displayOrder?: number }>;
 };
 
@@ -149,6 +155,7 @@ function buildCreateData(input: CreateProductInput) {
     imageUrl: input.imageUrl || null,
     ...(input.badge !== undefined && { badge: input.badge ?? null }),
     ...(input.isActive !== undefined && { isActive: input.isActive }),
+    ...(input.visibleHostnames !== undefined && { visibleHostnames: input.visibleHostnames || null }),
   };
 }
 

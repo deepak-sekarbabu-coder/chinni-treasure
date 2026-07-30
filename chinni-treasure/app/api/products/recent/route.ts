@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
 
 const MAX_LIMIT = 20;
 
@@ -11,8 +12,11 @@ export async function GET(request: Request) {
       ? Math.min(MAX_LIMIT, Math.max(1, rawLimit))
       : 8;
 
+    const hostname = getHostFromRequest(request);
+    const domainFilter = domainFilterWhere(hostname);
+
     const products = await prisma.product.findMany({
-      where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
+      where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 }, ...domainFilter },
       include: {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
