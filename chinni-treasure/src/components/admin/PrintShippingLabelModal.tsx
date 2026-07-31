@@ -273,21 +273,30 @@ ${labelHTML}
   };
 
   const labelContent = (
-    <div className="modal-overlay active print-label-overlay-active" onClick={(e) => { e.stopPropagation(); onClose(); }}>
+    <div
+      className="modal-overlay active print-label-overlay-active"
+      onClick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shipping-label-editor-title"
+    >
       <div
         className="print-label-modal-box"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Left Side: Editor Form */}
         <div
           className="print-label-editor-panel"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-dark)" }}>
+            <h2
+              id="shipping-label-editor-title"
+              style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-dark)" }}
+            >
               Shipping Label Editor
             </h2>
             <button
               onClick={onClose}
+              aria-label="Close shipping label editor"
               style={{
                 background: "transparent",
                 border: "none",

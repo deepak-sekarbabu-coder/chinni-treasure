@@ -40,7 +40,10 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // The nested shipping-label modal is intentionally dismissed only by
+      // its own Close button, so the parent must not handle Escape while it
+      // is open.
+      if (e.key === "Escape" && !showPrintModal) onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
@@ -48,7 +51,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, showPrintModal]);
 
   const isRejected = order.status === "rejected";
   const completedStatuses: readonly string[] = isRejected
