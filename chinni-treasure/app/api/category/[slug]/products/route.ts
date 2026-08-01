@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { createRedisCache } from "@/src/lib/redis-cache";
 
 const MAX_LIMIT = 60;
+
+const { get: getCached, set: setCache } = createRedisCache(60_000, "catpage");
 
 type SortKey = "newest" | "price-asc" | "price-desc";
 
@@ -50,6 +53,16 @@ export async function GET(
 
     const hostname = getHostFromRequest(request);
     const domainFilter = domainFilterWhere(hostname);
+
+    const cacheKey = `${hostname ?? "default"}:${slug}:${page}:${limit}:${sort}`;
+    const cached = await getCached(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      });
+    }
 
     const where: Prisma.ProductWhereInput = {
       categoryId: category.id,
@@ -107,6 +120,8 @@ export async function GET(
       limit,
       totalPages: Math.max(1, Math.ceil(total / limit)),
     };
+
+    await setCache(cacheKey, payload);
 
     return NextResponse.json(payload, {
       headers: {

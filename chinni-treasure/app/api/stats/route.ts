@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
-import { createCache } from "@/src/lib/cache";
+import { createRedisCache } from "@/src/lib/redis-cache";
 import { Prisma } from "@prisma/client";
 
-const { get: getCached, set: setCache } = createCache(30_000);
+const { get: getCached, set: setCache } = createRedisCache(30_000, "stats");
 
 /**
  * Retry a Prisma query when Nhost's pooler returns query_wait_timeout.
@@ -37,14 +37,14 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const cached = getCached("stats");
-  if (cached) {
-    return NextResponse.json(cached, {
-      headers: { "Cache-Control": "private, max-age=30" },
-    });
-  }
-
   try {
+    const cached = await getCached("stats");
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: { "Cache-Control": "private, max-age=30" },
+      });
+    }
+
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     // Retry the fetch block on Nhost pooler query_wait_timeout.
@@ -133,7 +133,7 @@ export async function GET() {
 
     const payload = { stats, chartData, productSalesData };
 
-    setCache("stats", payload);
+    await setCache("stats", payload);
 
     return NextResponse.json(payload, {
       headers: { "Cache-Control": "private, max-age=30" },

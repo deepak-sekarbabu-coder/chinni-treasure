@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -20,6 +21,14 @@ const CreateRazorpayOrderSchema = z.object({
 export async function POST(request: Request) {
   const csrfError = validateCsrfOrigin(request);
   if (csrfError) return csrfError;
+
+  const { allowed } = await checkRateLimit(`razorpay:${getClientIp(request)}`, 5);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many payment attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
 
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;

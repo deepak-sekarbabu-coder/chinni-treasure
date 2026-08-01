@@ -2,6 +2,13 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { createMockPrisma } from "@/src/__tests__/mocks/prisma";
 
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
+vi.mock("@/src/lib/redis-cache", () => ({
+  createRedisCache: () => ({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
 vi.mock("@/src/lib/auth", () => ({
   getSession: vi.fn().mockResolvedValue({ id: "admin-id", username: "admin", role: "admin" }),
   checkAuth: vi.fn().mockResolvedValue({ id: "admin-id", username: "admin", role: "admin" }),

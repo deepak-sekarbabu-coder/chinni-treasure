@@ -4,9 +4,12 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { clearCache } from "@/src/lib/products-cache";
+import { createRedisCache } from "@/src/lib/redis-cache";
+import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
 import { Prisma } from "@prisma/client";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
+
+const { get: getCached, set: setCache } = createRedisCache(300_000, "categories");
 
 // GET /api/categories
 // Public: returns active categories ordered by displayOrder.
@@ -15,6 +18,19 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
+
+    // Cache only the public (active) response — the admin variant
+    // (includeInactive=true) must always be fresh.
+    if (!includeInactive) {
+      const cached = await getCached("active");
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: {
+            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          },
+        });
+      }
+    }
 
     const where = includeInactive ? {} : { isActive: true };
 
@@ -43,6 +59,10 @@ export async function GET(request: Request) {
           ? (c._count as { products: number }).products ?? 0
           : undefined,
     }));
+
+    if (!includeInactive) {
+      await setCache("active", payload);
+    }
 
     return NextResponse.json(payload, {
       headers: {
@@ -117,7 +137,7 @@ export async function POST(request: Request) {
       },
     });
 
-    clearCache();
+    await invalidateCatalogCaches();
     revalidatePath("/catalogue");
     revalidatePath("/");
     revalidatePath("/category", "layout");

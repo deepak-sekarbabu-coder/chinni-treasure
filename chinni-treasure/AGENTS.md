@@ -93,6 +93,17 @@ Important enum values:
 - `ProductBadge`: `bestseller | new | premium | limited | luxury`
 - `AdminRole`: `admin | super_admin`
 
+### Redis Caching (shared, with in-memory fallback)
+
+Redis is optional (`REDIS_URL`). Every Redis-backed module falls back to an in-memory store when `REDIS_URL` is unset, so the app works identically in local dev and on serverless where a shared cache matters.
+
+- `src/lib/redis.ts` — single `ioredis` client; exports `null` when `REDIS_URL` is unset.
+- `src/lib/redis-cache.ts` — `createRedisCache(ttlMs, namespace)` provides async `get`/`set`/`clear`. `clear()` SCANs + DELs the `namespace:*` prefix. TTLs are short (15–300s) and payloads small to stay well under Redis Cloud's 30 MB free tier.
+- `src/lib/cache-invalidate.ts` — `invalidateCatalogCaches()` clears the catalog namespaces (`products`, `categories`, `catlatest`, `catpage`, `recent`) after any product/category mutation; `invalidateOrderCache(orderId)` clears the order detail + tracking namespaces after status/tracking changes.
+- `src/lib/rate-limiter.ts` — shared `INCR` + `EXPIRE` sliding window with per-route limits (`checkRateLimit(key, maxAttempts)`); used for login (5), checkout (3), Razorpay order creation (5), and tracking lookups (10).
+
+Cached public routes: products listing, categories, categories/latest, category product pages, recent products, order tracking, order detail, and the admin stats dashboard. Never cache: cart data (client-side), JWT sessions (stateless), admin CRUD responses, or binary assets.
+
 ### Critical Server Boundaries
 
 - The cart is synchronized through a guest client cart and a server-side cookie-backed cart.

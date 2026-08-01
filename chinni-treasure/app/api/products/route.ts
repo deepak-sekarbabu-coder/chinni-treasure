@@ -4,7 +4,8 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { getCached, setCache, clearCache } from "@/src/lib/products-cache";
+import { getCached, setCache } from "@/src/lib/products-cache";
+import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
@@ -87,8 +88,8 @@ export async function GET(request: Request) {
       where.badge = badgeFilter as ProductBadge;
     }
 
-    const cacheKey = `products:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
-    const cached = getCached(cacheKey);
+    const cacheKey = `${hostname ?? "default"}:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
+    const cached = await getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {
         headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
       totalPages: Math.ceil(total / limit),
     };
 
-    setCache(cacheKey, payload);
+    await setCache(cacheKey, payload);
 
     return NextResponse.json(payload, {
       headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
@@ -199,7 +200,7 @@ export async function POST(request: Request) {
       },
     });
 
-    clearCache();
+    await invalidateCatalogCaches();
     revalidatePath("/catalogue");
     revalidatePath("/");
     revalidatePath("/category", "layout");

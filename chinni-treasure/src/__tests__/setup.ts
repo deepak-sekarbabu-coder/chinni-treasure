@@ -10,6 +10,11 @@ vi.mock('@/src/lib/env', () => ({
   },
 }));
 
+// Force the in-memory fallback for Redis-backed caches and rate limiting.
+// Without this, tests would hit a live REDIS_URL when one is configured
+// in the dev environment, making behavior non-deterministic.
+vi.mock('@/src/lib/redis', () => ({ redis: null }));
+
 // Restore Node-native globals that jsdom polyfills break (jose needs real Uint8Array)
 import { TextEncoder, TextDecoder } from 'util';
 Object.assign(globalThis, { TextEncoder, TextDecoder });

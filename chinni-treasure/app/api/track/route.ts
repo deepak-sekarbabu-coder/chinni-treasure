@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import type { Order, OrderItem } from "@prisma/client";
-import { createCache } from "@/src/lib/cache";
+import { createRedisCache } from "@/src/lib/redis-cache";
+import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 
-const { get: getCached, set: setCache } = createCache(15_000);
+const { get: getCached, set: setCache } = createRedisCache(15_000, "track");
 const CACHE_HEADERS = { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } };
 
 function buildCacheKey(orderId: string | null, phone: string | null): string | null {
-  if (orderId) return `track:${orderId}`;
-  if (phone) return `track:${phone.replace(/\D/g, "")}`;
+  if (orderId) return `o:${orderId}`;
+  if (phone) return `p:${phone.replace(/\D/g, "")}`;
   return null;
 }
 
@@ -60,13 +61,21 @@ function formatOrderResults(orders: (Order & { items: OrderItem[] })[]) {
 // GET /api/track?orderId=xxx or /api/track?phone=xxx
 export async function GET(request: Request) {
   try {
+    const { allowed } = await checkRateLimit(`track:${getClientIp(request)}`, 10);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many tracking requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": "60" } },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get("orderId");
     const phone = searchParams.get("phone");
 
     const cacheKey = buildCacheKey(orderId, phone);
     if (cacheKey) {
-      const cached = getCached(cacheKey);
+      const cached = await getCached(cacheKey);
       if (cached) {
         return NextResponse.json(cached, CACHE_HEADERS);
       }
@@ -85,7 +94,7 @@ export async function GET(request: Request) {
     const formatted = formatOrderResults(orders);
 
     if (cacheKey) {
-      setCache(cacheKey, formatted);
+      await setCache(cacheKey, formatted);
     }
 
     return NextResponse.json(formatted, CACHE_HEADERS);

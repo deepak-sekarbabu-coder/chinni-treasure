@@ -4,7 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { clearCache } from "@/src/lib/products-cache";
+import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
 import { z } from "zod"
 import { Prisma, ProductBadge } from "@prisma/client"
 
@@ -115,7 +115,7 @@ export async function PUT(
       },
     });
 
-    clearCache();
+    await invalidateCatalogCaches();
     revalidatePath("/catalogue");
     revalidatePath("/");
     revalidatePath("/category", "layout");
@@ -162,7 +162,7 @@ export async function DELETE(
       data: { deletedAt: new Date() },
     });
 
-    clearCache();
+    await invalidateCatalogCaches();
     revalidatePath("/catalogue");
     revalidatePath("/");
     revalidatePath("/category", "layout");

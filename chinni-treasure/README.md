@@ -214,6 +214,7 @@ chinni-treasure/
 │   │   ├── docs/route.ts             # OpenAPI spec endpoint
 │   │   ├── export/route.ts           # Excel export endpoint (cursor-based batching)
 │   │   ├── health/db/route.ts        # Database health check
+│   │   ├── health/redis/route.ts     # Redis connectivity health check
 │   │   ├── orders/
 │   │   │   ├── route.ts              # Create order (public) + list (admin, paginated)
 │   │   │   └── [id]/
@@ -588,6 +589,7 @@ rejected (stock restored)
 | GET | `/api/stats` | Dashboard statistics (cached, SQL aggregation) | Yes |
 | GET | `/api/export` | Export orders to Excel (.xlsx, cursor-based batching) | Yes |
 | GET | `/api/health/db` | Database connectivity health check | No |
+| GET | `/api/health/redis` | Redis connectivity health check (not_configured/connected/unreachable) | No |
 | GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
 
 ---

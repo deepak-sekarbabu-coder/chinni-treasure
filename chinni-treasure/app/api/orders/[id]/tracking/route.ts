@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { invalidateOrderCache } from "@/src/lib/cache-invalidate";
 import { z } from "zod";
 
 const UpdateTrackingSchema = z.object({
@@ -42,6 +43,8 @@ export async function PATCH(
       data: { trackingId: parsed.data.trackingId },
       include: { items: true, statusHistory: true },
     });
+
+    await invalidateOrderCache(id);
 
     return NextResponse.json(updated);
   } catch (error) {

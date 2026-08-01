@@ -1,3 +1,5 @@
-import { createCache } from "@/src/lib/cache";
+import { createRedisCache } from "@/src/lib/redis-cache";
 
-export const { get: getCached, set: setCache, clear: clearCache } = createCache(30_000);
+// Catalog invalidation is handled centrally via invalidateCatalogCaches()
+// (src/lib/cache-invalidate.ts), so only get/set are exported here.
+export const { get: getCached, set: setCache } = createRedisCache(30_000, "products");

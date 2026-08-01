@@ -5,6 +5,7 @@ import { checkAuth } from "@/src/lib/auth";
 import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
 import { INDIAN_STATES, calcShippingCost } from "@/src/lib/constants";
 
@@ -79,6 +80,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const csrfError = validateCsrfOrigin(request);
   if (csrfError) return csrfError;
+
+  const { allowed } = await checkRateLimit(`order:${getClientIp(request)}`, 3);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many order attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
 
   try {
     const body = await request.json();

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { createRedisCache } from "@/src/lib/redis-cache";
 
 const MAX_LIMIT = 20;
+
+const { get: getCached, set: setCache } = createRedisCache(60_000, "recent");
 
 export async function GET(request: Request) {
   try {
@@ -15,6 +18,15 @@ export async function GET(request: Request) {
     const hostname = getHostFromRequest(request);
     const domainFilter = domainFilterWhere(hostname);
 
+    // Include the hostname because the domain filter can change the result set.
+    const cacheKey = `${hostname ?? "default"}:${limit}`;
+    const cached = await getCached(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+      });
+    }
+
     const products = await prisma.product.findMany({
       where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 }, ...domainFilter },
       include: {
@@ -24,6 +36,8 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       take: limit,
     });
+
+    await setCache(cacheKey, products);
 
     return NextResponse.json(products, {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },

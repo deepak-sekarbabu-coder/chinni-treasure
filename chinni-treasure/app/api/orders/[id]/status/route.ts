@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { invalidateOrderCache } from "@/src/lib/cache-invalidate";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -106,6 +107,8 @@ export async function PATCH(
         data: statusUpdateData(status, trackingId, notes),
       });
     }
+
+    await invalidateOrderCache(id);
 
     const updated = await prisma.order.findUnique({
       where: { id },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { verifyPassword, signToken, createSessionCookie } from "@/src/lib/auth";
-import { checkRateLimit } from "@/src/lib/rate-limiter";
+import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { z } from "zod";
 
@@ -15,11 +15,7 @@ export async function POST(request: Request) {
   if (csrfError) return csrfError;
 
   try {
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
-    const { allowed } = checkRateLimit(`login:${ip}`);
+    const { allowed } = await checkRateLimit(`login:${getClientIp(request)}`);
 
     if (!allowed) {
       return NextResponse.json(

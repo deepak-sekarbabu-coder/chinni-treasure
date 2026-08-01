@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { createRedisCache } from "@/src/lib/redis-cache";
 
 const RETRY_COUNT = 2;
+
+const { get: getCached, set: setCache } = createRedisCache(60_000, "catlatest");
 
 async function queryWithRetry<T>(
   fn: () => Promise<T>,
@@ -27,6 +30,15 @@ async function queryWithRetry<T>(
 // relation to avoid N+1 queries as the number of categories grows.
 export async function GET() {
   try {
+    const cached = await getCached("latest");
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      });
+    }
+
     const categories = await queryWithRetry(() =>
       prisma.category.findMany({
         where: { isActive: true },
@@ -95,6 +107,8 @@ export async function GET() {
           },
         };
       });
+
+    await setCache("latest", payload);
 
     return NextResponse.json(payload, {
       headers: {
