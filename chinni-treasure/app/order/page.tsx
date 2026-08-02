@@ -280,9 +280,9 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, on
         )}
       </fieldset>
       <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Additional Notes</legend>
+        <legend className="order-legend">Personalized Notes for Gifting</legend>
         <div className="form-group">
-          <label htmlFor="notes">Order Notes (Optional)</label>
+          <label htmlFor="notes">Send a Little Love</label>
           <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
         </div>
       </fieldset>
