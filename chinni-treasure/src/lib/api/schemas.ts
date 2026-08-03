@@ -17,7 +17,9 @@ const OrderItemSchema = z.object({
   productId: z.string().nullable().optional(),
   product: z
     .object({
+      name: z.string().nullable().optional(),
       sku: z.string().nullable().optional(),
+      imageUrl: z.string().nullable().optional(),
       compareAtPrice: z.coerce.number().nullable().optional(),
     })
     .nullable()

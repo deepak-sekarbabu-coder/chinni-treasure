@@ -1,6 +1,7 @@
 "use client";
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
 import type { Order } from "@/src/lib/api/schemas";
 
@@ -63,19 +64,24 @@ export default function AdminOrdersPanel({
               className="admin-stat-card order-card order-card-skeleton text-left"
               style={{ marginBottom: "16px", animationDelay: `${idx * 0.06}s` }}
             >
-              <div className="order-card-header">
-                <div className="skeleton-grow">
-                  <div className="skeleton-text" style={{ width: "60px", height: "10px", marginBottom: "8px" }} />
-                  <div className="skeleton-text" style={{ width: "140px", height: "16px" }} />
+              <div className="order-card-main">
+                <div className="skeleton-block order-card-thumb" />
+                <div className="order-card-body">
+                  <div className="order-card-header">
+                    <div className="skeleton-grow">
+                      <div className="skeleton-text" style={{ width: "60px", height: "10px", marginBottom: "8px" }} />
+                      <div className="skeleton-text" style={{ width: "140px", height: "16px" }} />
+                    </div>
+                    <div className="skeleton-block" style={{ width: "80px", height: "26px", borderRadius: "2px" }} />
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "6px" }} />
+                      <div className="skeleton-text" style={{ width: "90px", height: "12px" }} />
+                    </div>
+                    <div className="skeleton-text" style={{ width: "80px", height: "18px" }} />
+                  </div>
                 </div>
-                <div className="skeleton-block" style={{ width: "80px", height: "26px", borderRadius: "2px" }} />
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "6px" }} />
-                  <div className="skeleton-text" style={{ width: "90px", height: "12px" }} />
-                </div>
-                <div className="skeleton-text" style={{ width: "80px", height: "18px" }} />
               </div>
             </div>
           ))
@@ -84,6 +90,9 @@ export default function AdminOrdersPanel({
         ) : (
           orders.map((order) => {
             const isAdvancing = advancingOrderId === order.id;
+            const firstItem = order.items?.[0];
+            const thumbSrc = firstItem?.product?.imageUrl || null;
+            const extraItemCount = Math.max(0, (order.items?.length ?? 0) - 1);
             return (
               <div
                 key={order.id}
@@ -91,20 +100,40 @@ export default function AdminOrdersPanel({
                 style={{ marginBottom: "16px", cursor: isAdvancing ? "default" : "pointer" }}
                 onClick={() => !isAdvancing && onSelectOrder(order)}
               >
-                <div className="order-card-header">
-                  <div>
-                    <div className="order-card-label">Order ID</div>
-                    <h3 className="order-card-number">{order.orderNumber}</h3>
+                <div className="order-card-main">
+                  <div className="order-card-thumb" aria-hidden="true">
+                    {thumbSrc ? (
+                      <FallbackImage
+                        src={thumbSrc}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="order-card-thumb-img"
+                      />
+                    ) : (
+                      <span className="order-card-thumb-placeholder">🛍️</span>
+                    )}
+                    {extraItemCount > 0 && (
+                      <span className="order-card-thumb-count">+{extraItemCount}</span>
+                    )}
                   </div>
-                  <StatusBadge status={order.status} />
-                </div>
-                <div className="flex justify-between items-end gap-12">
-                  <div style={{ minWidth: 0 }}>
-                    <p className="order-card-name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.customerName}</p>
-                    <p className="order-card-date">{new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
-                  </div>
-                  <div className="text-right" style={{ flexShrink: 0 }}>
-                    <span className="order-card-price">₹{Number(order.totalAmount).toFixed(2)}</span>
+                  <div className="order-card-body">
+                    <div className="order-card-header">
+                      <div>
+                        <div className="order-card-label">Order ID</div>
+                        <h3 className="order-card-number">{order.orderNumber}</h3>
+                      </div>
+                      <StatusBadge status={order.status} />
+                    </div>
+                    <div className="flex justify-between items-end gap-12">
+                      <div style={{ minWidth: 0 }}>
+                        <p className="order-card-name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.customerName}</p>
+                        <p className="order-card-date">{new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
+                      </div>
+                      <div className="text-right" style={{ flexShrink: 0 }}>
+                        <span className="order-card-price">₹{Number(order.totalAmount).toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
