@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { invalidateOrderCache } from "@/src/lib/cache-invalidate";
+import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -108,6 +109,14 @@ export async function PATCH(
       });
     }
 
+    logger.info("Order status changed", {
+      orderId: id,
+      orderNumber: order.orderNumber,
+      from: order.status,
+      to: status,
+      trackingId: trackingId ?? null,
+    });
+
     await invalidateOrderCache(id);
 
     const updated = await prisma.order.findUnique({
@@ -117,6 +126,9 @@ export async function PATCH(
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to update order status:", error);
+    logger.error("Order status update failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to update order status" }, { status: 500 });
   }
 }

@@ -1,6 +1,26 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// @axiomhq/nextjs expects Next.js's runtime global AsyncLocalStorage
+// (polyfilled by Next). Provide it for plain-Node test runs.
+import { AsyncLocalStorage } from 'node:async_hooks';
+if (!(globalThis as Record<string, unknown>).AsyncLocalStorage) {
+  (globalThis as Record<string, unknown>).AsyncLocalStorage = AsyncLocalStorage;
+}
+
+// Keep Axiom logging inert under test — routes import the logger, but tests
+// assert on responses, not log output.
+vi.mock('@/lib/axiom/server', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    log: vi.fn(),
+    flush: vi.fn(),
+  },
+}));
+
 vi.mock('@/src/lib/env', () => ({
   env: {
     DATABASE_URL: 'postgresql://test:test@localhost:5432/test',

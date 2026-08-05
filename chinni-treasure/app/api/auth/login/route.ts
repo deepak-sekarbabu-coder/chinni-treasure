@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { verifyPassword, signToken, createSessionCookie } from "@/src/lib/auth";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
 
 const LoginSchema = z.object({
@@ -36,11 +37,13 @@ export async function POST(request: Request) {
 
     const admin = await prisma.admin.findUnique({ where: { username } });
     if (!admin || !admin.isActive) {
+      logger.warn("Admin login rejected", { username, reason: "unknown_or_inactive" });
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const valid = await verifyPassword(password, admin.passwordHash);
     if (!valid) {
+      logger.warn("Admin login rejected", { username, reason: "bad_password" });
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
@@ -51,6 +54,8 @@ export async function POST(request: Request) {
 
     const token = await signToken({ id: admin.id, username: admin.username, role: admin.role });
     const cookie = createSessionCookie(token);
+
+    logger.info("Admin login succeeded", { adminId: admin.id, username: admin.username });
 
     const response = NextResponse.json({
       id: admin.id,

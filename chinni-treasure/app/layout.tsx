@@ -9,6 +9,7 @@ import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import JsonLd from "@/src/components/ui/JsonLd";
+import { WebVitals } from "@/lib/axiom/client";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -167,6 +168,7 @@ export default async function RootLayout({
               <Footer />
               <Analytics />
               <SpeedInsights />
+              <WebVitals />
             </ToastProvider>
           </CartProvider>
         </QueryProvider>

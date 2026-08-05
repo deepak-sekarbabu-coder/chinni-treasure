@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -53,11 +54,21 @@ export async function POST(request: Request) {
 
   if (!signatureMatches) {
     console.warn("[verify-payment] Signature mismatch for order", razorpay_order_id);
+    logger.warn("Payment verification failed", {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      reason: "signature_mismatch",
+    });
     return NextResponse.json(
       { ok: false, error: "Payment verification failed" },
       { status: 400 },
     );
   }
+
+  logger.info("Payment verified", {
+    orderId: razorpay_order_id,
+    paymentId: razorpay_payment_id,
+  });
 
   return NextResponse.json({
     ok: true,
