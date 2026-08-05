@@ -26,7 +26,8 @@
     "compose:up": "podman compose up -d",
     "compose:down": "podman compose down",
     "postinstall": "prisma generate",
-    "fallow": "npx fallow"
+    "fallow": "npx fallow",
+    "fallow:report": "node scripts/run-fallow-report.mjs"
   },
   "dependencies": {
     "@axiomhq/js": "^1.8.0",
