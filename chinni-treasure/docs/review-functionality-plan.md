@@ -4,6 +4,8 @@
 **Status:** Proposed
 **Scope:** Add user-submitted product reviews with moderation workflow, a homepage top-five ranking algorithm, and full GDPR/CCPA compliance.
 
+> **Update (2026-08-05):** Still **not implemented** — no `Review` model or review API routes exist in the codebase yet. This document remains a forward-looking plan.
+
 ---
 
 ## 1. Requirements & Technical Scope Definition

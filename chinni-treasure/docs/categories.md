@@ -1,5 +1,7 @@
 # Categories & "Latest in Every Category"
 
+> **Last validated against codebase:** August 5, 2026 — migration, routes, cache headers, and tests re-verified.
+
 This document describes the category management and category-based browsing
 feature added to the Chinni Treasure storefront.
 

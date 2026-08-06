@@ -1,5 +1,11 @@
 **Prioritized Roadmap**
 
+> **Status:** Roadmap from an earlier UX review. Some items have since shipped
+> (consistent skeleton loading states, sticky action-bar spacing fixes, category
+> sort/pagination). Remaining items below are still open — verify against the
+> live UI before treating them as gaps.
+> **Last reviewed:** August 5, 2026.
+
 **Phase 1: Highest Impact, Lowest Effort**
 1. Tighten the homepage CTA flow
    - Add stronger primary actions like `Shop New Arrivals` and `Browse Categories`

@@ -1,6 +1,6 @@
 # Codebase Architectural Gaps & Technical Debt
 
-> **Last validated:** July 25, 2026 — Gaps and statuses re-validated against current codebase.
+> **Last validated:** August 5, 2026 — Gaps and statuses re-validated against current codebase.
 
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 
@@ -23,7 +23,7 @@ None currently identified.
 ## 3. Minor Gaps (Improvement / Best Practice)
 
 * **Incomplete Testing Coverage**
-  * **Issue:** Unit and integration tests are strong — **45+ test files** under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@testing-library/jest-dom` and `@testing-library/user-event` are dev dependencies; `@playwright/test` could be added for E2E groundwork.
+  * **Issue:** Unit and integration tests are strong — **32 test files** under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@testing-library/jest-dom` and `@testing-library/user-event` are dev dependencies; `@playwright/test` could be added for E2E groundwork.
   * **Recommendation:** Implement E2E tests with Playwright covering critical user journeys (browse → checkout → payment, admin order advancement).
 
 * **Lack of Dynamic Metadata** (Mostly Resolved)
@@ -31,6 +31,6 @@ None currently identified.
   * **Resolution:** Dynamic product-detail metadata + category metadata added (SEO work, July 2026). Top-level catalogue/listing pages remain pending.
   * **Recommendation:** Add `generateMetadata` to `app/catalogue/page.tsx` and any other dynamic listing pages.
 
-* **In-Memory Cache Not Shared Across Serverless Instances**
-  * **Issue:** The in-memory cache (`src/lib/cache.ts`, `src/lib/products-cache.ts`) works in development but won't persist across serverless function invocations on Vercel.
-  * **Recommendation:** Use Vercel KV or Redis for production caching.
+* ~~**In-Memory Cache Not Shared Across Serverless Instances**~~
+  * ~~**Issue:** The in-memory cache (`src/lib/cache.ts`, `src/lib/products-cache.ts`) works in development but won't persist across serverless function invocations on Vercel.~~
+  * **RESOLVED (Aug 5, 2026):** Redis caching integrated (`src/lib/redis.ts` + `src/lib/redis-cache.ts`) with an in-memory fallback when `REDIS_URL` is unset. Catalog, category, latest, recent, order, tracking, and stats routes now cache through Redis with short TTLs; `src/lib/cache-invalidate.ts` SCANs + DELs namespaces after mutations. See the architecture diagrams.

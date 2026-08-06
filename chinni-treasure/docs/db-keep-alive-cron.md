@@ -8,8 +8,9 @@ Chinni Treasure's database is hosted on **Nhost** (free tier). Nhost's Starter p
 This document covers the **Vercel Cron Job** that pings the database on a schedule so
 it never idles long enough to be paused.
 
-The code integration is **complete** (changes are in the working tree, not yet
-committed — commit and push them before deploying). This guide covers activation,
+The code integration is **complete and committed** (commit `67e5d19`, Aug 5,
+2026) — but the branch is **not yet pushed** to the remote (`main` is 4 commits
+ahead of `origin/main`). Push before deploying. This guide covers activation,
 plan limitations, verification, and troubleshooting.
 
 ---
@@ -20,7 +21,7 @@ plan limitations, verification, and troubleshooting.
 | --- | --- | --- |
 | Cron endpoint | `app/api/cron/db-health/route.ts` | `GET /api/cron/db-health` — runs `SELECT 1` through the retry-wrapped Prisma client. Verifies `Authorization: Bearer <CRON_SECRET>` (constant-time compare). Returns `not_configured` (200) if `CRON_SECRET` is unset — never touches the DB in that case. Returns 503 on DB failure. Logs every outcome to Axiom. Exports `maxDuration = 60` so a cold start + the 15s pool connect timeout fit inside Vercel's function limit. |
 | Cron trigger | `vercel.json` | `"crons": [{ "path": "/api/cron/db-health", "schedule": "0 8 * * *" }]` — fires every day at 08:00 UTC. Daily is the maximum frequency allowed on the Vercel Hobby (free) plan, so this deploys cleanly everywhere. |
-| Env template | `.env.example` | Documents `CRON_SECRET` with a generation one-liner. |
+| Env template | `.env.example` | Documents `CRON_SECRET` with a generation one-liner (present in the committed file). |
 
 ### How Vercel cron authentication works
 

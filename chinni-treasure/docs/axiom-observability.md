@@ -21,7 +21,7 @@ that makes logs actually flow, in both local dev and production (Vercel).
 | Web Vitals | `app/layout.tsx` | `<WebVitals />` mounted in the root layout. |
 | Route events | `app/api/verify-payment/route.ts` · `app/api/auth/login/route.ts` · `app/api/orders/[id]/status/route.ts` | Targeted structured logs: payment verified/failed, admin login rejected/succeeded, order status transitions. **No passwords or payment secrets are ever logged.** |
 | Env template | `.env.example` | Documents `NEXT_PUBLIC_AXIOM_TOKEN`, `NEXT_PUBLIC_AXIOM_DATASET`, `NEXT_PUBLIC_AXIOM_EDGE`. |
-| Tests | `src/__tests__/setup.ts` | `AsyncLocalStorage` polyfill + logger mock so the 349 tests stay deterministic. |
+| Tests | `src/__tests__/setup.ts` | `AsyncLocalStorage` polyfill + logger mock so the 183 tests across 32 files stay deterministic. |
 
 > Note: `transformMiddlewareRequest` (used in `proxy.ts`) only sends `ip`, `region`,
 > `method`, `host`, `path`, `scheme`, `referer`, `userAgent` — **no cookies, no

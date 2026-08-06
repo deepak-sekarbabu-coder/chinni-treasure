@@ -36,7 +36,7 @@ const groupKey = (g) =>
 const today = new Date().toISOString().slice(0, 10);
 push(`# Fallow Analysis Report — Chinni Treasure`);
 push();
-push(`> **Generated:** ${today} · **Fallow version:** ${health.version} (schema ${health.schema_version}) · **Command:** \`npm run fallow\``);
+push(`> **Generated:** ${today} · **Fallow version:** ${health.version} (schema ${health.schema_version}) · **Command:** \`npm run fallow:report\``);
 push(`> Raw JSON sources: \`fallow-health.json\`, \`fallow-dead.json\`, \`fallow-dupes.json\` (regenerate with \`npx fallow <analysis> --format json\`).`);
 push();
 
@@ -269,7 +269,7 @@ push();
 push(`## Appendix: Re-running`);
 push();
 push(`\`\`\`bash`);
-push(`npm run fallow                      # full analysis (dead-code + dupes + health)`);
+push(`npm run fallow:report                # full analysis (dead-code + dupes + health) -> docs/fallow-report.md`);
 push(`npx fallow health --format json --top 200 > fallow-health.json`);
 push(`npx fallow dead-code --format json > fallow-dead.json`);
 push(`npx fallow dupes --format json > fallow-dupes.json`);

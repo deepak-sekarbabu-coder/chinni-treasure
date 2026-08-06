@@ -1,6 +1,6 @@
 # Fallow Analysis Report — Chinni Treasure
 
-> **Generated:** 2026-08-05 · **Fallow version:** 3.14.0 (schema 7) · **Command:** `npm run fallow`
+> **Generated:** 2026-08-05 · **Fallow version:** 3.14.0 (schema 7) · **Command:** `npm run fallow:report`
 > Raw JSON sources: `fallow-health.json`, `fallow-dead.json`, `fallow-dupes.json` (regenerate with `npx fallow <analysis> --format json`).
 
 ## Summary
@@ -710,7 +710,7 @@ Sorted by **ROI score** (quick-win efficiency, descending). **Pri** is the absol
 ## Appendix: Re-running
 
 ```bash
-npm run fallow                      # full analysis (dead-code + dupes + health)
+npm run fallow:report                # full analysis (dead-code + dupes + health) -> docs/fallow-report.md
 npx fallow health --format json --top 200 > fallow-health.json
 npx fallow dead-code --format json > fallow-dead.json
 npx fallow dupes --format json > fallow-dupes.json

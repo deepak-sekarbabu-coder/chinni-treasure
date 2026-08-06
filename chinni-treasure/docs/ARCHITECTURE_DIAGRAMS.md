@@ -85,7 +85,6 @@ erDiagram
     Product ||--o{ OrderItem : "referenced in"
     Order ||--o{ OrderItem : "contains"
     Order ||--o{ OrderStatusHistory : "tracks"
-    Admin ||--o{ Order : "manages"
 
     Category {
         int id PK "Auto-increment"
@@ -100,7 +99,7 @@ erDiagram
 
     Product {
         uuid id PK "Random UUID"
-        varchar(50) sku UK "Stock keeping unit"
+        varchar(50) sku UK "Stock keeping unit (optional)"
         varchar(255) name "Product title"
         int categoryId FK "Nullable"
         text description "Markdown content"
@@ -169,10 +168,13 @@ erDiagram
     }
 
     Admin {
-        int id PK "Auto-increment"
-        varchar(100) username UK "Login name"
+        uuid id PK "Random UUID"
+        varchar(50) username UK "Login name"
+        varchar(255) email UK "Email address"
         varchar(255) passwordHash "bcrypt hash"
         enum role "admin|super_admin"
+        boolean isActive "Login allowed"
+        datetime lastLoginAt "Last successful login"
         datetime createdAt
         datetime updatedAt
     }
@@ -323,15 +325,15 @@ flowchart LR
         OrderMutation --> OrderDEL["DEL order:{id}<br/>SCAN + DEL track:*"]
     end
 
-    subgraph TTLs["⏱️ Cache TTLs"]
-        Products["Products Listing<br/>60s"]
-        Categories["Categories List<br/>120s"]
-        CatPage["Category Page<br/>90s"]
-        CatLatest["Latest in Category<br/>120s"]
-        Recent["Recent Products<br/>30s"]
-        OrderDetail["Order Detail<br/>15s"]
-        Tracking["Tracking Lookup<br/>30s"]
-        Stats["Admin Stats<br/>300s"]
+    subgraph TTLs["⏱️ Cache TTLs (from route Cache-Control headers)"]
+        Products["Products Listing<br/>30s"]
+        Categories["Categories List<br/>300s"]
+        CatPage["Category Page<br/>60s"]
+        CatLatest["Latest in Category<br/>60s"]
+        Recent["Recent Products<br/>60s"]
+        OrderDetail["Order Detail<br/>30s"]
+        Tracking["Tracking Lookup<br/>15s"]
+        Stats["Admin Stats<br/>30s (private)"]
     end
 
     classDef writeStyle fill:#059669,stroke:#047857,color:#FFFFFF
@@ -631,7 +633,7 @@ graph TB
         DB["PostgreSQL<br/>DATABASE_URL"]
         RedisInfra["Redis Cloud<br/>REDIS_URL<br/>(optional)"]
         RazorpayInfra["Razorpay API<br/>RAZORPAY_KEY_ID/SECRET"]
-        AxiomInfra["Axiom<br/>AXIOM_INGEST_TOKEN"]
+        AxiomInfra["Axiom<br/>NEXT_PUBLIC_AXIOM_TOKEN"]
     end
 
     subgraph Vercel["☁️ Vercel Deployment"]
@@ -647,8 +649,13 @@ graph TB
         JWT["JWT_SECRET"]
         SITEURL["NEXT_PUBLIC_SITE_URL"]
         CORS["ALLOWED_ORIGIN"]
+        REDIS["REDIS_URL (optional)"]
         RZP_ID["NEXT_PUBLIC_RAZORPAY_KEY_ID"]
         RZP_SECRET["RAZORPAY_KEY_SECRET"]
+        AXIOM_TOKEN["NEXT_PUBLIC_AXIOM_TOKEN"]
+        AXIOM_DATASET["NEXT_PUBLIC_AXIOM_DATASET"]
+        AXIOM_EDGE["NEXT_PUBLIC_AXIOM_EDGE"]
+        CRON["CRON_SECRET"]
         IMG_OPT["NEXT_PUBLIC_IMAGE_UNOPTIMIZED"]
     end
 
@@ -664,5 +671,5 @@ graph TB
     class Node,StaticFiles,ServerPages,APIHandler,NextStart containerStyle
     class DB,RedisInfra,RazorpayInfra,AxiomInfra infraStyle
     class EdgeMiddleware,ServerlessFunctions,ImageOpt,Analytics vercelStyle
-    class DBURL,DIRECTURL,JWT,SITEURL,CORS,RZP_ID,RZP_SECRET,IMG_OPT envStyle
+    class DBURL,DIRECTURL,JWT,SITEURL,CORS,REDIS,RZP_ID,RZP_SECRET,AXIOM_TOKEN,AXIOM_DATASET,AXIOM_EDGE,CRON,IMG_OPT envStyle
 ```
