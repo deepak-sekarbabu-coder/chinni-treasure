@@ -26,4 +26,5 @@ export const axiomClient: Axiom | null = token
     })
   : null;
 
+// fallow-ignore-next-line unused-export
 export default axiomClient;

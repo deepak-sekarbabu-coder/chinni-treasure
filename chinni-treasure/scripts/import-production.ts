@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 import "dotenv/config";
 import { PrismaClient, type OrderStatus, type AdminRole, type ProductBadge } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";

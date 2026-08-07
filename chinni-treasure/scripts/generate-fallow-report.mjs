@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 import fs from "node:fs";
 
 const dir = process.argv[2] ?? "/tmp";

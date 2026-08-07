@@ -5,7 +5,7 @@ import {
   Logger,
   type Transport,
 } from "@axiomhq/logging";
-import { createUseLogger, createWebVitalsComponent } from "@axiomhq/react";
+import { createWebVitalsComponent } from "@axiomhq/react";
 import { nextJsFormatters } from "@axiomhq/nextjs/client";
 import { axiomClient } from "./axiom";
 
@@ -19,12 +19,11 @@ function buildTransports(): [Transport, ...Transport[]] {
   return [] as unknown as [Transport, ...Transport[]];
 }
 
-export const logger = new Logger({
+const logger = new Logger({
   transports: buildTransports(),
   formatters: nextJsFormatters,
 });
 
-const useLogger = createUseLogger(logger);
 const WebVitals = createWebVitalsComponent(logger);
 
-export { useLogger, WebVitals };
+export { WebVitals };

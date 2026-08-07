@@ -10,7 +10,7 @@ interface SkeletonBaseProps {
   style?: React.CSSProperties;
 }
 
-export function SkeletonText({ className, width, height, style }: SkeletonBaseProps) {
+function SkeletonText({ className, width, height, style }: SkeletonBaseProps) {
   return (
     <div
       className={`skeleton-text ${className || ""}`}
@@ -24,7 +24,7 @@ export function SkeletonText({ className, width, height, style }: SkeletonBasePr
   );
 }
 
-export function SkeletonBlock({ className, width, height, borderRadius, style }: SkeletonBaseProps) {
+function SkeletonBlock({ className, width, height, borderRadius, style }: SkeletonBaseProps) {
   return (
     <div
       className={`skeleton-block ${className || ""}`}
@@ -56,7 +56,7 @@ export function ProductCardSkeleton({ animationDelay = 0 }: { animationDelay?: n
   );
 }
 
-export function CategoryCardSkeleton({ animationDelay = 0 }: { animationDelay?: number }) {
+function CategoryCardSkeleton({ animationDelay = 0 }: { animationDelay?: number }) {
   return (
     <div
       className="latest-category-skeleton-block"
@@ -69,7 +69,7 @@ export function CategoryCardSkeleton({ animationDelay = 0 }: { animationDelay?: 
   );
 }
 
-export function ProductDetailSkeleton() {
+function ProductDetailSkeleton() {
   return (
     <div className="product-detail-layout">
       <div className="product-detail-gallery">
@@ -99,7 +99,7 @@ export function ProductDetailSkeleton() {
   );
 }
 
-export function CheckoutSkeleton() {
+function CheckoutSkeleton() {
   return (
     <div className="order-layout">
       <div>
@@ -131,7 +131,7 @@ export function CheckoutSkeleton() {
   );
 }
 
-export function SearchResultsSkeleton({ itemCount = 6 }: { itemCount?: number }) {
+function SearchResultsSkeleton({ itemCount = 6 }: { itemCount?: number }) {
   return (
     <div className="search-results-container">
       <div className="search-header">

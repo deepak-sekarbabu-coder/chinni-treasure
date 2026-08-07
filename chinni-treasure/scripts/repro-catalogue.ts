@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 import { prisma } from "@/src/lib/prisma";
 import { ProductsResponseSchema } from "@/src/lib/api/schemas";
 

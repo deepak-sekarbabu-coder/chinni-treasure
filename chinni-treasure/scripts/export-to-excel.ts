@@ -1,4 +1,3 @@
-// fallow-ignore-file unused-file
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';

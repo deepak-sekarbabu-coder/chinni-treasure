@@ -1,91 +1,74 @@
 # Fallow Analysis Report — Chinni Treasure
 
-> **Generated:** 2026-08-05 · **Fallow version:** 3.14.0 (schema 7) · **Command:** `npm run fallow:report`
+> **Generated:** 2026-08-07 · **Fallow version:** 3.14.0 (schema 7) · **Command:** `npm run fallow:report`
 > Raw JSON sources: `fallow-health.json`, `fallow-dead.json`, `fallow-dupes.json` (regenerate with `npx fallow <analysis> --format json`).
 
 ## Summary
 
 | Metric | Value |
 | --- | --- |
-| **Health score** | **86.7 / 100 (grade A)** |
-| Maintainability index | 91.9 (good) |
-| Files analyzed | 236 |
-| Lines of code | 33,528 |
-| Functions analyzed | 1,741 |
-| Functions above complexity threshold | **95** (🔴 26 critical · 🟠 24 high · 🟡 45 moderate) |
+| **Health score** | **87.8 / 100 (grade A)** |
+| Maintainability index | 92.5 (good) |
+| Files analyzed | 237 |
+| Lines of code | 33,931 |
+| Functions analyzed | 1,742 |
+| Functions above complexity threshold | **96** (🔴 26 critical · 🟠 25 high · 🟡 45 moderate) |
 | Functions > 60 LOC | 51.7 per 1k functions |
-| Dead files | 4 (1.7%) |
-| Dead exports | 15 (4.6%) |
-| Duplicated lines | 1,459 (5.3%) across 42 files |
+| Dead files | 0 (0%) |
+| Dead exports | 3 (0.9%) |
+| Duplicated lines | 1,459 (5.2%) across 42 files |
 | Circular dependencies | 0 |
 | Unused dependencies | 0 |
 | Change hotspots (6 mo) | 0 |
-| Avg cyclomatic | 1.9 (p90: 4) |
-| Istanbul coverage matched | 95 / 1741 functions (5.5%) |
+| Avg cyclomatic | 2 (p90: 4) |
+| Istanbul coverage matched | 95 / 1742 functions (5.5%) |
 
-**Health score penalties:** dead_files −0.3 · dead_exports −0.9 · unit_size −10 · coupling −1.8 · duplication −0.3
+**Health score penalties:** dead_exports −0.2 · unit_size −10 · coupling −1.8 · duplication −0.2
 
-**Exit status:** analysis fails (non-zero) when any category has issues: dead-code (24), dupes (42 groups), health (95 above threshold).
+**Exit status:** analysis fails (non-zero) when any category has issues: dead-code (8), dupes (42 groups), health (96 above threshold).
 
 ## Progress Tracker
 
 Check off categories as they are resolved (fallow will confirm with a clean exit):
 
 - [ ] **Dead code** — 23 issues (3 files, 10 exports, 5 types, 1 test-only dep, 4 stale suppressions)
-- [ ] **Duplication** — 42 clone groups / 100 instances, 1,459 lines (5.3%)
-- [ ] **Complexity** — 95 functions above threshold (26 critical, 24 high, 45 moderate)
-- [ ] **File health** — 192 files scored; resolve the highest-risk files first
-- [ ] **Refactoring targets** — 11 prioritized recommendations
+- [ ] **Duplication** — 42 clone groups / 100 instances, 1,459 lines (5.2%)
+- [ ] **Complexity** — 96 functions above threshold (26 critical, 25 high, 45 moderate)
+- [ ] **File health** — 193 files scored; resolve the highest-risk files first
+- [ ] **Refactoring targets** — 10 prioritized recommendations
 
 ---
 
-## 1. Dead Code (24 issues)
+## 1. Dead Code (8 issues)
 
-### 1.1 Unused files (4)
+### 1.1 Unused files (0)
 
 Files not reachable from any entry point. Verify each is truly obsolete before deleting.
 
 | File | Status |
 | --- | --- |
-| `scripts/generate-fallow-report.mjs` | [ ] |
-| `scripts/import-production.ts` | [ ] |
-| `scripts/repro-catalogue.ts` | [ ] |
-| `src/lib/image-loader.ts` | [ ] |
 
-### 1.2 Unused exports (10)
+### 1.2 Unused exports (2)
 
 Exported symbols with no known consumers.
 
 | File | Export | Line | Status |
 | --- | --- | --- | --- |
-| `lib/axiom/axiom.ts` | `default` | 29 | [ ] |
 | `lib/axiom/client.ts` | `logger` | 22 | [ ] |
 | `lib/axiom/client.ts` | `useLogger` | 30 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `SkeletonText` | 13 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `SkeletonBlock` | 27 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `CategoryCardSkeleton` | 59 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `ProductDetailSkeleton` | 72 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `CheckoutSkeleton` | 102 | [ ] |
-| `src/components/ui/SkeletonLoader.tsx` | `SearchResultsSkeleton` | 134 | [ ] |
-| `src/lib/api/schemas.ts` | `CatalogueProductsResponseSchema` | 122 | [ ] |
 
-### 1.3 Unused type exports (5)
+### 1.3 Unused type exports (1)
 
 | File | Type | Line | Status |
 | --- | --- | --- | --- |
 | `src/__tests__/mocks/redis.ts` | `MockRedisSetCall` | 2 | [ ] |
-| `src/lib/api/schemas.ts` | `CatalogueProductsResponse` | 324 | [ ] |
-| `src/lib/api/schemas.ts` | `ProductImage` | 366 | [ ] |
-| `src/lib/api/schemas.ts` | `ProductImageInput` | 367 | [ ] |
-| `src/lib/api/schemas.ts` | `LatestCategoryProduct` | 373 | [ ] |
 
-### 1.4 Test-only production dependencies (1)
+### 1.4 Test-only production dependencies (0)
 
 Consider moving to `devDependencies`.
 
 | Package | File | Status |
 | --- | --- | --- |
-| `isomorphic-dompurify` | `package.json` | [ ] |
 
 ### 1.5 Stale suppressions (4)
 
@@ -94,13 +77,13 @@ Suppression comments that no longer match any issue (mostly a typo: `unused-file
 | File | Line | Issue kind | Status |
 | --- | --- | --- | --- |
 | `scripts/export-to-excel.ts` | 1 | `unused-file` | [ ] |
-| `src/__tests__/mocks/prisma.ts` | 1 | `unused-files` | [ ] |
-| `src/__tests__/mocks/redis.ts` | 1 | `unused-files` | [ ] |
-| `src/__tests__/utils/api-test.ts` | 1 | `unused-files` | [ ] |
+| `src/__tests__/mocks/prisma.ts` | 1 | `unused-file` | [ ] |
+| `src/__tests__/mocks/redis.ts` | 1 | `unused-file` | [ ] |
+| `src/__tests__/utils/api-test.ts` | 1 | `unused-file` | [ ] |
 
 ---
 
-## 2. Duplication (42 clone groups · 1,459 lines · 5.3%)
+## 2. Duplication (42 clone groups · 1,459 lines · 5.2%)
 
 Identical code blocks detected via suffix-array analysis. Groups with the most lines are the highest-value extraction targets.
 
@@ -134,7 +117,7 @@ Identical code blocks detected via suffix-array analysis. Groups with the most l
 | 24 | 24 | `app/api/categories/route.ts:104-115`<br>`app/api/products/route.ts:164-175` | [ ] |
 | 25 | 24 | `app/api/create-order/route.ts:36-47`<br>`app/api/verify-payment/route.ts:23-34` | [ ] |
 | 26 | 24 | `app/api/products/[id]/route.ts:112-123`<br>`app/api/products/route.ts:197-208` | [ ] |
-| 27 | 24 | `scripts/generate-seed-from-excel.ts:230-241`<br>`scripts/import-production.ts:192-203` | [ ] |
+| 27 | 24 | `scripts/generate-seed-from-excel.ts:230-241`<br>`scripts/import-production.ts:193-204` | [ ] |
 | 28 | 22 | `src/components/pages/catalogue-content.tsx:257-266`<br>`src/components/pages/category-content.tsx:225-236` | [ ] |
 | 29 | 21 | `app/api/export/route.ts:6-18`<br>`scripts/export-to-excel.ts:19-26` | [ ] |
 | 30 | 21 | `src/lib/api/schemas.ts:81-87`<br>`src/lib/api/schemas.ts:108-114`<br>`src/lib/api/schemas.ts:280-286` | [ ] |
@@ -147,9 +130,9 @@ Identical code blocks detected via suffix-array analysis. Groups with the most l
 | 37 | 18 | `app/catalogue/page.tsx:109-117`<br>`app/category/[slug]/page.tsx:146-154` | [ ] |
 | 38 | 18 | `src/components/admin/PrintShippingLabelModal.tsx:56-64`<br>`src/components/admin/PrintShippingLabelModal.tsx:104-112` | [ ] |
 | 39 | 18 | `src/lib/api/schemas.ts:81-89`<br>`src/lib/api/schemas.ts:280-288` | [ ] |
-| 40 | 16 | `scripts/generate-seed-from-excel.ts:76-84`<br>`scripts/import-production.ts:58-64` | [ ] |
+| 40 | 16 | `scripts/generate-seed-from-excel.ts:76-84`<br>`scripts/import-production.ts:59-65` | [ ] |
 | 41 | 16 | `src/components/order/ConfirmationDetails.tsx:107-114`<br>`src/components/order/ConfirmationDetails.tsx:139-146` | [ ] |
-| 42 | 14 | `scripts/generate-seed-from-excel.ts:3-9`<br>`scripts/import-production.ts:27-33` | [ ] |
+| 42 | 14 | `scripts/generate-seed-from-excel.ts:3-9`<br>`scripts/import-production.ts:28-34` | [ ] |
 
 ### Clone families (32)
 
@@ -190,10 +173,10 @@ Related groups spanning the same files — extract a shared function/module once
 
 ---
 
-## 3. Complexity (95 functions above threshold)
+## 3. Complexity (96 functions above threshold)
 
 Thresholds: cyclomatic > 20 · cognitive > 15 · CRAP ≥ 30 · unit size > 60 LOC.
-Coverage model: **istanbul** — only 95/1741 functions matched by Istanbul coverage; unmatched CRAP scores are estimated from export references.
+Coverage model: **istanbul** — only 95/1742 functions matched by Istanbul coverage; unmatched CRAP scores are estimated from export references.
 
 ### 3.1 Large functions (90 total, > 60 LOC)
 
@@ -202,7 +185,7 @@ Coverage model: **istanbul** — only 95/1741 functions matched by Istanbul cove
 | `PrintShippingLabelModal` | `src/components/admin/PrintShippingLabelModal.tsx:34` | 728 | [ ] |
 | `ProductFormModal` | `src/components/admin/ProductFormModal.tsx:39` | 394 | [ ] |
 | `main` | `scripts/generate-seed-from-excel.ts:39` | 371 | [ ] |
-| `main` | `scripts/import-production.ts:36` | 321 | [ ] |
+| `main` | `scripts/import-production.ts:37` | 321 | [ ] |
 | `<arrow>` | `src/components/layout/__tests__/Navbar.test.tsx:15` | 317 | [ ] |
 | `OrderPage` | `app/order/page.tsx:354` | 314 | [ ] |
 | `OrderDetailModal` | `src/components/order/OrderDetailModal.tsx:23` | 283 | [ ] |
@@ -290,7 +273,7 @@ Coverage model: **istanbul** — only 95/1741 functions matched by Istanbul cove
 | `ShippingNudgePopup` | `src/components/ui/ShippingNudgePopup.tsx:23` | 62 | [ ] |
 | `<arrow>` | `src/lib/hooks/__tests__/useAdminMutations.test.tsx:34` | 62 | [ ] |
 
-### 3.2 High-complexity functions (95)
+### 3.2 High-complexity functions (96)
 
 Sorted by cyclomatic complexity (descending).
 
@@ -301,8 +284,8 @@ Sorted by cyclomatic complexity (descending).
 | 🟠 high | `PrintShippingLabelModal` | `src/components/admin/PrintShippingLabelModal.tsx:34` | 22 | 37 | 728 | undefined | [ ] |
 | 🟡 moderate | `GET` | `app/api/products/route.ts:52` | 21 | 20 | 79 | undefined | [ ] |
 | 🔴 critical | `DeliveryDetailsStep` | `app/order/page.tsx:96` | 20 | 27 | 53 | 420 | [ ] |
-| 🔴 critical | `<arrow>` | `scripts/import-production.ts:178` | 18 | 17 | 26 | 342 | [ ] |
-| 🔴 critical | `main` | `scripts/import-production.ts:36` | 18 | 17 | 321 | 342 | [ ] |
+| 🔴 critical | `<arrow>` | `scripts/import-production.ts:179` | 18 | 17 | 26 | 342 | [ ] |
+| 🔴 critical | `main` | `scripts/import-production.ts:37` | 18 | 17 | 321 | 342 | [ ] |
 | 🟠 high | `CatalogueContent` | `src/components/pages/catalogue-content.tsx:30` | 18 | 36 | 260 | undefined | [ ] |
 | 🟡 moderate | `ProductCard` | `src/components/ui/ProductCard.tsx:45` | 18 | 17 | 98 | undefined | [ ] |
 | 🔴 critical | `useAdminPageState` | `app/admin/useAdminPageState.ts:28` | 17 | 32 | 109 | 306 | [ ] |
@@ -333,7 +316,7 @@ Sorted by cyclomatic complexity (descending).
 | 🔴 critical | `CategoryCard` | `src/components/pages/LatestInEveryCategory.tsx:17` | 10 | 8 | 94 | 110 | [ ] |
 | 🟡 moderate | `FallbackImage` | `src/components/ui/FallbackImage.tsx:42` | 9 | 24 | 97 | undefined | [ ] |
 | 🟠 high | `OrderSummaryCard` | `src/components/order/OrderSummaryCard.tsx:35` | 9 | 15 | 164 | 90 | [ ] |
-| 🟠 high | `<arrow>` | `scripts/import-production.ts:78` | 9 | 8 | 17 | 90 | [ ] |
+| 🟠 high | `<arrow>` | `scripts/import-production.ts:79` | 9 | 8 | 17 | 90 | [ ] |
 | 🟠 high | `extractUrl` | `scripts/generate-seed-from-excel.ts:28` | 9 | 7 | 10 | 90 | [ ] |
 | 🟠 high | `<arrow>` | `scripts/generate-seed-from-excel.ts:256` | 9 | 7 | 19 | 90 | [ ] |
 | 🟠 high | `seedProducts` | `prisma/seed.ts:27` | 9 | 13 | 52 | 90 | [ ] |
@@ -349,6 +332,7 @@ Sorted by cyclomatic complexity (descending).
 | 🟠 high | `LatestInEveryCategory` | `src/components/pages/LatestInEveryCategory.tsx:112` | 7 | 17 | 124 | 56 | [ ] |
 | 🟠 high | `handleAdd` | `src/components/pages/category-content.tsx:86` | 7 | 6 | 31 | 56 | [ ] |
 | 🟠 high | `retry` | `src/components/providers/QueryProvider.tsx:18` | 7 | 4 | 6 | 56 | [ ] |
+| 🟠 high | `GET` | `app/api/cron/db-health/route.ts:20` | 7 | 7 | 31 | 56 | [ ] |
 | 🟠 high | `handleSave` | `src/lib/hooks/useAdminCategoriesController.ts:108` | 7 | 7 | 28 | 56 | [ ] |
 | 🟠 high | `POST` | `app/api/verify-payment/route.ts:17` | 7 | 6 | 62 | 56 | [ ] |
 | 🟠 high | `CataloguePage` | `app/catalogue/page.tsx:36` | 7 | 6 | 115 | 56 | [ ] |
@@ -358,9 +342,9 @@ Sorted by cyclomatic complexity (descending).
 | 🟡 moderate | `proxy` | `proxy.ts:11` | 6 | 6 | 32 | 42 | [ ] |
 | 🟡 moderate | `StepNavigation` | `app/order/page.tsx:294` | 6 | 13 | 28 | 42 | [ ] |
 | 🟡 moderate | `handleRazorpayPayment` | `app/order/page.tsx:478` | 6 | 5 | 87 | 42 | [ ] |
-| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:244` | 6 | 5 | 12 | 42 | [ ] |
-| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:280` | 6 | 5 | 10 | 42 | [ ] |
-| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:315` | 6 | 5 | 13 | 42 | [ ] |
+| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:245` | 6 | 5 | 12 | 42 | [ ] |
+| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:281` | 6 | 5 | 10 | 42 | [ ] |
+| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:316` | 6 | 5 | 13 | 42 | [ ] |
 | 🟡 moderate | `schemaLabel` | `app/docs/page.tsx:62` | 6 | 5 | 6 | 42 | [ ] |
 | 🟡 moderate | `<arrow>` | `scripts/generate-seed-from-excel.ts:180` | 6 | 5 | 11 | 42 | [ ] |
 | 🟡 moderate | `<arrow>` | `scripts/generate-seed-from-excel.ts:293` | 6 | 5 | 10 | 42 | [ ] |
@@ -374,13 +358,13 @@ Sorted by cyclomatic complexity (descending).
 | 🟡 moderate | `StickyCheckoutBar` | `app/order/page.tsx:323` | 5 | 11 | 30 | 30 | [ ] |
 | 🟡 moderate | `handleSubmit` | `app/order/page.tsx:566` | 5 | 4 | 32 | 30 | [ ] |
 | 🟡 moderate | `TrackOrderCard` | `src/components/track/TrackOrderCard.tsx:11` | 5 | 3 | 50 | 30 | [ ] |
-| 🟡 moderate | `parseDate` | `scripts/import-production.ts:11` | 5 | 5 | 9 | 30 | [ ] |
-| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:54` | 5 | 4 | 11 | 30 | [ ] |
-| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:127` | 5 | 4 | 11 | 30 | [ ] |
+| 🟡 moderate | `parseDate` | `scripts/import-production.ts:12` | 5 | 5 | 9 | 30 | [ ] |
+| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:55` | 5 | 4 | 11 | 30 | [ ] |
+| 🟡 moderate | `<arrow>` | `scripts/import-production.ts:128` | 5 | 4 | 11 | 30 | [ ] |
 | 🟡 moderate | `<arrow>` | `app/docs/page.tsx:83` | 5 | 4 | 14 | 30 | [ ] |
 | 🟡 moderate | `renderSchema` | `app/docs/page.tsx:69` | 5 | 5 | 31 | 30 | [ ] |
 | 🟡 moderate | `handleSubmit` | `app/admin/login/page.tsx:19` | 5 | 5 | 21 | 30 | [ ] |
-| 🟡 moderate | `main` | `scripts/repro-catalogue.ts:4` | 5 | 4 | 38 | 30 | [ ] |
+| 🟡 moderate | `main` | `scripts/repro-catalogue.ts:5` | 5 | 4 | 38 | 30 | [ ] |
 | 🟡 moderate | `parseDate` | `scripts/generate-seed-from-excel.ts:19` | 5 | 4 | 8 | 30 | [ ] |
 | 🟡 moderate | `<arrow>` | `scripts/generate-seed-from-excel.ts:73` | 5 | 4 | 12 | 30 | [ ] |
 | 🟡 moderate | `<arrow>` | `scripts/generate-seed-from-excel.ts:142` | 5 | 4 | 7 | 30 | [ ] |
@@ -394,7 +378,7 @@ Sorted by cyclomatic complexity (descending).
 
 ---
 
-## 4. File Health Scores (192 files)
+## 4. File Health Scores (193 files)
 
 Sorted by triage concern (higher = address first). **Risk** is the max CRAP score (untested complexity); **MI** is the maintainability index (100 = best). **Risk flag** marks files where CRAP risk is the dominant concern.
 
@@ -402,7 +386,7 @@ Sorted by triage concern (higher = address first). **Risk** is the max CRAP scor
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `src/components/admin/AdminCataloguePanel.tsx` | 436 | 2 | 4 | 0% | 0.19 | 87.9 | 702 | 3 | ⚠️ risk |
 | 2 | `app/order/page.tsx` | 668 | 0 | 12 | 0% | 0.24 | 82.5 | 420 | 9 | ⚠️ risk |
-| 3 | `scripts/import-production.ts` | 362 | 0 | 0 | 100% | 0.24 | 72.8 | 342 | 9 | ⚠️ risk |
+| 3 | `scripts/import-production.ts` | 363 | 0 | 0 | 0% | 0.24 | 92.8 | 342 | 9 | ⚠️ risk |
 | 4 | `app/admin/useAdminPageState.ts` | 137 | 2 | 7 | 0% | 0.25 | 84.2 | 306 | 1 | ⚠️ risk |
 | 5 | `app/catalogue/[id]/page.tsx` | 178 | 0 | 4 | 0% | 0.17 | 88.5 | 306 | 2 | ⚠️ risk |
 | 6 | `scripts/generate-seed-from-excel.ts` | 412 | 0 | 0 | 0% | 0.31 | 90.7 | 306 | 12 | ⚠️ risk |
@@ -425,52 +409,52 @@ Sorted by triage concern (higher = address first). **Risk** is the max CRAP scor
 | 23 | `src/lib/hooks/useAdminCategoriesController.ts` | 193 | 3 | 4 | 0% | 0.15 | 89.1 | 56 | 2 | ⚠️ risk |
 | 24 | `app/catalogue/page.tsx` | 151 | 0 | 5 | 0% | 0.09 | 90.1 | 56 | 1 | ⚠️ risk |
 | 25 | `src/components/providers/QueryProvider.tsx` | 52 | 1 | 0 | 0% | 0.31 | 90.7 | 56 | 1 | ⚠️ risk |
-| 26 | `app/api/verify-payment/route.ts` | 79 | 0 | 2 | 0% | 0.09 | 92.9 | 56 | 1 | ⚠️ risk |
-| 27 | `app/api/orders/[id]/tracking/route.ts` | 55 | 0 | 4 | 0% | 0.13 | 89.7 | 42 | 1 | ⚠️ risk |
-| 28 | `app/api/products/recent/route.ts` | 50 | 0 | 3 | 0% | 0.12 | 90.9 | 42 | 1 | ⚠️ risk |
-| 29 | `proxy.ts` | 52 | 0 | 1 | 0% | 0.19 | 91.5 | 42 | 1 | ⚠️ risk |
-| 30 | `src/components/order/OrderDetailModal.tsx` | 306 | 3 | 5 | 0% | 0.19 | 87.1 | 31 | 1 | ⚠️ risk |
-| 31 | `scripts/repro-catalogue.ts` | 49 | 0 | 2 | 100% | 0.16 | 70.9 | 30 | 1 | ⚠️ risk |
+| 26 | `app/api/cron/db-health/route.ts` | 51 | 0 | 2 | 0% | 0.14 | 91.4 | 56 | 1 | ⚠️ risk |
+| 27 | `app/api/verify-payment/route.ts` | 79 | 0 | 2 | 0% | 0.09 | 92.9 | 56 | 1 | ⚠️ risk |
+| 28 | `app/api/orders/[id]/tracking/route.ts` | 55 | 0 | 4 | 0% | 0.13 | 89.7 | 42 | 1 | ⚠️ risk |
+| 29 | `app/api/products/recent/route.ts` | 50 | 0 | 3 | 0% | 0.12 | 90.9 | 42 | 1 | ⚠️ risk |
+| 30 | `proxy.ts` | 52 | 0 | 1 | 0% | 0.19 | 91.5 | 42 | 1 | ⚠️ risk |
+| 31 | `src/components/order/OrderDetailModal.tsx` | 306 | 3 | 5 | 0% | 0.19 | 87.1 | 31 | 1 | ⚠️ risk |
 | 32 | `app/category/[slug]/page.tsx` | 190 | 0 | 5 | 0% | 0.08 | 90.4 | 30 | 1 | ⚠️ risk |
-| 33 | `src/components/track/TrackOrderCard.tsx` | 61 | 1 | 2 | 0% | 0.1 | 92.6 | 30 | 1 | ⚠️ risk |
-| 34 | `app/page.tsx` | 110 | 0 | 2 | 0% | 0.08 | 93.2 | 30 | 1 | ⚠️ risk |
-| 35 | `app/admin/login/page.tsx` | 107 | 0 | 1 | 0% | 0.12 | 93.6 | 30 | 1 | ⚠️ risk |
-| 36 | `app/sitemap.ts` | 80 | 0 | 1 | 0% | 0.06 | 95.4 | 30 | 1 | ⚠️ risk |
-| 37 | `src/components/ui/Breadcrumbs.tsx` | 39 | 3 | 0 | 0% | 0.15 | 96.5 | 30 | 1 | ⚠️ risk |
-| 38 | `src/components/admin/PrintShippingLabelModal.tsx` | 762 | 1 | 1 | 0% | 0.14 | 93 | 22 | 0 | structure |
-| 39 | `app/api/products/route.ts` | 220 | 1 | 7 | 0% | 0.22 | 85.1 | 21 | 0 | structure |
-| 40 | `src/lib/image-loader.ts` | 43 | 0 | 0 | 100% | 0.09 | 77.7 | 20 | 0 | structure |
+| 33 | `scripts/repro-catalogue.ts` | 50 | 0 | 2 | 0% | 0.16 | 90.8 | 30 | 1 | ⚠️ risk |
+| 34 | `src/components/track/TrackOrderCard.tsx` | 61 | 1 | 2 | 0% | 0.1 | 92.6 | 30 | 1 | ⚠️ risk |
+| 35 | `app/page.tsx` | 110 | 0 | 2 | 0% | 0.08 | 93.2 | 30 | 1 | ⚠️ risk |
+| 36 | `app/admin/login/page.tsx` | 107 | 0 | 1 | 0% | 0.12 | 93.6 | 30 | 1 | ⚠️ risk |
+| 37 | `app/sitemap.ts` | 80 | 0 | 1 | 0% | 0.06 | 95.4 | 30 | 1 | ⚠️ risk |
+| 38 | `src/components/ui/Breadcrumbs.tsx` | 39 | 3 | 0 | 0% | 0.15 | 96.5 | 30 | 1 | ⚠️ risk |
+| 39 | `src/components/admin/PrintShippingLabelModal.tsx` | 762 | 1 | 1 | 0% | 0.14 | 93 | 22 | 0 | structure |
+| 40 | `app/api/products/route.ts` | 220 | 1 | 7 | 0% | 0.22 | 85.1 | 21 | 0 | structure |
 | 41 | `src/lib/razorpay.ts` | 35 | 1 | 1 | 0% | 0.26 | 91.8 | 20 | 0 | structure |
 | 42 | `src/components/admin/AdminDeleteConfirm.tsx` | 59 | 1 | 1 | 0% | 0.12 | 93.6 | 20 | 0 | structure |
 | 43 | `app/confirmation/[id]/page.tsx` | 122 | 0 | 2 | 0% | 0.05 | 94.1 | 20 | 0 | structure |
-| 44 | `src/components/pages/catalogue-content.tsx` | 290 | 2 | 10 | 0% | 0.19 | 84.7 | 18 | 0 | structure |
-| 45 | `src/components/ui/ProductCard.tsx` | 145 | 5 | 4 | 0% | 0.17 | 88.5 | 18 | 0 | structure |
-| 46 | `src/lib/hooks/useAdminCatalogueController.ts` | 206 | 2 | 4 | 0% | 0.21 | 87.3 | 17 | 0 | structure |
-| 47 | `src/lib/api/client.ts` | 150 | 5 | 1 | 0% | 0.23 | 90.3 | 17 | 0 | structure |
-| 48 | `app/api/products/[id]/route.ts` | 176 | 1 | 5 | 0% | 0.26 | 85 | 16 | 0 | structure |
-| 49 | `app/api/categories/[id]/route.ts` | 166 | 1 | 6 | 0% | 0.19 | 86.5 | 16 | 0 | structure |
-| 50 | `src/components/layout/Navbar.tsx` | 188 | 2 | 3 | 0% | 0.25 | 87 | 15 | 0 | structure |
-| 51 | `app/api/orders/[id]/status/route.ts` | 135 | 1 | 5 | 0% | 0.18 | 87.4 | 13 | 0 | structure |
-| 52 | `scripts/generate-fallow-report.mjs` | 289 | 0 | 0 | 100% | 0.09 | 77.3 | 12 | 0 | structure |
+| 44 | `src/lib/image-loader.ts` | 44 | 0 | 0 | 0% | 0.09 | 97.6 | 20 | 0 | structure |
+| 45 | `src/components/pages/catalogue-content.tsx` | 290 | 2 | 10 | 0% | 0.19 | 84.7 | 18 | 0 | structure |
+| 46 | `src/components/ui/ProductCard.tsx` | 145 | 5 | 4 | 0% | 0.17 | 88.5 | 18 | 0 | structure |
+| 47 | `src/lib/hooks/useAdminCatalogueController.ts` | 206 | 2 | 4 | 0% | 0.21 | 87.3 | 17 | 0 | structure |
+| 48 | `src/lib/api/client.ts` | 150 | 5 | 1 | 0% | 0.23 | 90.3 | 17 | 0 | structure |
+| 49 | `app/api/products/[id]/route.ts` | 176 | 1 | 5 | 0% | 0.26 | 85 | 16 | 0 | structure |
+| 50 | `app/api/categories/[id]/route.ts` | 166 | 1 | 6 | 0% | 0.19 | 86.5 | 16 | 0 | structure |
+| 51 | `src/components/layout/Navbar.tsx` | 188 | 2 | 3 | 0% | 0.25 | 87 | 15 | 0 | structure |
+| 52 | `app/api/orders/[id]/status/route.ts` | 135 | 1 | 5 | 0% | 0.18 | 87.4 | 13 | 0 | structure |
 | 53 | `lib/axiom/client.ts` | 31 | 1 | 1 | 67% | 0.1 | 82 | 12 | 0 | structure |
 | 54 | `app/api/categories/route.ts` | 163 | 1 | 7 | 0% | 0.21 | 85.4 | 12 | 0 | structure |
 | 55 | `app/api/category/[slug]/products/route.ts` | 139 | 1 | 3 | 0% | 0.13 | 90.6 | 12 | 0 | structure |
 | 56 | `scripts/export-to-excel.ts` | 216 | 0 | 0 | 0% | 0.25 | 92.5 | 12 | 0 | structure |
 | 57 | `src/components/admin/AdminTrackingModal.tsx` | 80 | 1 | 1 | 0% | 0.13 | 93.3 | 12 | 0 | structure |
 | 58 | `src/components/admin/AdminChartsSection.tsx` | 110 | 1 | 1 | 0% | 0.1 | 94.2 | 12 | 0 | structure |
-| 59 | `src/components/admin/AdminHeader.tsx` | 43 | 1 | 0 | 0% | 0.07 | 98.2 | 12 | 0 | structure |
-| 60 | `app/api/track/route.ts` | 106 | 1 | 3 | 0% | 0.25 | 87 | 11 | 0 | structure |
-| 61 | `src/lib/api/index.ts` | 305 | 7 | 2 | 0% | 0.17 | 90.5 | 10 | 0 | structure |
-| 62 | `src/lib/csrf.ts` | 21 | 13 | 1 | 0% | 0.48 | 91.2 | 10 | 0 | structure |
-| 63 | `src/lib/hooks/useAdminMutations.ts` | 225 | 9 | 3 | 0% | 0.26 | 86.7 | 9 | 0 | structure |
-| 64 | `app/api/orders/route.ts` | 240 | 1 | 7 | 0% | 0.13 | 87.8 | 9 | 0 | structure |
-| 65 | `src/components/ui/FallbackImage.tsx` | 139 | 9 | 1 | 0% | 0.09 | 94.5 | 9 | 0 | structure |
-| 66 | `app/api/auth/login/route.ts` | 72 | 1 | 5 | 0% | 0.13 | 88.9 | 8 | 0 | structure |
-| 67 | `app/api/stats/route.ts` | 146 | 1 | 3 | 0% | 0.15 | 90 | 8 | 0 | structure |
-| 68 | `src/lib/useFocusTrap.ts` | 48 | 8 | 0 | 0% | 0.25 | 92.8 | 7.3 | 0 | structure |
-| 69 | `src/components/ui/SkeletonLoader.tsx` | 158 | 2 | 0 | 86% | 0.13 | 78.9 | 5 | 0 | structure |
+| 59 | `scripts/generate-fallow-report.mjs` | 290 | 0 | 0 | 0% | 0.09 | 97.3 | 12 | 0 | structure |
+| 60 | `src/components/admin/AdminHeader.tsx` | 43 | 1 | 0 | 0% | 0.07 | 98.2 | 12 | 0 | structure |
+| 61 | `app/api/track/route.ts` | 106 | 1 | 3 | 0% | 0.25 | 87 | 11 | 0 | structure |
+| 62 | `src/lib/api/index.ts` | 305 | 7 | 2 | 0% | 0.17 | 90.5 | 10 | 0 | structure |
+| 63 | `src/lib/csrf.ts` | 21 | 13 | 1 | 0% | 0.48 | 91.2 | 10 | 0 | structure |
+| 64 | `src/lib/hooks/useAdminMutations.ts` | 225 | 9 | 3 | 0% | 0.26 | 86.7 | 9 | 0 | structure |
+| 65 | `app/api/orders/route.ts` | 240 | 1 | 7 | 0% | 0.13 | 87.8 | 9 | 0 | structure |
+| 66 | `src/components/ui/FallbackImage.tsx` | 139 | 9 | 1 | 0% | 0.09 | 94.5 | 9 | 0 | structure |
+| 67 | `app/api/auth/login/route.ts` | 72 | 1 | 5 | 0% | 0.13 | 88.9 | 8 | 0 | structure |
+| 68 | `app/api/stats/route.ts` | 146 | 1 | 3 | 0% | 0.15 | 90 | 8 | 0 | structure |
+| 69 | `src/lib/useFocusTrap.ts` | 48 | 8 | 0 | 0% | 0.25 | 92.8 | 7.3 | 0 | structure |
 | 70 | `src/components/layout/NavCartDropdown.tsx` | 112 | 1 | 2 | 0% | 0.15 | 91.1 | 7 | 0 | structure |
-| 71 | `src/lib/prisma.ts` | 174 | 39 | 1 | 0% | 0.19 | 91.5 | 7 | 0 | structure |
+| 71 | `src/lib/prisma.ts` | 174 | 40 | 1 | 0% | 0.19 | 91.5 | 7 | 0 | structure |
 | 72 | `src/components/ui/ToastProvider.tsx` | 101 | 16 | 0 | 0% | 0.22 | 93.4 | 6.1 | 0 | structure |
 | 73 | `src/components/layout/Footer.tsx` | 121 | 2 | 1 | 0% | 0.06 | 95.4 | 6.1 | 0 | structure |
 | 74 | `src/lib/hooks/useAdminOrdersController.ts` | 126 | 2 | 5 | 0% | 0.14 | 88.6 | 6 | 0 | structure |
@@ -492,23 +476,23 @@ Sorted by triage concern (higher = address first). **Risk** is the max CRAP scor
 | 90 | `src/lib/cart-cookie.ts` | 26 | 1 | 1 | 0% | 0.19 | 94.3 | 5 | 0 | structure |
 | 91 | `src/lib/csrf-helpers.ts` | 15 | 1 | 0 | 0% | 0.6 | 94.6 | 5 | 0 | structure |
 | 92 | `src/lib/utils.ts` | 25 | 7 | 0 | 0% | 0.28 | 95.8 | 5 | 0 | structure |
-| 93 | `src/lib/query-keys.ts` | 42 | 4 | 0 | 0% | 0.55 | 86.1 | 3 | 0 | structure |
-| 94 | `src/lib/hooks/useAdminData.ts` | 108 | 5 | 3 | 0% | 0.2 | 88.5 | 4 | 0 | structure |
-| 95 | `src/components/layout/__tests__/Navbar.test.tsx` | 350 | 0 | 2 | 0% | 0.21 | 89.3 | 4 | 0 | structure |
-| 96 | `src/__tests__/lib/auth.test.ts` | 108 | 0 | 1 | 0% | 0.19 | 91.5 | 4 | 0 | structure |
-| 97 | `app/api/orders/[id]/route.ts` | 44 | 1 | 2 | 0% | 0.09 | 93.2 | 4 | 0 | structure |
-| 98 | `src/__tests__/mocks/redis.ts` | 110 | 3 | 0 | 0% | 0.21 | 93.7 | 4 | 0 | structure |
-| 99 | `src/components/ui/StatusBadge.tsx` | 19 | 4 | 1 | 0% | 0.21 | 94.8 | 4 | 0 | structure |
-| 100 | `lib/axiom/server.ts` | 28 | 6 | 1 | 0% | 0.14 | 94.9 | 4 | 0 | structure |
-| 101 | `src/components/ui/StockBadge.tsx` | 16 | 3 | 0 | 0% | 0.25 | 97.6 | 4 | 0 | structure |
-| 102 | `src/__tests__/api/categories.id.test.ts` | 132 | 0 | 7 | 0% | 0.11 | 88.4 | 1 | 0 | structure |
-| 103 | `src/__tests__/api/categories.test.ts` | 158 | 0 | 7 | 0% | 0.11 | 88.4 | 1 | 0 | structure |
-| 104 | `src/__tests__/api/products.test.ts` | 219 | 0 | 6 | 0% | 0.11 | 88.9 | 3 | 0 | structure |
-| 105 | `src/__tests__/setup.ts` | 103 | 0 | 3 | 0% | 0.18 | 89.1 | 2 | 0 | structure |
-| 106 | `src/components/pages/__tests__/catalogue-pagination.test.tsx` | 140 | 0 | 4 | 0% | 0.15 | 89.1 | 2 | 0 | structure |
-| 107 | `src/lib/hooks/__tests__/useAdminHeaderActions.test.ts` | 93 | 0 | 3 | 0% | 0.18 | 89.1 | 1 | 0 | structure |
-| 108 | `src/__tests__/api/track.test.ts` | 105 | 0 | 6 | 0% | 0.1 | 89.2 | 1 | 0 | structure |
-| 109 | `lib/axiom/axiom.ts` | 30 | 2 | 0 | 50% | 0.03 | 89.5 | 1 | 0 | structure |
+| 93 | `src/components/ui/SkeletonLoader.tsx` | 158 | 2 | 0 | 0% | 0.13 | 96.1 | 5 | 0 | structure |
+| 94 | `src/lib/query-keys.ts` | 42 | 4 | 0 | 0% | 0.55 | 86.1 | 3 | 0 | structure |
+| 95 | `src/lib/hooks/useAdminData.ts` | 108 | 5 | 3 | 0% | 0.2 | 88.5 | 4 | 0 | structure |
+| 96 | `src/components/layout/__tests__/Navbar.test.tsx` | 350 | 0 | 2 | 0% | 0.21 | 89.3 | 4 | 0 | structure |
+| 97 | `src/__tests__/lib/auth.test.ts` | 108 | 0 | 1 | 0% | 0.19 | 91.5 | 4 | 0 | structure |
+| 98 | `app/api/orders/[id]/route.ts` | 44 | 1 | 2 | 0% | 0.09 | 93.2 | 4 | 0 | structure |
+| 99 | `src/__tests__/mocks/redis.ts` | 110 | 3 | 0 | 0% | 0.21 | 93.7 | 4 | 0 | structure |
+| 100 | `src/components/ui/StatusBadge.tsx` | 19 | 4 | 1 | 0% | 0.21 | 94.8 | 4 | 0 | structure |
+| 101 | `lib/axiom/server.ts` | 28 | 7 | 1 | 0% | 0.14 | 94.9 | 4 | 0 | structure |
+| 102 | `src/components/ui/StockBadge.tsx` | 16 | 3 | 0 | 0% | 0.25 | 97.6 | 4 | 0 | structure |
+| 103 | `src/__tests__/api/categories.id.test.ts` | 132 | 0 | 7 | 0% | 0.11 | 88.4 | 1 | 0 | structure |
+| 104 | `src/__tests__/api/categories.test.ts` | 158 | 0 | 7 | 0% | 0.11 | 88.4 | 1 | 0 | structure |
+| 105 | `src/__tests__/api/products.test.ts` | 219 | 0 | 6 | 0% | 0.11 | 88.9 | 3 | 0 | structure |
+| 106 | `src/__tests__/setup.ts` | 103 | 0 | 3 | 0% | 0.18 | 89.1 | 2 | 0 | structure |
+| 107 | `src/components/pages/__tests__/catalogue-pagination.test.tsx` | 140 | 0 | 4 | 0% | 0.15 | 89.1 | 2 | 0 | structure |
+| 108 | `src/lib/hooks/__tests__/useAdminHeaderActions.test.ts` | 93 | 0 | 3 | 0% | 0.18 | 89.1 | 1 | 0 | structure |
+| 109 | `src/__tests__/api/track.test.ts` | 105 | 0 | 6 | 0% | 0.1 | 89.2 | 1 | 0 | structure |
 | 110 | `src/__tests__/api/orders.id.test.ts` | 85 | 0 | 5 | 0% | 0.11 | 89.5 | 1 | 0 | structure |
 | 111 | `src/__tests__/api/orders.status.test.ts` | 142 | 0 | 6 | 0% | 0.09 | 89.5 | 1 | 0 | structure |
 | 112 | `src/__tests__/api/stats.test.ts` | 75 | 0 | 5 | 0% | 0.11 | 89.5 | 1 | 0 | structure |
@@ -579,7 +563,7 @@ Sorted by triage concern (higher = address first). **Risk** is the max CRAP scor
 | 177 | `app/track/layout.tsx` | 15 | 0 | 0 | 0% | 0.07 | 99.4 | 2 | 0 | structure |
 | 178 | `app/track/loading.tsx` | 18 | 0 | 0 | 0% | 0.06 | 99.4 | 2 | 0 | structure |
 | 179 | `src/components/ui/JsonLd.tsx` | 13 | 4 | 0 | 0% | 0.08 | 99.4 | 2 | 0 | structure |
-| 180 | `next.config.ts` | 141 | 0 | 0 | 0% | 0.01 | 99.7 | 2 | 0 | structure |
+| 180 | `next.config.ts` | 151 | 0 | 0 | 0% | 0.01 | 99.7 | 2 | 0 | structure |
 | 181 | `src/__tests__/lib/sanitize.test.ts` | 28 | 0 | 1 | 0% | 0.18 | 94.2 | 1 | 0 | structure |
 | 182 | `src/components/order/__tests__/OrderDetailModal.test.tsx` | 297 | 0 | 1 | 0% | 0.1 | 94.2 | 1 | 0 | structure |
 | 183 | `src/components/ui/__tests__/SectionHeader.test.tsx` | 36 | 0 | 1 | 0% | 0.14 | 94.2 | 1 | 0 | structure |
@@ -588,14 +572,15 @@ Sorted by triage concern (higher = address first). **Risk** is the max CRAP scor
 | 186 | `src/components/layout/FooterClientWrapper.tsx` | 18 | 1 | 1 | 0% | 0.17 | 95.4 | 1 | 0 | structure |
 | 187 | `src/__tests__/api/health.redis.test.ts` | 14 | 0 | 1 | 0% | 0.14 | 96.1 | 1 | 0 | structure |
 | 188 | `src/components/ui/Markdown.tsx` | 25 | 3 | 0 | 0% | 0.08 | 98.8 | 1 | 0 | structure |
-| 189 | `src/__tests__/mocks/prisma.ts` | 63 | 14 | 0 | 0% | 0.02 | 99.4 | 1 | 0 | structure |
-| 190 | `src/components/ui/AdminStatCard.tsx` | 36 | 2 | 0 | 0% | 0.03 | 99.4 | 1 | 0 | structure |
-| 191 | `src/lib/redis.ts` | 15 | 8 | 0 | 0% | 0.07 | 99.4 | 1 | 0 | structure |
-| 192 | `src/lib/sanitize.ts` | 7 | 6 | 0 | 0% | 0.14 | 99.4 | 1 | 0 | structure |
+| 189 | `lib/axiom/axiom.ts` | 31 | 2 | 0 | 0% | 0.03 | 99.4 | 1 | 0 | structure |
+| 190 | `src/__tests__/mocks/prisma.ts` | 63 | 14 | 0 | 0% | 0.02 | 99.4 | 1 | 0 | structure |
+| 191 | `src/components/ui/AdminStatCard.tsx` | 36 | 2 | 0 | 0% | 0.03 | 99.4 | 1 | 0 | structure |
+| 192 | `src/lib/redis.ts` | 15 | 8 | 0 | 0% | 0.07 | 99.4 | 1 | 0 | structure |
+| 193 | `src/lib/sanitize.ts` | 7 | 6 | 0 | 0% | 0.14 | 99.4 | 1 | 0 | structure |
 
 ---
 
-## 5. Refactoring Targets (11)
+## 5. Refactoring Targets (10)
 
 Sorted by **ROI score** (quick-win efficiency, descending). **Pri** is the absolute priority weight (efficiency × effort) — a high effort can push a medium ROI target up.
 
@@ -603,15 +588,14 @@ Sorted by **ROI score** (quick-win efficiency, descending). **Pri** is the absol
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 19.2 | 19.2 | `lib/axiom/client.ts` | remove dead code | low | high | Remove 2 unused exports to reduce surface area (67% dead) | [ ] |
 | 2 | 12.2 | 24.3 | `src/lib/env.ts` | split high impact | medium | medium | Split high-impact file (23 LOC), 4 dependents amplify every change | [ ] |
-| 3 | 12.1 | 24.1 | `src/components/ui/SkeletonLoader.tsx` | remove dead code | medium | high | Remove 6 unused exports to reduce surface area (86% dead) | [ ] |
-| 4 | 10.2 | 30.7 | `src/lib/csrf.ts` | split high impact | high | medium | Split high-impact file (21 LOC), 13 dependents amplify every change | [ ] |
-| 5 | 9.7 | 19.3 | `app/admin/useAdminPageState.ts` | extract complex functions | medium | high | Extract useAdminPageState (cognitive: 32) in 137-LOC file into smaller functions | [ ] |
-| 6 | 9.4 | 18.7 | `src/components/pages/catalogue-content.tsx` | extract complex functions | medium | high | Extract CatalogueContent (cognitive: 36) in 290-LOC file into smaller functions | [ ] |
-| 7 | 8.3 | 16.5 | `src/components/order/OrderDetailModal.tsx` | extract complex functions | medium | high | Extract OrderDetailModal (cognitive: 37) in 306-LOC file into smaller functions | [ ] |
-| 8 | 7.5 | 22.5 | `src/lib/query-keys.ts` | split high impact | high | medium | Split high-impact file (42 LOC), 4 dependents amplify every change | [ ] |
-| 9 | 6.9 | 13.7 | `src/components/admin/AdminCataloguePanel.tsx` | extract complex functions | medium | high | Extract AdminCataloguePanel (cognitive: 30) in 436-LOC file into smaller functions | [ ] |
-| 10 | 4.7 | 9.3 | `scripts/generate-seed-from-excel.ts` | add test coverage | medium | high | 12 complex functions lack test coverage path, add tests before modifying | [ ] |
-| 11 | 2.3 | 7 | `src/components/admin/PrintShippingLabelModal.tsx` | extract complex functions | high | high | Extract PrintShippingLabelModal (cognitive: 37) in 762-LOC file into smaller functions | [ ] |
+| 3 | 10.2 | 30.7 | `src/lib/csrf.ts` | split high impact | high | medium | Split high-impact file (21 LOC), 13 dependents amplify every change | [ ] |
+| 4 | 9.7 | 19.3 | `app/admin/useAdminPageState.ts` | extract complex functions | medium | high | Extract useAdminPageState (cognitive: 32) in 137-LOC file into smaller functions | [ ] |
+| 5 | 9.4 | 18.7 | `src/components/pages/catalogue-content.tsx` | extract complex functions | medium | high | Extract CatalogueContent (cognitive: 36) in 290-LOC file into smaller functions | [ ] |
+| 6 | 8.3 | 16.5 | `src/components/order/OrderDetailModal.tsx` | extract complex functions | medium | high | Extract OrderDetailModal (cognitive: 37) in 306-LOC file into smaller functions | [ ] |
+| 7 | 7.5 | 22.5 | `src/lib/query-keys.ts` | split high impact | high | medium | Split high-impact file (42 LOC), 4 dependents amplify every change | [ ] |
+| 8 | 6.9 | 13.7 | `src/components/admin/AdminCataloguePanel.tsx` | extract complex functions | medium | high | Extract AdminCataloguePanel (cognitive: 30) in 436-LOC file into smaller functions | [ ] |
+| 9 | 4.7 | 9.3 | `scripts/generate-seed-from-excel.ts` | add test coverage | medium | high | 12 complex functions lack test coverage path, add tests before modifying | [ ] |
+| 10 | 2.3 | 7 | `src/components/admin/PrintShippingLabelModal.tsx` | extract complex functions | high | high | Extract PrintShippingLabelModal (cognitive: 37) in 762-LOC file into smaller functions | [ ] |
 
 ### Target details
 
@@ -631,15 +615,6 @@ Sorted by **ROI score** (quick-win efficiency, descending). **Pri** is the absol
 - **Category:** split high impact · **Effort:** medium · **Confidence:** medium
 - **Recommendation:** Split high-impact file (23 LOC), 4 dependents amplify every change
 - **Consumers:** `src/__tests__/lib/auth-fallback.test.ts`, `src/__tests__/setup.ts`, `src/lib/auth.ts`, `src/lib/prisma.ts`
-
-#### 24.1 — `src/components/ui/SkeletonLoader.tsx`
-
-*ROI 12.1 · Pri 24.1*
-
-- **Category:** remove dead code · **Effort:** medium · **Confidence:** high
-- **Recommendation:** Remove 6 unused exports to reduce surface area (86% dead)
-- **Consumers:** `src/components/pages/catalogue-content.tsx`, `src/components/pages/category-content.tsx`
-- **Unused exports:** `SkeletonText`, `SkeletonBlock`, `CategoryCardSkeleton`, `ProductDetailSkeleton`, `CheckoutSkeleton`, `SearchResultsSkeleton`
 
 #### 30.7 — `src/lib/csrf.ts`
 

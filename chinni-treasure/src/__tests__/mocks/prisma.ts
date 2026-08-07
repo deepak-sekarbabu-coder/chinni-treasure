@@ -1,4 +1,3 @@
-// fallow-ignore-next-line unused-files
 import { vi } from "vitest";
 
 export function createMockPrisma() {

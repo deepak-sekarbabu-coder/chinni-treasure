@@ -119,7 +119,7 @@ const CatalogueProductSchema = z.object({
   images: z.array(ProductImageSchema).optional(),
 });
 
-export const CatalogueProductsResponseSchema = z.union([
+const CatalogueProductsResponseSchema = z.union([
   z.object({ products: z.array(CatalogueProductSchema) }),
   z.array(CatalogueProductSchema),
 ]);
@@ -321,7 +321,7 @@ export type TrackOrdersResponse = z.infer<typeof TrackOrdersResponseSchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductsResponse = z.infer<typeof ProductsResponseSchema>;
 export type CatalogueProduct = z.infer<typeof CatalogueProductSchema>;
-export type CatalogueProductsResponse = z.infer<
+type CatalogueProductsResponse = z.infer<
   typeof CatalogueProductsResponseSchema
 >;
 export type Stats = z.infer<typeof StatsSchema>;
@@ -363,14 +363,14 @@ export type UpdateOrderStatusInput = z.infer<
 >;
 export type UpdateTrackingInput = z.infer<typeof UpdateTrackingInputSchema>;
 export type ProductInput = z.infer<typeof ProductInputSchema>;
-export type ProductImage = z.infer<typeof ProductImageSchema>;
-export type ProductImageInput = z.infer<typeof ProductImageInputSchema>;
+type ProductImage = z.infer<typeof ProductImageSchema>;
+type ProductImageInput = z.infer<typeof ProductImageInputSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoriesResponse = z.infer<typeof CategoriesResponseSchema>;
 export type CategoryDetail = z.infer<typeof CategoryDetailSchema>;
 export type CreateCategoryInput = z.infer<typeof CreateCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>;
-export type LatestCategoryProduct = z.infer<typeof LatestCategoryProductSchema>;
+type LatestCategoryProduct = z.infer<typeof LatestCategoryProductSchema>;
 export type LatestCategorySection = z.infer<typeof LatestCategorySectionSchema>;
 export type LatestCategoriesResponse = z.infer<typeof LatestCategoriesResponseSchema>;
 export type CategoryProductsResponse = z.infer<typeof CategoryProductsResponseSchema>;
