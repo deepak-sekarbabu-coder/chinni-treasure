@@ -45,9 +45,9 @@ export interface SeedProduct {
   price: number;
   compareAtPrice: number | null;
   stockQuantity: number;
-  imageUrl: string;
+  imageUrl: string | null;
   additionalImages: string[];
-  description: string;
+  description: string | null;
   badge: ProductBadge | null;
 }
 
