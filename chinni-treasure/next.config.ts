@@ -20,7 +20,17 @@ const CORS_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-  output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
+  // Standalone output is only needed for self-hosting (Docker). Vercel deploys
+  // serverless functions and never uses the standalone folder. Keeping it
+  // enabled on Vercel breaks the build on Next 16.3+ (Turbopack): Vercel's
+  // build adapter makes Turbopack skip emitting `.next/next-server.js.nft.json`,
+  // but the standalone finalize step still requires it -> ENOENT
+  // (vercel/next.js#96646 / #96657). Disable standalone when building on
+  // Vercel (`VERCEL=1` is set by the platform during every build).
+  output:
+    process.env.VERCEL || process.env.NODE_ENV !== "production"
+      ? undefined
+      : "standalone",
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
   allowedDevOrigins: ['192.168.1.6'],
   poweredByHeader: false,
