@@ -24,6 +24,15 @@ export function createRedisCache<T = unknown>(ttlMs: number, namespace: string) 
         fallback.set(key, data);
       }
     },
+    async remove(key: string): Promise<void> {
+      fallback.remove(key);
+      if (!redis) return;
+      try {
+        await redis.del(`${namespace}:${key}`);
+      } catch {
+        // Fallback already removed above
+      }
+    },
     async clear(): Promise<void> {
       fallback.clear();
       if (!redis) return;

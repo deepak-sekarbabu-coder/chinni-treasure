@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { catLatestCache } from "@/src/lib/catalogue-cache";
 
 const RETRY_COUNT = 2;
 
-const { get: getCached, set: setCache } = createRedisCache(60_000, "catlatest");
+const { get: getCached, set: setCache } = catLatestCache;
 
 async function queryWithRetry<T>(
   fn: () => Promise<T>,

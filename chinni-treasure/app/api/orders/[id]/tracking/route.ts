@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { invalidateOrderCache } from "@/src/lib/cache-invalidate";
+import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { z } from "zod";
 
 const UpdateTrackingSchema = z.object({

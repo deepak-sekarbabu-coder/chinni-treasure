@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { catPageCache } from "@/src/lib/catalogue-cache";
 
 const MAX_LIMIT = 60;
 
-const { get: getCached, set: setCache } = createRedisCache(60_000, "catpage");
+const { get: getCached, set: setCache } = catPageCache;
 
 type SortKey = "newest" | "price-asc" | "price-desc";
 

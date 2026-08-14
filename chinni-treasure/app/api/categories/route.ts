@@ -4,12 +4,11 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { createRedisCache } from "@/src/lib/redis-cache";
-import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
+import { categoriesCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { Prisma } from "@prisma/client";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 
-const { get: getCached, set: setCache } = createRedisCache(300_000, "categories");
+const { get: getCached, set: setCache } = categoriesCache;
 
 // GET /api/categories
 // Public: returns active categories ordered by displayOrder.

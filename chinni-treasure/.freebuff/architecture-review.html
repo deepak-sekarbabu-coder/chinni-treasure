@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Architecture Review — Chinni Treasure</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#14100d",
+          coal: "#1e1813",
+          line: "#3a2f26",
+          cream: "#f3e9d8",
+          muted: "#a8997f",
+          gold: "#c9a24b",
+          goldsoft: "#e6c87a",
+          ember: "#d97b3f",
+        },
+        fontFamily: {
+          serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+          mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { background: #14100d; color: #f3e9d8; }
+  ::selection { background: #c9a24b; color: #14100d; }
+  .card { background: linear-gradient(180deg, #1e1813 0%, #191410 100%); border: 1px solid #3a2f26; border-radius: 16px; }
+  .badge-strong { background: #c9a24b; color: #14100d; }
+  .badge-worthy { background: #3a5a3a; color: #e6f0e6; border: 1px solid #5a7a5a; }
+  .badge-spec { background: transparent; color: #a8997f; border: 1px dashed #a8997f; }
+  .chip { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+  .filebox { background: #14100d; border: 1px solid #2e261d; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12px; color: #e6c87a; padding: 8px 12px; }
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-panel { border-radius: 12px; padding: 14px; }
+  .ba-before { background: #1a1410; border: 1px solid #4a3226; }
+  .ba-after { background: #101a12; border: 1px solid #2e4a34; }
+  .ba-title { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+  .ba-before .ba-title { color: #d97b3f; }
+  .ba-after .ba-title { color: #7fb56f; }
+  .node { display: inline-block; padding: 5px 9px; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 11px; margin: 2px; }
+  .node-route { background: #2a1f16; border: 1px solid #5a3f2a; color: #f3e9d8; }
+  .node-guard { background: #3a2a14; border: 1px solid #8a6a2a; color: #e6c87a; }
+  .node-deep { background: #17301c; border: 1px solid #3a6a44; color: #a8d8a0; }
+  .node-thin { background: #1e2a18; border: 1px solid #4a6a3a; color: #c0e0b0; }
+  .dupbar { height: 8px; border-radius: 4px; background: #3a2f26; }
+  .dupbar-fill { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #c9a24b, #d97b3f); }
+  .mermaid { background: transparent !important; }
+  .prose-a { color: #e6c87a; }
+  h2 { scroll-margin-top: 90px; }
+  .sticky-top { position: sticky; top: 0; z-index: 40; background: rgba(20,16,13,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #3a2f26; }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky-top">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-baseline gap-3">
+      <span class="text-gold font-serif text-2xl">Chinni Treasure</span>
+      <span class="text-muted text-sm hidden sm:inline">Architecture Review</span>
+    </div>
+    <span class="text-xs text-muted">Aug 7, 2026 · deepening opportunities</span>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 pt-12 pb-24">
+
+  <!-- ================= INTRO ================= -->
+  <section class="mb-16">
+    <p class="chip badge-strong inline-block mb-4">Deepening Opportunities</p>
+    <h1 class="font-serif text-4xl sm:text-5xl leading-tight mb-6">
+      Turning <span class="text-gold">shallow modules</span> into<br />deep ones that carry the complexity.
+    </h1>
+    <p class="text-muted max-w-3xl text-lg leading-relaxed">
+      Five friction points surfaced while walking the storefront, the admin surface, and the order lifecycle.
+      Each is a <strong class="text-cream">shallow module</strong> — an interface nearly as complex as its
+      implementation, or a concept scattered across files so that understanding it requires bouncing between
+      many small pieces. The proposed changes <strong class="text-cream">deepen</strong> them: fewer, richer
+      modules whose interfaces hide real work, so the codebase becomes easier to test and easier for AI (and
+      humans) to navigate.
+    </p>
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-8 text-center">
+      <div class="card p-4"><div class="text-3xl font-serif text-gold">9+</div><div class="text-xs text-muted mt-1">routes duplicating the admin guard</div></div>
+      <div class="card p-4"><div class="text-3xl font-serif text-gold">121</div><div class="text-xs text-muted mt-1">duplicated listing lines</div></div>
+      <div class="card p-4"><div class="text-3xl font-serif text-gold">248</div><div class="text-xs text-muted mt-1">free-shipping clone lines</div></div>
+      <div class="card p-4"><div class="text-3xl font-serif text-gold">668</div><div class="text-xs text-muted mt-1">LOC in the order page</div></div>
+      <div class="card p-4"><div class="text-3xl font-serif text-gold">728</div><div class="text-xs text-muted mt-1">LOC shipping-label function</div></div>
+    </div>
+  </section>
+
+  <!-- ================= CANDIDATE 1 ================= -->
+  <section id="c1" class="mb-16">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="chip badge-strong">Candidate 01</span>
+      <span class="chip badge-strong">Strong</span>
+    </div>
+    <h2 class="font-serif text-3xl mb-4">The admin route guard: compose the security posture once</h2>
+
+    <div class="card p-6 mb-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2">Files</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="filebox">app/api/auth/login/route.ts</span>
+        <span class="filebox">app/api/products/route.ts</span>
+        <span class="filebox">app/api/products/[id]/route.ts</span>
+        <span class="filebox">app/api/categories/route.ts</span>
+        <span class="filebox">app/api/categories/[id]/route.ts</span>
+        <span class="filebox">app/api/orders/route.ts</span>
+        <span class="filebox">app/api/orders/[id]/status/route.ts</span>
+        <span class="filebox">app/api/orders/[id]/tracking/route.ts</span>
+        <span class="filebox">app/api/create-order/route.ts</span>
+        <span class="filebox">app/api/verify-payment/route.ts</span>
+      </div>
+      <p class="text-xs text-muted mt-3">Shared primitives that already exist: <span class="filebox">src/lib/csrf.ts</span> <span class="filebox">src/lib/rate-limiter.ts</span> <span class="filebox">src/lib/auth.ts</span></p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Problem</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          Every mutating route begins with the same ~12-line sequence: <code class="text-gold">validateCsrfOrigin</code>,
+          then <code class="text-gold">checkAuth</code>, then a try/catch wrapping body parse + Zod
+          <code class="text-gold">safeParse</code> + Prisma error mapping. Fallow counts this as two clone groups
+          spanning <strong>9 files / 175 lines</strong>. The <em>interface</em> — "three helper calls, remember to
+          wrap in try/catch, remember the 400/401/409/500 mappings" — is nearly as complex as the work itself.
+          A route author can forget the rate-limit, return the wrong status for a P2025, or skip the CSRF check
+          entirely. The deletion test says: delete the guard in any one route and nothing concentrates — the
+          knowledge simply evaporates, because it was never owned by a module.
+        </p>
+      </div>
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Solution</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          A deep <strong class="text-gold">request-guard module</strong>: one
+          <code class="text-gold">requireAdmin(request, opts)</code> that composes CSRF + JWT + optional
+          rate-limit and returns <code class="text-gold">{ admin } | NextResponse</code>, plus a
+          <code class="text-gold">parseBody(schema)</code> and a shared Prisma error → response mapper.
+          Each route collapses to: <em>guard → parse → do → respond</em>. The security posture of the entire
+          admin surface lives in one file you can read top-to-bottom.
+        </p>
+      </div>
+    </div>
+
+    <div class="before-after mb-6">
+      <div class="ba-panel ba-before">
+        <div class="ba-title">Before — 9 shallow routes, each re-implementing the guard</div>
+        <div class="space-y-1">
+          <div><span class="node node-route">products/route</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">products/[id]</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">categories/route</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">categories/[id]</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">orders/route</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">orders/status</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">orders/tracking</span> <span class="node node-guard">csrf</span> <span class="node node-guard">auth</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">create-order</span> <span class="node node-guard">csrf</span> <span class="node node-guard">rate</span> <span class="node node-guard">try/parse</span></div>
+          <div><span class="node node-route">verify-payment</span> <span class="node node-guard">csrf</span> <span class="node node-guard">rate</span> <span class="node node-guard">try/parse</span></div>
+        </div>
+        <div class="mt-4">
+          <div class="flex justify-between text-[10px] text-muted mb-1"><span>duplicated guard lines</span><span>175</span></div>
+          <div class="dupbar"><div class="dupbar-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="ba-panel ba-after">
+        <div class="ba-title">After — one deep guard module, routes become thin</div>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span class="node node-deep">requireAdmin()</span>
+          <span class="node node-deep">parseBody(schema)</span>
+          <span class="node node-deep">prismaError()</span>
+        </div>
+        <div class="space-y-1">
+          <div><span class="node node-route">products/route</span> <span class="node node-thin">requireAdmin → parse → do</span></div>
+          <div><span class="node node-route">categories/[id]</span> <span class="node node-thin">requireAdmin → parse → do</span></div>
+          <div><span class="node node-route">orders/status</span> <span class="node node-thin">requireAdmin → parse → do</span></div>
+          <div><span class="node node-route">create-order</span> <span class="node node-thin">requireAdmin → parse → do</span></div>
+          <div class="text-muted text-xs mt-1 italic">…plus 5 more one-liner routes</div>
+        </div>
+        <div class="mt-4">
+          <div class="flex justify-between text-[10px] text-muted mb-1"><span>guard lines owned by one module</span><span>~60 once</span></div>
+          <div class="dupbar"><div class="dupbar-fill" style="width:35%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3">Benefits — locality, leverage, tests</p>
+      <ul class="grid md:grid-cols-3 gap-4 text-sm text-cream/90">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Locality.</strong> CSRF ordering, auth, rate-limit, and error mapping sit
+          together. A future "every mutation needs an audit log" change lands in exactly one file.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Leverage.</strong> The interface <code>requireAdmin(request)</code> hides
+          5 decisions. Adding admin endpoint #10 is 15 lines, not 15 lines of judgment calls.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Tests.</strong> The interface is the test surface: one suite can assert
+          "403 without origin, 401 without session, 429 after N attempts" instead of nine partial re-tests.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= CANDIDATE 2 ================= -->
+  <section id="c2" class="mb-16">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="chip badge-strong">Candidate 02</span>
+      <span class="chip badge-strong">Strong</span>
+    </div>
+    <h2 class="font-serif text-3xl mb-4">The product listing module: one deep listing, two thin pages</h2>
+
+    <div class="card p-6 mb-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2">Files</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="filebox">src/components/pages/catalogue-content.tsx</span>
+        <span class="filebox">src/components/pages/category-content.tsx</span>
+        <span class="filebox">src/components/ui/ProductCard.tsx</span>
+        <span class="filebox">src/lib/hooks/useAdminData.ts</span>
+        <span class="filebox">src/lib/hooks/useShippingNudge.ts</span>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Problem</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          <code class="text-gold">catalogue-content.tsx</code> and <code class="text-gold">category-content.tsx</code>
+          are siblings that share ~121 lines across three clone groups: the same search box, category filter,
+          skeleton grid, image-settling effect, page-transition dimmer, pagination bar, and add-to-cart +
+          shipping-nudge wiring — differing only in the fetch hook and a few labels. Understanding "how does a
+          listing work?" requires diffing two 250-line files. The interfaces are shallow: their props differ
+          from each other more than their behaviour does.
+        </p>
+      </div>
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Solution</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          One deep <strong class="text-gold">ProductListing</strong> module. Its interface is a small
+          <em>query config</em> — the fetch function, initial data, and which affordances to show — instead of
+          a bespoke hook per page. <code class="text-gold">CataloguePage</code> and
+          <code class="text-gold">CategoryPage</code> become thin declarative wrappers that hand it a config.
+          The third listing surface (a future "search results" or "sale" page) becomes a config, not a fourth copy.
+        </p>
+      </div>
+    </div>
+
+    <div class="before-after mb-6">
+      <div class="ba-panel ba-before">
+        <div class="ba-title">Before — two shallow siblings carrying the same machinery</div>
+        <div class="flex flex-wrap gap-3">
+          <div class="border border-line rounded-lg p-3 flex-1 min-w-[180px]">
+            <div class="text-[10px] uppercase tracking-widest text-muted mb-2">catalogue-content</div>
+            <div class="space-y-1 text-[10px]">
+              <div class="text-muted">✓ search box</div>
+              <div class="text-muted">✓ category filter</div>
+              <div class="text-muted">✓ skeleton grid</div>
+              <div class="text-muted">✓ image-settling</div>
+              <div class="text-muted">✓ pagination bar</div>
+              <div class="text-muted">✓ add-to-cart nudge</div>
+            </div>
+          </div>
+          <div class="border border-line rounded-lg p-3 flex-1 min-w-[180px]">
+            <div class="text-[10px] uppercase tracking-widest text-muted mb-2">category-content</div>
+            <div class="space-y-1 text-[10px]">
+              <div class="text-muted">✓ search box</div>
+              <div class="text-muted">✓ category filter</div>
+              <div class="text-muted">✓ skeleton grid</div>
+              <div class="text-muted">✓ image-settling</div>
+              <div class="text-muted">✓ pagination bar</div>
+              <div class="text-muted">✓ add-to-cart nudge</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 text-[10px] text-muted">121 duplicated lines · two files that must be kept in lockstep</div>
+      </div>
+      <div class="ba-panel ba-after">
+        <div class="ba-title">After — one deep module, two thin configs</div>
+        <div class="space-y-2">
+          <div class="border border-[#2e4a34] rounded-lg p-3">
+            <div class="text-[10px] uppercase tracking-widest text-[#7fb56f] mb-2">ProductListing (deep)</div>
+            <div class="text-[10px] text-cream/80">fetch · filters · pagination · skeletons · image settling · cart nudge — owned once</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="border border-[#2e4a34] rounded-lg p-2 flex-1 text-center">
+              <div class="text-[10px] text-muted">catalogue page</div>
+              <div class="text-[10px] text-cream/80">config A</div>
+            </div>
+            <div class="border border-[#2e4a34] rounded-lg p-2 flex-1 text-center">
+              <div class="text-[10px] text-muted">category page</div>
+              <div class="text-[10px] text-cream/80">config B</div>
+            </div>
+            <div class="border border-[#2e4a34] rounded-lg p-2 flex-1 text-center">
+              <div class="text-[10px] text-muted">future page</div>
+              <div class="text-[10px] text-cream/80">config C</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3">Benefits — locality, leverage, tests</p>
+      <ul class="grid md:grid-cols-3 gap-4 text-sm text-cream/90">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Locality.</strong> The image-settling + page-transition dance, the one part
+          of the UI that has real timing logic, exists in exactly one place.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Leverage.</strong> A third listing surface is a config object, not another
+          copy to keep honest. The seam is the config, and the config is small.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Tests.</strong> The existing pagination test suite gains a single,
+          comprehensive surface; category and catalogue behaviour can no longer drift apart.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= CANDIDATE 3 ================= -->
+  <section id="c3" class="mb-16">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="chip badge-worthy">Candidate 03</span>
+      <span class="chip badge-worthy">Worth exploring</span>
+    </div>
+    <h2 class="font-serif text-3xl mb-4">The free-shipping incentive: a domain module two presenters share</h2>
+
+    <div class="card p-6 mb-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2">Files</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="filebox">src/components/order/OrderSummaryCard.tsx</span>
+        <span class="filebox">src/components/ui/ShippingNudgePopup.tsx</span>
+        <span class="filebox">src/lib/hooks/useShippingNudge.ts</span>
+        <span class="filebox">src/lib/constants.ts</span>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Problem</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          Fallow flags a <strong>248-line clone</strong> between these two files — and the "how close to free
+          shipping" progress math, the <code class="text-gold">formatRupees</code> Intl formatting, and the
+          threshold constant are implemented twice with slightly different copy. The
+          <em>free-shipping incentive</em> is a real domain concept (threshold, remaining amount, progress
+          percent, unlocked state) but it has no home: it leaks out of the presenters instead of being a module.
+          Each presenter's interface is shallow — it re-derives the same numbers its sibling does.
+        </p>
+      </div>
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Solution</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          A deep <strong class="text-gold">free-shipping incentive module</strong>: one
+          <code class="text-gold">useFreeShippingIncentive(cartTotal)</code> returning
+          <code class="text-gold">{ remaining, percent, unlocked, messages }</code>, plus a shared
+          <code class="text-gold">formatRupees</code> in one place. OrderSummaryCard and ShippingNudgePopup
+          become thin presenters of the same state — and any future surface (cart dropdown, checkout sticky bar)
+          gets the incentive for free.
+        </p>
+      </div>
+    </div>
+
+    <div class="before-after mb-6">
+      <div class="ba-panel ba-before">
+        <div class="ba-title">Before — one concept, two implementations</div>
+        <div class="space-y-2 text-[11px]">
+          <div class="border border-line rounded p-2">
+            <div class="text-muted">OrderSummaryCard</div>
+            <div class="text-cream/70">formatRupees() · progress% · remaining · "Add ₹X more"</div>
+          </div>
+          <div class="border border-line rounded p-2">
+            <div class="text-muted">ShippingNudgePopup</div>
+            <div class="text-cream/70">formatRupees() · progress% · shippingLeft · "Add ₹X more"</div>
+          </div>
+          <div class="text-[10px] text-muted">248 duplicated lines — the copy drifts first, then the math</div>
+        </div>
+      </div>
+      <div class="ba-panel ba-after">
+        <div class="ba-title">After — one domain module, two presenters</div>
+        <div class="space-y-2 text-[11px]">
+          <div class="border border-[#2e4a34] rounded p-2">
+            <div class="text-[#7fb56f]">useFreeShippingIncentive(total)</div>
+            <div class="text-cream/70">remaining · percent · unlocked · formatRupees · copy — owned once</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="border border-[#2e4a34] rounded p-2 flex-1 text-center text-cream/70">OrderSummaryCard</div>
+            <div class="border border-[#2e4a34] rounded p-2 flex-1 text-center text-cream/70">NudgePopup</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3">Benefits — locality, leverage, tests</p>
+      <ul class="grid md:grid-cols-3 gap-4 text-sm text-cream/90">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Locality.</strong> Threshold, rounding, and message copy are domain
+          decisions that belong together. Change "free over ₹999" in one place.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Leverage.</strong> The cart dropdown, sticky checkout bar, and order
+          confirmation all want this state eventually — the module is ready for them.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Tests.</strong> The incentive math (rounding edge cases, exactly-at-threshold,
+          zero total) becomes unit-testable without rendering any component.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= CANDIDATE 4 ================= -->
+  <section id="c4" class="mb-16">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="chip badge-worthy">Candidate 04</span>
+      <span class="chip badge-worthy">Worth exploring</span>
+    </div>
+    <h2 class="font-serif text-3xl mb-4">Checkout orchestration: pull the payment flow out of the page</h2>
+
+    <div class="card p-6 mb-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2">Files</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="filebox">app/order/page.tsx</span>
+        <span class="filebox">src/lib/hooks/useAdminMutations.ts</span>
+        <span class="filebox">src/lib/razorpay.ts</span>
+        <span class="filebox">app/api/create-order/route.ts</span>
+        <span class="filebox">app/api/verify-payment/route.ts</span>
+        <span class="filebox">src/lib/api/index.ts</span>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Problem</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          <code class="text-gold">app/order/page.tsx</code> is 668 lines and carries nine functions above the
+          complexity threshold. It mixes three distinct jobs: <strong>form orchestration</strong> (three steps of
+          validation rules), <strong>money math</strong> (shipping cost, grand total, test-product bypass), and
+          <strong>the Razorpay lifecycle</strong> (script load → create order → handler → verify → place order →
+          navigate). The payment sequence especially is a deep, stateful protocol buried inside JSX handlers —
+          its failure modes (dismiss, payment.failed, verification failure) are only reachable through a browser.
+        </p>
+      </div>
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Solution</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          Extract the money math into a pure <strong class="text-gold">checkout totals module</strong>
+          (<code class="text-gold">computeShipping(total, state, isTestProduct)</code>) and the payment protocol
+          into a <strong class="text-gold">useRazorpayCheckout</strong> hook that owns
+          script → order → handler → verify → placeOrder and surfaces the outcome.
+          The page keeps only presenters and step navigation. The interface is the test surface: the whole
+          payment protocol becomes mockable.
+        </p>
+      </div>
+    </div>
+
+    <div class="before-after mb-6">
+      <div class="ba-panel ba-before">
+        <div class="ba-title">Before — the page is the whole system</div>
+        <div class="space-y-1 text-[11px]">
+          <div class="border border-line rounded p-2">
+            <div class="text-muted">app/order/page.tsx · 668 LOC</div>
+            <div class="text-cream/70 mt-1">
+              validation rules · step nav · shipping math · grand total · Razorpay script · order create ·
+              payment handler · verify · placeOrder · toast · navigate
+            </div>
+          </div>
+          <div class="text-[10px] text-muted">browser required to exercise any of it; bugs hide in the wiring</div>
+        </div>
+      </div>
+      <div class="ba-panel ba-after">
+        <div class="ba-title">After — three deep modules, a thin page</div>
+        <div class="space-y-1 text-[11px]">
+          <div class="border border-[#2e4a34] rounded p-2"><span class="text-[#7fb56f]">useCheckoutForm</span> <span class="text-cream/70">— rules + step state</span></div>
+          <div class="border border-[#2e4a34] rounded p-2"><span class="text-[#7fb56f]">computeTotals()</span> <span class="text-cream/70">— pure money math</span></div>
+          <div class="border border-[#2e4a34] rounded p-2"><span class="text-[#7fb56f]">useRazorpayCheckout</span> <span class="text-cream/70">— payment protocol</span></div>
+          <div class="border border-[#2e4a34] rounded p-2"><span class="text-cream/70">page — presenters + nav only</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3">Benefits — locality, leverage, tests</p>
+      <ul class="grid md:grid-cols-3 gap-4 text-sm text-cream/90">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Locality.</strong> The payment protocol's states and failure modes sit in one
+          module you can read top-to-bottom, not scattered across a 668-line render.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Leverage.</strong> A future "pay later / COD" checkout reuses the form and
+          totals modules and swaps only the payment adapter.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Tests.</strong> The verify→placeOrder→navigate sequence, and the totals math,
+          become testable without a browser or a real Razorpay order.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= CANDIDATE 5 ================= -->
+  <section id="c5" class="mb-16">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="chip badge-spec">Candidate 05</span>
+      <span class="chip badge-spec">Speculative</span>
+    </div>
+    <h2 class="font-serif text-3xl mb-4">The shipping label: separate generation from presentation</h2>
+
+    <div class="card p-6 mb-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2">Files</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="filebox">src/components/admin/PrintShippingLabelModal.tsx</span>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Problem</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          <code class="text-gold">PrintShippingLabelModal</code> is a single 728-line function (16 hooks) that
+          couples two genuinely different concerns: <strong>generating the label</strong> (jsPDF layout,
+          barcode, address blocks, courier formatting) and <strong>presenting it</strong> (modal open/close,
+          size presets, print wiring). The generation logic — the part a courier actually depends on — is
+          untestable through this interface: you must mount the modal to touch it. This one is marked
+          <em>speculative</em> because the payoff is real but the modal is also just large; the deepening is
+          low-risk and high-value.
+        </p>
+      </div>
+      <div class="card p-6">
+        <p class="text-xs text-muted uppercase tracking-widest mb-3">Solution</p>
+        <p class="text-sm leading-relaxed text-cream/90">
+          A pure <strong class="text-gold">generateShippingLabel(order)</strong> module returning
+          <code class="text-gold">{ svg, pdfBytes, pageCount }</code> — deterministic, dependency-injectable
+          (pass a jsPDF instance for tests). The modal becomes a thin presenter that calls it. Label layout
+          rules become a testable, reusable domain artifact.
+        </p>
+      </div>
+    </div>
+
+    <div class="before-after mb-6">
+      <div class="ba-panel ba-before">
+        <div class="ba-title">Before — 728 LOC, generation welded to the modal</div>
+        <div class="text-[11px] text-cream/70 border border-line rounded p-2">
+          <div>PrintShippingLabelModal: 16 hooks · jsPDF layout · barcode · size presets · print · modal</div>
+          <div class="text-muted mt-1">→ to test the label, you must render the modal</div>
+        </div>
+      </div>
+      <div class="ba-panel ba-after">
+        <div class="ba-title">After — a pure generator behind a seam</div>
+        <div class="text-[11px]">
+          <div class="border border-[#2e4a34] rounded p-2"><span class="text-[#7fb56f]">generateShippingLabel(order) → { svg, pdf, pages }</span></div>
+          <div class="border border-[#2e4a34] rounded p-2 mt-1 text-cream/70">modal → present + print</div>
+          <div class="text-muted mt-1">→ label layout unit-tested headlessly</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3">Benefits — locality, leverage, tests</p>
+      <ul class="grid md:grid-cols-3 gap-4 text-sm text-cream/90">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Locality.</strong> Courier-facing layout rules (barcode placement, address
+          block, margins) become a single source of truth instead of lines inside a component.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Leverage.</strong> The generator could serve an API endpoint or a batch
+          print flow later without dragging the modal along.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Tests.</strong> PDF/barcode output becomes assertable in CI — the label is
+          the one artefact whose exact bytes matter to the business.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= TOP RECOMMENDATION ================= -->
+  <section id="top" class="mb-16">
+    <div class="card p-8 border-gold/40" style="border-width:1px">
+      <p class="chip badge-strong inline-block mb-4">Top Recommendation</p>
+      <h2 class="font-serif text-3xl mb-4">Start with <span class="text-gold">Candidate 01 — the admin route guard</span></h2>
+      <p class="text-sm leading-relaxed text-cream/90 max-w-4xl mb-4">
+        It is the highest-leverage and lowest-risk deepening on the list:
+      </p>
+      <ul class="grid md:grid-cols-2 gap-4 text-sm text-cream/90 mb-6">
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Largest duplication, smallest surface.</strong> It removes the two biggest
+          fallow clone groups (175 lines across 9 files) while touching only additive helpers — every route
+          keeps its behaviour.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">The seam already exists.</strong> <code>validateCsrfOrigin</code>,
+          <code>checkAuth</code>, <code>checkRateLimit</code> are primitives waiting for composition — this is
+          deepening, not new design.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Security posture in one file.</strong> The guard is exactly the kind of
+          module where "the interface is the test surface": a 403/401/429 suite covers the whole admin surface.
+        </li>
+        <li class="border-l-2 border-gold pl-3">
+          <strong class="text-gold">Unblocks everything else.</strong> Ordering/verification routes
+          (Candidate 04) and every future admin endpoint get cleaner once the guard is one call.
+        </li>
+      </ul>
+      <p class="text-xs text-muted">
+        No domain glossary (<code>CONTEXT.md</code>) or ADRs exist yet — if any of these deepenings are later
+        rejected for a load-bearing reason, that's the moment to record an ADR so future reviews don't re-suggest them.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-line pt-8 text-xs text-muted">
+    <p>
+      Vocabulary: <strong class="text-cream">module · interface · depth · seam · adapter · leverage · locality</strong> —
+      the <em>deletion test</em> ("would deleting it concentrate complexity, or just move it?") was applied to each candidate.
+    </p>
+    <p class="mt-2">Chinni Treasure · Next.js 16 / React 19 / Prisma / PostgreSQL · generated from a live walk of the codebase, cross-referenced with the Fallow report.</p>
+  </footer>
+
+</main>
+</body>
+</html>

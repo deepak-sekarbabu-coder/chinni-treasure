@@ -4,7 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
+import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
 

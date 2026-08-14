@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { recentCache } from "@/src/lib/catalogue-cache";
 
 const MAX_LIMIT = 20;
 
-const { get: getCached, set: setCache } = createRedisCache(60_000, "recent");
+const { get: getCached, set: setCache } = recentCache;
 
 export async function GET(request: Request) {
   try {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { statsCache } from "@/src/lib/stats-cache";
 import { Prisma } from "@prisma/client";
 
-const { get: getCached, set: setCache } = createRedisCache(30_000, "stats");
+const { get: getCached, set: setCache } = statsCache;
 
 /**
  * Retry a Prisma query when Nhost's pooler returns query_wait_timeout.

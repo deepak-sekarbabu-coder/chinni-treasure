@@ -155,12 +155,24 @@ Add Zod schemas for review creation, update, and response:
 **`app/api/reviews/[id]/helpfulness/route.ts`**
 - `POST` — Public (authenticated optional). Increments `helpfulnessVotes` for a review. Rate-limited to 1 vote per customer per review (stored in Redis key `review:vote:{reviewId}:{customerIp}`).
 
-#### 2.1.4 Cache & Invalidation Updates (`src/lib/cache-invalidate.ts`)
-Add review cache namespaces:
+#### 2.1.4 Cache & Invalidation (`src/lib/reviews-cache.ts`)
+Add a reviews cache module following the cache-ownership pattern (ADR-0001 — routes never create caches inline; invalidation clears what the owning module owns):
 ```ts
-const REVIEW_NAMESPACES = ["reviews"];
+// src/lib/reviews-cache.ts
+import { createRedisCache } from "@/src/lib/redis-cache";
+
+export const reviewsCache = createRedisCache(300_000, "reviews");
+
+export async function invalidateReviewCaches(productId?: string): Promise<void> {
+  if (productId) await reviewsCache.remove(`product:${productId}`);
+  await reviewsCache.remove("top");
+}
 ```
-Add `invalidateReviewCaches(productId?: string)` function that clears `reviews:product:{productId}` and `reviews:top`.
+- Cache keys: `reviews:product:{productId}` and `reviews:top` (same `reviews` namespace).
+- `remove(key)` clears both Redis and the in-memory fallback for that key (ADR-0001).
+- Top-review freshness (120s, §2.3.7) is enforced via `s-maxage` headers; the module TTL is the backstop and `invalidateReviewCaches()` keeps both keys fresh on any review mutation.
+- Routes import `reviewsCache` from this module and call `invalidateReviewCaches()` on review create / status change / delete — never `createRedisCache` directly.
+- New module joins `catalogue-cache.ts` / `order-cache.ts` / `stats-cache.ts`; record it in `CONTEXT.md` when implemented.
 
 #### 2.1.5 Rate Limiter Updates (`src/lib/rate-limiter.ts`)
 Add review-specific rate limit check:
@@ -366,7 +378,7 @@ Add `@import "./styles/home.css"` to `app/globals.css` (before responsive/access
 | `src/lib/api/schemas.ts` | Add review Zod schemas and types |
 | `src/lib/api/index.ts` | Add review API client functions |
 | `src/lib/query-keys.ts` | Add `reviews` query key group |
-| `src/lib/cache-invalidate.ts` | Add `invalidateReviewCaches()` |
+| `src/lib/reviews-cache.ts` | New: reviews cache module + `invalidateReviewCaches()` |
 | `src/lib/rate-limiter.ts` | Add review rate limit helper |
 | `src/lib/hooks/useAdminMutations.ts` | Add review mutation hooks |
 | `app/admin/page.tsx` | Add Reviews tab with dynamic import |

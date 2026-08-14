@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import type { Order, OrderItem } from "@prisma/client";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { trackingCache } from "@/src/lib/order-cache";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 
-const { get: getCached, set: setCache } = createRedisCache(15_000, "track");
+const { get: getCached, set: setCache } = trackingCache;
 const CACHE_HEADERS = { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } };
 
 function buildCacheKey(orderId: string | null, phone: string | null): string | null {

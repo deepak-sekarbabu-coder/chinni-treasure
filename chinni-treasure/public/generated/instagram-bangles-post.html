@@ -1,0 +1,266 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  html, body { margin: 0; width: 1080px; height: 1350px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(214, 177, 90, 0.25), transparent 26%),
+      radial-gradient(circle at 80% 28%, rgba(255, 255, 255, 0.08), transparent 16%),
+      radial-gradient(circle at 75% 75%, rgba(201, 164, 76, 0.18), transparent 28%),
+      linear-gradient(160deg, #090709 0%, #140d11 38%, #23161c 100%);
+    font-family: Georgia, "Times New Roman", serif;
+    color: #f6ead2;
+  }
+  .frame {
+    position: relative;
+    width: 1080px;
+    height: 1350px;
+    padding: 64px 68px 58px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .frame::before,
+  .frame::after {
+    content: "";
+    position: absolute;
+    inset: 28px;
+    border: 1px solid rgba(216, 181, 94, 0.35);
+    border-radius: 36px;
+    pointer-events: none;
+  }
+  .frame::after {
+    inset: 40px;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .brand {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 34px;
+    z-index: 2;
+  }
+  .logo {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    padding: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 1px rgba(216, 181, 94, 0.65), 0 16px 32px rgba(0,0,0,0.35);
+    object-fit: contain;
+  }
+  .brand-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.02;
+  }
+  .brand-name {
+    font-size: 30px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #fff3d7;
+  }
+  .brand-tag {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgba(246, 234, 210, 0.72);
+    margin-top: 6px;
+  }
+  .grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 28px;
+    align-items: center;
+    height: 1040px;
+  }
+  .eyebrow {
+    font-family: Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.34em;
+    color: #d9b96a;
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 82px;
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    color: #fff4df;
+    text-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  }
+  .accent { color: #dcb867; }
+  .sub {
+    margin: 28px 0 0;
+    width: 90%;
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    line-height: 1.5;
+    color: rgba(246, 234, 210, 0.88);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 30px;
+  }
+  .chip {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f2e3c0;
+    border: 1px solid rgba(216, 181, 94, 0.5);
+    background: rgba(255,255,255,0.04);
+    padding: 12px 16px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+  }
+  .cta {
+    margin-top: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #e0c06d, #a67c2b);
+    color: #150f11;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+  }
+  .product-card {
+    position: relative;
+    height: 920px;
+    border-radius: 44px;
+    border: 1px solid rgba(216, 181, 94, 0.42);
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.22), transparent 30%),
+      linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.03));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 30px 70px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .product-card::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .product-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -10% -6% -10%;
+    height: 260px;
+    background: radial-gradient(circle at center, rgba(216, 181, 94, 0.25), transparent 68%);
+    filter: blur(16px);
+  }
+  .product-img-wrap {
+    position: absolute;
+    inset: 72px 42px 136px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 24px 46px rgba(0,0,0,0.34);
+  }
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.03);
+  }
+  .badge {
+    position: absolute;
+    right: 56px;
+    top: 56px;
+    background: rgba(11, 7, 9, 0.72);
+    border: 1px solid rgba(216, 181, 94, 0.55);
+    color: #f7ead0;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+  .footer {
+    position: absolute;
+    left: 68px;
+    right: 68px;
+    bottom: 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 24px;
+    z-index: 3;
+  }
+  .footer-left {
+    max-width: 56%;
+    font-family: Arial, sans-serif;
+    color: rgba(246, 234, 210, 0.82);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .footer-left strong { color: #fff1cc; }
+  .footer-right {
+    text-align: right;
+    font-family: Arial, sans-serif;
+    color: #d8b55e;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="brand">
+      <img class="logo" src="https://www.chinnitreasure.in/images/branding/logo.png" alt="Chinni Treasure logo" />
+      <div class="brand-copy">
+        <div class="brand-name">Chinni Treasure</div>
+        <div class="brand-tag">Little Love</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section>
+        <div class="eyebrow">Artisan-crafted luxury goods</div>
+        <h1>Pink <span class="accent">Velvet</span><br/>Bangle Set</h1>
+        <p class="sub">A graceful statement piece for festive dressing, gifting moments, and everyday elegance. Designed to feel premium, look timeless, and shine beautifully in every frame.</p>
+        <div class="chips">
+          <div class="chip">Premium Materials</div>
+          <div class="chip">Handcrafted Feel</div>
+          <div class="chip">Festive Ready</div>
+          <div class="chip">Free Shipping Above ₹599</div>
+        </div>
+        <div class="cta">Shop the Look</div>
+      </section>
+
+      <section class="product-card">
+        <div class="badge">Limited Drop</div>
+        <div class="product-img-wrap">
+          <img class="product-img" src="https://i.imgur.gg/cArGP3I-IMG_20260626_155904.jpg?w=550&q=75" alt="Pink Velvet Bangle Set" />
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">
+      <div class="footer-left"><strong>Chinni Treasure</strong> • Artisan-made • Premium design • Made for the moments you want to remember.</div>
+      <div class="footer-right">Instagram Post</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -22,7 +22,6 @@ import type {
   Order,
   Product,
   ProductInput,
-  ProductsResponse,
   UpdateCategoryInput,
   UpdateOrderStatusInput,
 } from "@/src/lib/api/schemas";
@@ -35,52 +34,43 @@ function invalidateAdminQueries(queryClient: ReturnType<typeof useQueryClient>) 
   ]);
 }
 
-function patchProductListCache(queryClient: ReturnType<typeof useQueryClient>, product: Product) {
-  const productListQueries = queryClient.getQueriesData<ProductsResponse>({
-    queryKey: queryKeys.products.lists(),
-  });
+/** Any cached product list shape — admin list pages and public catalogue grids. */
+type ProductListData = { products: Product[] };
 
-  for (const [queryKey, previousData] of productListQueries) {
-    if (!previousData?.products) continue;
+/** The two query-key groups that hold product lists. */
+const PRODUCT_LIST_KEY_GROUPS = [
+  queryKeys.products.lists(),
+  queryKeys.products.catalogues(),
+] as const;
 
-    const productIndex = previousData.products.findIndex((item) => item.id === product.id);
-    const nextProducts = previousData.products.map((item) => (item.id === product.id ? product : item));
+/**
+ * Patch every cached product list (admin lists + public catalogue grids) so a
+ * create/update reflects immediately: replaces the product in place, or
+ * prepends it when the cache hasn't seen it yet.
+ */
+export function patchProductCache(queryClient: ReturnType<typeof useQueryClient>, product: Product) {
+  for (const keyGroup of PRODUCT_LIST_KEY_GROUPS) {
+    for (const [queryKey, previousData] of queryClient.getQueriesData<ProductListData>({ queryKey: keyGroup })) {
+      if (!previousData?.products) continue;
 
-    if (productIndex === -1) {
-      queryClient.setQueryData(queryKey, {
-        ...previousData,
-        products: [product, ...previousData.products],
-      });
-      continue;
+      const nextProducts = previousData.products.some((item) => item.id === product.id)
+        ? previousData.products.map((item) => (item.id === product.id ? product : item))
+        : [product, ...previousData.products];
+
+      queryClient.setQueryData(queryKey, { ...previousData, products: nextProducts });
     }
-
-    queryClient.setQueryData(queryKey, {
-      ...previousData,
-      products: nextProducts,
-    });
   }
+}
 
-  const catalogueQueries = queryClient.getQueriesData<{ products: Product[] }>({
-    queryKey: queryKeys.products.catalogues(),
-  });
-
-  for (const [queryKey, previousData] of catalogueQueries) {
-    if (!previousData?.products) continue;
-
-    const catalogueIndex = previousData.products.findIndex((item) => item.id === product.id);
-    const nextProducts = previousData.products.map((item) => (item.id === product.id ? product : item));
-
-    if (catalogueIndex === -1) {
-      queryClient.setQueryData(queryKey, {
-        ...previousData,
-        products: [product, ...previousData.products],
-      });
-      continue;
-    }
-
-    queryClient.setQueryData(queryKey, {
-      ...previousData,
-      products: nextProducts,
+/**
+ * Remove a product from every cached product list (admin lists + catalogue
+ * grids) after a delete.
+ */
+export function removeProductFromCache(queryClient: ReturnType<typeof useQueryClient>, productId: string) {
+  for (const keyGroup of PRODUCT_LIST_KEY_GROUPS) {
+    queryClient.setQueriesData<ProductListData | undefined>({ queryKey: keyGroup }, (previousData) => {
+      if (!previousData?.products) return previousData;
+      return { ...previousData, products: previousData.products.filter((item) => item.id !== productId) };
     });
   }
 }
@@ -106,7 +96,7 @@ export function useCreateProduct() {
   return useMutation<Product, Error, ProductInput>({
     mutationFn: (input) => createProduct(input),
     onSuccess: (product) => {
-      patchProductListCache(queryClient, product);
+      patchProductCache(queryClient, product);
       return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
     },
   });
@@ -117,7 +107,7 @@ export function useUpdateProduct() {
   return useMutation<Product, Error, { productId: string; input: ProductInput }>({
     mutationFn: ({ productId, input }) => updateProduct(productId, input),
     onSuccess: (product) => {
-      patchProductListCache(queryClient, product);
+      patchProductCache(queryClient, product);
       return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
     },
   });
@@ -128,26 +118,7 @@ export function useDeleteProduct() {
   return useMutation<void, Error, string>({
     mutationFn: (productId) => deleteProduct(productId),
     onSuccess: async (_data, productId) => {
-      queryClient.setQueriesData(
-        { queryKey: queryKeys.products.lists() },
-        (previousData: ProductsResponse | undefined) => {
-          if (!previousData?.products) return previousData;
-          return {
-            ...previousData,
-            products: previousData.products.filter((item) => item.id !== productId),
-          };
-        },
-      );
-      queryClient.setQueriesData(
-        { queryKey: queryKeys.products.catalogues() },
-        (previousData: { products: Product[] } | undefined) => {
-          if (!previousData?.products) return previousData;
-          return {
-            ...previousData,
-            products: previousData.products.filter((item) => item.id !== productId),
-          };
-        },
-      );
+      removeProductFromCache(queryClient, productId);
       return queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
     },
   });

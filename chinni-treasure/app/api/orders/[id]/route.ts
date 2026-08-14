@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { createRedisCache } from "@/src/lib/redis-cache";
+import { orderDetailCache } from "@/src/lib/order-cache";
 
-const { get: getCached, set: setCache } = createRedisCache(30_000, "order");
+const { get: getCached, set: setCache } = orderDetailCache;
 
 // GET /api/orders/[id] — Get a single order by ID
 export async function GET(

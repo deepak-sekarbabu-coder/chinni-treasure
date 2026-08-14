@@ -32,7 +32,7 @@ graph TB
     subgraph Cache["📦 Caching Layer"]
         Redis["Redis<br/>Shared Cache"]
         MemFallback["In-Memory Fallback<br/>Per-Instance"]
-        CacheInvalidation["Cache Invalidation<br/>SCAN + DEL"]
+        CacheInvalidation["Cache Ownership<br/>catalogue-cache.ts · order-cache.ts<br/>SCAN + DEL of owned namespaces"]
     end
 
     subgraph External["🌍 External Services"]
@@ -54,7 +54,7 @@ graph TB
     APIRoutes -->|"Cache Read/Write"| Redis
     Redis <-.->|"Sync"| RedisCloud
     Redis <-.->|"Fallback"| MemFallback
-    APIRoutes -->|"Invalidate"| CacheInvalidation
+    APIRoutes -->|"Invalidate (via cache modules)"| CacheInvalidation
     ReactQuery -->|"Data Fetch"| APIRoutes
     RazorpaySDK -->|"Payment"| RazorpayAPI
     APIRoutes -->|"Log"| Axiom
@@ -576,8 +576,10 @@ graph TB
     subgraph Lib["📚 Core Libraries"]
         AuthLib["auth.ts<br/>JWT + bcrypt"]
         PrismaLib["prisma.ts<br/>Database Client"]
-        RedisLib["redis.ts + redis-cache.ts"]
-        CacheInv["cache-invalidate.ts"]
+        RedisLib["redis.ts + redis-cache.ts<br/>cache.ts fallback"]
+        CatalogueCache["catalogue-cache.ts<br/>products · categories · catlatest · catpage · recent"]
+        OrderCache["order-cache.ts<br/>order · track (+ stats invalidation)"]
+        StatsCache["stats-cache.ts"]
         RateLimit["rate-limiter.ts"]
         CSRFLib["csrf.ts + csrf-helpers.ts"]
         Sanitize["sanitize.ts"]
@@ -604,7 +606,7 @@ graph TB
     class AdminTabs,AdminHeader,AdminCatalogue,AdminCategories,AdminOrders,AdminCharts,AdminStats,ProductForm,CategoryForm,OrderDetail,TrackingModal,PrintLabel adminStyle
     class ProductCard,ProductImage,FallbackImage,StatusBadge,StockBadge,LoadingSpinner,Skeleton,Breadcrumbs,SectionHeader,Toast,JsonLd,Markdown,ShippingNudge uiStyle
     class AdminData,AdminSession,AdminMutations,AdminCatalogueCtrl,AdminCategoriesCtrl,AdminOrdersCtrl,AdminHeaderActions,TrackSearch,ResponsivePage,ShippingNudgeHook hookStyle
-    class AuthLib,PrismaLib,RedisLib,CacheInv,RateLimit,CSRFLib,Sanitize,RazorpayLib,CartCookie libStyle
+    class AuthLib,PrismaLib,RedisLib,CatalogueCache,OrderCache,StatsCache,RateLimit,CSRFLib,Sanitize,RazorpayLib,CartCookie libStyle
 ```
 
 ---

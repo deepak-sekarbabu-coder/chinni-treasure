@@ -4,11 +4,12 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { getCached, setCache } from "@/src/lib/products-cache";
-import { invalidateCatalogCaches } from "@/src/lib/cache-invalidate";
+import { productsCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+
+const { get: getCached, set: setCache } = productsCache;
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
