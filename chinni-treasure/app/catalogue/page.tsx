@@ -6,7 +6,9 @@ import { headers } from "next/headers";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
 import type { Metadata } from "next";
 
-export const revalidate = 60;
+// Content depends on the request's Host header (visibleHostnames domain
+// filter), so every request must render fresh — see category/[slug]/page.tsx.
+export const dynamic = "force-dynamic";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
 

@@ -25,8 +25,8 @@ const CATALOGUE_CACHES = [
 ] as const;
 
 /**
- * Clear every cache owned by the catalogue — Redis keys across all instances
- * (SCAN + DEL) plus the local in-memory fallback. Call after any product or
+ * Clear every cache owned by the catalogue — the namespace in Redis (SCAN +
+ * DEL) plus the module's local in-memory fallback. Call after any product or
  * category create / update / delete.
  */
 export async function invalidateCatalogCaches(): Promise<void> {

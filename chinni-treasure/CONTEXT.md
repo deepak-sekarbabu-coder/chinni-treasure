@@ -25,7 +25,7 @@ Terms marked **seam** are names for good module boundaries — use them when tal
 These are **deep modules** — small interfaces, big hidden implementations — that own a concept. Future reviews should deepen around these seams, not re-litigate them.
 
 ### Catalogue cache module — *seam*
-`src/lib/catalogue-cache.ts`. Owns **all five catalogue caches** (`products`, `categories`, `catlatest`, `catpage`, `recent`) and exports `invalidateCatalogCaches()`, which clears exactly what the module owns (Redis SCAN+DEL across instances **plus** the local in-memory fallback). Routes import their cache from this module; they never call `createRedisCache` themselves. **Resolved by the Aug 2026 architecture review** — do not re-suggest a hardcoded namespace list.
+`src/lib/catalogue-cache.ts`. Owns **all five catalogue caches** (`products`, `categories`, `catlatest`, `catpage`, `recent`) and exports `invalidateCatalogCaches()`, which clears exactly what the module owns (the namespace in Redis via SCAN+DEL **plus** the local in-memory fallback). Routes import their cache from this module; they never call `createRedisCache` themselves. **Resolved by the Aug 2026 architecture review** — do not re-suggest a hardcoded namespace list.
 
 ### Order cache module — *seam*
 `src/lib/order-cache.ts`. Owns the order-detail cache (`order`) and the tracking cache (`track`), plus `invalidateOrderCache(orderId?)`. Order-derived **stats are cleared here too** — on any order mutation (status change / tracking update), the dashboard cache must refresh.
@@ -59,7 +59,7 @@ Findings from the Aug 2026 architecture review, not yet addressed:
 
 - **Order module** (candidate 1, *Strong*) — placement / fulfilment / payment logic lives inline in HTTP handlers; inventory knowledge is split; the payment flow lacks an amount-integrity invariant.
 - **Pricing policy** (candidate 2, *Strong*) — shipping + total computed twice (checkout preview vs server finalize); should become one shared module.
-- **One contract, not four** (candidate 3, *Worth exploring*) — input contracts duplicated as server Zod, client Zod, and hand-rolled checkout rules.
+- **One contract, not four** (candidate 3, *Worth exploring*) — input contracts duplicated as server Zod, client Zod, and hand-rolled checkout rules. **Partially resolved (Aug 2026):** the 9× copy-pasted `.safeParse` 400 block in the API routes is now one shared helper, `validateOr400` in `src/lib/validate.ts`; the remaining duplication — server Zod vs client Zod vs hand-rolled checkout rules — is still open.
 - **Admin dashboard mesh** (candidate 5, *Speculative*) — six controller hooks behind a 25-key interface. **Partially resolved (Aug 2026):** the duplicated cache patching collapsed into `patchProductCache` / `removeProductFromCache` (one key-group list drives both admin lists and catalogue grids) and the controllers have direct hook tests; full reducer-style consolidation remains open and is only worth it if the dashboard keeps growing.
 
 **Resolved:** Catalogue cache module (candidate 4) — done Aug 2026.

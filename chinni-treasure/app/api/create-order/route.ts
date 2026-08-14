@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { validateOr400 } from "@/src/lib/validate";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
 
@@ -44,13 +45,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = CreateRazorpayOrderSchema.safeParse(raw);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues.map((i) => i.message).join(", ") },
-      { status: 400 },
-    );
-  }
+  const parsed = validateOr400(CreateRazorpayOrderSchema, raw);
+  if (!parsed.ok) return parsed.response;
 
   const { amount, currency, receipt } = parsed.data;
   if (amount < MIN_AMOUNT_PAISE) {

@@ -4,6 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { validateOr400 } from "@/src/lib/validate";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
@@ -49,13 +50,8 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const parsed = UpdateCategorySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 },
-      );
-    }
+    const parsed = validateOr400(UpdateCategorySchema, body);
+    if (!parsed.ok) return parsed.response;
 
     const data: Prisma.CategoryUpdateInput = {};
     if (parsed.data.name !== undefined) data.name = sanitize(parsed.data.name);

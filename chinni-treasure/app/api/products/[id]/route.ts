@@ -4,6 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { validateOr400 } from "@/src/lib/validate";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { z } from "zod"
 import { Prisma, ProductBadge } from "@prisma/client"
@@ -69,13 +70,8 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const parsed = UpdateProductSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 },
-      );
-    }
+    const parsed = validateOr400(UpdateProductSchema, body);
+    if (!parsed.ok) return parsed.response;
 
     const { images, ...productFields } = parsed.data;
 

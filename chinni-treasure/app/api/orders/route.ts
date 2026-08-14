@@ -5,6 +5,7 @@ import { checkAuth } from "@/src/lib/auth";
 import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { validateOr400 } from "@/src/lib/validate";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
 import { INDIAN_STATES, calcShippingCost } from "@/src/lib/constants";
@@ -91,13 +92,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const parsed = CreateOrderSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 },
-      );
-    }
+    const parsed = validateOr400(CreateOrderSchema, body);
+    if (!parsed.ok) return parsed.response;
     const {
       customerName,
       customerEmail,

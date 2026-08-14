@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { verifyPassword, signToken, createSessionCookie } from "@/src/lib/auth";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { validateOr400 } from "@/src/lib/validate";
 import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
 
@@ -26,13 +27,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const parsed = LoginSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 },
-      );
-    }
+    const parsed = validateOr400(LoginSchema, body);
+    if (!parsed.ok) return parsed.response;
     const { username, password } = parsed.data;
 
     const admin = await prisma.admin.findUnique({ where: { username } });

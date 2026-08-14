@@ -14,14 +14,10 @@ interface Props {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
 
-export const revalidate = 60;
-
-// Return empty array so no category pages are pre-rendered at build time.
-// Pages are rendered on first visit (ISR) and cached with revalidate=60.
-// dynamicParams defaults to true, so any slug still works on-demand.
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  return [];
-}
+// Content depends on the request's Host header (visibleHostnames domain
+// filter), so every request must render fresh — ISR/static rendering would
+// both crash on headers() and serve one host's filtered view to another.
+export const dynamic = "force-dynamic";
 
 /**
  * Cached category lookup shared by generateMetadata and the page component
