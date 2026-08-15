@@ -27,6 +27,7 @@
 /* Overlay Components */
 @import "./styles/modal.css";
 @import "./styles/shipping-nudge.css";
+@import "./styles/complementary-gift.css";
 
 /* Page-Specific */
 @import "./styles/hero.css";

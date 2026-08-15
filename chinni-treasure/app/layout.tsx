@@ -5,6 +5,7 @@ import Navbar from "@/src/components/layout/Navbar";
 import Footer from "@/src/components/layout/Footer";
 import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartProvider";
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
+import ComplementaryGiftPopup from "@/src/components/ui/ComplementaryGiftPopup";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -175,6 +176,7 @@ export default async function RootLayout({
                 <div className="page-transition">{children}</div>
               </main>
               <Footer />
+              <ComplementaryGiftPopup />
               {isVercel && (
                 <>
                   <Analytics />
