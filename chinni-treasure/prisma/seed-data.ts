@@ -35,6 +35,13 @@ export const SEED_CATEGORIES = [
     "description": null,
     "displayOrder": 5,
     "isActive": true
+  },
+  {
+    "name": "Gift Boxes",
+    "slug": "box",
+    "description": null,
+    "displayOrder": 6,
+    "isActive": true
   }
 ];
 
@@ -45,9 +52,9 @@ export interface SeedProduct {
   price: number;
   compareAtPrice: number | null;
   stockQuantity: number;
-  imageUrl: string | null;
+  imageUrl: string;
   additionalImages: string[];
-  description: string | null;
+  description: string;
   badge: ProductBadge | null;
 }
 
@@ -341,6 +348,24 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     ]
   },
   {
+    "sku": "0066",
+    "name": "Hexagon Velvet Box",
+    "categorySlug": "box",
+    "price": 150,
+    "compareAtPrice": 199,
+    "stockQuantity": 2,
+    "imageUrl": "https://i.imgur.gg/anFnsR5-IMG_20260812_112503.jpg",
+    "description": "#Hexagon Velvet Gift Box\n\n## 🎨 Appearance\n- **Color:** Navy Blue\n- **Material:** Engineered wood with Premium Velvet\n\n## ✨ Special Features\n- Lightweight yet sturdy design\n- Spacious storage\n- Convenient handle for portability\n- Secure lock for safety\n\n## 📝 Product Description\nCrafted to protect what matters most. Premium Hexagon Velvet gift box with a luxurious designer finish, secure lock and sturdy design to safely organize your precious collection.\n\n## 💎 Why Choose This Treasure?\n- Unique handcrafted masterpiece\n- Tuff to find this hidden gem in other social platforms\n- Luxurious product at a cost-effective range\n- Beauty begins with organization\n- Give your cherished precious collection the elegant home they deserve.",
+    "badge": "luxury",
+    "additionalImages": [
+      "https://i.imgur.gg/anFnsR5-IMG_20260812_112503.jpg",
+      "https://i.imgur.gg/HBvWEAE-IMG_20260812_112513.jpg",
+      "https://i.imgur.gg/E3PAyaS-IMG_20260812_112451.jpg",
+      "https://i.imgur.gg/wzB0tvQ-IMG_20260812_112431.jpg",
+      "https://i.imgur.gg/snx6yAU-IMG_20260812_112410.jpg"
+    ]
+  },
+  {
     "sku": "0006",
     "name": "Pearly Golden Clutch",
     "categorySlug": "clutches",
@@ -494,31 +519,6 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/eX5K92n-IMG_20260719_140527.jpg",
       "https://i.imgur.gg/TFlTBkQ-IMG_20260719_141058.jpg",
       "https://i.imgur.gg/1qiGePZ-IMG_20260719_143359.jpg"
-    ]
-  },
-  {
-    "sku": "0043",
-    "name": "Premium Laxmi Bridal Set",
-    "categorySlug": "jewellery",
-    "price": 1599,
-    "compareAtPrice": 1699,
-    "stockQuantity": 1,
-    "imageUrl": "https://i.imgur.gg/WiuVS3A-IMG_20260719_144644.jpg",
-    "description": "# Laxmi Bridal Set\n\n## 🛍️ Product Details\n- **Price:** 1599Rs  \n- **Color:**  Gold,Multicolor Stone & Pearls\n## ✨ Features\n- Premium 18K Gold plated, Anti-Tarnish & Skin-Friendly, intricated with Precious Stones & Pearls, Luxury box packaging, Long Haram, Short to Medium adjustable necklace with earrings & Maang Tikka, Two Thread string attachments for necklace set length adjustments.\n\n## ✨ Description\n- A Premium traditional Laxmi inspo temple-style bridal set with a rich gold-tone finish & anti-tarnish.\n- Heavily detailed on each piece of this bridal set.\n- Suits for bridal, traditional wear & gifting, festivals & grand occasions.\n- Elegant temple inspired necklace set with intricate craftsmanship.\n- Peacock motifs with premium stones & pearl embellishments.\n- Meticulous attention to Laxmi coins around the corners.\n- Pink, green & white stones with pearls to elevate the traditional look for a regal touch.\n- Lightweight but looks full & heavy because of the detailed intricate work.\n\n## 💎 Why Choose This Treasure?\n- A graceful handcrafted premium laxmi necklace set with a sparkling stone detail to enhance your traditional look.\n- Crafted with meticulous attention.\n- Intricately embellished with premium pearls and stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.",
-    "badge": "premium",
-    "additionalImages": [
-      "https://i.imgur.gg/WiuVS3A-IMG_20260719_144644.jpg",
-      "https://i.imgur.gg/ka3Ohy9-IMG_20260719_144659.jpg",
-      "https://i.imgur.gg/xBmlcNq-IMG_20260719_144707.jpg",
-      "https://i.imgur.gg/x2cZlMm-IMG_20260719_144725.jpg",
-      "https://i.imgur.gg/STGVAv7-IMG_20260719_145005.jpg",
-      "https://i.imgur.gg/JYQWQ00-IMG_20260719_145012.jpg",
-      "https://i.imgur.gg/nYZqMBu-IMG_20260719_145519.jpg",
-      "https://i.imgur.gg/2dPcs0u-IMG_20260719_151241.jpg",
-      "https://i.imgur.gg/3faIJ9P-IMG_20260719_151353.jpg",
-      "https://i.imgur.gg/8cmomGO-IMG_20260719_151359.jpg",
-      "https://i.imgur.gg/CVydwW7-IMG_20260719_151417.jpg",
-      "https://i.imgur.gg/C6Pccws-IMG_20260719_151427.jpg"
     ]
   },
   {
@@ -725,6 +725,249 @@ export const SEED_PRODUCTS: SeedProduct[] = [
       "https://i.imgur.gg/ExMT8VS-IMG_20260705_184048.jpg",
       "https://i.imgur.gg/BWoz3zi-IMG_20260705_184131.jpg"
     ]
+  },
+  {
+    "sku": "0043",
+    "name": "Premium Laxmi Bridal Set",
+    "categorySlug": "jewellery",
+    "price": 1599,
+    "compareAtPrice": 1699,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/WiuVS3A-IMG_20260719_144644.jpg",
+    "description": "# Laxmi Bridal Set\n\n## 🛍️ Product Details\n- **Price:** 1599Rs  \n- **Color:**  Gold,Multicolor Stone & Pearls\n## ✨ Features\n- Premium 18K Gold plated, Anti-Tarnish & Skin-Friendly, intricated with Precious Stones & Pearls, Luxury box packaging, Long Haram, Short to Medium adjustable necklace with earrings & Maang Tikka, Two Thread string attachments for necklace set length adjustments.\n\n## ✨ Description\n- A Premium traditional Laxmi inspo temple-style bridal set with a rich gold-tone finish & anti-tarnish.\n- Heavily detailed on each piece of this bridal set.\n- Suits for bridal, traditional wear & gifting, festivals & grand occasions.\n- Elegant temple inspired necklace set with intricate craftsmanship.\n- Peacock motifs with premium stones & pearl embellishments.\n- Meticulous attention to Laxmi coins around the corners.\n- Pink, green & white stones with pearls to elevate the traditional look for a regal touch.\n- Lightweight but looks full & heavy because of the detailed intricate work.\n\n## 💎 Why Choose This Treasure?\n- A graceful handcrafted premium laxmi necklace set with a sparkling stone detail to enhance your traditional look.\n- Crafted with meticulous attention.\n- Intricately embellished with premium pearls and stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.",
+    "badge": "premium",
+    "additionalImages": [
+      "https://i.imgur.gg/WiuVS3A-IMG_20260719_144644.jpg",
+      "https://i.imgur.gg/ka3Ohy9-IMG_20260719_144659.jpg",
+      "https://i.imgur.gg/xBmlcNq-IMG_20260719_144707.jpg",
+      "https://i.imgur.gg/x2cZlMm-IMG_20260719_144725.jpg",
+      "https://i.imgur.gg/STGVAv7-IMG_20260719_145005.jpg",
+      "https://i.imgur.gg/JYQWQ00-IMG_20260719_145012.jpg",
+      "https://i.imgur.gg/nYZqMBu-IMG_20260719_145519.jpg",
+      "https://i.imgur.gg/2dPcs0u-IMG_20260719_151241.jpg",
+      "https://i.imgur.gg/3faIJ9P-IMG_20260719_151353.jpg",
+      "https://i.imgur.gg/8cmomGO-IMG_20260719_151359.jpg",
+      "https://i.imgur.gg/CVydwW7-IMG_20260719_151417.jpg",
+      "https://i.imgur.gg/C6Pccws-IMG_20260719_151427.jpg"
+    ]
+  },
+  {
+    "sku": "0045",
+    "name": "Temple Style Haram Set",
+    "categorySlug": "jewellery",
+    "price": 1600,
+    "compareAtPrice": 1799,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/isU29b4-IMG_20260719_155849.jpg",
+    "description": "# Temple Style Haram Set\n\n## 🛍️ Product Details\n- **Price:** 1600Rs  \n- **Color:**  Gold,Multicolor Stone & Pearls\n## ✨ Features\n- Premium 18K Gold plated, Anti-Tarnish & Skin-Friendly, intricated with Precious Stones & Pearls, Luxury Jewellery box packaging, Long Haram, Medium to long adjustable Haram with earrings, Thread string attachments for Haram length adjustments.\n\n## ✨ Description\n- A Luxury traditional temple-style Haram set with a rich gold-tone finish & anti-tarnish.\n- Heavily detailed on each piece of this bridal set.\n- Suits for bridal, traditional wear & gifting, festivals & grand occasions.\n- Elegant temple inspired Haram set with intricate craftsmanship.\n- A circular medallion motif with premium stones & pearl embellishments.\n- Meticulous attention to each coin around the corners.\n- Red, green & white stones with pearls to elevate the traditional look for a regal touch.\n- Lightweight but looks full & heavy because of the detailed intricate work.\n\n## 💎 Why Choose This Treasure?\n- A graceful handcrafted Luxury Temple Style set with a sparkling stone detail to enhance your traditional look.\n- Crafted with meticulous attention.\n- Intricately embellished with premium pearls and stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.",
+    "badge": "luxury",
+    "additionalImages": [
+      "https://i.imgur.gg/isU29b4-IMG_20260719_155849.jpg",
+      "https://i.imgur.gg/Jrz9Q8r-IMG_20260719_155853.jpg",
+      "https://i.imgur.gg/b7dLGOU-IMG_20260719_155857.jpg"
+    ]
+  },
+  {
+    "sku": "0032",
+    "name": "Laxmi Black Beads",
+    "categorySlug": "jewellery",
+    "price": 280,
+    "compareAtPrice": 399,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/cRsec0M-WhatsApp_Image_2026-08-05_at_9.41.40_AM_(1).jpeg",
+    "description": "# Laxmi Black Beads\n\n## 🛍️ Product Details\n- **Price:** 280Rs  \n- **Color:**  Gold, Black Beads, Multicolor Stone & Pearls\n## ✨ Features\n- Premium 18K Gold plated, Anti-Tarnish & Skin-Friendly, intricated with Precious Stones & Pearls.\n\n## ✨ Description\n- A Luxury traditional Laxmi Black Beads with a rich gold-tone finish & anti-tarnish.\n- Suits for traditional wear & gifting, festivals & grand occasions.\n- Elegant Laxmi Goddess long neckpiece inspired with intricate craftsmanship.\n- Premium stones & pearl embellishments.\n- Pink, green & white stones with pearls to elevate the traditional look for a regal touch.\n- Lightweight but looks full & heavy because of the detailed intricate work.\n\n## 💎 Why Choose This Treasure?\n- A graceful handcrafted neckpiece with a sparkling stone detail to enhance your traditional look.\n- Crafted with meticulous attention.\n- Intricately embellished with premium pearls and stone details.\n- Exceptional craftsmanship to create a bold and eye-catching look.\n- Rare to find in other social platforms.",
+    "badge": "limited",
+    "additionalImages": [
+      "https://i.imgur.gg/cRsec0M-WhatsApp_Image_2026-08-05_at_9.41.40_AM_(1).jpeg",
+      "https://i.imgur.gg/cNKqtaB-WhatsApp_Image_2026-08-05_at_9.41.40_AM_(2).jpeg",
+      "https://i.imgur.gg/FWeFShR-WhatsApp_Image_2026-08-05_at_9.41.40_AM.jpeg",
+      "https://i.imgur.gg/bt2R7Mj-WhatsApp_Image_2026-08-05_at_9.41.41_AM_(1).jpeg",
+      "https://i.imgur.gg/ROqINZc-WhatsApp_Image_2026-08-05_at_9.41.41_AM_(2).jpeg",
+      "https://i.imgur.gg/hhfSt2A-WhatsApp_Image_2026-08-05_at_9.41.41_AM.jpeg",
+      "https://i.imgur.gg/c3GuRma-WhatsApp_Image_2026-08-05_at_9.41.42_AM.jpeg"
+    ]
+  },
+  {
+    "sku": "9876",
+    "name": "Neclace",
+    "categorySlug": "jewellery",
+    "price": 123,
+    "compareAtPrice": 123,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/5tFGozH-IMG_20260812_111040.jpg",
+    "description": null,
+    "badge": "bestseller",
+    "additionalImages": [
+      "https://i.imgur.gg/5tFGozH-IMG_20260812_111040.jpg",
+      "https://i.imgur.gg/hRU3bvQ-IMG_20260812_111104.jpg",
+      "https://i.imgur.gg/rnaI98r-IMG_20260812_111154.jpg",
+      "https://i.imgur.gg/XNbj4WP-IMG_20260812_111159.jpg",
+      "https://i.imgur.gg/H1HAhYj-IMG_20260812_111206.jpg",
+      "https://i.imgur.gg/XJR9bPn-IMG_20260812_111312.jpg",
+      "https://i.imgur.gg/Dliytsc-IMG_20260812_111327.jpg"
+    ]
+  },
+  {
+    "sku": "0065",
+    "name": "Red Velvet Gift Box",
+    "categorySlug": "box",
+    "price": 75,
+    "compareAtPrice": 100,
+    "stockQuantity": 25,
+    "imageUrl": "https://i.imgur.gg/d2fWCC3-IMG_20260812_112237.jpg",
+    "description": "#Red Velvet Gift Box\n\n## 🎨 Appearance\n- **Color:** Red\n- **Material:** Engineered wood with Premium Velvet\n\n## ✨ Special Features\n- Lightweight yet sturdy design\n- Spacious storage\n- Convenient handle for portability\n- Secure lock for safety\n\n## 📝 Product Description\nCrafted to protect what matters most. Premium Red velvet gift box with a luxurious designer finish, secure lock and sturdy design to safely organize your precious collection.\n\n## 💎 Why Choose This Treasure?\n- Unique handcrafted masterpiece\n- Tuff to find this hidden gem in other social platforms\n- Luxurious product at a cost-effective range\n- Beauty begins with organization\n- Give your cherished precious collection the elegant home they deserve.",
+    "badge": "luxury",
+    "additionalImages": [
+      "https://i.imgur.gg/d2fWCC3-IMG_20260812_112237.jpg",
+      "https://i.imgur.gg/LjGQRAM-IMG_20260812_112233.jpg",
+      "https://i.imgur.gg/3pjTzp5-IMG_20260812_112246.jpg",
+      "https://i.imgur.gg/uxp8PQp-IMG_20260812_112258.jpg",
+      "https://i.imgur.gg/Q5QTMRD-IMG_20260812_112308.jpg",
+      "https://i.imgur.gg/IfzWzuU-IMG_20260812_112315.jpg",
+      "https://i.imgur.gg/IOSbJki-IMG_20260812_112323.jpg"
+    ]
+  },
+  {
+    "sku": "3333",
+    "name": "Test3",
+    "categorySlug": "box",
+    "price": 333,
+    "compareAtPrice": 3333,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/3G07gex-IMG_20260812_112537.jpg",
+    "description": null,
+    "badge": "limited",
+    "additionalImages": [
+      "https://i.imgur.gg/3G07gex-IMG_20260812_112537.jpg",
+      "https://i.imgur.gg/22f2pNP-IMG_20260812_112550.jpg",
+      "https://i.imgur.gg/URT1cot-IMG_20260812_112557.jpg",
+      "https://i.imgur.gg/vlPMxo5-IMG_20260812_112607.jpg",
+      "https://i.imgur.gg/V8kMNjt-IMG_20260812_112616.jpg",
+      "https://i.imgur.gg/1o1H5o6-IMG_20260812_112623.jpg",
+      "https://i.imgur.gg/TsUxlsk-IMG_20260812_112644.jpg",
+      "https://i.imgur.gg/wl9Pt2d-IMG_20260812_112646.jpg",
+      "https://i.imgur.gg/k92QMxP-IMG_20260812_112649.jpg",
+      "https://i.imgur.gg/PvahdrY-IMG_20260812_112653.jpg",
+      "https://i.imgur.gg/iapO8qE-IMG_20260812_112658.jpg",
+      "https://i.imgur.gg/LRNBduX-IMG_20260812_112700.jpg",
+      "https://i.imgur.gg/FcM6buV-IMG_20260812_112525.jpg",
+      "https://i.imgur.gg/8XIxFgW-IMG_20260812_112529.jpg",
+      "https://i.imgur.gg/ipvguDG-IMG_20260812_112532.jpg"
+    ]
+  },
+  {
+    "sku": "555",
+    "name": "Box5",
+    "categorySlug": "box",
+    "price": 12345,
+    "compareAtPrice": 54654,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/vcngvDe-IMG_20260812_112728.jpg",
+    "description": null,
+    "badge": "limited",
+    "additionalImages": [
+      "https://i.imgur.gg/vcngvDe-IMG_20260812_112728.jpg",
+      "https://i.imgur.gg/3168ovw-IMG_20260812_112737.jpg",
+      "https://i.imgur.gg/h6LSo4z-IMG_20260812_112745.jpg",
+      "https://i.imgur.gg/IzoTYaO-IMG_20260812_112752.jpg",
+      "https://i.imgur.gg/5VC7CcI-IMG_20260812_112759.jpg"
+    ]
+  },
+  {
+    "sku": "666",
+    "name": "Box6",
+    "categorySlug": "box",
+    "price": 666,
+    "compareAtPrice": 666,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/9QSs5f9-IMG_20260812_112826.jpg",
+    "description": null,
+    "badge": "limited",
+    "additionalImages": [
+      "https://i.imgur.gg/9QSs5f9-IMG_20260812_112826.jpg",
+      "https://i.imgur.gg/RRdPuN3-IMG_20260812_112831.jpg",
+      "https://i.imgur.gg/mM1DpXS-IMG_20260812_112843.jpg",
+      "https://i.imgur.gg/2IOUIaM-IMG_20260812_112847.jpg",
+      "https://i.imgur.gg/Zln0oVj-IMG_20260812_112850.jpg",
+      "https://i.imgur.gg/p0aMCvm-IMG_20260812_112854.jpg"
+    ]
+  },
+  {
+    "sku": "77",
+    "name": "77",
+    "categorySlug": "jewellery",
+    "price": 77,
+    "compareAtPrice": 77,
+    "stockQuantity": 7,
+    "imageUrl": "https://i.imgur.gg/PVw69EN-IMG_20260812_113320.jpg",
+    "description": null,
+    "badge": "limited",
+    "additionalImages": [
+      "https://i.imgur.gg/PVw69EN-IMG_20260812_113320.jpg",
+      "https://i.imgur.gg/ouIMZb7-IMG_20260812_113220.jpg",
+      "https://i.imgur.gg/8wfFWPz-IMG_20260812_113248.jpg",
+      "https://i.imgur.gg/tOnjHfA-IMG_20260812_113251.jpg",
+      "https://i.imgur.gg/fwPHL7p-IMG_20260812_113302.jpg",
+      "https://i.imgur.gg/CJ8eYzP-IMG_20260812_113312.jpg"
+    ]
+  },
+  {
+    "sku": "88",
+    "name": "88",
+    "categorySlug": "",
+    "price": 88,
+    "compareAtPrice": 88,
+    "stockQuantity": 8,
+    "imageUrl": "https://i.imgur.gg/WiICRc7-IMG_20260812_114002.jpg",
+    "description": null,
+    "badge": null,
+    "additionalImages": [
+      "https://i.imgur.gg/WiICRc7-IMG_20260812_114002.jpg",
+      "https://i.imgur.gg/FDOarbQ-IMG_20260812_114010.jpg",
+      "https://i.imgur.gg/OCB3KeO-IMG_20260812_114014.jpg",
+      "https://i.imgur.gg/zefSrh5-IMG_20260812_114024.jpg",
+      "https://i.imgur.gg/bThcXmS-IMG_20260812_114135.jpg",
+      "https://i.imgur.gg/z03f3o7-IMG_20260812_114148.jpg"
+    ]
+  },
+  {
+    "sku": "99",
+    "name": "99",
+    "categorySlug": "",
+    "price": 99,
+    "compareAtPrice": 99,
+    "stockQuantity": 9,
+    "imageUrl": "https://i.imgur.gg/dccEFEb-IMG_20260812_115245.jpg",
+    "description": null,
+    "badge": null,
+    "additionalImages": [
+      "https://i.imgur.gg/dccEFEb-IMG_20260812_115245.jpg",
+      "https://i.imgur.gg/HoAiubw-IMG_20260812_115317.jpg",
+      "https://i.imgur.gg/jSQm0JF-IMG_20260812_115327.jpg",
+      "https://i.imgur.gg/OQs5cct-IMG_20260812_115519.jpg",
+      "https://i.imgur.gg/Dnp7Yal-IMG_20260812_115531.jpg",
+      "https://i.imgur.gg/L81kFx9-IMG_20260812_115633.jpg"
+    ]
+  },
+  {
+    "sku": "10010",
+    "name": "10",
+    "categorySlug": "",
+    "price": 10,
+    "compareAtPrice": 10,
+    "stockQuantity": 1,
+    "imageUrl": "https://i.imgur.gg/9q5DgR3-IMG_20260812_120605.jpg",
+    "description": null,
+    "badge": null,
+    "additionalImages": [
+      "https://i.imgur.gg/9q5DgR3-IMG_20260812_120605.jpg",
+      "https://i.imgur.gg/BYR8fmS-IMG_20260812_120616.jpg",
+      "https://i.imgur.gg/aIcVq0f-IMG_20260812_120624.jpg",
+      "https://i.imgur.gg/DNWNeHa-IMG_20260812_120637.jpg",
+      "https://i.imgur.gg/ckC6s0z-IMG_20260812_120730.jpg",
+      "https://i.imgur.gg/DcpsYoi-IMG_20260812_120917.jpg",
+      "https://i.imgur.gg/GGajWR0-IMG_20260812_120922.jpg"
+    ]
   }
 ];
 
@@ -831,7 +1074,7 @@ export const SEED_ORDERS: SeedOrder[] = [
     "stateCode": "TN",
     "postalCode": "600082",
     "countryCode": "IN",
-    "status": "shipped",
+    "status": "delivered",
     "trackingId": "14112364117417",
     "subtotal": 299,
     "shippingCost": 150,
@@ -870,6 +1113,11 @@ export const SEED_ORDERS: SeedOrder[] = [
         "status": "shipped",
         "notes": "Status changed to shipped",
         "createdAt": "2026-08-03T09:55:29.496Z"
+      },
+      {
+        "status": "delivered",
+        "notes": "Status changed to delivered",
+        "createdAt": "2026-08-11T05:52:19.416Z"
       }
     ]
   },
