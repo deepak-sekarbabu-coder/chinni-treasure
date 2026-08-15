@@ -50,6 +50,10 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
+        {/* Persistent section heading keeps the document outline sequential
+            (h1 → h2 → footer h3/h4). */}
+        <h2 className="sr-only">Sign In</h2>
+
         <form onSubmit={handleSubmit} aria-label="Admin login form">
           <div className="form-group">
             <label htmlFor="username" className="login-label">

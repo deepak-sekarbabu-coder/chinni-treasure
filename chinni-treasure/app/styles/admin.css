@@ -141,7 +141,7 @@
 }
 
 .login-subtitle {
-    color: var(--text-muted);
+    color: var(--text-light);
     font-size: 0.85rem;
 }
 

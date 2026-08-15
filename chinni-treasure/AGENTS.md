@@ -166,7 +166,8 @@ chinni-treasure/
 ├── prisma/                      # Schema, seed data, and four migration directories
 ├── docs/                        # Architecture notes, ADRs, plans, and review documents
 ├── public/                      # Branding, generated assets, icons, manifest, robots, and static files
-├── scripts/                     # Import/export, seed, repro, and Fallow-report utilities
+├── scripts/                     # Import/export, seed, repro, Fallow-report, and Lighthouse runner utilities
+├── lighthouse/                  # Routes and performance budgets for the Lighthouse runner (reports are gitignored)
 ├── proxy.ts                     # Axiom page logging and admin route protection
 ├── instrumentation.ts           # Next.js instrumentation entry point
 ├── next.config.ts               # Headers, CORS, images, redirects, and deployment settings

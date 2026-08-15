@@ -26,6 +26,10 @@
     "compose:build": "podman compose build",
     "compose:up": "podman compose up -d",
     "compose:down": "podman compose down",
+    "lighthouse": "node scripts/run-lighthouse.mjs",
+    "lighthouse:desktop": "node scripts/run-lighthouse.mjs --desktop",
+    "lighthouse:analyze": "node scripts/analyze-lighthouse.mjs",
+    "lighthouse:report": "node scripts/open-lighthouse-report.mjs",
     "postinstall": "prisma generate",
     "fallow": "npx fallow",
     "fallow:report": "node scripts/run-fallow-report.mjs"
@@ -69,18 +73,22 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/dompurify": "^3.0.5",
-    "isomorphic-dompurify": "^3.19.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.7",
+    "chrome-launcher": "^1.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "isomorphic-dompurify": "^3.19.0",
     "jsdom": "^29.1.1",
+    "lighthouse": "^13.4.1",
     "prisma": "^7.9.1",
     "tsx": "^4.19.0",
     "typescript": "^5",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "lighthouse": "^13.4.1",
+    "chrome-launcher": "^1.2.1"
   }
 }

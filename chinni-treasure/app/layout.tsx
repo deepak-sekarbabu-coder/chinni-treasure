@@ -150,6 +150,15 @@ export default async function RootLayout({
     },
   };
 
+  // Only mount Vercel Analytics & Speed Insights when running on Vercel
+  // (or when explicitly enabled). Outside Vercel (local dev, self-hosted Docker,
+  // Lighthouse runner), the scripts return 404 and log errors in the console.
+  const isVercel = Boolean(
+    process.env.VERCEL === "1" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV ||
+    process.env.NEXT_PUBLIC_ENABLE_VERCEL_ANALYTICS === "true"
+  );
+
   return (
     <html lang="en" className={`${cormorant.variable} ${albert.variable} ${pinyon.variable}`}>
       <body>
@@ -166,8 +175,12 @@ export default async function RootLayout({
                 <div className="page-transition">{children}</div>
               </main>
               <Footer />
-              <Analytics />
-              <SpeedInsights />
+              {isVercel && (
+                <>
+                  <Analytics />
+                  <SpeedInsights />
+                </>
+              )}
               <WebVitals />
             </ToastProvider>
           </CartProvider>

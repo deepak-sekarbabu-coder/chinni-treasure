@@ -63,7 +63,16 @@ export default function TrackPage() {
         </div>
       </section>
 
-      <section className="section" style={{ maxWidth: "600px", margin: "0 auto" }}>
+      <section
+        className="section"
+        style={{ maxWidth: "600px", margin: "0 auto" }}
+        aria-labelledby="track-search-heading"
+      >
+        {/* Persistent section heading keeps the document outline sequential
+            (h1 → h2 → footer h3/h4) even before any results are shown. */}
+        <h2 id="track-search-heading" className="sr-only">
+          Search Orders
+        </h2>
         <div className="order-form-section fade-in visible">
           <form onSubmit={handleSearch} aria-label="Order tracking form">
             <div className="track-toggle" role="radiogroup" aria-label="Search method">

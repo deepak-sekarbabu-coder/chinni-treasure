@@ -1,0 +1,16 @@
+{
+  "mobile": {
+    "fcpMs": 1800,
+    "lcpMs": 2500,
+    "tbtMs": 200,
+    "cls": 0.1,
+    "siMs": 3400
+  },
+  "desktop": {
+    "fcpMs": 1200,
+    "lcpMs": 2000,
+    "tbtMs": 150,
+    "cls": 0.1,
+    "siMs": 2500
+  }
+}

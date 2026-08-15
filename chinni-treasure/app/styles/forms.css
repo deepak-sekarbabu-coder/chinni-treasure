@@ -74,7 +74,9 @@
 }
 
 /* ── Login page form overrides ── */
-.login-label {
+/* Specificity must beat .form-group label (0,1,1); a bare .login-label (0,1,0)
+   would be overridden and the labels would render charcoal on the dark card. */
+.form-group .login-label {
     color: var(--cream);
 }
 

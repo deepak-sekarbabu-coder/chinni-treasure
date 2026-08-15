@@ -1,0 +1,10 @@
+{
+  "routes": [
+    { "name": "Home", "path": "/" },
+    { "name": "Catalogue", "path": "/catalogue" },
+    { "name": "Category Clutches", "path": "/category/clutches" },
+    { "name": "First Product", "resolve": "firstProduct" },
+    { "name": "Track Order", "path": "/track" },
+    { "name": "Admin Login", "path": "/admin/login" }
+  ]
+}

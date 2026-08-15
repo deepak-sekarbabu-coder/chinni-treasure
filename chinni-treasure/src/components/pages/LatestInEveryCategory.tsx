@@ -39,7 +39,7 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
         <Link
           href={`/category/${category.slug}`}
           className="latest-category-viewall"
-          aria-label={`Shop all ${category.name} products`}
+          aria-label={`Shop Category — all ${category.name} products`}
         >
           Shop Category
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -49,11 +49,12 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
         </Link>
       </div>
 
+      {/* No aria-label: the accessible name comes from the card content
+          (product name + price), so it matches the visible text exactly. */}
       <Link
         href={`/catalogue/${product.id}`}
         className="latest-category-card"
         style={{ textDecoration: "none", color: "inherit" }}
-        aria-label={`View ${product.name}`}
       >
         <div className="latest-category-card-image">
           <FallbackImage

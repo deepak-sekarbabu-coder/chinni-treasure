@@ -172,7 +172,7 @@ export default function AdminCataloguePanel({
           <div className="active-filter-chips">
             {filters.search && (
               <span className="filter-chip">
-                Search: "{filters.search}"
+                Search: &quot;{filters.search}&quot;
                 <button type="button" onClick={() => onFilterChange({ search: "" })}>✕</button>
               </span>
             )}
