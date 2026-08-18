@@ -10,6 +10,15 @@ const globalForPrisma = globalThis as unknown as {
 function createPool() {
   const url = new URL(env.DATABASE_URL);
 
+  // pg-connection-string currently treats 'prefer', 'require', and
+  // 'verify-ca' as aliases for 'verify-full' (and will warn about it in the
+  // next major version). Normalize to the explicit mode so the deprecation
+  // warning never fires — the behavior is identical, but the intent is clear.
+  const sslmode = url.searchParams.get("sslmode");
+  if (sslmode && ["prefer", "require", "verify-ca"].includes(sslmode)) {
+    url.searchParams.set("sslmode", "verify-full");
+  }
+
   const pool = new Pool({
     connectionString: url.toString(),
     // Nhost free tier has ~5 pooler slots; use max 3 to leave headroom
