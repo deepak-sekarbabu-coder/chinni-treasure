@@ -85,7 +85,7 @@ async function main() {
 
   // --- Products ---
   const prodSheet = wb.getWorksheet("Products")!;
-  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number };
+  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number; isActive: number | null; visibleHostnames: number | null; deletedAt: number | null };
   function buildProductColMap(): ProductColMap {
     const header = prodSheet.getRow(1);
     const idx: Record<string, number> = {};
@@ -99,6 +99,9 @@ async function main() {
       stockQuantity: idx["stock quantity"] || (idx["image url"] ? idx["image url"] - 1 : 8),
       imageUrl: idx["image url"] || (idx["badge"] ? idx["badge"] - 1 : 9),
       badge: idx["badge"] || 10,
+      isActive: idx["is active"] || null,
+      visibleHostnames: idx["visible hostnames"] || null,
+      deletedAt: idx["deleted at"] || null,
     };
   }
   const prodCol = buildProductColMap();
@@ -112,6 +115,9 @@ async function main() {
     imageUrl: string | null;
     description: string | null;
     badge: string | null;
+    isActive: boolean;
+    visibleHostnames: string | null;
+    deletedAt: string | null;
   }[] = [];
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
@@ -126,6 +132,11 @@ async function main() {
       imageUrl: extractUrl(row.getCell(prodCol.imageUrl).value),
       description: row.getCell(prodCol.description).value ? String(row.getCell(prodCol.description).value) : null,
       badge: row.getCell(prodCol.badge).value ? String(row.getCell(prodCol.badge).value) : null,
+      isActive: prodCol.isActive ? parseBool(row.getCell(prodCol.isActive).value) : true,
+      visibleHostnames: prodCol.visibleHostnames && row.getCell(prodCol.visibleHostnames).value
+        ? String(row.getCell(prodCol.visibleHostnames).value)
+        : null,
+      deletedAt: prodCol.deletedAt ? parseDate(row.getCell(prodCol.deletedAt).value) : null,
     });
   });
 
@@ -210,33 +221,41 @@ async function main() {
     transactionId: string | null;
     customerNotes: string | null;
     adminNotes: string | null;
+    version: number;
     createdAt: string | null;
     updatedAt: string | null;
   }[] = [];
   if (orderSheet) {
+    const orderCol: Record<string, number> = {};
+    orderSheet.getRow(1).eachCell((cell, col) => { orderCol[String(cell.value).toLowerCase().trim()] = col; });
+    const cell = (row: ExcelJS.Row, key: string): unknown => {
+      const col = orderCol[key];
+      return col ? row.getCell(col).value : null;
+    };
     orderSheet.eachRow((row, i) => {
       if (i === 1) return;
       orders.push({
-        orderNumber: String(row.getCell(2).value || ""),
-        customerName: String(row.getCell(3).value || ""),
-        customerEmail: String(row.getCell(4).value || ""),
-        customerPhone: String(row.getCell(5).value || ""),
-        addressLine1: String(row.getCell(6).value || ""),
-        addressLine2: row.getCell(7).value ? String(row.getCell(7).value) : null,
-        city: String(row.getCell(8).value || ""),
-        stateCode: String(row.getCell(9).value || ""),
-        postalCode: String(row.getCell(10).value || ""),
-        countryCode: String(row.getCell(11).value || "IN"),
-        status: String(row.getCell(12).value || "pending"),
-        trackingId: row.getCell(13).value ? String(row.getCell(13).value) : null,
-        subtotal: parseNum(row.getCell(14).value),
-        shippingCost: parseNum(row.getCell(15).value),
-        totalAmount: parseNum(row.getCell(16).value),
-        transactionId: row.getCell(17).value ? String(row.getCell(17).value) : null,
-        customerNotes: row.getCell(18).value ? String(row.getCell(18).value) : null,
-        adminNotes: row.getCell(19).value ? String(row.getCell(19).value) : null,
-        createdAt: parseDate(row.getCell(20).value),
-        updatedAt: parseDate(row.getCell(21).value),
+        orderNumber: String(cell(row, "order number") || ""),
+        customerName: String(cell(row, "customer name") || ""),
+        customerEmail: String(cell(row, "customer email") || ""),
+        customerPhone: String(cell(row, "customer phone") || ""),
+        addressLine1: String(cell(row, "address line 1") || ""),
+        addressLine2: cell(row, "address line 2") ? String(cell(row, "address line 2")) : null,
+        city: String(cell(row, "city") || ""),
+        stateCode: String(cell(row, "state code") || ""),
+        postalCode: String(cell(row, "postal code") || ""),
+        countryCode: String(cell(row, "country code") || "IN"),
+        status: String(cell(row, "status") || "pending"),
+        trackingId: cell(row, "tracking id") ? String(cell(row, "tracking id")) : null,
+        subtotal: parseNum(cell(row, "subtotal")),
+        shippingCost: parseNum(cell(row, "shipping cost")),
+        totalAmount: parseNum(cell(row, "total amount")),
+        transactionId: cell(row, "transaction id") ? String(cell(row, "transaction id")) : null,
+        customerNotes: cell(row, "customer notes") ? String(cell(row, "customer notes")) : null,
+        adminNotes: cell(row, "admin notes") ? String(cell(row, "admin notes")) : null,
+        version: parseNum(cell(row, "version")),
+        createdAt: parseDate(cell(row, "created at")),
+        updatedAt: parseDate(cell(row, "updated at")),
       });
     });
   }
@@ -346,10 +365,13 @@ export interface SeedProduct {
   price: number;
   compareAtPrice: number | null;
   stockQuantity: number;
-  imageUrl: string;
+  imageUrl: string | null;
   additionalImages: string[];
-  description: string;
+  description: string | null;
   badge: ProductBadge | null;
+  isActive: boolean;
+  visibleHostnames: string | null;
+  deletedAt: string | null;
 }
 
 export const SEED_PRODUCTS: SeedProduct[] = ${JSON.stringify(
@@ -388,6 +410,7 @@ export interface SeedOrder {
   transactionId: string | null;
   customerNotes: string | null;
   adminNotes: string | null;
+  version: number;
   createdAt: string | null;
   updatedAt: string | null;
   items: SeedOrderItem[];

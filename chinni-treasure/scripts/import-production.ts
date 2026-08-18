@@ -34,10 +34,41 @@ function parseNum(val: unknown): number {
   return 0;
 }
 
+function buildColMap(sheet: ExcelJS.Worksheet): Record<string, number> {
+  const idx: Record<string, number> = {};
+  sheet.getRow(1).eachCell((cell, col) => { idx[String(cell.value).toLowerCase().trim()] = col; });
+  return idx;
+}
+
+function cell(row: ExcelJS.Row, colMap: Record<string, number>, key: string): unknown {
+  const col = colMap[key];
+  return col ? row.getCell(col).value : null;
+}
+
 async function main() {
-  console.log("Reading Excel file...");
+  // Auto-discover the latest export file if no path provided
+  let filePath = process.argv[2];
+  if (!filePath) {
+    const { readdirSync, existsSync } = await import("fs");
+    const { join } = await import("path");
+    const exportsDir = join(process.cwd(), "exports");
+    if (existsSync(exportsDir)) {
+      const files = readdirSync(exportsDir)
+        .filter(f => f.startsWith("chinni-treasure-export-") && f.endsWith(".xlsx"))
+        .sort()
+        .reverse();
+      if (files.length > 0) {
+        filePath = join(exportsDir, files[0]);
+      }
+    }
+    if (!filePath) {
+      console.error("No export file found. Run 'npm run data:export' first.");
+      process.exit(1);
+    }
+  }
+  console.log(`Reading from: ${filePath}`);
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile("chinni-treasure-export-2026-07-18.xlsx");
+  await wb.xlsx.readFile(filePath);
 
   // Clear all tables in FK-safe order
   console.log("Clearing existing data...");
@@ -51,16 +82,17 @@ async function main() {
 
   // --- Categories ---
   const catSheet = wb.getWorksheet("Categories")!;
+  const catCol = buildColMap(catSheet);
   const categories: { id: number; name: string; slug: string; description: string | null; displayOrder: number; isActive: boolean }[] = [];
   catSheet.eachRow((row, i) => {
     if (i === 1) return;
     categories.push({
-      id: parseNum(row.getCell(1).value),
-      name: String(row.getCell(2).value || ""),
-      slug: String(row.getCell(3).value || ""),
-      description: row.getCell(4).value ? String(row.getCell(4).value) : null,
-      displayOrder: parseNum(row.getCell(5).value),
-      isActive: parseBool(row.getCell(6).value),
+      id: parseNum(cell(row, catCol, "id")),
+      name: String(cell(row, catCol, "name") || ""),
+      slug: String(cell(row, catCol, "slug") || ""),
+      description: cell(row, catCol, "description") ? String(cell(row, catCol, "description")) : null,
+      displayOrder: parseNum(cell(row, catCol, "display order")),
+      isActive: parseBool(cell(row, catCol, "is active")),
     });
   });
   console.log(`Importing ${categories.length} categories...`);
@@ -70,27 +102,32 @@ async function main() {
 
   // --- Products ---
   const prodSheet = wb.getWorksheet("Products")!;
+  const prodCol = buildColMap(prodSheet);
   const products: {
     id: string; sku: string | null; name: string; categoryId: number | null;
-    description: string | null; price: number; stockQuantity: number;
+    description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number;
     imageUrl: string | null; badge: string | null; isActive: boolean;
+    visibleHostnames: string | null; deletedAt: Date | null;
     createdAt: Date | null; updatedAt: Date | null;
   }[] = [];
   prodSheet.eachRow((row, i) => {
     if (i === 1) return;
     products.push({
-      id: String(row.getCell(1).value || ""),
-      sku: row.getCell(2).value ? String(row.getCell(2).value) : null,
-      name: String(row.getCell(3).value || ""),
-      categoryId: row.getCell(4).value ? parseNum(row.getCell(4).value) : null,
-      description: row.getCell(6).value ? String(row.getCell(6).value) : null,
-      price: parseNum(row.getCell(7).value),
-      stockQuantity: parseNum(row.getCell(8).value),
-      imageUrl: row.getCell(9).value ? String(row.getCell(9).value) : null,
-      badge: row.getCell(10).value ? String(row.getCell(10).value) : null,
-      isActive: parseBool(row.getCell(11).value),
-      createdAt: parseDate(row.getCell(12).value),
-      updatedAt: parseDate(row.getCell(13).value),
+      id: String(cell(row, prodCol, "id") || ""),
+      sku: cell(row, prodCol, "sku") ? String(cell(row, prodCol, "sku")) : null,
+      name: String(cell(row, prodCol, "name") || ""),
+      categoryId: cell(row, prodCol, "category id") ? parseNum(cell(row, prodCol, "category id")) : null,
+      description: cell(row, prodCol, "description") ? String(cell(row, prodCol, "description")) : null,
+      price: parseNum(cell(row, prodCol, "price")),
+      compareAtPrice: cell(row, prodCol, "compare at price") ? parseNum(cell(row, prodCol, "compare at price")) : null,
+      stockQuantity: parseNum(cell(row, prodCol, "stock quantity")),
+      imageUrl: cell(row, prodCol, "image url") ? String(cell(row, prodCol, "image url")) : null,
+      badge: cell(row, prodCol, "badge") ? String(cell(row, prodCol, "badge")) : null,
+      isActive: parseBool(cell(row, prodCol, "is active")),
+      visibleHostnames: cell(row, prodCol, "visible hostnames") ? String(cell(row, prodCol, "visible hostnames")) : null,
+      deletedAt: parseDate(cell(row, prodCol, "deleted at")),
+      createdAt: parseDate(cell(row, prodCol, "created at")),
+      updatedAt: parseDate(cell(row, prodCol, "updated at")),
     });
   });
   console.log(`Importing ${products.length} products...`);
@@ -103,11 +140,13 @@ async function main() {
         categoryId: p.categoryId,
         description: p.description,
         price: p.price,
-        compareAtPrice: null,
+        compareAtPrice: p.compareAtPrice,
         stockQuantity: p.stockQuantity,
         imageUrl: p.imageUrl,
         badge: p.badge as ProductBadge | null,
         isActive: p.isActive,
+        visibleHostnames: p.visibleHostnames,
+        deletedAt: p.deletedAt,
         createdAt: p.createdAt ?? undefined,
         updatedAt: p.updatedAt ?? undefined,
       },
@@ -116,6 +155,7 @@ async function main() {
 
   // --- Product Images ---
   const imgSheet = wb.getWorksheet("Product Images");
+  const imgCol = imgSheet ? buildColMap(imgSheet) : null;
   const productImages: {
     id: string;
     productId: string;
@@ -124,16 +164,16 @@ async function main() {
     displayOrder: number;
     createdAt: Date | null;
   }[] = [];
-  if (imgSheet) {
+  if (imgSheet && imgCol) {
     imgSheet.eachRow((row, i) => {
       if (i === 1) return;
       productImages.push({
-        id: String(row.getCell(1).value || ""),
-        productId: String(row.getCell(2).value || ""),
-        url: String(row.getCell(3).value || ""),
-        isPrimary: parseBool(row.getCell(4).value),
-        displayOrder: parseNum(row.getCell(5).value),
-        createdAt: parseDate(row.getCell(6).value),
+        id: String(cell(row, imgCol, "id") || ""),
+        productId: String(cell(row, imgCol, "product id") || ""),
+        url: String(cell(row, imgCol, "url") || ""),
+        isPrimary: parseBool(cell(row, imgCol, "is primary")),
+        displayOrder: parseNum(cell(row, imgCol, "display order")),
+        createdAt: parseDate(cell(row, imgCol, "created at")),
       });
     });
   }
@@ -153,6 +193,7 @@ async function main() {
 
   // --- Orders ---
   const orderSheet = wb.getWorksheet("Orders")!;
+  const orderCol = buildColMap(orderSheet);
   const orders: {
     id: string;
     orderNumber: string;
@@ -173,33 +214,35 @@ async function main() {
     transactionId: string | null;
     customerNotes: string | null;
     adminNotes: string | null;
+    version: number;
     createdAt: Date | null;
     updatedAt: Date | null;
   }[] = [];
   orderSheet.eachRow((row, i) => {
     if (i === 1) return;
     orders.push({
-      id: String(row.getCell(1).value || ""),
-      orderNumber: String(row.getCell(2).value || ""),
-      customerName: String(row.getCell(3).value || ""),
-      customerEmail: String(row.getCell(4).value || ""),
-      customerPhone: String(row.getCell(5).value || ""),
-      addressLine1: String(row.getCell(6).value || ""),
-      addressLine2: row.getCell(7).value ? String(row.getCell(7).value) : null,
-      city: String(row.getCell(8).value || ""),
-      stateCode: String(row.getCell(9).value || ""),
-      postalCode: String(row.getCell(10).value || ""),
-      countryCode: row.getCell(11).value ? String(row.getCell(11).value) : "IN",
-      status: String(row.getCell(12).value || "pending"),
-      trackingId: row.getCell(13).value ? String(row.getCell(13).value) : null,
-      subtotal: parseNum(row.getCell(14).value),
-      shippingCost: parseNum(row.getCell(15).value),
-      totalAmount: parseNum(row.getCell(16).value),
-      transactionId: row.getCell(17).value ? String(row.getCell(17).value) : null,
-      customerNotes: row.getCell(18).value ? String(row.getCell(18).value) : null,
-      adminNotes: row.getCell(19).value ? String(row.getCell(19).value) : null,
-      createdAt: parseDate(row.getCell(20).value),
-      updatedAt: parseDate(row.getCell(21).value),
+      id: String(cell(row, orderCol, "id") || ""),
+      orderNumber: String(cell(row, orderCol, "order number") || ""),
+      customerName: String(cell(row, orderCol, "customer name") || ""),
+      customerEmail: String(cell(row, orderCol, "customer email") || ""),
+      customerPhone: String(cell(row, orderCol, "customer phone") || ""),
+      addressLine1: String(cell(row, orderCol, "address line 1") || ""),
+      addressLine2: cell(row, orderCol, "address line 2") ? String(cell(row, orderCol, "address line 2")) : null,
+      city: String(cell(row, orderCol, "city") || ""),
+      stateCode: String(cell(row, orderCol, "state code") || ""),
+      postalCode: String(cell(row, orderCol, "postal code") || ""),
+      countryCode: String(cell(row, orderCol, "country code") || "IN"),
+      status: String(cell(row, orderCol, "status") || "pending"),
+      trackingId: cell(row, orderCol, "tracking id") ? String(cell(row, orderCol, "tracking id")) : null,
+      subtotal: parseNum(cell(row, orderCol, "subtotal")),
+      shippingCost: parseNum(cell(row, orderCol, "shipping cost")),
+      totalAmount: parseNum(cell(row, orderCol, "total amount")),
+      transactionId: cell(row, orderCol, "transaction id") ? String(cell(row, orderCol, "transaction id")) : null,
+      customerNotes: cell(row, orderCol, "customer notes") ? String(cell(row, orderCol, "customer notes")) : null,
+      adminNotes: cell(row, orderCol, "admin notes") ? String(cell(row, orderCol, "admin notes")) : null,
+      version: parseNum(cell(row, orderCol, "version")),
+      createdAt: parseDate(cell(row, orderCol, "created at")),
+      updatedAt: parseDate(cell(row, orderCol, "updated at")),
     });
   });
   console.log(`Importing ${orders.length} orders...`);
@@ -225,6 +268,7 @@ async function main() {
         transactionId: o.transactionId,
         customerNotes: o.customerNotes,
         adminNotes: o.adminNotes,
+        version: o.version,
         createdAt: o.createdAt ?? undefined,
         updatedAt: o.updatedAt ?? undefined,
       },
@@ -233,6 +277,7 @@ async function main() {
 
   // --- Order Items ---
   const itemSheet = wb.getWorksheet("Order Items")!;
+  const itemCol = buildColMap(itemSheet);
   const items: {
     id: string;
     orderId: string;
@@ -245,13 +290,13 @@ async function main() {
   itemSheet.eachRow((row, i) => {
     if (i === 1) return;
     items.push({
-      id: String(row.getCell(1).value || ""),
-      orderId: String(row.getCell(2).value || ""),
-      productId: row.getCell(3).value ? String(row.getCell(3).value) : null,
-      productName: String(row.getCell(4).value || ""),
-      unitPrice: parseNum(row.getCell(5).value),
-      quantity: parseNum(row.getCell(6).value),
-      createdAt: parseDate(row.getCell(7).value),
+      id: String(cell(row, itemCol, "id") || ""),
+      orderId: String(cell(row, itemCol, "order id") || ""),
+      productId: cell(row, itemCol, "product id") ? String(cell(row, itemCol, "product id")) : null,
+      productName: String(cell(row, itemCol, "product name") || ""),
+      unitPrice: parseNum(cell(row, itemCol, "unit price")),
+      quantity: parseNum(cell(row, itemCol, "quantity")),
+      createdAt: parseDate(cell(row, itemCol, "created at")),
     });
   });
   console.log(`Importing ${items.length} order items...`);
@@ -271,6 +316,7 @@ async function main() {
 
   // --- Order Status History ---
   const histSheet = wb.getWorksheet("Order Status History")!;
+  const histCol = buildColMap(histSheet);
   const history: {
     id: string;
     orderId: string;
@@ -281,11 +327,11 @@ async function main() {
   histSheet.eachRow((row, i) => {
     if (i === 1) return;
     history.push({
-      id: String(row.getCell(1).value || ""),
-      orderId: String(row.getCell(2).value || ""),
-      status: String(row.getCell(3).value || ""),
-      notes: row.getCell(4).value ? String(row.getCell(4).value) : null,
-      createdAt: parseDate(row.getCell(5).value),
+      id: String(cell(row, histCol, "id") || ""),
+      orderId: String(cell(row, histCol, "order id") || ""),
+      status: String(cell(row, histCol, "status") || ""),
+      notes: cell(row, histCol, "notes") ? String(cell(row, histCol, "notes")) : null,
+      createdAt: parseDate(cell(row, histCol, "created at")),
     });
   });
   console.log(`Importing ${history.length} status history records...`);
@@ -303,6 +349,7 @@ async function main() {
 
   // --- Admins ---
   const adminSheet = wb.getWorksheet("Admins")!;
+  const adminCol = buildColMap(adminSheet);
   const admins: {
     id: string;
     username: string;
@@ -316,14 +363,14 @@ async function main() {
   adminSheet.eachRow((row, i) => {
     if (i === 1) return;
     admins.push({
-      id: String(row.getCell(1).value || ""),
-      username: String(row.getCell(2).value || ""),
-      email: String(row.getCell(3).value || ""),
-      role: String(row.getCell(4).value || "admin"),
-      isActive: parseBool(row.getCell(5).value),
-      lastLoginAt: parseDate(row.getCell(6).value),
-      createdAt: parseDate(row.getCell(7).value),
-      updatedAt: parseDate(row.getCell(8).value),
+      id: String(cell(row, adminCol, "id") || ""),
+      username: String(cell(row, adminCol, "username") || ""),
+      email: String(cell(row, adminCol, "email") || ""),
+      role: String(cell(row, adminCol, "role") || "admin"),
+      isActive: parseBool(cell(row, adminCol, "is active")),
+      lastLoginAt: parseDate(cell(row, adminCol, "last login at")),
+      createdAt: parseDate(cell(row, adminCol, "created at")),
+      updatedAt: parseDate(cell(row, adminCol, "updated at")),
     });
   });
   console.log(`Importing ${admins.length} admins...`);

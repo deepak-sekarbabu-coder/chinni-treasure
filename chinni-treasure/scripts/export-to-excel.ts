@@ -94,6 +94,8 @@ async function exportToExcel() {
     { header: 'Image URL', key: 'imageUrl', width: 50 },
     { header: 'Badge', key: 'badge', width: 15 },
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Visible Hostnames', key: 'visibleHostnames', width: 40 },
+    { header: 'Deleted At', key: 'deletedAt', width: 20, format: (v: unknown) => v ? (v as Date).toISOString() : '' },
     { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
     { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
@@ -135,7 +137,9 @@ async function exportToExcel() {
     { header: 'Transaction ID', key: 'transactionId', width: 30 },
     { header: 'Customer Notes', key: 'customerNotes', width: 40 },
     { header: 'Admin Notes', key: 'adminNotes', width: 40 },
+    { header: 'Version', key: 'version', width: 8 },
     { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
+    { header: 'Updated At', key: 'updatedAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 
   // 4. Export Order Items

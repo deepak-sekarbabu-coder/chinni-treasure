@@ -38,6 +38,9 @@ async function seedProducts(categoryMap: Record<string, number>): Promise<Record
         description: p.description,
         badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
+        ...(p.isActive !== undefined ? { isActive: p.isActive } : {}),
+        visibleHostnames: p.visibleHostnames ?? null,
+        deletedAt: p.deletedAt ? new Date(p.deletedAt) : null,
       },
       create: {
         sku: p.sku,
@@ -49,6 +52,9 @@ async function seedProducts(categoryMap: Record<string, number>): Promise<Record
         description: p.description,
         badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
+        isActive: p.isActive ?? true,
+        visibleHostnames: p.visibleHostnames ?? null,
+        deletedAt: p.deletedAt ? new Date(p.deletedAt) : null,
       },
     });
     skuMap[p.sku] = product.id;
@@ -113,6 +119,7 @@ async function seedOrders(skuMap: Record<string, string>) {
         transactionId: o.transactionId,
         customerNotes: o.customerNotes,
         adminNotes: o.adminNotes,
+        version: o.version ?? 0,
       },
       create: {
         orderNumber: o.orderNumber,
@@ -133,8 +140,14 @@ async function seedOrders(skuMap: Record<string, string>) {
         transactionId: o.transactionId,
         customerNotes: o.customerNotes,
         adminNotes: o.adminNotes,
+        version: o.version ?? 0,
       },
     });
+
+    // Idempotent seeding: replace this order's items and status history
+    // instead of appending, so re-running the seed never duplicates rows.
+    await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
+    await prisma.orderStatusHistory.deleteMany({ where: { orderId: order.id } });
 
     for (const item of o.items) {
       await prisma.orderItem.create({
