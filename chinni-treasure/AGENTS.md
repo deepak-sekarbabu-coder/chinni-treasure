@@ -22,14 +22,14 @@ Chinni Treasure is a luxury e-commerce storefront built with Next.js 16, React 1
 
 ### Current stack
 
-- Framework: Next.js 16.2.x with the App Router; `proxy.ts` provides request logging and admin-route protection.
+- Framework: Next.js 16.3.x with the App Router; `proxy.ts` provides request logging and admin-route protection.
 - UI: React 19.2.x with React Context for the cart and React Query 5 for client-side server-state caching.
 - Database: PostgreSQL through Prisma 7.9.x and `@prisma/adapter-pg`.
 - Styling: modular raw CSS under `app/styles/`; Tailwind and other CSS frameworks are not used.
 - Validation and sanitization: Zod 4, `src/lib/api/schemas.ts`, and `src/lib/sanitize.ts`.
 - Authentication: JWT-based admin sessions in an `HttpOnly` `session` cookie, verified by `proxy.ts` and `src/lib/auth.ts`.
 - Payments: Razorpay Standard Checkout plus manual UPI/bank-transfer handling.
-- Supporting libraries: ExcelJS, jsPDF, JsBarcode, Sharp, React Markdown, and custom image loading.
+- Supporting libraries: ExcelJS, jsPDF, JsBarcode, React Markdown, ioredis (optional Redis), and custom image loading.
 - Observability: Axiom helpers under `lib/axiom/`, wired through request logging, route events, Web Vitals, and error instrumentation when configured.
 - Hosting: Vercel configuration includes a daily `/api/cron/db-health` keep-alive job; Docker/Podman remains supported for self-hosting.
 - Testing: Vitest 4 with Testing Library, jsdom, and coverage support.
@@ -166,7 +166,7 @@ chinni-treasure/
 ├── prisma/                      # Schema, seed data, and four migration directories
 ├── docs/                        # Architecture notes, ADRs, plans, and review documents
 ├── public/                      # Branding, generated assets, icons, manifest, robots, and static files
-├── scripts/                     # Import/export, seed, repro, Fallow-report, and Lighthouse runner utilities
+├── scripts/                     # Import/export, seed, repro, static/dynamic boundary check, Fallow-report, and Lighthouse runner utilities
 ├── lighthouse/                  # Routes and performance budgets for the Lighthouse runner (reports are gitignored)
 ├── proxy.ts                     # Axiom page logging and admin route protection
 ├── instrumentation.ts           # Next.js instrumentation entry point
@@ -184,10 +184,11 @@ chinni-treasure/
 | Command | Action |
 | --- | --- |
 | `npm run dev` | Start the Next.js development server |
-| `npm run build` | Generate Prisma Client and build the production bundle |
+| `npm run build` | Check static/dynamic boundaries, generate Prisma Client, and build the production bundle |
 | `npm start` | Start the production server |
-| `npm run lint` | Run ESLint |
+| `npm run lint` | Check static/dynamic boundaries, then run ESLint |
 | `npm run lint:fix` | Run ESLint with fixes |
+| `npm run check:static-dynamic` | Verify the server/client component boundary rules (`scripts/check-static-dynamic.mjs`) |
 | `npm run typecheck` | Run TypeScript validation (`tsc --noEmit`) |
 | `npm test` | Run Vitest in watch mode |
 | `npm run test:run` | Run Vitest once |
@@ -204,6 +205,13 @@ chinni-treasure/
 | `npm run compose:down` | Stop container services |
 | `npm run fallow` | Run Fallow code-quality analysis |
 | `npm run fallow:report` | Generate the Fallow report artifacts |
+| `npm run lighthouse` | Run the Lighthouse performance audit (`scripts/run-lighthouse.mjs`) |
+| `npm run lighthouse:desktop` | Run the Lighthouse audit with desktop emulation |
+| `npm run lighthouse:analyze` | Analyze Lighthouse reports against the budgets in `lighthouse/` |
+| `npm run lighthouse:report` | Open the latest Lighthouse report |
+| `npm run clean` | Remove `.next`, `.turbo`, and `node_modules` |
+| `npm run clean:cache` | Remove `.next` and `.turbo` only |
+| `npm run clean:all` | Clean and reinstall dependencies |
 
 ### Environment variables
 
@@ -220,7 +228,7 @@ Required for the full application:
 | `RAZORPAY_KEY_SECRET` | Server-only Razorpay secret |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Browser-exposed Razorpay key ID |
 
-Optional configuration includes `NEXT_PUBLIC_IMAGE_UNOPTIMIZED`, `REDIS_URL`, `NEXT_PUBLIC_AXIOM_TOKEN`, `NEXT_PUBLIC_AXIOM_DATASET`, `NEXT_PUBLIC_AXIOM_EDGE`, and `CRON_SECRET`. See `.env.example` for setup notes and safe placeholders.
+Optional configuration includes `NEXT_PUBLIC_IMAGE_UNOPTIMIZED`, `REDIS_URL`, Axiom variables (`NEXT_PUBLIC_AXIOM_TOKEN`, `NEXT_PUBLIC_AXIOM_DATASET`, optional `NEXT_PUBLIC_AXIOM_EDGE`), `CRON_SECRET`, `NEXT_PUBLIC_ENABLE_VERCEL_ANALYTICS`, and `NEXT_PUBLIC_ENABLE_SURPRISE_GIFT`. See `.env.example` for setup notes and safe placeholders.
 
 ## 8. Verification Expectations
 

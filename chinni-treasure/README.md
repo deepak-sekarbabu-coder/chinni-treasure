@@ -4,19 +4,21 @@
 
 ## Tech Stack
 
-- **Framework:** [Next.js 16.2.6](https://nextjs.org/) (App Router, React 19.2.4)
-- **Database:** PostgreSQL with [Prisma ORM 7.8.0](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into **30 component-specific files** under `app/styles/`, orchestrated via `@import` statements in the entry point.
+- **Framework:** [Next.js 16.3.1](https://nextjs.org/) (App Router, React 19.2.8)
+- **Database:** PostgreSQL with [Prisma ORM 7.9.1](https://www.prisma.io/) via `@prisma/adapter-pg`
+- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into **31 component-specific files** under `app/styles/`, orchestrated via `@import` statements in the entry point.
 - **Authentication:** JWT-based admin auth stored in an `HttpOnly` `session` cookie
 - **State Management:** React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
-- **Server State:** React Query (`@tanstack/react-query` v5.101.0 + devtools) for client-side caching and data fetch orchestration
+- **Server State:** React Query (`@tanstack/react-query` v5.101.4 + devtools) for client-side caching and data fetch orchestration
 - **Validation:** Zod v4.4.3 for checkout, cart, and API request/response validation
+- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue/order/stats caches are owned by dedicated modules under `src/lib/`
+- **Observability:** Axiom structured logging (`@axiomhq/*`) for page traffic, route events, Web Vitals, and errors when configured
 - **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual UPI/bank-transfer fallback
 - **Analytics & Insights:** Vercel Analytics (`@vercel/analytics` v2.0.1) + Speed Insights (`@vercel/speed-insights` v2.0.0)
 - **Markdown:** `react-markdown` v10.1.0 for rendering rich product/legal content
 - **Export:** ExcelJS v4.4.0 for admin data export; jsPDF v4.2.1 for invoice generation; jsBarcode v3.12.3 for barcode generation
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
-- **Testing:** Vitest v4.1.7 with @testing-library/react v16.3.2, @testing-library/jest-dom v6.9.1, @testing-library/user-event v14.6.1, and jsdom
+- **Testing:** Vitest v4.1.7 with @testing-library/react v16.3.2, @testing-library/jest-dom v6.9.1, @testing-library/user-event v14.6.4, and jsdom
 
 ---
 
@@ -29,6 +31,7 @@
 - **Admin dashboard** with order management, catalogue CRUD, **category management** (create/edit/delete/toggle active, display order), status advancement, Excel export, and pure-CSS charts
 - **Category browsing** with dedicated `/category/[slug]` pages, paginated/sortable listings, and a homepage "Latest in Every Category" section showing the newest in-stock product per active category
 - **Order tracking** portal and shareable confirmation pages (by Order ID or customer phone number)
+- **Surprise gift** (optional via `NEXT_PUBLIC_ENABLE_SURPRISE_GIFT`): a free complementary gift is auto-added to the cart, announced with a popup
 - **Accessibility-first** UI: skip links, ARIA attributes, focus trapping, and `prefers-reduced-motion` / `prefers-contrast` support
 - **Production hardening**: CSRF/origin validation, rate-limited admin login, DOMPurify sanitization, Zod validation, serializable inventory transactions, and optimistic-concurrency order updates
 
@@ -108,7 +111,7 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 # NEXT_PUBLIC_IMAGE_UNOPTIMIZED=true
 ```
 
-> **Note:** The `.env` file includes example Vercel Postgres variables for production deployment. For local development, `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, and the Razorpay variables are required. Vercel auto-injects the `POSTGRES_*` variables when you attach a Postgres database. Set `ALLOWED_ORIGIN` and `NEXT_PUBLIC_SITE_URL` to your production domain in the Vercel dashboard.
+> **Note:** For local development, `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, and the Razorpay variables are required. Optional variables (Redis, Axiom, `CRON_SECRET`, analytics/surprise-gift flags) are documented with setup notes in `.env.example`. In production on Vercel, set `DATABASE_URL`/`DIRECT_URL` to your database connection string and set `ALLOWED_ORIGIN` and `NEXT_PUBLIC_SITE_URL` to your production domain in the Vercel dashboard.
 
 ### 5. Run Database Setup
 
@@ -142,10 +145,10 @@ npm run db:seed
 
 The seed script creates:
 
-- **6 categories** (Clutches, Bangles, Jewellery, Bangle Organizer, Accessories, Bracelets)
-- **22 products** with pricing, stock, multiple images, and rich markdown descriptions
+- **6 categories** (Clutches, Bangles, Jewellery, Bangle Organizer, Bracelets, Gift Boxes)
+- **47 products** with pricing, stock, multiple images, and rich markdown descriptions
 - **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
-- **1 sample order** with full status history (for demo/testing)
+- **3 sample orders** with full status history (for demo/testing)
 
 ### 7. Start the Development Server
 
@@ -162,10 +165,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | Script | Description |
 |---|---|
 | `npm run dev` | Start the Next.js development server |
-| `npm run build` | Generate Prisma client + build the application for production |
+| `npm run build` | Check static/dynamic boundaries, generate Prisma client + build the application for production |
 | `npm start` | Start the production server |
-| `npm run lint` | Run ESLint across the project |
+| `npm run lint` | Check static/dynamic boundaries, then run ESLint |
 | `npm run lint:fix` | Run ESLint with auto-fix |
+| `npm run check:static-dynamic` | Verify server/client component boundary rules |
 | `npm run typecheck` | Run TypeScript type checking (`tsc --noEmit`) |
 | `npm test` | Run tests in watch mode (Vitest) |
 | `npm run test:run` | Run tests once (Vitest) |
@@ -184,6 +188,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run compose:up` | Start container services in detached mode (Podman) |
 | `npm run compose:down` | Stop and remove containers (Podman) |
 | `npm run fallow` | Run Fallow code quality analysis (complexity, duplication, dead code) |
+| `npm run fallow:report` | Generate the Fallow report artifacts |
+| `npm run lighthouse` | Run the Lighthouse performance audit |
+| `npm run lighthouse:desktop` | Run the Lighthouse audit with desktop emulation |
+| `npm run lighthouse:analyze` | Analyze Lighthouse reports against budgets in `lighthouse/` |
+| `npm run lighthouse:report` | Open the latest Lighthouse report |
 
 ---
 
@@ -211,6 +220,8 @@ chinni-treasure/
 │   │   ├── category/
 │   │   │   └── [slug]/products/route.ts # Paginated/sortable products for a category
 │   │   ├── create-order/route.ts     # Create a Razorpay order (Standard Checkout)
+│   │   ├── cron/
+│   │   │   └── db-health/route.ts    # Daily database keep-alive ping (Vercel cron, CRON_SECRET)
 │   │   ├── docs/route.ts             # OpenAPI spec endpoint
 │   │   ├── export/route.ts           # Excel export endpoint (cursor-based batching)
 │   │   ├── health/db/route.ts        # Database health check
@@ -256,7 +267,7 @@ chinni-treasure/
 │   ├── loading.tsx                   # Root loading state
 │   ├── not-found.tsx                 # Root 404
 │   ├── sitemap.ts                    # Dynamic sitemap generation (products + categories)
-│   ├── styles/                       # Decomposed modular CSS files (**30 files**)
+│   ├── styles/                       # Decomposed modular CSS files (**31 files**)
 │   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
 │   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
 │   │   ├── keyframes.css             # All @keyframes animations
@@ -286,20 +297,27 @@ chinni-treasure/
 │   │   ├── latest-category.css       # Homepage "Latest in Every Category" section
 │   │   ├── gallery.css               # Product image gallery
 │   │   ├── breadcrumbs.css           # Breadcrumb navigation
+│   │   ├── complementary-gift.css    # Surprise/complementary gift popup
 │   │   └── shipping-nudge.css        # Free-shipping threshold progress popup
 │   ├── globals.css                   # Entry point — @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (Navbar, Footer, Providers, fonts, Analytics)
 │   └── page.tsx                      # Homepage (server component)
 ├── prisma/
 │   ├── schema.prisma                 # Database schema (**7 models + 3 enums**)
-│   ├── seed.ts                       # Database seeder (**22 products + 6 categories + admin + sample order**)
+│   ├── seed.ts                       # Database seeder (**47 products + 6 categories + admin + 3 sample orders**)
 │   ├── seed-data.ts                  # Seed data constants (products, categories, orders)
-│   └── migrations/                   # Database migration history (5 migrations)
+│   └── migrations/                   # Database migration history (4 migrations)
 ├── scripts/
+│   ├── analyze-lighthouse.mjs        # Analyze Lighthouse reports against budgets
+│   ├── check-static-dynamic.mjs      # Server/client boundary checker (build & lint pre-step)
 │   ├── export-to-excel.ts            # Excel export utility
+│   ├── generate-fallow-report.mjs    # Build the Fallow report markdown
 │   ├── generate-seed-from-excel.ts   # Generate seed data from Excel
 │   ├── import-production.ts          # Import production data
-│   └── repro-catalogue.ts            # Reproduce catalogue issues
+│   ├── open-lighthouse-report.mjs    # Open the latest Lighthouse report
+│   ├── repro-catalogue.ts            # Reproduce catalogue issues
+│   ├── run-fallow-report.mjs         # Run Fallow analysis end to end
+│   └── run-lighthouse.mjs            # Programmatic Lighthouse audit runner
 ├── src/
 │   ├── components/
 │   │   ├── cart/
@@ -344,6 +362,7 @@ chinni-treasure/
 │   │   └── ui/
 │   │       ├── AdminStatCard.tsx        # Dashboard stat display card
 │   │       ├── Breadcrumbs.tsx          # Breadcrumb navigation (SEO, aria)
+│   │       ├── ComplementaryGiftPopup.tsx # Surprise-gift announcement popup
 │   │       ├── FallbackImage.tsx        # Next/image fallback (honors NEXT_PUBLIC_IMAGE_UNOPTIMIZED)
 │   │       ├── JsonLd.tsx               # Structured data (JSON-LD) for SEO
 │   │       ├── LoadingSpinner.tsx       # Loading indicator (full-page or inline)
@@ -357,7 +376,7 @@ chinni-treasure/
 │   │       ├── StatusBadge.tsx          # Order status badge (color-coded)
 │   │       ├── StockBadge.tsx           # Stock level badge (in-stock/low/empty)
 │   │       ├── ToastProvider.tsx        # Toast notification system
-│   │       └── __tests__/               # 7 component unit tests
+│   │       └── __tests__/               # 8 component unit tests
 │   ├── lib/
 │   │   ├── api/
 │   │   │   ├── client.ts               # Typed API fetch client with Zod validation
@@ -378,22 +397,28 @@ chinni-treasure/
 │   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
 │   │   ├── cache.ts                  # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
+│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/page/recent)
 │   │   ├── constants.ts              # Indian states, status flow, labels, icons
 │   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
 │   │   ├── csrf-helpers.ts           # CSRF host validation helpers
+│   │   ├── domain-filter.ts          # visibleHostnames multi-domain product filtering
 │   │   ├── env.ts                    # Environment variable validation (requireEnv)
 │   │   ├── images.ts                 # Product image URL/quality helpers
 │   │   ├── image-loader.ts           # Next.js image loader (custom domains, quality)
 │   │   ├── image-fallback.ts         # NEXT_PUBLIC_IMAGE_UNOPTIMIZED flag helper
 │   │   ├── openapi-spec.ts           # OpenAPI 3.0 specification document
+│   │   ├── order-cache.ts            # Order-detail/tracking cache owner (+ stats invalidation)
 │   │   ├── prisma.ts                 # Prisma client singleton (global caching)
-│   │   ├── razorpay.ts               # Loads the Razorpay Standard Checkout script (browser)
-│   │   ├── products-cache.ts         # Product- & category-specific cache wrapper
 │   │   ├── query-keys.ts             # React Query key factory
 │   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts, eviction)
+│   │   ├── razorpay.ts               # Loads the Razorpay Standard Checkout script (browser)
+│   │   ├── redis-cache.ts            # Redis-backed cache with in-memory fallback
+│   │   ├── redis.ts                  # Shared ioredis client (null when REDIS_URL unset)
 │   │   ├── sanitize.ts               # XSS sanitization via isomorphic-dompurify
+│   │   ├── stats-cache.ts            # Dashboard statistics cache
 │   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
-│   │   └── utils.ts                  # API error extraction, UUID order number generation
+│   │   ├── utils.ts                  # API error extraction, UUID order number generation
+│   │   └── validate.ts               # Shared validateOr400 helper for API routes
 │   ├── types/
 │   │   ├── cart.ts                   # CartItem interface
 │   │   ├── razorpay.d.ts             # Razorpay response/constructor types
@@ -404,8 +429,8 @@ chinni-treasure/
 │       ├── mocks/                    # Shared mock implementations (prisma.ts)
 │       ├── setup.ts                  # Vitest global setup
 │       └── utils/                    # Test helper utilities (api-test.ts)
-├── proxy.ts                          # Next.js middleware (JWT admin route protection)
-├── prisma.config.ts                  # Prisma configuration (defineConfig, reads POSTGRES_* env)
+├── proxy.ts                          # Next.js middleware (JWT admin route protection + Axiom page logging)
+├── prisma.config.ts                  # Prisma CLI configuration (defineConfig, reads DIRECT_URL or DATABASE_URL)
 ├── next.config.ts                    # Next.js configuration (image domains, etc.)
 ├── Dockerfile                        # Container build definition
 ├── docker-compose.yml                # Podman/Compose service definition
@@ -483,7 +508,7 @@ Click **Deploy**. Vercel will:
 1. After deployment, go to your project dashboard → **Storage** → **Connect Store** → **Create New** → **Postgres**
 2. Follow the wizard to create and attach a database
 3. Vercel auto-injects the `POSTGRES_*` env vars into your project
-4. The `prisma.config.ts` already reads these vars — no config changes needed
+4. Set `DATABASE_URL` (and `DIRECT_URL`) in the Vercel dashboard to that connection string — `prisma.config.ts` reads `DIRECT_URL` first, then `DATABASE_URL`; it does not read the `POSTGRES_*` names directly
 5. Re-deploy the project by pushing a new commit (or use **Redeploy** in the Vercel dashboard)
 
 ### 6. Run Database Migrations
@@ -590,13 +615,14 @@ rejected (stock restored)
 | GET | `/api/export` | Export orders to Excel (.xlsx, cursor-based batching) | Yes |
 | GET | `/api/health/db` | Database connectivity health check | No |
 | GET | `/api/health/redis` | Redis connectivity health check (not_configured/connected/unreachable) | No |
+| GET | `/api/cron/db-health` | Daily keep-alive ping from Vercel cron (`Authorization: Bearer <CRON_SECRET>` when set) | Cron secret |
 | GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
 
 ---
 
 ## Middleware (Admin Route Protection)
 
-The `proxy.ts` file is the middleware entry point (configured in `next.config.ts` / `vercel.json`). It protects all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library.
+The `proxy.ts` file is the middleware entry point (configured in `next.config.ts` / `vercel.json`). It protects all `/admin/*` routes (except `/admin/login`) by verifying the JWT `session` cookie using the `jose` library. When Axiom is configured it also logs page traffic to Axiom; API routes, static assets, and metadata files are excluded from that matcher.
 
 ---
 
@@ -612,10 +638,10 @@ npm run test:coverage # With coverage report
 
 **Test locations:**
 
-- `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, Pages, UI — 13 test files)
+- `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, Pages, UI — 14 test files)
 - `src/lib/hooks/__tests__/` — Custom hook tests (5 files)
-- `src/__tests__/api/` — API route handler tests (14 files)
-- `src/__tests__/lib/` — Lib module tests (13 files)
+- `src/__tests__/api/` — API route handler tests (16 files)
+- `src/__tests__/lib/` — Lib module tests (18 files)
 - `src/__tests__/setup.ts` — Vitest global setup
 - `src/__tests__/mocks/` — Shared mock implementations (Prisma mock)
 - `src/__tests__/utils/` — Test helper utilities (API test harness)
@@ -626,18 +652,19 @@ npm run test:coverage # With coverage report
 
 | Library | Purpose |
 |---|---|
+| `@axiomhq/*` | Axiom structured logging (server, client, logger, Next.js integration) |
 | `@prisma/adapter-pg` + `pg` | PostgreSQL database adapter |
 | `@tanstack/react-query` + devtools | Server state management with caching |
 | `@vercel/analytics` + speed-insights | Privacy-friendly traffic + performance insights |
 | `bcryptjs` | Password hashing |
-| `dayjs` | Date/time formatting |
+| `dotenv` | Loads `.env` for Prisma CLI operations |
+| `ioredis` | Optional shared Redis client for caches and rate limiting |
 | `jose` | JWT verification in middleware |
 | `jsbarcode` | Barcode generation for shipping labels |
 | `jspdf` | PDF invoice generation |
 | `zod` | Runtime validation (API schemas, cart, checkout) |
 | `isomorphic-dompurify` | Server-side XSS sanitization |
 | `exceljs` | Data export to Excel |
-| `sharp` | Image processing |
 | `razorpay` | Razorpay Standard Checkout payment gateway |
 | `react-markdown` | Markdown rendering for product/legal content |
 

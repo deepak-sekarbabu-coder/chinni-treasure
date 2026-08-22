@@ -1,6 +1,6 @@
 # Categories & "Latest in Every Category"
 
-> **Last validated against codebase:** August 5, 2026 — migration, routes, cache headers, and tests re-verified.
+> **Last validated against codebase:** August 22, 2026 — cache invalidation notes re-verified against the catalogue-cache module (`products-cache` was removed in the Aug 14, 2026 cache-ownership refactor). Migration, routes, cache headers, and tests re-verified August 5, 2026.
 
 This document describes the category management and category-based browsing
 feature added to the Chinni Treasure storefront.
@@ -41,8 +41,8 @@ browsable, paginated, sortable listing page at `/category/[slug]`.
 - Caching headers: `latest` and `[slug]/products` use
   `Cache-Control: public, s-maxage=60, stale-while-revalidate=120`; public
   `/api/categories` uses `s-maxage=300, stale-while-revalidate=600`.
-- `clearCache()` (from `products-cache`) is called on category mutations so the
-  cached category listings invalidate.
+- Category mutations call `invalidateCatalogCaches()` (from `catalogue-cache`) so
+  the cached category listings (and the rest of the catalogue caches) invalidate.
 
 ## Frontend
 
