@@ -2,9 +2,15 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import type { CartItem } from "@/src/types";
 
+const giftBoxSchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.number().int().positive(),
+});
+
 const cartItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().positive(),
+  giftBoxes: z.array(giftBoxSchema).optional(),
 });
 
 const cartSchema = z.array(cartItemSchema);

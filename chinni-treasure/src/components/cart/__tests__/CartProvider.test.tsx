@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+
+// Must run before CartProvider module is evaluated
+vi.hoisted(() => {
+  vi.stubEnv("NEXT_PUBLIC_ENABLE_SURPRISE_GIFT", "false");
+});
+
 import { CartProvider, useCart } from "../CartProvider";
 
 const mockProduct = {

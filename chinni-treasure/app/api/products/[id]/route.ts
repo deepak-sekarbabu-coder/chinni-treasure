@@ -27,6 +27,7 @@ const UpdateProductSchema = z.object({
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
   isActive: z.boolean().optional(),
   visibleHostnames: z.string().optional().nullable(),
+  allowGiftBoxBundling: z.boolean().optional(),
   images: z.array(ImageInputSchema).optional(),
 });
 
@@ -73,7 +74,7 @@ export async function PUT(
     const parsed = validateOr400(UpdateProductSchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const { images, ...productFields } = parsed.data;
+    const { images, allowGiftBoxBundling, ...productFields } = parsed.data;
 
     // Handle image updates: delete existing, create new ones
     if (images !== undefined) {
@@ -95,11 +96,23 @@ export async function PUT(
     // from the current product's value.
     const existing = await prisma.product.findUnique({
       where: { id },
-      select: { sku: true },
+      select: { sku: true, category: { select: { slug: true } }, allowGiftBoxBundling: true },
     });
+
+    // Validate gift box bundling: cannot enable on a Gift Box category product
+    if (allowGiftBoxBundling && existing?.category?.slug === "box") {
+      return NextResponse.json(
+        { error: "Gift box bundling cannot be enabled on Gift Box products" },
+        { status: 400 },
+      );
+    }
+
     const updateData = buildUpdateData(productFields as Record<string, unknown>) as Record<string, unknown>;
     if (updateData.sku !== undefined && existing && updateData.sku === existing.sku) {
       delete updateData.sku;
+    }
+    if (allowGiftBoxBundling !== undefined) {
+      updateData.allowGiftBoxBundling = allowGiftBoxBundling;
     }
 
     const product = await prisma.product.update({

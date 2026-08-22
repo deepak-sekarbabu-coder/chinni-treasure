@@ -10,6 +10,11 @@ import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
 import { INDIAN_STATES, calcShippingCost } from "@/src/lib/constants";
 
+const GiftBoxItemSchema = z.object({
+  id: z.string().min(1),
+  quantity: z.number().int().positive(),
+});
+
 const CreateOrderSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Invalid email address"),
@@ -32,6 +37,7 @@ const CreateOrderSchema = z.object({
       z.object({
         id: z.string().min(1, "Product ID is required"),
         quantity: z.number().int().positive("Quantity must be a positive integer"),
+        giftBoxes: z.array(GiftBoxItemSchema).optional(),
       }),
     )
     .min(1, "At least one item is required"),
@@ -111,9 +117,15 @@ export async function POST(request: Request) {
     const order = await prisma.$transaction(
       async (tx) => {
         // Re-read products inside the transaction for fresh data
-        const productIds = items.map((i) => i.id);
+        const allProductIds = new Set<string>(items.map((i) => i.id));
+        for (const item of items) {
+          if (item.giftBoxes) {
+            for (const gb of item.giftBoxes) allProductIds.add(gb.id);
+          }
+        }
         const products = await tx.product.findMany({
-          where: { id: { in: productIds }, isActive: true },
+          where: { id: { in: [...allProductIds] }, isActive: true },
+          include: { category: { select: { slug: true } } },
         });
 
         const productMap = new Map(products.map((p) => [p.id, p]));
@@ -137,6 +149,48 @@ export async function POST(request: Request) {
               `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}`,
               400,
             );
+          }
+
+          // Validate gift box bundling rules
+          if (item.giftBoxes && item.giftBoxes.length > 0) {
+            // A gift box product cannot be used as a bundle parent
+            if (product.category?.slug === "box") {
+              throw new OrderError(
+                "Gift box products cannot be bundled onto other products",
+                400,
+              );
+            }
+            // Parent must support bundling
+            if (!product.allowGiftBoxBundling) {
+              throw new OrderError(
+                `Product ${product.name} does not support gift box bundling`,
+                400,
+              );
+            }
+            for (const gb of item.giftBoxes) {
+              const gbProduct = productMap.get(gb.id);
+              if (!gbProduct) {
+                throw new OrderError(`Gift box product ${gb.id} not found`, 404);
+              }
+              if (gbProduct.category?.slug !== "box") {
+                throw new OrderError(
+                  `Product ${gbProduct.name} is not a gift box`,
+                  400,
+                );
+              }
+              if (gbProduct.stockQuantity < gb.quantity) {
+                throw new OrderError(
+                  `Insufficient stock for gift box ${gbProduct.name}. Available: ${gbProduct.stockQuantity}`,
+                  400,
+                );
+              }
+              if (gb.quantity > item.quantity) {
+                throw new OrderError(
+                  `Gift box quantity cannot exceed the parent product quantity`,
+                  400,
+                );
+              }
+            }
           }
 
           orderItems.push({
@@ -184,6 +238,35 @@ export async function POST(request: Request) {
           },
         });
 
+        // Create gift box order items linked to parent items
+        const giftBoxEntries: Array<{
+          orderId: string;
+          productId: string;
+          productName: string;
+          unitPrice: number;
+          quantity: number;
+          parentOrderItemId: string;
+        }> = [];
+        for (const item of items) {
+          if (!item.giftBoxes || item.giftBoxes.length === 0) continue;
+          const parentOrderItem = created.items.find((oi) => oi.productId === item.id);
+          if (!parentOrderItem) continue;
+          for (const gb of item.giftBoxes) {
+            const gbProduct = productMap.get(gb.id)!;
+            giftBoxEntries.push({
+              orderId: created.id,
+              productId: gbProduct.id,
+              productName: gbProduct.name,
+              unitPrice: Number(gbProduct.price),
+              quantity: gb.quantity,
+              parentOrderItemId: parentOrderItem.id,
+            });
+          }
+        }
+        if (giftBoxEntries.length > 0) {
+          await tx.orderItem.createMany({ data: giftBoxEntries });
+        }
+
         // Deduct stock atomically within the same transaction
         for (const item of orderItems) {
           const updated = await tx.product.update({
@@ -198,8 +281,20 @@ export async function POST(request: Request) {
             );
           }
         }
+        // Deduct gift box stock
+        for (const gbEntry of giftBoxEntries) {
+          await tx.product.update({
+            where: { id: gbEntry.productId },
+            data: { stockQuantity: { decrement: gbEntry.quantity } },
+          });
+        }
 
-        return created;
+        // Re-fetch the order with all items
+        const finalOrder = await tx.order.findUnique({
+          where: { id: created.id },
+          include: { items: true },
+        });
+        return finalOrder ?? created;
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,

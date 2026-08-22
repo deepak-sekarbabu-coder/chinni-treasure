@@ -56,6 +56,7 @@ model Product {
   badge         ProductBadge?
   isActive         Boolean       @default(true) @map("is_active")
   visibleHostnames String?       @map("visible_hostnames") @db.VarChar(500)
+  allowGiftBoxBundling Boolean   @default(false) @map("allow_gift_box_bundling")
   deletedAt        DateTime?     @map("deleted_at")
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
@@ -129,6 +130,7 @@ model OrderItem {
   productName String   @map("product_name") @db.VarChar(255)
   unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 2)
   quantity    Int
+  parentOrderItemId String?  @map("parent_order_item_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([orderId])

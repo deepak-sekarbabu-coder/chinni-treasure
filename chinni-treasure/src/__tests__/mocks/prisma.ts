@@ -56,6 +56,10 @@ export const mockTx = {
   },
   order: {
     create: vi.fn(),
+    findUnique: vi.fn(),
     update: vi.fn(),
+  },
+  orderItem: {
+    createMany: vi.fn(),
   },
 };

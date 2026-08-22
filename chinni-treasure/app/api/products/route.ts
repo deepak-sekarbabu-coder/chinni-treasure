@@ -24,6 +24,7 @@ const CreateProductSchema = z.object({
   badge: z.nativeEnum(ProductBadge).optional().nullable(),
   isActive: z.boolean().optional(),
   visibleHostnames: z.string().optional(),
+  allowGiftBoxBundling: z.boolean().optional(),
   images: z
     .array(
       z.object({
@@ -144,6 +145,7 @@ type CreateProductInput = {
   badge?: ProductBadge | null;
   isActive?: boolean;
   visibleHostnames?: string;
+  allowGiftBoxBundling?: boolean;
   images?: Array<{ url: string; isPrimary?: boolean; displayOrder?: number }>;
 };
 
@@ -160,6 +162,7 @@ function buildCreateData(input: CreateProductInput) {
     ...(input.badge !== undefined && { badge: input.badge ?? null }),
     ...(input.isActive !== undefined && { isActive: input.isActive }),
     ...(input.visibleHostnames !== undefined && { visibleHostnames: input.visibleHostnames || null }),
+    ...(input.allowGiftBoxBundling !== undefined && { allowGiftBoxBundling: input.allowGiftBoxBundling }),
   };
 }
 
@@ -178,10 +181,22 @@ export async function POST(request: Request) {
     const parsed = validateOr400(CreateProductSchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const { images, ...productData } = parsed.data;
+    const { images, allowGiftBoxBundling, ...productData } = parsed.data;
+
+    // Validate gift box bundling: cannot enable on a Gift Box category product
+    if (allowGiftBoxBundling && productData.categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: productData.categoryId }, select: { slug: true } });
+      if (category?.slug === "box") {
+        return NextResponse.json(
+          { error: "Gift box bundling cannot be enabled on Gift Box products" },
+          { status: 400 },
+        );
+      }
+    }
+
     const product = await prisma.product.create({
       data: {
-        ...buildCreateData(productData as CreateProductInput),
+        ...buildCreateData({ ...productData, allowGiftBoxBundling } as CreateProductInput),
         images: images && images.length > 0
           ? {
             create: images.map((img, idx) => ({
