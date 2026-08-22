@@ -8,6 +8,7 @@ import { useFocusTrap } from "@/src/lib/useFocusTrap";
 const SHOW_DELAY_MS = 600;
 const AUTO_DISMISS_MS = 6000;
 const EXIT_MS = 300;
+const SESSION_SHOWN_KEY = "gift-popup-shown";
 
 const COMPLEMENTARY_GIFTS = [
   {
@@ -36,7 +37,21 @@ export default function ComplementaryGiftPopup() {
 
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
-    const timer = window.setTimeout(() => setVisible(true), SHOW_DELAY_MS);
+    // The popup is a full-screen modal: showing it on every navigation made
+    // pages (e.g. /catalogue) feel frozen. Show it at most once per session.
+    try {
+      if (window.sessionStorage.getItem(SESSION_SHOWN_KEY)) return;
+    } catch {
+      // Storage unavailable – fall through and show as usual.
+    }
+    const timer = window.setTimeout(() => {
+      try {
+        window.sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+      } catch {
+        // ignore
+      }
+      setVisible(true);
+    }, SHOW_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [pathname]);
 
