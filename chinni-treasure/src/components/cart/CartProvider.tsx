@@ -11,6 +11,10 @@ import {
 } from "react";
 import type { CartItem } from "@/src/types";
 
+export const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
+const SURPRISE_GIFT_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_SURPRISE_GIFT !== "false";
+
 export interface CartItemDisplay {
   productId: string;
   name: string;
@@ -19,6 +23,26 @@ export interface CartItemDisplay {
   image: string;
   stock: number;
   sku?: string;
+  isGift?: boolean;
+}
+
+const SURPRISE_GIFT_ITEM: CartItemDisplay = {
+  productId: SURPRISE_GIFT_PRODUCT_ID,
+  name: "Surprise Gift 🎁",
+  price: 0,
+  quantity: 1,
+  image: "/images/OIP.webp",
+  stock: 999,
+  isGift: true,
+};
+
+function ensureGiftItem(items: CartItemDisplay[]): CartItemDisplay[] {
+  if (!SURPRISE_GIFT_ENABLED) return items;
+  const hasRealItems = items.some((i) => !i.isGift);
+  const hasGift = items.some((i) => i.isGift);
+  if (!hasRealItems) return items.filter((i) => !i.isGift);
+  if (hasGift) return items;
+  return [...items, SURPRISE_GIFT_ITEM];
 }
 
 interface CartContextType {
@@ -50,7 +74,9 @@ function saveCart(items: CartItemDisplay[]) {
 }
 
 function toCartCookie(items: CartItemDisplay[]): CartItem[] {
-  return items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+  return items
+    .filter((i) => !i.isGift)
+    .map((i) => ({ productId: i.productId, quantity: i.quantity }));
 }
 
 const CART_COOKIE = "cart";
@@ -73,7 +99,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
     if (raw) {
       try {
         const localItems: CartItemDisplay[] = JSON.parse(raw);
-        const timer = setTimeout(() => setItems(localItems), 0);
+        const timer = setTimeout(() => setItems(ensureGiftItem(localItems)), 0);
         hasLoadedCart.current = true;
         return () => clearTimeout(timer);
       } catch {
@@ -96,27 +122,30 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
       let result: "added" | "max_reached" | "max_one" = "added";
       setItems((prev) => {
         const existing = prev.find((i) => i.productId === product.id);
+        let next: CartItemDisplay[];
         if (existing) {
           if (existing.quantity >= product.stock) {
             result = product.stock === 1 ? "max_one" : "max_reached";
             return prev;
           }
-          return prev.map((i) =>
+          next = prev.map((i) =>
             i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
           );
+        } else {
+          next = [
+            ...prev,
+            {
+              productId: product.id,
+              name: product.name,
+              price: product.price,
+              quantity: 1,
+              image: product.image,
+              stock: product.stock,
+              sku: product.sku,
+            },
+          ];
         }
-        return [
-          ...prev,
-          {
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: 1,
-            image: product.image,
-            stock: product.stock,
-            sku: product.sku,
-          },
-        ];
+        return ensureGiftItem(next);
       });
       return result;
     },
@@ -124,14 +153,17 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   );
 
   const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+    setItems((prev) => {
+      const next = prev.filter((i) => i.productId !== productId);
+      return ensureGiftItem(next);
+    });
   }, []);
 
   const updateQuantity = useCallback(
     (productId: string, delta: number) => {
       let result: "updated" | "max_reached" | "max_one" | "removed" | "unchanged" = "unchanged";
-      setItems((prev) =>
-        prev
+      setItems((prev) => {
+        const next = prev
           .map((i) => {
             if (i.productId !== productId) return i;
             const newQty = i.quantity + delta;
@@ -146,8 +178,9 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
             result = "updated";
             return { ...i, quantity: newQty };
           })
-          .filter(Boolean) as CartItemDisplay[],
-      );
+          .filter(Boolean) as CartItemDisplay[];
+        return ensureGiftItem(next);
+      });
       return result;
     },
     [],
@@ -158,11 +191,11 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   }, []);
 
   const getTotal = useCallback(() => {
-    return items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    return items.reduce((sum, i) => (i.isGift ? sum : sum + i.price * i.quantity), 0);
   }, [items]);
 
   const getCount = useCallback(() => {
-    return items.reduce((sum, i) => sum + i.quantity, 0);
+    return items.reduce((sum, i) => (i.isGift ? sum : sum + i.quantity), 0);
   }, [items]);
 
   return (

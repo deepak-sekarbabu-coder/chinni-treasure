@@ -11,6 +11,7 @@ interface CartItem {
   quantity: number;
   image: string;
   stock: number;
+  isGift?: boolean;
 }
 
 interface Props {
@@ -42,33 +43,42 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
           </div>
         ) : (
           items.map((item) => (
-            <div key={item.productId} className="cart-dropdown-item">
+            <div key={item.productId} className={`cart-dropdown-item${item.isGift ? " cart-dropdown-item-gift" : ""}`}>
               <FallbackImage src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} sizes="50px" quality={75} />
               <div className="cart-dropdown-item-info">
-                <h5>{item.name}</h5>
-                <p className="cart-dropdown-item-price">₹{item.price.toFixed(2)} each</p>
-                <div className="cart-dropdown-item-qty">
-                  <button
-                    className="cart-dropdown-qty-btn"
-                    aria-label={`Decrease quantity of ${item.name}`}
-                    onClick={() => item.quantity <= 1 ? onRemove(item.productId) : onUpdateQuantity(item.productId, -1)}
-                    disabled={item.quantity < 1}
-                  >
-                    −
-                  </button>
-                  <span className="cart-dropdown-qty-value" aria-live="polite">{item.quantity}</span>
-                  <button
-                    className="cart-dropdown-qty-btn"
-                    aria-label={`Increase quantity of ${item.name}`}
-                    onClick={() => onUpdateQuantity(item.productId, 1)}
-                    disabled={item.quantity >= item.stock}
-                    title={item.quantity >= item.stock ? (item.stock === 1 ? "Max 1 per user" : `Only ${item.stock} in stock`) : "Increase quantity"}
-                  >
-                    +
-                  </button>
-                </div>
-                {item.stock <= 3 && item.stock > 0 && (
-                  <p className="cart-dropdown-low-stock">Only {item.stock} left</p>
+                <h5>
+                  {item.name}
+                  {item.isGift && <span className="cart-gift-badge">FREE GIFT</span>}
+                </h5>
+                {item.isGift ? (
+                  <p className="cart-dropdown-item-price cart-gift-price">Complimentary</p>
+                ) : (
+                  <>
+                    <p className="cart-dropdown-item-price">₹{item.price.toFixed(2)} each</p>
+                    <div className="cart-dropdown-item-qty">
+                      <button
+                        className="cart-dropdown-qty-btn"
+                        aria-label={`Decrease quantity of ${item.name}`}
+                        onClick={() => item.quantity <= 1 ? onRemove(item.productId) : onUpdateQuantity(item.productId, -1)}
+                        disabled={item.quantity < 1}
+                      >
+                        −
+                      </button>
+                      <span className="cart-dropdown-qty-value" aria-live="polite">{item.quantity}</span>
+                      <button
+                        className="cart-dropdown-qty-btn"
+                        aria-label={`Increase quantity of ${item.name}`}
+                        onClick={() => onUpdateQuantity(item.productId, 1)}
+                        disabled={item.quantity >= item.stock}
+                        title={item.quantity >= item.stock ? (item.stock === 1 ? "Max 1 per user" : `Only ${item.stock} in stock`) : "Increase quantity"}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {item.stock <= 3 && item.stock > 0 && (
+                      <p className="cart-dropdown-low-stock">Only {item.stock} left</p>
+                    )}
+                  </>
                 )}
               </div>
               <button

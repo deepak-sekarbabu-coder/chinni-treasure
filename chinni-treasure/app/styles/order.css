@@ -179,6 +179,41 @@
     gap: 8px;
 }
 
+
+/* Order Summary Gift Item */
+.order-summary-item-gift {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.04) 0%, rgba(212, 175, 55, 0.08) 100%);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--gold);
+}
+
+.order-summary-item-gift .order-summary-item-name {
+    color: var(--gold-deep);
+}
+
+.order-summary-item-gift .cart-gift-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--black);
+    background: var(--gold);
+    border-radius: 2px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+.order-summary-item-gift .cart-gift-price {
+    color: var(--gold-deep);
+    font-style: italic;
+    font-weight: 600;
+}
+
+
 /* Quantity count between − / + buttons — needs visible base styling */
 .qty-value {
     font-size: 0.85rem;

@@ -13,6 +13,7 @@ interface CartItem {
   quantity: number;
   stock: number;
   image?: string;
+  isGift?: boolean;
 }
 
 interface Props {
@@ -37,11 +38,12 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
 
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
   const progressPercent = Math.min(100, Math.max(0, (total / FREE_SHIPPING_THRESHOLD) * 100));
+  const displayCount = items.filter((i) => !i.isGift).length;
 
   return (
     <div className="admin-stat-card order-summary-card" style={{ textAlign: "left" }}>
       <h3 className="order-summary-title order-summary-title-desktop">
-        Order Summary{items.length > 0 && ` (${items.length})`}
+        Order Summary{displayCount > 0 && ` (${displayCount})`}
       </h3>
 
       <button
@@ -82,7 +84,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
           <>
             <div className="order-summary-items">
               {items.map((item) => (
-                <div key={item.productId} className="order-summary-item">
+                <div key={item.productId} className={`order-summary-item${item.isGift ? " order-summary-item-gift" : ""}`}>
                   <FallbackImage
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -93,43 +95,52 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                     className="order-summary-item-img"
                   />
                   <div className="order-summary-item-info">
-                    <h4 className="order-summary-item-name">{item.name}</h4>
-                    <p className="order-summary-item-price">₹{item.price.toFixed(2)} each</p>
-                    <div className="order-summary-item-qty">
-                      <button
-                        className="btn-secondary qty-btn"
-                        onClick={() => item.quantity <= 1 ? onRemove(item.productId) : onUpdateQuantity(item.productId, -1)}
-                        disabled={item.quantity < 1}
-                      >
-                        −
-                      </button>
-                      <span className="qty-value">{item.quantity}</span>
-                      <button
-                        className="btn-secondary qty-btn"
-                        onClick={() => onUpdateQuantity(item.productId, 1)}
-                        disabled={item.quantity >= item.stock}
-                        title={item.quantity >= item.stock ? (item.stock === 1 ? "Max 1 Qty per user" : `Maximum available quantity reached (${item.stock} in stock)`) : "Increase quantity"}
-                        aria-label={item.quantity >= item.stock ? (item.stock === 1 ? `Max 1 Qty per user for ${item.name}` : `Maximum quantity reached for ${item.name}`) : `Increase quantity for ${item.name}`}
-                      >
-                        +
-                      </button>
-                      <button
-                        className="order-summary-remove"
-                        onClick={() => onRemove(item.productId)}
-                        aria-label={`Remove ${item.name}`}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    {item.quantity >= item.stock && item.stock === 1 && (
-                      <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
-                        Max 1 Qty per user
-                      </p>
-                    )}
-                    {item.quantity >= item.stock && item.stock > 1 && (
-                      <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
-                        Max available quantity reached ({item.stock} in stock)
-                      </p>
+                    <h4 className="order-summary-item-name">
+                      {item.name}
+                      {item.isGift && <span className="cart-gift-badge">FREE GIFT</span>}
+                    </h4>
+                    {item.isGift ? (
+                      <p className="order-summary-item-price cart-gift-price">Complimentary</p>
+                    ) : (
+                      <>
+                        <p className="order-summary-item-price">₹{item.price.toFixed(2)} each</p>
+                        <div className="order-summary-item-qty">
+                          <button
+                            className="btn-secondary qty-btn"
+                            onClick={() => item.quantity <= 1 ? onRemove(item.productId) : onUpdateQuantity(item.productId, -1)}
+                            disabled={item.quantity < 1}
+                          >
+                            −
+                          </button>
+                          <span className="qty-value">{item.quantity}</span>
+                          <button
+                            className="btn-secondary qty-btn"
+                            onClick={() => onUpdateQuantity(item.productId, 1)}
+                            disabled={item.quantity >= item.stock}
+                            title={item.quantity >= item.stock ? (item.stock === 1 ? "Max 1 Qty per user" : `Maximum available quantity reached (${item.stock} in stock)`) : "Increase quantity"}
+                            aria-label={item.quantity >= item.stock ? (item.stock === 1 ? `Max 1 Qty per user for ${item.name}` : `Maximum quantity reached for ${item.name}`) : `Increase quantity for ${item.name}`}
+                          >
+                            +
+                          </button>
+                          <button
+                            className="order-summary-remove"
+                            onClick={() => onRemove(item.productId)}
+                            aria-label={`Remove ${item.name}`}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {item.quantity >= item.stock && item.stock === 1 && (
+                          <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
+                            Max 1 Qty per user
+                          </p>
+                        )}
+                        {item.quantity >= item.stock && item.stock > 1 && (
+                          <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
+                            Max available quantity reached ({item.stock} in stock)
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -178,7 +189,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
               <div className="order-summary-total-row">
                 <span>Shipping</span>
                 {shippingCost < 0 ? (
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>&#x2014;</span>
                 ) : shippingCost === 0 ? (
                   <span className="order-summary-free-shipping">Free</span>
                 ) : (
