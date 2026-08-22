@@ -340,8 +340,17 @@ export const openApiSpec = {
     "/api/products": {
       get: {
         tags: ["Products"],
-        summary: "List active products",
+        summary: "List products",
         operationId: "listProducts",
+        parameters: [
+          {
+            name: "isActive",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["all", "active", "inactive"], default: "active" },
+            description: "Filter by active status. Defaults to active-only for public listings.",
+          },
+        ],
         responses: {
           "200": {
             description: "Array of active products with category info",

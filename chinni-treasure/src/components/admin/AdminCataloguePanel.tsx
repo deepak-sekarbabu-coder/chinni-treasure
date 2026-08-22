@@ -76,7 +76,12 @@ export default function AdminCataloguePanel({
     [onFilterChange],
   );
 
-  const hasActiveFilters = filters.search || filters.categoryId || filters.badge !== "all" || filters.sort !== "newest";
+  const hasActiveFilters =
+    filters.search ||
+    filters.categoryId ||
+    filters.badge !== "all" ||
+    filters.status !== "all" ||
+    filters.sort !== "newest";
 
   return (
     <div id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue">
@@ -139,6 +144,17 @@ export default function AdminCataloguePanel({
 
           <select
             className="admin-catalogue-select"
+            value={filters.status}
+            onChange={(e) => onFilterChange({ status: e.target.value as ProductFilters["status"] })}
+            aria-label="Filter by active status"
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+
+          <select
+            className="admin-catalogue-select"
             value={filters.sort}
             onChange={(e) => onFilterChange({ sort: e.target.value })}
             aria-label="Sort products"
@@ -186,6 +202,12 @@ export default function AdminCataloguePanel({
               <span className="filter-chip">
                 Badge: {filters.badge}
                 <button type="button" onClick={() => onFilterChange({ badge: "all" })}>✕</button>
+              </span>
+            )}
+            {filters.status !== "all" && (
+              <span className="filter-chip">
+                Status: {filters.status === "active" ? "Active" : "Inactive"}
+                <button type="button" onClick={() => onFilterChange({ status: "all" })}>✕</button>
               </span>
             )}
           </div>

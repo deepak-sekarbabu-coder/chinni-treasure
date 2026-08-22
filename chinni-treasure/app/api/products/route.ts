@@ -61,6 +61,7 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit;
 
     const isActiveParam = searchParams.get("isActive");
+    const statusFilter = isActiveParam === "all" || isActiveParam === "inactive" ? isActiveParam : "active";
     const searchQuery = searchParams.get("search") || "";
     const rawCategoryId = searchParams.get("categoryId");
     const categoryId = rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined;
@@ -71,9 +72,9 @@ export async function GET(request: Request) {
     const hostname = getHostFromRequest(request);
     const domainFilter = domainFilterWhere(hostname);
 
-    const where: Prisma.ProductWhereInput = isActiveParam === "all"
+    const where: Prisma.ProductWhereInput = statusFilter === "all"
       ? { deletedAt: null, ...domainFilter }
-      : { isActive: true, deletedAt: null, ...domainFilter };
+      : { isActive: statusFilter !== "inactive", deletedAt: null, ...domainFilter };
 
     if (searchQuery) {
       where.OR = [
@@ -90,7 +91,7 @@ export async function GET(request: Request) {
       where.badge = badgeFilter as ProductBadge;
     }
 
-    const cacheKey = `${hostname ?? "default"}:${page}:${limit}:${isActiveParam || "active"}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
+    const cacheKey = `${hostname ?? "default"}:${page}:${limit}:${statusFilter}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
     const cached = await getCached(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {

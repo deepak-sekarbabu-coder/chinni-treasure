@@ -81,7 +81,7 @@ export function fetchOrders(params: OrdersQueryParams, signal?: AbortSignal) {
 export interface ProductsQueryParams {
   page: number;
   limit: number;
-  isActive?: "all" | "active";
+  isActive?: "all" | "active" | "inactive";
   search?: string;
   categoryId?: number;
   badge?: string;

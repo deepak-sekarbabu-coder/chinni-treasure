@@ -20,10 +20,11 @@ export interface ProductFilters {
   search: string;
   categoryId: number | "";
   badge: string;
+  status: "all" | "active" | "inactive";
   sort: string;
 }
 
-const DEFAULT_FILTERS: ProductFilters = { search: "", categoryId: "", badge: "all", sort: "newest" };
+const DEFAULT_FILTERS: ProductFilters = { search: "", categoryId: "", badge: "all", status: "all", sort: "newest" };
 
 export function useAdminPageState() {
   const { authenticated, authLoading, ready } = useAdminSession();
@@ -49,7 +50,7 @@ export function useAdminPageState() {
     {
       page: productPage,
       limit: PRODUCTS_PER_PAGE,
-      isActive: "all",
+      isActive: productFilters.status,
       search: productFilters.search || undefined,
       categoryId: typeof productFilters.categoryId === "number" ? productFilters.categoryId : undefined,
       badge: productFilters.badge !== "all" ? productFilters.badge : undefined,
