@@ -226,6 +226,7 @@ export default function AdminCataloguePanel({
               <th>Price & MRP</th>
               <th>Stock</th>
               <th>Badge</th>
+              <th>Bundling</th>
               <th>Gallery</th>
               <th>Status</th>
               <th>Actions</th>
@@ -236,7 +237,7 @@ export default function AdminCataloguePanel({
               <SkeletonRows />
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={10} className="empty-state">
+                <td colSpan={11} className="empty-state">
                   No products match your filters.
                 </td>
               </tr>
@@ -281,6 +282,7 @@ function SkeletonRows() {
       <td><div className="skeleton-text skeleton-text-price" /></td>
       <td><div className="skeleton-text skeleton-text-stock" /></td>
       <td><div className="skeleton-text skeleton-text-badge" /></td>
+      <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td><div className="skeleton-text" style={{ width: "40px" }} /></td>
       <td><div className="skeleton-text" style={{ width: "50px" }} /></td>
       <td>
@@ -363,6 +365,16 @@ function ProductRow({
         {product.badge ? (
           <span className={`luxury-badge badge-${product.badge.toLowerCase()}`}>
             {product.badge}
+          </span>
+        ) : (
+          <span className="text-muted text-xs">—</span>
+        )}
+      </td>
+      <td>
+        {product.allowGiftBoxBundling ? (
+          <span className="table-status-pill active">
+            <span className="status-dot" />
+            Enabled
           </span>
         ) : (
           <span className="text-muted text-xs">—</span>
