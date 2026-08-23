@@ -14,6 +14,7 @@ interface CartItem {
   stock: number;
   image?: string;
   isGift?: boolean;
+  giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>;
 }
 
 interface Props {
@@ -139,6 +140,18 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                           <p style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--warning)", letterSpacing: "0.2px" }}>
                             Max available quantity reached ({item.stock} in stock)
                           </p>
+                        )}
+                        {item.giftBoxes && item.giftBoxes.length > 0 && (
+                          <div className="gift-box-linked-items">
+                            {item.giftBoxes.map((gb) => (
+                              <div key={gb.productId} className="gift-box-linked-item">
+                                <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
+                                <span className="gift-box-linked-name">📦 {gb.name}</span>
+                                <span className="gift-box-linked-qty">×{gb.quantity}</span>
+                                <span className="gift-box-linked-price">₹{(gb.price * gb.quantity).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </>
                     )}
