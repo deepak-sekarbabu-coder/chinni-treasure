@@ -12,6 +12,7 @@ interface CartItem {
   image: string;
   stock: number;
   isGift?: boolean;
+  giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>;
 }
 
 interface Props {
@@ -77,6 +78,18 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
                     </div>
                     {item.stock <= 3 && item.stock > 0 && (
                       <p className="cart-dropdown-low-stock">Only {item.stock} left</p>
+                    )}
+                    {item.giftBoxes && item.giftBoxes.length > 0 && (
+                      <div className="gift-box-linked-items">
+                        {item.giftBoxes.map((gb) => (
+                          <div key={gb.productId} className="gift-box-linked-item">
+                            <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
+                            <span className="gift-box-linked-name">📦 {gb.name}</span>
+                            <span className="gift-box-linked-qty">×{gb.quantity}</span>
+                            <span className="gift-box-linked-price">₹{(gb.price * gb.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </>
                 )}

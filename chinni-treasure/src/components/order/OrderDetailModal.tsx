@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
   ORDER_STATUS_FLOW,
@@ -234,13 +234,31 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
                 </tr>
               </thead>
               <tbody>
-                {(order.items || []).map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.productName}</td>
-                    <td>{item.quantity}</td>
-                    <td>₹{Number(item.unitPrice * item.quantity).toFixed(2)}</td>
-                  </tr>
-                ))}
+                {(order.items || [])
+                  .filter((item) => !item.parentOrderItemId)
+                  .map((item) => {
+                    const linkedGiftBoxes = (order.items || []).filter(
+                      (gb) => gb.parentOrderItemId === item.id
+                    );
+                    return (
+                      <Fragment key={item.id}>
+                        <tr>
+                          <td>{item.productName}</td>
+                          <td>{item.quantity}</td>
+                          <td>₹{Number(item.unitPrice * item.quantity).toFixed(2)}</td>
+                        </tr>
+                        {linkedGiftBoxes.map((gb) => (
+                          <tr key={gb.id} className="gift-box-order-row">
+                            <td style={{ paddingLeft: "24px", fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                              📦 {gb.productName}
+                            </td>
+                            <td style={{ fontSize: "0.82rem" }}>{gb.quantity}</td>
+                            <td style={{ fontSize: "0.82rem" }}>₹{Number(gb.unitPrice * gb.quantity).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
               </tbody>
             </table>
             <div className="modal-totals">

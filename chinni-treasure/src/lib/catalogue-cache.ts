@@ -15,6 +15,7 @@ export const categoriesCache = createRedisCache(300_000, "categories");
 export const catLatestCache = createRedisCache(60_000, "catlatest");
 export const catPageCache = createRedisCache(60_000, "catpage");
 export const recentCache = createRedisCache(60_000, "recent");
+export const giftBoxCache = createRedisCache(60_000, "giftboxes");
 
 const CATALOGUE_CACHES = [
   productsCache,
@@ -22,6 +23,7 @@ const CATALOGUE_CACHES = [
   catLatestCache,
   catPageCache,
   recentCache,
+  giftBoxCache,
 ] as const;
 
 /**

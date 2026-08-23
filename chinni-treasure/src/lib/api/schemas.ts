@@ -15,6 +15,7 @@ const OrderItemSchema = z.object({
   unitPrice: z.coerce.number(),
   quantity: z.number(),
   productId: z.string().nullable().optional(),
+  parentOrderItemId: z.string().nullable().optional(),
   product: z
     .object({
       name: z.string().nullable().optional(),
@@ -91,6 +92,7 @@ export const ProductSchema = z.object({
   categoryId: z.number().nullable(),
   sku: z.string().nullable(),
   isActive: z.boolean(),
+  allowGiftBoxBundling: z.boolean().optional(),
   visibleHostnames: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
@@ -116,6 +118,7 @@ const CatalogueProductSchema = z.object({
   stockQuantity: z.number(),
   badge: z.string().nullable(),
   sku: z.string().nullable(),
+  allowGiftBoxBundling: z.boolean().optional(),
   images: z.array(ProductImageSchema).optional(),
 });
 
@@ -175,6 +178,14 @@ export const CreateOrderInputSchema = z.object({
       z.object({
         id: z.string().min(1, "Product ID is required"),
         quantity: z.number().int().positive("Quantity must be a positive integer"),
+        giftBoxes: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              quantity: z.number().int().positive(),
+            }),
+          )
+          .optional(),
       }),
     )
     .min(1, "At least one item is required"),
@@ -220,6 +231,7 @@ export const ProductInputSchema = z.object({
   badge: z.string().nullable().optional(),
   categoryId: z.coerce.number().int().positive().nullable().optional(),
   isActive: z.boolean().optional(),
+  allowGiftBoxBundling: z.boolean().optional(),
   visibleHostnames: z.string().optional(),
   images: z.array(ProductImageInputSchema).optional(),
 });

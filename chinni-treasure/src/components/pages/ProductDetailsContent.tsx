@@ -7,6 +7,7 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import StockBadge from "@/src/components/ui/StockBadge";
 import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
+import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/GiftBoxSelector";
 import type { ProductImageData } from "@/src/components/ui/ProductCard";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 
@@ -21,6 +22,7 @@ interface ProductDetails {
     stockQuantity: number;
     badge: string | null;
     sku: string | null;
+    allowGiftBoxBundling?: boolean;
     images: ProductImageData[];
 }
 
@@ -39,6 +41,7 @@ export default function ProductDetailsContent({ product }: Props) {
         dismiss: dismissShippingNudge,
     } = useShippingNudge();
     const [quantity, setQuantity] = useState(1);
+    const [selectedGiftBoxes, setSelectedGiftBoxes] = useState<SelectedGiftBox[]>([]);
 
     const allImages = product.images.length > 0
         ? product.images
@@ -59,6 +62,7 @@ export default function ProductDetailsContent({ product }: Props) {
                 image: product.imageUrl ?? "",
                 stock: product.stockQuantity,
                 sku: product.sku ?? undefined,
+                giftBoxes: i === 0 && selectedGiftBoxes.length > 0 ? selectedGiftBoxes : undefined,
             });
             if (result === "max_one") {
                 showToast(`Max 1 Qty per user for ${product.name}`, "info");
@@ -75,7 +79,7 @@ export default function ProductDetailsContent({ product }: Props) {
         }
         triggerShippingNudge(Number(product.price), quantity);
         showToast(`${quantity} × ${product.name} added to cart`, "success");
-    }, [product, quantity, addItem, showToast, triggerShippingNudge]);
+    }, [product, quantity, selectedGiftBoxes, addItem, showToast, triggerShippingNudge]);
 
     return (
         <div className="product-details-page">
@@ -133,6 +137,13 @@ export default function ProductDetailsContent({ product }: Props) {
                     </div>
 
                     <div className="product-details-actions">
+                        {product.allowGiftBoxBundling && product.category?.name !== "Gift Boxes" && (
+                            <GiftBoxSelector
+                                parentQuantity={quantity}
+                                selected={selectedGiftBoxes}
+                                onChange={setSelectedGiftBoxes}
+                            />
+                        )}
                         <div className="product-details-qty">
                             <button
                                 className="btn-secondary qty-btn"

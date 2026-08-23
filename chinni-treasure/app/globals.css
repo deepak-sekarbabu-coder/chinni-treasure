@@ -40,6 +40,7 @@
 @import "./styles/checkout.css";
 @import "./styles/order.css";
 @import "./styles/confirmation.css";
+@import "./styles/gift-box.css";
 
 /* Admin */
 @import "./styles/admin.css";

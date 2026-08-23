@@ -321,6 +321,29 @@ describe("Navbar", () => {
     expect(screen.getByText(/only 3 left/i)).toBeInTheDocument();
   });
 
+  it("shows linked gift boxes beneath items in cart dropdown", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelperWithGiftBox />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    expect(screen.getByText(/📦 Golden Gift Box/)).toBeInTheDocument();
+    expect(screen.getByText("×1")).toBeInTheDocument();
+    expect(screen.getByText("₹99.00")).toBeInTheDocument();
+  });
+
+  it("cart dropdown total includes gift box prices", () => {
+    render(
+      <CartProvider>
+        <NavbarTestHelperWithGiftBox />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByLabelText("Shopping cart"));
+    const totalEl = document.getElementById("cart-dropdown-total");
+    expect(totalEl?.textContent).toBe("₹128.99");
+  });
+
   it("Track link closes menu", () => {
     renderNavbar();
     fireEvent.click(screen.getByLabelText("Toggle menu"));
@@ -343,6 +366,24 @@ function NavbarTestHelperLowStock() {
   const { addItem } = useCart();
   React.useEffect(() => {
     addItem({ id: "prod-1", name: "Low Stock Product", price: 49.99, image: "/test.jpg", stock: 3 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <Navbar />;
+}
+
+function NavbarTestHelperWithGiftBox() {
+  const { addItem } = useCart();
+  React.useEffect(() => {
+    addItem({
+      id: "prod-1",
+      name: "Test Product",
+      price: 29.99,
+      image: "/test.jpg",
+      stock: 10,
+      giftBoxes: [
+        { productId: "box-1", name: "Golden Gift Box", price: 99, image: "/box.jpg", quantity: 1 },
+      ],
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return <Navbar />;

@@ -109,9 +109,12 @@
         right: 12px;
         left: 12px;
         bottom: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
         width: auto;
         max-height: 60vh;
-        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 12px;
         transform: translateY(calc(100% + 20px));
         transition:
             transform 0.35s var(--ease-out),
@@ -123,18 +126,54 @@
         transform: translateY(0);
     }
 
+    .cart-dropdown-items {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .cart-dropdown-total,
+    .cart-dropdown-shipping-note,
+    .cart-dropdown-actions,
+    .cart-dropdown > .cart-dropdown-browse-btn {
+        flex-shrink: 0;
+    }
+
+    .cart-dropdown-item {
+        padding: 10px 0;
+        gap: 10px;
+    }
+
+    .cart-dropdown-item-info h5 {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .cart-gift-badge {
+        margin-left: 0;
+    }
+
     .cart-dropdown-actions {
         flex-direction: column;
     }
 
+    .cart-dropdown-actions .btn {
+        padding: 14px 12px;
+        min-height: 48px;
+    }
+
     .cart-dropdown-qty-btn {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
     }
 
     .cart-overlay {
-        display: none;
+        display: block;
     }
 
     .step-navigation {
@@ -572,8 +611,10 @@
         left: 8px;
         right: 8px;
         bottom: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         padding: 20px;
         max-height: 70vh;
+        border-radius: 16px;
     }
 
     .cart-dropdown h4 {
@@ -599,14 +640,24 @@
 
     .cart-dropdown-actions .btn {
         font-size: 0.72rem;
-        padding: 8px 10px;
+        padding: 12px 10px;
+        min-height: 48px;
     }
 
     .cart-dropdown-qty-btn {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
         font-size: 0.8rem;
+    }
+
+    .cart-dropdown-low-stock {
+        font-size: 0.68rem;
+    }
+
+    .cart-gift-badge {
+        font-size: 0.55rem;
+        padding: 2px 6px;
     }
 
     .order-fieldset {

@@ -9,6 +9,7 @@ interface OrderItem {
   productName: string;
   unitPrice: number;
   quantity: number;
+  parentOrderItemId?: string | null;
 }
 
 interface OrderData {
@@ -171,6 +172,7 @@ async function generateInvoice(order: OrderData, logoBase64?: string | null) {
   doc.setTextColor(dark);
 
   for (const item of order.items) {
+    if (item.parentOrderItemId) continue;
     const name = item.productName.length > 35
       ? item.productName.slice(0, 32) + "..."
       : item.productName;
@@ -179,6 +181,22 @@ async function generateInvoice(order: OrderData, logoBase64?: string | null) {
     doc.text(fmt(item.unitPrice), priceX, y, { align: "right" });
     doc.text(fmt(item.unitPrice * item.quantity), totalX, y, { align: "right" });
     y += 6;
+
+    const linkedGiftBoxes = order.items.filter(
+      (gb) => gb.parentOrderItemId === item.id,
+    );
+    if (linkedGiftBoxes.length > 0) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(gray);
+      for (const gb of linkedGiftBoxes) {
+        const gbName = `  + Gift box: ${gb.productName.length > 28 ? gb.productName.slice(0, 25) + "..." : gb.productName} x${gb.quantity}`;
+        doc.text(gbName, nameX, y);
+        doc.text(fmt(gb.unitPrice * gb.quantity), totalX, y, { align: "right" });
+        y += 5;
+      }
+      doc.setFontSize(9);
+      doc.setTextColor(dark);
+    }
   }
 
   y += 2;
@@ -320,12 +338,31 @@ export default function ConfirmationDetails({ order }: { order: OrderData }) {
 
       <section className="confirmation-items" aria-labelledby="items-heading" style={{ marginBottom: "20px" }}>
         <h3 id="items-heading" style={{ fontFamily: "var(--font-serif)", fontSize: "1rem", marginBottom: "10px", color: "var(--gold)" }}>Items Ordered</h3>
-        {order.items.map((item) => (
-          <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(212,175,55,0.15)", fontSize: "0.85rem" }}>
-            <span>{item.productName} <span style={{ color: "var(--text-muted)" }}>×{item.quantity}</span></span>
-            <span style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}>₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
-          </div>
-        ))}
+        {order.items
+          .filter((item) => !item.parentOrderItemId)
+          .map((item) => {
+            const linkedGiftBoxes = order.items.filter(
+              (gb) => gb.parentOrderItemId === item.id
+            );
+            return (
+              <div key={item.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(212,175,55,0.15)", fontSize: "0.85rem" }}>
+                  <span>{item.productName} <span style={{ color: "var(--text-muted)" }}>×{item.quantity}</span></span>
+                  <span style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}>₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
+                </div>
+                {linkedGiftBoxes.length > 0 && (
+                  <div style={{ paddingLeft: "16px", borderLeft: "2px solid var(--gold)", marginLeft: "8px" }}>
+                    {linkedGiftBoxes.map((gb) => (
+                      <div key={gb.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                        <span>📦 {gb.productName} ×{gb.quantity}</span>
+                        <span>₹{(gb.unitPrice * gb.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", fontSize: "0.85rem" }}>
           <span style={{ color: "var(--text-muted)" }}>Subtotal</span>
           <span>₹{order.subtotal.toFixed(2)}</span>
