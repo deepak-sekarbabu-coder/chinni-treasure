@@ -200,7 +200,10 @@
 .cart-dropdown-items {
     max-height: 280px;
     overflow-y: auto;
+    overflow-x: hidden;
     margin-bottom: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
 }
 
 .cart-dropdown-item {
