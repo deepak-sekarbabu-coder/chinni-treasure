@@ -85,7 +85,7 @@ async function main() {
 
   // --- Products ---
   const prodSheet = wb.getWorksheet("Products")!;
-  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number; isActive: number | null; visibleHostnames: number | null; deletedAt: number | null };
+  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number; isActive: number | null; allowGiftBoxBundling: number | null; visibleHostnames: number | null; deletedAt: number | null };
   function buildProductColMap(): ProductColMap {
     const header = prodSheet.getRow(1);
     const idx: Record<string, number> = {};
@@ -100,6 +100,7 @@ async function main() {
       imageUrl: idx["image url"] || (idx["badge"] ? idx["badge"] - 1 : 9),
       badge: idx["badge"] || 10,
       isActive: idx["is active"] || null,
+      allowGiftBoxBundling: idx["allow gift box bundling"] || null,
       visibleHostnames: idx["visible hostnames"] || null,
       deletedAt: idx["deleted at"] || null,
     };
@@ -116,6 +117,7 @@ async function main() {
     description: string | null;
     badge: string | null;
     isActive: boolean;
+    allowGiftBoxBundling: boolean;
     visibleHostnames: string | null;
     deletedAt: string | null;
   }[] = [];
@@ -133,6 +135,7 @@ async function main() {
       description: row.getCell(prodCol.description).value ? String(row.getCell(prodCol.description).value) : null,
       badge: row.getCell(prodCol.badge).value ? String(row.getCell(prodCol.badge).value) : null,
       isActive: prodCol.isActive ? parseBool(row.getCell(prodCol.isActive).value) : true,
+      allowGiftBoxBundling: prodCol.allowGiftBoxBundling ? parseBool(row.getCell(prodCol.allowGiftBoxBundling).value) : false,
       visibleHostnames: prodCol.visibleHostnames && row.getCell(prodCol.visibleHostnames).value
         ? String(row.getCell(prodCol.visibleHostnames).value)
         : null,
@@ -268,29 +271,61 @@ async function main() {
     productName: string;
     unitPrice: number;
     quantity: number;
+    parentProductSku: string | null;
     createdAt: string | null;
   }[] = [];
   if (oiSheet) {
-    let orderIdx = 0;
+    const oiCol: Record<string, number> = {};
+    oiSheet.getRow(1).eachCell((cell, col) => { oiCol[String(cell.value).toLowerCase().trim()] = col; });
+    const oiCell = (row: ExcelJS.Row, key: string): unknown => {
+      const col = oiCol[key];
+      return col ? row.getCell(col).value : null;
+    };
+
+    // Build order ID to order number mapping from Orders sheet
+    const orderIdToNumber: Record<string, string> = {};
+    orderSheet?.eachRow((row, i) => {
+      if (i === 1) return;
+      orderIdToNumber[String(row.getCell(1).value || "")] = String(row.getCell(2).value || "");
+    });
+
+    const itemIdToSku: Record<string, string> = {};
+    const rawItems: { id: string; orderId: string; sku: string; productName: string; unitPrice: number; quantity: number; parentItemId: string | null; createdAt: string | null }[] = [];
     oiSheet.eachRow((row, i) => {
       if (i === 1) return;
-      const prodId = String(row.getCell(4).value || "");
-      const prodName = String(row.getCell(5).value || "");
+      const id = String(oiCell(row, "id") || "");
+      const prodId = String(oiCell(row, "product id") || "");
+      const prodName = String(oiCell(row, "product name") || "");
       let sku = prodIdToSku[prodId] || "";
       // Fallback: try matching by product name
       if (!sku) {
         sku = prodNameToSku[prodName.toLowerCase().trim()] || "";
       }
-      orderItems.push({
-        orderNumber: orders[orderIdx]?.orderNumber || "",
-        productSku: sku,
+      if (id && sku) {
+        itemIdToSku[id] = sku;
+      }
+      rawItems.push({
+        id,
+        orderId: String(oiCell(row, "order id") || ""),
+        sku,
         productName: prodName,
-        unitPrice: parseNum(row.getCell(6).value),
-        quantity: parseNum(row.getCell(7).value),
-        createdAt: parseDate(row.getCell(8).value),
+        unitPrice: parseNum(oiCell(row, "unit price")),
+        quantity: parseNum(oiCell(row, "quantity")),
+        parentItemId: oiCell(row, "parent order item id") ? String(oiCell(row, "parent order item id")) : null,
+        createdAt: parseDate(oiCell(row, "created at")),
       });
-      orderIdx++;
     });
+    for (const it of rawItems) {
+      orderItems.push({
+        orderNumber: orderIdToNumber[it.orderId] || "",
+        productSku: it.sku,
+        productName: it.productName,
+        unitPrice: it.unitPrice,
+        quantity: it.quantity,
+        parentProductSku: it.parentItemId ? itemIdToSku[it.parentItemId] ?? null : null,
+        createdAt: it.createdAt,
+      });
+    }
   }
 
   // --- Order Status History ---
@@ -370,6 +405,7 @@ export interface SeedProduct {
   description: string | null;
   badge: ProductBadge | null;
   isActive: boolean;
+  allowGiftBoxBundling?: boolean;
   visibleHostnames: string | null;
   deletedAt: string | null;
 }
@@ -388,6 +424,7 @@ export interface SeedOrderItem {
   productName: string;
   unitPrice: number;
   quantity: number;
+  parentProductSku?: string | null;
   createdAt: string | null;
 }
 

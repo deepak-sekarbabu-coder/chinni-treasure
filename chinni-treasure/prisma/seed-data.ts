@@ -57,6 +57,7 @@ export interface SeedProduct {
   description: string | null;
   badge: ProductBadge | null;
   isActive: boolean;
+  allowGiftBoxBundling?: boolean;
   visibleHostnames: string | null;
   deletedAt: string | null;
 }
@@ -1117,6 +1118,7 @@ export interface SeedOrderItem {
   productName: string;
   unitPrice: number;
   quantity: number;
+  parentProductSku?: string | null;
   createdAt: string | null;
 }
 

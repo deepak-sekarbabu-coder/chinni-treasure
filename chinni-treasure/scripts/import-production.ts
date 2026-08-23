@@ -106,7 +106,7 @@ async function main() {
   const products: {
     id: string; sku: string | null; name: string; categoryId: number | null;
     description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number;
-    imageUrl: string | null; badge: string | null; isActive: boolean;
+    imageUrl: string | null; badge: string | null; isActive: boolean; allowGiftBoxBundling: boolean;
     visibleHostnames: string | null; deletedAt: Date | null;
     createdAt: Date | null; updatedAt: Date | null;
   }[] = [];
@@ -124,6 +124,7 @@ async function main() {
       imageUrl: cell(row, prodCol, "image url") ? String(cell(row, prodCol, "image url")) : null,
       badge: cell(row, prodCol, "badge") ? String(cell(row, prodCol, "badge")) : null,
       isActive: parseBool(cell(row, prodCol, "is active")),
+      allowGiftBoxBundling: parseBool(cell(row, prodCol, "allow gift box bundling")),
       visibleHostnames: cell(row, prodCol, "visible hostnames") ? String(cell(row, prodCol, "visible hostnames")) : null,
       deletedAt: parseDate(cell(row, prodCol, "deleted at")),
       createdAt: parseDate(cell(row, prodCol, "created at")),
@@ -145,6 +146,7 @@ async function main() {
         imageUrl: p.imageUrl,
         badge: p.badge as ProductBadge | null,
         isActive: p.isActive,
+        allowGiftBoxBundling: p.allowGiftBoxBundling,
         visibleHostnames: p.visibleHostnames,
         deletedAt: p.deletedAt,
         createdAt: p.createdAt ?? undefined,
@@ -285,6 +287,7 @@ async function main() {
     productName: string;
     unitPrice: number;
     quantity: number;
+    parentOrderItemId: string | null;
     createdAt: Date | null;
   }[] = [];
   itemSheet.eachRow((row, i) => {
@@ -296,6 +299,7 @@ async function main() {
       productName: String(cell(row, itemCol, "product name") || ""),
       unitPrice: parseNum(cell(row, itemCol, "unit price")),
       quantity: parseNum(cell(row, itemCol, "quantity")),
+      parentOrderItemId: cell(row, itemCol, "parent order item id") ? String(cell(row, itemCol, "parent order item id")) : null,
       createdAt: parseDate(cell(row, itemCol, "created at")),
     });
   });
@@ -309,6 +313,7 @@ async function main() {
         productName: it.productName,
         unitPrice: it.unitPrice,
         quantity: it.quantity,
+        parentOrderItemId: it.parentOrderItemId,
         createdAt: it.createdAt ?? undefined,
       },
     });

@@ -94,6 +94,7 @@ async function exportToExcel() {
     { header: 'Image URL', key: 'imageUrl', width: 50 },
     { header: 'Badge', key: 'badge', width: 15 },
     { header: 'Is Active', key: 'isActive', width: 12, format: (v: unknown) => v ? 'Yes' : 'No' },
+    { header: 'Allow Gift Box Bundling', key: 'allowGiftBoxBundling', width: 20, format: (v: unknown) => v ? 'Yes' : 'No' },
     { header: 'Visible Hostnames', key: 'visibleHostnames', width: 40 },
     { header: 'Deleted At', key: 'deletedAt', width: 20, format: (v: unknown) => v ? (v as Date).toISOString() : '' },
     { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
@@ -154,6 +155,7 @@ async function exportToExcel() {
     { header: 'Product Name', key: 'productName', width: 40 },
     { header: 'Unit Price', key: 'unitPrice', width: 12, format: (v: unknown) => String(v) },
     { header: 'Quantity', key: 'quantity', width: 10 },
+    { header: 'Parent Order Item ID', key: 'parentOrderItemId', width: 36 },
     { header: 'Created At', key: 'createdAt', width: 20, format: (v: unknown) => (v as Date).toISOString() },
   ]);
 

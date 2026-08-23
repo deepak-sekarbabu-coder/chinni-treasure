@@ -39,6 +39,7 @@ async function seedProducts(categoryMap: Record<string, number>): Promise<Record
         badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
         ...(p.isActive !== undefined ? { isActive: p.isActive } : {}),
+        allowGiftBoxBundling: p.allowGiftBoxBundling ?? false,
         visibleHostnames: p.visibleHostnames ?? null,
         deletedAt: p.deletedAt ? new Date(p.deletedAt) : null,
       },
@@ -53,6 +54,7 @@ async function seedProducts(categoryMap: Record<string, number>): Promise<Record
         badge: p.badge,
         categoryId: categoryMap[p.categorySlug] || null,
         isActive: p.isActive ?? true,
+        allowGiftBoxBundling: p.allowGiftBoxBundling ?? false,
         visibleHostnames: p.visibleHostnames ?? null,
         deletedAt: p.deletedAt ? new Date(p.deletedAt) : null,
       },
@@ -149,8 +151,10 @@ async function seedOrders(skuMap: Record<string, string>) {
     await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
     await prisma.orderStatusHistory.deleteMany({ where: { orderId: order.id } });
 
+    const createdItemIdBySku: Record<string, string> = {};
+    const childLinks: { childId: string; parentSku: string | null }[] = [];
     for (const item of o.items) {
-      await prisma.orderItem.create({
+      const created = await prisma.orderItem.create({
         data: {
           orderId: order.id,
           productId: skuMap[item.productSku] || null,
@@ -159,6 +163,22 @@ async function seedOrders(skuMap: Record<string, string>) {
           quantity: item.quantity,
         },
       });
+      if (!createdItemIdBySku[item.productSku]) {
+        createdItemIdBySku[item.productSku] = created.id;
+      }
+      if (item.parentProductSku) {
+        childLinks.push({ childId: created.id, parentSku: item.parentProductSku });
+      }
+    }
+
+    for (const link of childLinks) {
+      const parentId = link.parentSku ? createdItemIdBySku[link.parentSku] : undefined;
+      if (parentId && parentId !== link.childId) {
+        await prisma.orderItem.update({
+          where: { id: link.childId },
+          data: { parentOrderItemId: parentId },
+        });
+      }
     }
 
     for (const h of o.statusHistory) {
