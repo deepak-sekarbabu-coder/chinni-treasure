@@ -337,6 +337,43 @@ export const openApiSpec = {
         },
       },
     },
+    "/api/gift-boxes": {
+      get: {
+        tags: ["Products"],
+        summary: "List active gift-box products (public)",
+        operationId: "listGiftBoxes",
+        responses: {
+          "200": {
+            description: "Array of active, in-stock gift-box products",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string", format: "uuid" },
+                      name: { type: "string" },
+                      price: { type: "number" },
+                      imageUrl: { type: "string", nullable: true },
+                      stockQuantity: { type: "integer" },
+                    },
+                    required: ["id", "name", "price"],
+                  },
+                },
+              },
+            },
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string" },
+                description: "public, s-maxage=60, stale-while-revalidate=120",
+              },
+            },
+          },
+          "500": { description: "Server error" },
+        },
+      },
+    },
     "/api/products": {
       get: {
         tags: ["Products"],
@@ -397,6 +434,10 @@ export const openApiSpec = {
                     enum: ["bestseller", "new", "premium", "limited", "luxury"],
                     nullable: true,
                   },
+                  allowGiftBoxBundling: {
+                    type: "boolean",
+                    description: "Allow customers to attach gift boxes to this product",
+                  },
                 },
               },
             },
@@ -443,6 +484,10 @@ export const openApiSpec = {
                     nullable: true,
                   },
                   isActive: { type: "boolean" },
+                  allowGiftBoxBundling: {
+                    type: "boolean",
+                    description: "Allow customers to attach gift boxes to this product. Cannot be enabled on Gift Box category products.",
+                  },
                 },
               },
             },
@@ -579,6 +624,18 @@ export const openApiSpec = {
                       properties: {
                         id: { type: "string", format: "uuid", description: "Product ID" },
                         quantity: { type: "integer", minimum: 1 },
+                        giftBoxes: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              id: { type: "string", format: "uuid", description: "Gift-box product ID" },
+                              quantity: { type: "integer", minimum: 1 },
+                            },
+                            required: ["id", "quantity"],
+                          },
+                          description: "Optional gift boxes to bundle with this product",
+                        },
                       },
                       required: ["id", "quantity"],
                     },
@@ -854,6 +911,10 @@ export const openApiSpec = {
             nullable: true,
           },
           isActive: { type: "boolean" },
+          allowGiftBoxBundling: {
+            type: "boolean",
+            description: "When true, customers can attach gift boxes to this product at checkout",
+          },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
@@ -886,6 +947,11 @@ export const openApiSpec = {
               properties: {
                 id: { type: "string", format: "uuid" },
                 productId: { type: "string", nullable: true },
+                parentOrderItemId: {
+                  type: "string",
+                  nullable: true,
+                  description: "ID of the parent order item this gift-box item is linked to",
+                },
                 productName: { type: "string" },
                 unitPrice: { type: "number" },
                 quantity: { type: "integer" },
