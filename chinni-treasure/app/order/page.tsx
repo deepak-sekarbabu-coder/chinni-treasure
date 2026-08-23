@@ -463,7 +463,16 @@ export default function OrderPage() {
   }
 
   const orderPayload = {
-    items: items.filter((i) => !i.isGift).map((i) => ({ id: i.productId, quantity: i.quantity })),
+    items: items
+      .filter((i) => !i.isGift)
+      .map((i) => ({
+        id: i.productId,
+        quantity: i.quantity,
+        giftBoxes: i.giftBoxes?.map((gb) => ({
+          id: gb.productId,
+          quantity: gb.quantity,
+        })),
+      })),
     customerName: form.fullName.trim(),
     customerEmail: form.email.trim(),
     customerPhone: form.phone.trim(),
