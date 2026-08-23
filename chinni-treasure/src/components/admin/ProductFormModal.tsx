@@ -49,6 +49,9 @@ export default function ProductFormModal({
 }: Props) {
   const trapRef = useFocusTrap(open);
   const [newImageUrl, setNewImageUrl] = useState("");
+  const isGiftBoxCategory = categories.find(
+    (c) => c.id === Number(productForm.categoryId)
+  )?.slug === "box";
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editUrl, setEditUrl] = useState("");
   const [imageUrlError, setImageUrlError] = useState("");
@@ -232,6 +235,26 @@ export default function ProductFormModal({
                   <span className="toggle-slider"></span>
                   <span className="toggle-label">{productForm.isActive ? "Active" : "Inactive"}</span>
                 </label>
+              </div>
+              <div className="form-group toggle-form-group">
+                <label>Gift-Box Bundling</label>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={productForm.allowGiftBoxBundling}
+                    onChange={(e) => onFormChange({ ...productForm, allowGiftBoxBundling: e.target.checked })}
+                    disabled={isGiftBoxCategory}
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-label">
+                    {productForm.allowGiftBoxBundling ? "Enabled" : "Disabled"}
+                  </span>
+                </label>
+                {isGiftBoxCategory && (
+                  <p className="form-hint" style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "4px" }}>
+                    Gift Box products cannot enable bundling
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label>Category</label>
