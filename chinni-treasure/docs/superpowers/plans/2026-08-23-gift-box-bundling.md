@@ -2,13 +2,51 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Complete the gift-box bundling feature by adding the missing UI layer (admin toggle, customer selector, cart/checkout/confirmation display) and updating API schemas to expose the `allowGiftBoxBundling` field.
+**Goal:** Complete the user-selected gift-box bundling feature — the system where customers choose a gift box from the "Gift Boxes" category to package their purchase in.
 
 **Architecture:** The backend foundation is already in place — the Prisma schema has `allowGiftBoxBundling` on Product and `parentOrderItemId` on OrderItem, the order creation route validates and persists gift boxes, and the product create/update APIs accept the field. This plan fills the gaps: API schema exposure, a gift-box products endpoint, admin UI for the toggle, customer-facing gift-box selector, cart/checkout/confirmation display of linked boxes, and OpenAPI spec updates.
 
 **Tech Stack:** Next.js 16 (App Router), React 19, Prisma 7, Zod 4, modular raw CSS under `app/styles/`, React Query 5 for server-state.
 
 **Spec:** The requirements are in the user-provided plan above (Gift-Box Bundling Feature summary).
+
+---
+
+## Two Gift Systems — Do Not Confuse
+
+This codebase has **two independent gift concepts**. They must not be mixed up:
+
+### 1. Free Surprise Gift (✅ Already complete — no work needed)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | A complimentary gift the store adds to every order (handwritten note, customized notes) |
+| **Controlled by** | `NEXT_PUBLIC_ENABLE_SURPRISE_GIFT` env var |
+| **Product ID** | Virtual: `"__surprise_gift__"` (not a real DB product) |
+| **Cart flag** | `isGift: true` on `CartItemDisplay` |
+| **Price** | Always ₹0, shown as "Complimentary" |
+| **UI** | `ComplementaryGiftPopup` announces it; `NavCartDropdown` and `OrderSummaryCard` show "FREE GIFT" badge |
+| **Order handling** | Excluded from order payload (`items.filter(i => !i.isGift)`) — never sent to the API |
+| **Files** | `src/components/cart/CartProvider.tsx` (`ensureGiftItem`, `SURPRISE_GIFT_ITEM`), `src/components/ui/ComplementaryGiftPopup.tsx`, `app/styles/complementary-gift.css` |
+
+**Do not modify any `isGift` logic.** It is a separate, finished feature.
+
+### 2. User-Selected Gift-Box Bundling (🔧 This plan)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Customer chooses a gift box product from the "Gift Boxes" category to package their purchase |
+| **Controlled by** | `allowGiftBoxBundling` boolean on Product (admin toggle per product) |
+| **Product IDs** | Real DB products in the category with `slug === "box"` |
+| **Cart storage** | `giftBoxes` array on each parent `CartItemDisplay` item |
+| **Price** | Uses the gift box product's actual price; added to cart/checkout total |
+| **Order handling** | Sent as `items[].giftBoxes` in the order API; persisted as `OrderItem` rows with `parentOrderItemId` linking to the parent |
+| **Backend** | Already implemented (schema, order API validation, stock deduction) |
+| **Frontend** | This plan covers the missing UI and API schema pieces |
+
+**Key distinction in code:**
+- `isGift` → free surprise gift (virtual, ₹0, excluded from orders)
+- `giftBoxes` → user-selected gift-box bundling (real products, priced, included in orders)
 
 ---
 
@@ -21,6 +59,7 @@
 - JWT auth via HttpOnly cookie for admin routes
 - Follow existing file conventions and component patterns
 - Gift Boxes category is identified by slug `"box"`
+- Do not modify any `isGift` / surprise-gift logic
 
 ---
 
@@ -30,20 +69,18 @@
 
 | File | Responsibility |
 |------|---------------|
-| `src/lib/api/schemas.ts` | Add `allowGiftBoxBundling` to `ProductSchema` and `ProductInputSchema`; add `parentOrderItemId` to `OrderItemSchema`; add gift box sub-item types |
+| `src/lib/api/schemas.ts` | Add `allowGiftBoxBundling` to `ProductSchema` and `ProductInputSchema`; add `parentOrderItemId` to `OrderItemSchema`; add `giftBoxes` to `CreateOrderInputSchema` |
 | `src/lib/openapi-spec.ts` | Document `allowGiftBoxBundling` on Product schema and gift box items on Order |
-| `app/api/products/route.ts` | Already handles `allowGiftBoxBundling` — no changes needed |
-| `app/api/products/[id]/route.ts` | Already handles `allowGiftBoxBundling` — no changes needed |
 | `app/api/gift-boxes/route.ts` | **New** — public endpoint to fetch active gift-box products |
 | `src/lib/catalogue-cache.ts` | Add gift-box products cache |
 | `src/components/admin/AdminCataloguePanel.tsx` | Add "Gift Box" column to product table; add `allowGiftBoxBundling` to `ProductFormData` |
 | `src/components/admin/ProductFormModal.tsx` | Add "Allow gift-box bundling" toggle (disabled for Gift Box category products) |
 | `app/admin/useAdminPageState.ts` | Pass `allowGiftBoxBundling` through filter/form state |
-| `src/lib/hooks/useAdminCatalogueController.ts` | Add `allowGiftBoxBundling` to form state and save payload |
+| `src/lib/hooks/useAdminCatalogueController.ts` | Add `allowGiftBoxBundling` to form state, defaults, conversion, and save payload |
 | `src/components/pages/ProductDetailsContent.tsx` | Add gift-box selector when product supports bundling |
-| `src/components/cart/CartProvider.tsx` | Handle gift-box items in cart (add/remove/update with parent linkage) |
+| `src/components/cart/CartProvider.tsx` | Handle `giftBoxes` array on cart items (add/remove/update with parent linkage) — **separate from `isGift`** |
 | `src/components/order/OrderSummaryCard.tsx` | Display linked gift boxes beneath parent products |
-| `app/order/page.tsx` | Pass gift boxes in order payload |
+| `app/order/page.tsx` | Pass `giftBoxes` in order payload |
 | `src/components/order/ConfirmationDetails.tsx` | Display linked gift boxes in order items |
 | `src/components/order/OrderDetailModal.tsx` | Display linked gift boxes in admin order detail |
 | `app/styles/gift-box.css` | **New** — styles for gift-box selector and display |
@@ -59,7 +96,7 @@
 
 **Interfaces:**
 - Consumes: existing `ProductSchema`, `OrderItemSchema`, `CreateOrderInputSchema`
-- Produces: updated schemas with `allowGiftBoxBundling`, `parentOrderItemId`, and gift-box sub-item types
+- Produces: updated schemas with `allowGiftBoxBundling`, `parentOrderItemId`, and `giftBoxes` on order items
 
 - [ ] **Step 1: Add `allowGiftBoxBundling` to ProductSchema**
 
@@ -107,33 +144,7 @@ export const ProductInputSchema = z.object({
 });
 ```
 
-- [ ] **Step 3: Add `parentOrderItemId` to OrderItemSchema and gift-box sub-item types**
-
-Add a `GiftBoxOrderItemSchema` and update `OrderItemSchema`:
-
-```typescript
-export const GiftBoxOrderItemSchema = z.object({
-  id: z.string(),
-  productName: z.string(),
-  unitPrice: z.coerce.number(),
-  quantity: z.number(),
-  productId: z.string().nullable().optional(),
-  parentOrderItemId: z.string().nullable().optional(),
-  product: z
-    .object({
-      name: z.string().nullable().optional(),
-      sku: z.string().nullable().optional(),
-      imageUrl: z.string().nullable().optional(),
-      compareAtPrice: z.coerce.number().nullable().optional(),
-    })
-    .nullable()
-    .optional(),
-});
-
-export type GiftBoxOrderItem = z.infer<typeof GiftBoxOrderItemSchema>;
-```
-
-Update `OrderItemSchema` to include `parentOrderItemId`:
+- [ ] **Step 3: Add `parentOrderItemId` to OrderItemSchema**
 
 ```typescript
 const OrderItemSchema = z.object({
@@ -155,35 +166,46 @@ const OrderItemSchema = z.object({
 });
 ```
 
-- [ ] **Step 4: Update CatalogueProductSchema to include `allowGiftBoxBundling`**
+- [ ] **Step 4: Add `giftBoxes` to CreateOrderInputSchema**
 
 ```typescript
-const CatalogueProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  price: z.coerce.number(),
-  compareAtPrice: z.coerce.number().nullable().optional(),
-  imageUrl: z.string().nullable(),
-  description: z.string().nullable(),
-  category: z.object({ name: z.string() }).nullable(),
-  stockQuantity: z.number(),
-  badge: z.string().nullable(),
-  sku: z.string().nullable(),
-  allowGiftBoxBundling: z.boolean().optional(),
-  images: z.array(ProductImageSchema).optional(),
+export const CreateOrderInputSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1, "Product ID is required"),
+        quantity: z.number().int().positive("Quantity must be a positive integer"),
+        giftBoxes: z.array(z.object({
+          id: z.string().min(1),
+          quantity: z.number().int().positive(),
+        })).optional(),
+      }),
+    )
+    .min(1, "At least one item is required"),
+  // ... rest of fields unchanged
 });
 ```
 
-- [ ] **Step 5: Run typecheck to verify**
+- [ ] **Step 5: Update CatalogueProductSchema to include `allowGiftBoxBundling`**
+
+```typescript
+const CatalogueProductSchema = z.object({
+  // ... existing fields
+  allowGiftBoxBundling: z.boolean().optional(),
+  // ...
+});
+```
+
+- [ ] **Step 6: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/lib/api/schemas.ts
-git commit -m "feat: add allowGiftBoxBundling and parentOrderItemId to API schemas"
+git commit -m "feat: add allowGiftBoxBundling, parentOrderItemId, and giftBoxes to API schemas"
 ```
 
 ---
@@ -446,12 +468,13 @@ git commit -m "feat: add gift-box bundling column to admin product list"
 **Files:**
 - Create: `src/components/pages/GiftBoxSelector.tsx`
 - Modify: `src/components/pages/ProductDetailsContent.tsx`
+- Modify: `app/catalogue/[id]/page.tsx`
 - Create: `app/styles/gift-box.css`
 - Modify: `app/globals.css`
 
 **Interfaces:**
 - Consumes: `GET /api/gift-boxes` response (array of `{ id, name, price, imageUrl, stockQuantity }`)
-- Produces: selected gift boxes array `Array<{ productId: string; quantity: number }>` passed to cart
+- Produces: selected gift boxes array `Array<{ productId: string; quantity: number }>` passed to cart's `giftBoxes` field
 
 - [ ] **Step 1: Create GiftBoxSelector component**
 
@@ -510,10 +533,8 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
   function toggleBox(box: GiftBox) {
     const existing = selected.find((s) => s.productId === box.id);
     if (existing) {
-      // Remove this box
       onChange(selected.filter((s) => s.productId !== box.id));
     } else if (canAddMore) {
-      // Add with quantity 1
       onChange([...selected, { productId: box.id, quantity: 1 }]);
     }
   }
@@ -543,8 +564,8 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
-        <span className="gift-box-toggle-icon">🎁</span>
-        <span>Add a Gift Box</span>
+        <span className="gift-box-toggle-icon">📦</span>
+        <span>Add a Gift Box for Packing</span>
         {selected.length > 0 && (
           <span className="gift-box-count">{selected.length}</span>
         )}
@@ -636,7 +657,7 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
             if (!box) return null;
             return (
               <span key={s.productId} className="gift-box-selected-tag">
-                🎁 {box.name} ×{s.quantity}
+                📦 {box.name} ×{s.quantity}
                 <button
                   type="button"
                   onClick={() => onChange(selected.filter((x) => x.productId !== s.productId))}
@@ -654,15 +675,14 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
 }
 ```
 
-- [ ] **Step 2: Integrate GiftBoxSelector into ProductDetailsContent**
+- [ ] **Step 2: Update ProductDetailsContent to accept and use gift-box data**
 
 In `src/components/pages/ProductDetailsContent.tsx`:
 
 1. Import `GiftBoxSelector`
-2. Add state: `const [selectedGiftBoxes, setSelectedGiftBoxes] = useState<Array<{ productId: string; quantity: number }>>([]);`
-3. Pass `allowGiftBoxBundling` and `category` through the product details interface and the server page
-4. In the product details page (`app/catalogue/[id]/page.tsx`), pass `allowGiftBoxBundling` and `category` to `productData`
-5. Show the selector between the description and the add-to-cart button:
+2. Add `allowGiftBoxBundling` and `category` to the `ProductDetails` interface
+3. Add state: `const [selectedGiftBoxes, setSelectedGiftBoxes] = useState<Array<{ productId: string; quantity: number }>>([]);`
+4. Show the selector between the description and the add-to-cart button:
 
 ```tsx
 {product.allowGiftBoxBundling && product.category?.name !== "Gift Boxes" && (
@@ -674,9 +694,33 @@ In `src/components/pages/ProductDetailsContent.tsx`:
 )}
 ```
 
-6. Update `handleAddToCart` to pass gift boxes to the cart's `addItem` (the cart already supports `giftBoxes` in `CartItem`)
+5. Update `handleAddToCart` to pass gift boxes to the cart's `addItem`:
 
-- [ ] **Step 3: Create gift-box.css styles**
+```typescript
+const result = addItem({
+  id: product.id,
+  name: product.name,
+  price: Number(product.price),
+  image: product.imageUrl ?? "",
+  stock: product.stockQuantity,
+  sku: product.sku ?? undefined,
+  giftBoxes: selectedGiftBoxes.length > 0 ? selectedGiftBoxes : undefined,
+});
+```
+
+- [ ] **Step 3: Pass `allowGiftBoxBundling` and `category` from server page**
+
+In `app/catalogue/[id]/page.tsx`, add to `productData`:
+
+```typescript
+const productData = {
+  // ... existing fields
+  allowGiftBoxBundling: product.allowGiftBoxBundling,
+  category: product.category,
+};
+```
+
+- [ ] **Step 4: Create gift-box.css styles**
 
 Create `app/styles/gift-box.css` with styles for:
 - `.gift-box-selector` — container
@@ -688,8 +732,11 @@ Create `app/styles/gift-box.css` with styles for:
 - `.gift-box-selected-summary` — summary of selected boxes
 - `.gift-box-selected-tag` — individual selected box tag
 - `.gift-box-limit-hint` — max quantity hint
+- `.gift-box-linked-items` — linked boxes in cart/checkout
+- `.gift-box-linked-item` — individual linked box row
+- `.gift-box-order-row` — gift box row in admin order detail
 
-- [ ] **Step 4: Import gift-box.css in globals.css**
+- [ ] **Step 5: Import gift-box.css in globals.css**
 
 In `app/globals.css`, add:
 
@@ -697,12 +744,12 @@ In `app/globals.css`, add:
 @import "./styles/gift-box.css";
 ```
 
-- [ ] **Step 5: Run typecheck**
+- [ ] **Step 6: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/components/pages/GiftBoxSelector.tsx src/components/pages/ProductDetailsContent.tsx app/catalogue/\[id\]/page.tsx app/styles/gift-box.css app/globals.css
@@ -718,7 +765,9 @@ git commit -m "feat: add customer-facing gift-box selector on product detail pag
 
 **Interfaces:**
 - Consumes: `CartItem.giftBoxes` (already defined in `src/types/cart.ts`)
-- Produces: cart items with gift-box sub-items, updated `toCartCookie` and `getTotal`
+- Produces: cart items with `giftBoxes` array, updated `toCartCookie`, `getTotal`, and cascading removal
+
+**Important:** This task only touches the `giftBoxes` array on cart items. The `isGift` flag (free surprise gift) is a completely separate system and must not be modified.
 
 - [ ] **Step 1: Extend CartItemDisplay with giftBoxes**
 
@@ -733,7 +782,7 @@ export interface CartItemDisplay {
   image: string;
   stock: number;
   sku?: string;
-  isGift?: boolean;
+  isGift?: boolean;  // ← free surprise gift (DO NOT CHANGE)
   giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>;
 }
 ```
@@ -766,11 +815,11 @@ interface CartContextType {
 
 - [ ] **Step 3: Update addItem to include giftBoxes**
 
-When adding a product, if `giftBoxes` are provided, attach them to the cart item.
+When adding a product, if `giftBoxes` are provided in the product parameter, attach them to the cart item. Store the gift box product details (name, price, image) so they can be displayed in the cart without extra fetches.
 
 - [ ] **Step 4: Update removeItem to cascade-remove linked gift boxes**
 
-When removing a parent product, also remove its linked gift boxes from the state.
+When removing a parent product, also remove its linked gift boxes from the state. This is the `giftBoxes` array, not the `isGift` flag.
 
 - [ ] **Step 5: Update toCartCookie to include giftBoxes**
 
@@ -845,7 +894,7 @@ interface CartItem {
 
 - [ ] **Step 2: Render gift boxes beneath parent items**
 
-After each non-gift, non-gift-box parent item's quantity controls, render its linked gift boxes:
+After each non-gift parent item's quantity controls, render its linked gift boxes:
 
 ```tsx
 {item.giftBoxes && item.giftBoxes.length > 0 && (
@@ -853,7 +902,7 @@ After each non-gift, non-gift-box parent item's quantity controls, render its li
     {item.giftBoxes.map((gb) => (
       <div key={gb.productId} className="gift-box-linked-item">
         <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
-        <span className="gift-box-linked-name">🎁 {gb.name}</span>
+        <span className="gift-box-linked-name">📦 {gb.name}</span>
         <span className="gift-box-linked-qty">×{gb.quantity}</span>
         <span className="gift-box-linked-price">₹{(gb.price * gb.quantity).toFixed(2)}</span>
       </div>
@@ -862,39 +911,15 @@ After each non-gift, non-gift-box parent item's quantity controls, render its li
 )}
 ```
 
-- [ ] **Step 3: Add gift-box-linked styles to gift-box.css**
-
-```css
-.gift-box-linked-items {
-  margin-top: 6px;
-  padding-left: 8px;
-  border-left: 2px solid var(--gold, #d4af37);
-}
-.gift-box-linked-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  font-size: 0.78rem;
-  color: var(--text-muted, #888);
-}
-.gift-box-linked-img {
-  border-radius: 4px;
-}
-.gift-box-linked-name {
-  flex: 1;
-}
-```
-
-- [ ] **Step 4: Run typecheck**
+- [ ] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add src/components/order/OrderSummaryCard.tsx app/styles/gift-box.css
+git add src/components/order/OrderSummaryCard.tsx
 git commit -m "feat: display linked gift boxes in order summary card"
 ```
 
@@ -937,37 +962,15 @@ const orderPayload = {
 };
 ```
 
-- [ ] **Step 2: Update CreateOrderInputSchema to accept giftBoxes**
-
-In `src/lib/api/schemas.ts`, update `CreateOrderInputSchema`:
-
-```typescript
-export const CreateOrderInputSchema = z.object({
-  items: z
-    .array(
-      z.object({
-        id: z.string().min(1, "Product ID is required"),
-        quantity: z.number().int().positive("Quantity must be a positive integer"),
-        giftBoxes: z.array(z.object({
-          id: z.string().min(1),
-          quantity: z.number().int().positive(),
-        })).optional(),
-      }),
-    )
-    .min(1, "At least one item is required"),
-  // ... rest unchanged
-});
-```
-
-- [ ] **Step 3: Run typecheck**
+- [ ] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add app/order/page.tsx src/lib/api/schemas.ts
+git add app/order/page.tsx
 git commit -m "feat: pass gift-box selections through checkout to order API"
 ```
 
@@ -1026,7 +1029,7 @@ In `src/components/order/ConfirmationDetails.tsx`:
           <div style={{ paddingLeft: "16px", borderLeft: "2px solid var(--gold)", marginLeft: "8px" }}>
             {linkedGiftBoxes.map((gb) => (
               <div key={gb.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                <span>🎁 {gb.productName} ×{gb.quantity}</span>
+                <span>📦 {gb.productName} ×{gb.quantity}</span>
                 <span>₹{(gb.unitPrice * gb.quantity).toFixed(2)}</span>
               </div>
             ))}
@@ -1059,17 +1062,12 @@ git commit -m "feat: display linked gift boxes on order confirmation page"
 
 **Files:**
 - Modify: `src/components/order/OrderDetailModal.tsx`
-- Modify: `app/api/orders/[id]/route.ts` (include `parentOrderItemId` in response)
 
 **Interfaces:**
 - Consumes: Order items with `parentOrderItemId`
 - Produces: gift boxes displayed in admin order detail modal
 
-- [ ] **Step 1: Include parentOrderItemId in order detail API response**
-
-In `app/api/orders/[id]/route.ts`, the Prisma query already includes all item fields. Verify `parentOrderItemId` is returned (it should be, since it's a scalar field on `OrderItem`). If not, add it to the `include` or `select`.
-
-- [ ] **Step 2: Update OrderDetailModal items table**
+- [ ] **Step 1: Update OrderDetailModal items table**
 
 In `src/components/order/OrderDetailModal.tsx`:
 
@@ -1094,7 +1092,7 @@ In `src/components/order/OrderDetailModal.tsx`:
         {linkedGiftBoxes.map((gb) => (
           <tr key={gb.id} className="gift-box-order-row">
             <td style={{ paddingLeft: "24px", fontSize: "0.82rem", color: "var(--text-muted)" }}>
-              🎁 {gb.productName}
+              📦 {gb.productName}
             </td>
             <td style={{ fontSize: "0.82rem" }}>{gb.quantity}</td>
             <td style={{ fontSize: "0.82rem" }}>₹{Number(gb.unitPrice * gb.quantity).toFixed(2)}</td>
@@ -1105,25 +1103,15 @@ In `src/components/order/OrderDetailModal.tsx`:
   })}
 ```
 
-- [ ] **Step 3: Add gift-box-order-row style**
-
-In `app/styles/gift-box.css`:
-
-```css
-.gift-box-order-row td {
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-}
-```
-
-- [ ] **Step 4: Run typecheck**
+- [ ] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add src/components/order/OrderDetailModal.tsx app/api/orders/\[id\]/route.ts app/styles/gift-box.css
+git add src/components/order/OrderDetailModal.tsx
 git commit -m "feat: display linked gift boxes in admin order detail modal"
 ```
 
@@ -1228,16 +1216,23 @@ Expected: PASS
    - ✅ Database changes (already done)
    - ✅ Admin toggle (Task 3)
    - ✅ Admin product list column (Task 4)
-   - ✅ Customer gift-box selector (Task 5)
-   - ✅ Cart handling (Task 6)
-   - ✅ Order summary display (Task 7)
-   - ✅ Checkout payload (Task 8)
-   - ✅ Confirmation display (Task 9)
-   - ✅ Admin order detail display (Task 10)
-   - ✅ OpenAPI spec (Task 11)
-   - ✅ Gift-box products endpoint (Task 2)
-   - ✅ API schemas (Task 1)
+   - ✅ Admin cannot enable toggle for Gift Box products (Task 3 - disabled when category slug is "box")
+   - ✅ All existing products start with bundling disabled (default false - already in schema)
+   - ✅ Customer "Add a gift box" option (Task 5)
+   - ✅ Show all active gift-box products with image, name, price, stock, quantity selector (Task 5)
+   - ✅ Allow multiple gift-box types (Task 5)
+   - ✅ Limit total gift-box quantity to parent quantity (Task 5)
+   - ✅ Gift-box prices added to cart/checkout total (Task 6, 7)
+   - ✅ Removing product removes linked gift boxes (Task 6)
+   - ✅ Gift boxes purchasable independently (already works - no changes needed)
+   - ✅ Recheck box stock during checkout (already done in order API)
+   - ✅ Reject checkout with clear message if unavailable (already done)
+   - ✅ Reduce stock for gift boxes (already done)
+   - ✅ Display linked gift boxes in cart, checkout, confirmation, admin order detail (Tasks 7, 9, 10)
+   - ✅ Test cases covered by existing tests + new components
 
 2. **Placeholder scan:** No TBD/TODO placeholders found.
 
 3. **Type consistency:** All interfaces and types are consistent across tasks.
+
+4. **Two-system separation:** The plan clearly distinguishes `isGift` (free surprise gift, already complete) from `giftBoxes` (user-selected gift-box bundling, this plan). No task modifies the free gift system.
