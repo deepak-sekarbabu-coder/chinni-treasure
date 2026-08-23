@@ -88,6 +88,7 @@ export default async function ProductDetailsPage({ params }: Props) {
         imageUrl: product.imageUrl ?? "",
         description: product.description ?? "",
         category: product.category,
+        allowGiftBoxBundling: product.allowGiftBoxBundling,
         stockQuantity: product.stockQuantity,
         badge: product.badge,
         sku: product.sku,
