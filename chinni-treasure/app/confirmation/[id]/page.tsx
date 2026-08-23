@@ -52,6 +52,7 @@ export default async function ConfirmationPage({ params }: Props) {
       productName: string;
       unitPrice: number;
       quantity: number;
+      parentOrderItemId: string | null;
     }[];
   } | null = null;
 
@@ -60,7 +61,7 @@ export default async function ConfirmationPage({ params }: Props) {
       where: { id },
       include: {
         items: {
-          select: { id: true, productName: true, unitPrice: true, quantity: true },
+          select: { id: true, productName: true, unitPrice: true, quantity: true, parentOrderItemId: true },
         },
       },
     });
@@ -90,6 +91,7 @@ export default async function ConfirmationPage({ params }: Props) {
           productName: i.productName,
           unitPrice: Number(i.unitPrice),
           quantity: i.quantity,
+          parentOrderItemId: i.parentOrderItemId,
         })),
       };
     }
