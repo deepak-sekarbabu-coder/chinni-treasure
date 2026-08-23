@@ -15,6 +15,14 @@ export const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
 const SURPRISE_GIFT_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_SURPRISE_GIFT !== "false";
 
+export interface CartGiftBox {
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
+
 export interface CartItemDisplay {
   productId: string;
   name: string;
@@ -24,6 +32,7 @@ export interface CartItemDisplay {
   stock: number;
   sku?: string;
   isGift?: boolean;
+  giftBoxes?: CartGiftBox[];
 }
 
 const SURPRISE_GIFT_ITEM: CartItemDisplay = {
@@ -45,18 +54,23 @@ function ensureGiftItem(items: CartItemDisplay[]): CartItemDisplay[] {
   return [...items, SURPRISE_GIFT_ITEM];
 }
 
+interface AddItemProduct {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  stock: number;
+  sku?: string;
+  giftBoxes?: CartGiftBox[];
+}
+
 interface CartContextType {
   items: CartItemDisplay[];
-  addItem: (product: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-    stock: number;
-    sku?: string;
-  }) => "added" | "max_reached" | "max_one" | "out_of_stock";
+  addItem: (product: AddItemProduct) => "added" | "max_reached" | "max_one" | "out_of_stock";
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, delta: number) => "updated" | "max_reached" | "max_one" | "removed" | "unchanged";
+  updateGiftBoxes: (parentProductId: string, giftBoxes: CartGiftBox[]) => void;
+  removeGiftBox: (parentProductId: string, giftBoxProductId: string) => void;
   clearCart: () => void;
   getTotal: () => number;
   getCount: () => number;
@@ -76,7 +90,26 @@ function saveCart(items: CartItemDisplay[]) {
 function toCartCookie(items: CartItemDisplay[]): CartItem[] {
   return items
     .filter((i) => !i.isGift)
-    .map((i) => ({ productId: i.productId, quantity: i.quantity }));
+    .map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+      giftBoxes: i.giftBoxes?.map((gb) => ({ productId: gb.productId, quantity: gb.quantity })),
+    }));
+}
+
+function mergeGiftBoxes(
+  current: CartGiftBox[] | undefined,
+  incoming: CartGiftBox[] | undefined,
+): CartGiftBox[] | undefined {
+  if (!incoming || incoming.length === 0) return current;
+  const merged = new Map<string, CartGiftBox>();
+  for (const gb of current ?? []) merged.set(gb.productId, { ...gb });
+  for (const gb of incoming) {
+    const existing = merged.get(gb.productId);
+    if (existing) existing.quantity += gb.quantity;
+    else merged.set(gb.productId, { ...gb });
+  }
+  return Array.from(merged.values());
 }
 
 const CART_COOKIE = "cart";
@@ -117,7 +150,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   }, [items]);
 
   const addItem = useCallback(
-    (product: { id: string; name: string; price: number; image: string; stock: number; sku?: string }) => {
+    (product: AddItemProduct) => {
       if (product.stock <= 0) return "out_of_stock" as const;
       let result: "added" | "max_reached" | "max_one" = "added";
       setItems((prev) => {
@@ -128,9 +161,11 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
             result = product.stock === 1 ? "max_one" : "max_reached";
             return prev;
           }
-          next = prev.map((i) =>
-            i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-          );
+          next = prev.map((i) => {
+            if (i.productId !== product.id) return i;
+            const merged = mergeGiftBoxes(i.giftBoxes, product.giftBoxes);
+            return { ...i, quantity: i.quantity + 1, ...(merged && { giftBoxes: merged }) };
+          });
         } else {
           next = [
             ...prev,
@@ -142,6 +177,9 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
               image: product.image,
               stock: product.stock,
               sku: product.sku,
+              ...(product.giftBoxes?.length && {
+                giftBoxes: product.giftBoxes.map((gb) => ({ ...gb })),
+              }),
             },
           ];
         }
@@ -154,6 +192,8 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
 
   const removeItem = useCallback((productId: string) => {
     setItems((prev) => {
+      // Linked gift boxes are stored on the parent item, so removing the
+      // parent removes them with it.
       const next = prev.filter((i) => i.productId !== productId);
       return ensureGiftItem(next);
     });
@@ -186,12 +226,41 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
     [],
   );
 
+  const updateGiftBoxes = useCallback((parentProductId: string, giftBoxes: CartGiftBox[]) => {
+    setItems((prev) =>
+      ensureGiftItem(
+        prev.map((i) =>
+          i.productId === parentProductId
+            ? { ...i, giftBoxes: giftBoxes.length > 0 ? giftBoxes.map((gb) => ({ ...gb })) : undefined }
+            : i,
+        ),
+      ),
+    );
+  }, []);
+
+  const removeGiftBox = useCallback((parentProductId: string, giftBoxProductId: string) => {
+    setItems((prev) =>
+      ensureGiftItem(
+        prev.map((i) => {
+          if (i.productId !== parentProductId || !i.giftBoxes) return i;
+          const remaining = i.giftBoxes.filter((gb) => gb.productId !== giftBoxProductId);
+          return { ...i, giftBoxes: remaining.length > 0 ? remaining : undefined };
+        }),
+      ),
+    );
+  }, []);
+
   const clearCart = useCallback(() => {
     setItems([]);
   }, []);
 
   const getTotal = useCallback(() => {
-    return items.reduce((sum, i) => (i.isGift ? sum : sum + i.price * i.quantity), 0);
+    return items.reduce((sum, i) => {
+      if (i.isGift) return sum;
+      const itemTotal = i.price * i.quantity;
+      const giftBoxTotal = i.giftBoxes?.reduce((gbSum, gb) => gbSum + gb.price * gb.quantity, 0) ?? 0;
+      return sum + itemTotal + giftBoxTotal;
+    }, 0);
   }, [items]);
 
   const getCount = useCallback(() => {
@@ -200,7 +269,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, getTotal, getCount }}
+      value={{ items, addItem, removeItem, updateQuantity, updateGiftBoxes, removeGiftBox, clearCart, getTotal, getCount }}
     >
       {children}
     </CartContext.Provider>
