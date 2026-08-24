@@ -79,6 +79,8 @@ export default function AdminPage() {
             advancingOrderId={ordersController.advancingOrderId}
             selectedOrder={selectedOrder}
             onSelectOrder={(order) => setSelectedOrderId(order?.id ?? null)}
+            sort={orderSort}
+            onSortChange={setOrderSort}
           />
         )}
 

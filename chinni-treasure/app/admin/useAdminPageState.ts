@@ -12,6 +12,7 @@ import { useAdminCategoriesController } from "@/src/lib/hooks/useAdminCategories
 import { useAdminHeaderActions } from "@/src/lib/hooks/useAdminHeaderActions";
 import { useAdminOrdersController } from "@/src/lib/hooks/useAdminOrdersController";
 import { useAdminSession } from "@/src/lib/hooks/useAdminSession";
+import type { OrderSortKey } from "@/src/components/admin/table/columns.orders";
 
 const PRODUCTS_PER_PAGE = ADMIN_PAGE_SIZES.products;
 const ITEMS_PER_PAGE = ADMIN_PAGE_SIZES.orders;
@@ -31,6 +32,7 @@ export function useAdminPageState() {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderSort, setOrderSort] = useState<OrderSortKey>("date-desc");
   const [productPage, setProductPage] = useState(1);
   const [activeTab, setActiveTab] = useState<AdminTabKey>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function useAdminPageState() {
 
   const statsQuery = useAdminStats(authenticated);
   const ordersQuery = useAdminOrders(
-    { page: currentPage, limit: ITEMS_PER_PAGE, status: statusFilter },
+    { page: currentPage, limit: ITEMS_PER_PAGE, status: statusFilter, sort: orderSort },
     authenticated,
   );
   const productsQuery = useAdminProducts(
@@ -104,6 +106,7 @@ export function useAdminPageState() {
     authLoading,
     ready,
     statusFilter,
+    orderSort,
     currentPage,
     productPage,
     activeTab,
@@ -127,6 +130,7 @@ export function useAdminPageState() {
     headerActions,
     setActiveTab,
     setCurrentPage,
+    setOrderSort,
     setProductPage,
     setSelectedOrderId,
     clearSelectedOrder,

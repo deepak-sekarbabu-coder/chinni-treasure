@@ -2229,3 +2229,19 @@
         transition: none;
     }
 }
+
+/* ── Orders Table Rows ── */
+.order-table-row {
+    cursor: pointer;
+}
+
+.order-table-row--selected {
+    background: rgba(212, 175, 55, 0.08);
+}
+
+.order-table-row--advancing {
+    opacity: 0.85;
+    cursor: default;
+    pointer-events: none;
+    animation: orderAdvanceShimmer 1.5s ease-in-out infinite;
+}
