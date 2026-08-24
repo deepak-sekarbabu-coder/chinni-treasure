@@ -2183,3 +2183,49 @@
         font-size: 0.7rem;
     }
 }
+/* ── Sortable Table Headers ── */
+.th-sort-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color var(--transition-fast) var(--ease-out);
+}
+
+.th-sort-btn:hover {
+    color: var(--gold-deep);
+}
+
+.th-sort-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    color: var(--gold-deep);
+}
+
+.admin-table th[data-sort] {
+    color: var(--gold-deep);
+}
+
+.admin-table th[data-sort]::after {
+    content: "↑";
+    font-size: 0.7rem;
+    margin-left: 2px;
+}
+
+.admin-table th[data-sort="desc"]::after {
+    content: "↓";
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .th-sort-btn {
+        transition: none;
+    }
+}
