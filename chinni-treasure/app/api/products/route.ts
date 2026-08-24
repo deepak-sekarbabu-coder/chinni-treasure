@@ -5,12 +5,13 @@ import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
-import { productsCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { productsCache, catIndexCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
 
 const { get: getCached, set: setCache } = productsCache;
+const { get: getIndexCached, set: setIndexCache } = catIndexCache;
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -51,6 +52,85 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
+type CatalogueIndexProduct = Prisma.ProductGetPayload<{
+  include: { category: { select: { name: true } }; images: true };
+}>;
+
+const INDEX_SORT_FIELDS: Record<
+  SortKey,
+  { field: (p: CatalogueIndexProduct) => string | number | null; dir: 1 | -1 }
+> = {
+  newest: { field: (p) => new Date(p.createdAt).getTime(), dir: -1 },
+  oldest: { field: (p) => new Date(p.createdAt).getTime(), dir: 1 },
+  "name-asc": { field: (p) => p.name, dir: 1 },
+  "name-desc": { field: (p) => p.name, dir: -1 },
+  "price-asc": { field: (p) => Number(p.price), dir: 1 },
+  "price-desc": { field: (p) => Number(p.price), dir: -1 },
+  "stock-desc": { field: (p) => p.stockQuantity, dir: -1 },
+  "stock-asc": { field: (p) => p.stockQuantity, dir: 1 },
+  "sku-asc": { field: (p) => p.sku, dir: 1 },
+  "sku-desc": { field: (p) => p.sku, dir: -1 },
+};
+
+// Mirrors the DB ordering: stockQuantity desc, then the chosen sort, then id desc.
+function compareIndexProducts(a: CatalogueIndexProduct, b: CatalogueIndexProduct, sortParam: SortKey): number {
+  if (a.stockQuantity !== b.stockQuantity) return b.stockQuantity - a.stockQuantity;
+  const { field, dir } = INDEX_SORT_FIELDS[sortParam] ?? INDEX_SORT_FIELDS.newest;
+  const av = field(a);
+  const bv = field(b);
+  if (av !== bv) {
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "string" || typeof bv === "string") {
+      const cmp = String(av).localeCompare(String(bv));
+      if (cmp !== 0) return cmp * dir;
+    } else {
+      return ((av as number) - (bv as number)) * dir;
+    }
+  }
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+}
+
+async function loadActiveIndex(hostname: string | null): Promise<CatalogueIndexProduct[]> {
+  const key = `${hostname ?? "default"}:active`;
+  const cached = (await getIndexCached(key)) as CatalogueIndexProduct[] | null;
+  if (cached) return cached;
+  const products = await prisma.product.findMany({
+    where: { isActive: true, deletedAt: null, ...domainFilterWhere(hostname) },
+    include: {
+      category: { select: { name: true } },
+      images: { orderBy: { displayOrder: "asc" } },
+    },
+    orderBy: [{ stockQuantity: "desc" }, { id: "desc" }],
+  });
+  await setIndexCache(key, products);
+  return products;
+}
+
+function filterActiveIndex(
+  index: CatalogueIndexProduct[],
+  searchQuery: string,
+  categoryId: number | undefined,
+  badgeFilter: string,
+): CatalogueIndexProduct[] {
+  let filtered = index;
+  const needle = searchQuery.toLowerCase();
+  if (needle) {
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(needle) ||
+        (p.sku ?? "").toLowerCase().includes(needle),
+    );
+  }
+  if (categoryId && Number.isFinite(categoryId)) {
+    filtered = filtered.filter((p) => p.categoryId === categoryId);
+  }
+  if (badgeFilter && badgeFilter !== "all") {
+    filtered = filtered.filter((p) => p.badge === badgeFilter);
+  }
+  return filtered;
+}
+
 // GET /api/products — List products (optionally paginated)
 export async function GET(request: Request) {
   try {
@@ -73,9 +153,29 @@ export async function GET(request: Request) {
     const hostname = getHostFromRequest(request);
     const domainFilter = domainFilterWhere(hostname);
 
+    // Public catalogue requests (active products) filter an in-memory index of
+    // the full active catalogue instead of querying Postgres per request, so
+    // search-as-you-type costs no database round trips after one cache load.
+    if (statusFilter === "active") {
+      const index = await loadActiveIndex(hostname);
+      const filtered = filterActiveIndex(index, searchQuery, categoryId, badgeFilter);
+      const sorted = [...filtered].sort((a, b) => compareIndexProducts(a, b, sortParam));
+      const total = sorted.length;
+      return NextResponse.json(
+        {
+          products: sorted.slice(skip, skip + limit),
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+        { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } },
+      );
+    }
+
     const where: Prisma.ProductWhereInput = statusFilter === "all"
       ? { deletedAt: null, ...domainFilter }
-      : { isActive: statusFilter !== "inactive", deletedAt: null, ...domainFilter };
+      : { isActive: false, deletedAt: null, ...domainFilter };
 
     if (searchQuery) {
       where.OR = [

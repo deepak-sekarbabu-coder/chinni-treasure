@@ -45,6 +45,7 @@ export default function CatalogueContent({
     dismiss: dismissShippingNudge,
   } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchInput, setSearchInput] = useState(initialSearch);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(initialCategoryId);
   const [pageTransitionLoading, setPageTransitionLoading] = useState(false);
@@ -52,6 +53,22 @@ export default function CatalogueContent({
   const settledImageIdsRef = useRef<Set<string>>(new Set());
 
   const pageSize = useResponsivePageSize();
+
+  // Debounce search commits so typing fires one request per pause, not per
+  // keystroke; the input itself stays responsive and never blocks on loading.
+  // The initial value comes from SSR, so skip committing it on mount.
+  const isInitialSearch = useRef(true);
+  useEffect(() => {
+    if (isInitialSearch.current) {
+      isInitialSearch.current = false;
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1);
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
 
   // Transform SSR data to match the current page size (avoids flash on mobile)
   const initialData = useMemo(() => {
@@ -140,8 +157,7 @@ export default function CatalogueContent({
   }, [currentPage]);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
+    setSearchInput(e.target.value);
   }, []);
 
   const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -180,10 +196,9 @@ export default function CatalogueContent({
             type="text"
             className={`catalogue-search-input${loading ? " catalogue-search-input--loading" : ""}`}
             placeholder="Search by product code..."
-            value={searchQuery}
+            value={searchInput}
             onChange={handleSearch}
             aria-label="Search products by code"
-            readOnly={loading}
           />
         </div>
 
