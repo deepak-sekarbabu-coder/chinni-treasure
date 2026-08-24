@@ -92,7 +92,7 @@ Redis is optional. `src/lib/redis-cache.ts` uses Redis when `REDIS_URL` is confi
 
 Cache ownership is intentionally split by domain:
 
-- `src/lib/catalogue-cache.ts` owns products, categories, latest-per-category, category-page, and recent-product caches. Any product or category mutation invalidates all five through `invalidateCatalogCaches()`.
+- `src/lib/catalogue-cache.ts` owns products, the active-product index (`catindex`, used to serve public catalogue searches from memory), categories, latest-per-category, category-page, and recent-product caches. Any product or category mutation invalidates all six through `invalidateCatalogCaches()`.
 - `src/lib/order-cache.ts` owns order-detail and tracking caches. It also clears the order-derived stats cache after order mutations through `invalidateOrderCache(orderId?)`.
 - `src/lib/stats-cache.ts` owns the dashboard statistics cache; invalidation is owned by `order-cache.ts` because stats derive from orders.
 - `src/lib/redis.ts` owns the shared ioredis client and is `null` when Redis is not configured.

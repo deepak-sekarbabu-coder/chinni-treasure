@@ -25,7 +25,7 @@ Terms marked **seam** are names for good module boundaries — use them when tal
 These are **deep modules** — small interfaces, big hidden implementations — that own a concept. Future reviews should deepen around these seams, not re-litigate them.
 
 ### Catalogue cache module — *seam*
-`src/lib/catalogue-cache.ts`. Owns **all five catalogue caches** (`products`, `categories`, `catlatest`, `catpage`, `recent`) and exports `invalidateCatalogCaches()`, which clears exactly what the module owns (the namespace in Redis via SCAN+DEL **plus** the local in-memory fallback). Routes import their cache from this module; they never call `createRedisCache` themselves. **Resolved by the Aug 2026 architecture review** — do not re-suggest a hardcoded namespace list.
+`src/lib/catalogue-cache.ts`. Owns **all six catalogue caches** (`products`, `catindex`, `categories`, `catlatest`, `catpage`, `recent`) and exports `invalidateCatalogCaches()`, which clears exactly what the module owns (the namespace in Redis via SCAN+DEL **plus** the local in-memory fallback). Routes import their cache from this module; they never call `createRedisCache` themselves. **Resolved by the Aug 2026 architecture review** — do not re-suggest a hardcoded namespace list. The `catindex` cache holds the full active-product list per hostname so public catalogue searches filter in memory instead of querying Postgres per request.
 
 ### Order cache module — *seam*
 `src/lib/order-cache.ts`. Owns the order-detail cache (`order`) and the tracking cache (`track`), plus `invalidateOrderCache(orderId?)`. Order-derived **stats are cleared here too** — on any order mutation (status change / tracking update), the dashboard cache must refresh.
