@@ -32,13 +32,13 @@ const OrderDetailModal = dynamic(() => import("@/src/components/order/OrderDetai
 export default function AdminPage() {
   const {
     authenticated, authLoading, ready,
-    statusFilter, currentPage, productPage, activeTab,
+    statusFilter, orderSort, currentPage, productPage, activeTab,
     productFilters,
     statsQuery, ordersQuery, productsQuery, categoriesQuery,
     orders, totalPages, products, productTotalPages,
     stats, chartData, productSales, selectedOrder,
     ordersController, catalogueController, categoriesController, headerActions,
-    setActiveTab, setCurrentPage, setProductPage, setSelectedOrderId,
+    setActiveTab, setCurrentPage, setOrderSort, setProductPage, setSelectedOrderId,
     clearSelectedOrder, handleStatusFilterChange,
     handleProductFilterChange, handleProductFilterReset,
   } = useAdminPageState();
