@@ -1,12 +1,19 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  type SortingState,
+} from "@tanstack/react-table";
+import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import { createCategoryColumns } from "@/src/components/admin/table/columns.categories";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 import CategoryFormModal from "@/src/components/admin/CategoryFormModal";
-
-const BADGE_ACTIVE = "delivered";
-const BADGE_INACTIVE = "rejected";
 
 interface Props {
   showForm: boolean;
@@ -48,6 +55,39 @@ export default function AdminCategoriesPanel({
   onToggleActive,
 }: Props) {
   const deleteTrapRef = useFocusTrap(deleteConfirm.open);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const columns = useMemo(
+    () =>
+      createCategoryColumns({
+        togglePendingId,
+        loadingCategoryId,
+        onToggleActive,
+        onEdit,
+        onRequestDelete,
+      }),
+    [togglePendingId, loadingCategoryId, onToggleActive, onEdit, onRequestDelete],
+  );
+
+  const table = useReactTable({
+    data: categories,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    sortDescFirst: false,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const q = String(filterValue).toLowerCase();
+      return (
+        row.original.name.toLowerCase().includes(q) ||
+        row.original.slug.toLowerCase().includes(q)
+      );
+    },
+  });
 
   return (
     <div id="panel-categories" role="tabpanel" aria-labelledby="tab-categories">
@@ -67,85 +107,23 @@ export default function AdminCategoriesPanel({
         onClose={onToggleForm}
       />
 
-      <div className="admin-product-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Order</th>
-              <th>Products</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categoriesLoading ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: "24px" }}>
-                  Loading categories…
-                </td>
-              </tr>
-            ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: "24px" }}>
-                  No categories yet. Create your first one above.
-                </td>
-              </tr>
-            ) : (
-              categories.map((c) => {
-                const isDeleting = loadingCategoryId === c.id;
-                const isToggling = togglePendingId === c.id;
-                const isActive = c.isActive ?? true;
-                const productCount = c.productCount ?? 0;
-                return (
-                  <tr key={c.id} className={`product-table-row ${isDeleting ? "removing" : ""}`}>
-                    <td className="fw-500">{c.name}</td>
-                    <td className="font-mono text-xs text-muted">{c.slug}</td>
-                    <td>{c.displayOrder}</td>
-                    <td>
-                      <span className={`stock-badge ${productCount > 0 ? "in-stock" : "empty"}`}>
-                        {productCount}
-                      </span>
-                    </td>
-                    <td className="active-cell">
-                      <span className={`status-badge ${isActive ? BADGE_ACTIVE : BADGE_INACTIVE}`}>
-                        {isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button
-                          className="btn btn-secondary product-action-btn btn-xs"
-                          onClick={() => onToggleActive(c)}
-                          disabled={isToggling}
-                        >
-                          {isActive ? "Disable" : "Enable"}
-                        </button>
-                        <button
-                          className="btn btn-secondary product-action-btn btn-xs"
-                          onClick={() => onEdit(c)}
-                          disabled={isDeleting}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`}
-                          onClick={() => onRequestDelete({ ...c, productCount })}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting && <span className="btn-spinner"></span>}
-                          {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="admin-category-search">
+        <input
+          type="text"
+          className="admin-catalogue-search-input"
+          placeholder="Search by name or slug..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          aria-label="Search categories"
+        />
       </div>
+
+      <AdminDataTable
+        table={table}
+        isLoading={categoriesLoading}
+        skeletonRowCount={4}
+        emptyMessage="No categories found."
+      />
 
       {deleteConfirm.open && (
         <div
