@@ -461,6 +461,30 @@
     border-top: 1px solid var(--cream);
 }
 
+/* ── Form Section Grouping ── */
+.form-section-group {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cream);
+}
+
+.form-section-group:last-of-type {
+    border-bottom: none;
+    margin-bottom: 8px;
+    padding-bottom: 0;
+}
+
+.form-section-title {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gold-deep);
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    letter-spacing: 0.02em;
+}
+
 /* ── Product Form Grid ── */
 .admin-product-form-grid {
     display: grid;
@@ -478,7 +502,7 @@
 }
 
 .admin-product-form-grid textarea {
-    min-height: 200px;
+    min-height: 140px;
 }
 
 /* ── Product Management Animations ── */
@@ -1517,6 +1541,30 @@
     .admin-product-form-grid .full-width {
         grid-column: span 1;
     }
+
+    .form-section-group {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+
+    .form-section-title {
+        font-size: 0.88rem;
+        margin-bottom: 12px;
+    }
+
+    .product-form-modal .modal-body {
+        padding: 20px;
+    }
+
+    .product-form-footer {
+        position: sticky;
+        bottom: 0;
+        background: var(--white);
+        margin: 16px -20px -20px;
+        padding: 14px 20px;
+        border-top: 1px solid var(--cream);
+        z-index: 1;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1642,6 +1690,31 @@
     .admin-product-form-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .product-form-modal .modal-body {
+        padding: 14px;
+    }
+
+    .form-section-group {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+    }
+
+    .form-section-title {
+        font-size: 0.82rem;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+    }
+
+    .product-form-footer {
+        margin: 12px -14px -14px;
+        padding: 12px 14px;
+    }
+
+    .product-form-footer .btn {
+        flex: 1;
+        min-height: 44px;
     }
 
     .admin-order-list .admin-stat-card {
