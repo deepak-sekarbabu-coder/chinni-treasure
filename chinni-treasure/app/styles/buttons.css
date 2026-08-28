@@ -403,14 +403,17 @@
 }
 
 .product-add-btn.cancel {
-    background: transparent !important;
-    color: var(--error) !important;
-    border: 1px solid var(--error) !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid rgba(212, 175, 55, 0.25) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .product-add-btn.cancel:hover {
-    background: var(--error) !important;
-    color: var(--white) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: var(--near-black) !important;
+    border-color: var(--gold) !important;
 }
 
 /* ── Footer link button ── */

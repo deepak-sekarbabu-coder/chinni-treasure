@@ -551,7 +551,9 @@
     margin-top: 8px;
     position: sticky;
     bottom: 0;
-    background: var(--white);
+    background: transparent;
+    padding-top: 0;
+    border-top: none;
 }
 
 .product-form-inner {
@@ -582,7 +584,9 @@
     margin-top: 8px;
     position: sticky;
     bottom: 0;
-    background: var(--white);
+    background: transparent;
+    padding-top: 0;
+    border-top: none;
 }
 
 /* ── Admin Catalogue Filters ── */
@@ -1134,6 +1138,85 @@
     border-color: var(--gold);
 }
 
+/* Navigation arrows on catalogue lightbox main image */
+.catalogue-lightbox-main-img {
+    position: relative;
+}
+
+.catalogue-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--cream);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--near-black);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.catalogue-lightbox-nav:hover {
+    background: var(--gold);
+    color: var(--black);
+    box-shadow: var(--shadow-gold);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.catalogue-lightbox-nav:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.catalogue-lightbox-nav-prev {
+    left: 10px;
+}
+
+.catalogue-lightbox-nav-next {
+    right: 10px;
+}
+
+/* Header right side (badge + close button) */
+.catalogue-lightbox-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Close button inside catalogue lightbox card */
+.catalogue-lightbox-close {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--error);
+    background: var(--error);
+    color: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.catalogue-lightbox-close:hover {
+    background: #c0392b;
+    transform: scale(1.08);
+}
+
+.catalogue-lightbox-close svg {
+    stroke: currentColor;
+}
+
 /* ── Product Images ── */
 .product-img {
     object-fit: cover;
@@ -1559,10 +1642,9 @@
     .product-form-footer {
         position: sticky;
         bottom: 0;
-        background: var(--white);
+        background: transparent;
         margin: 16px -20px -20px;
         padding: 14px 20px;
-        border-top: 1px solid var(--cream);
         z-index: 1;
     }
 }

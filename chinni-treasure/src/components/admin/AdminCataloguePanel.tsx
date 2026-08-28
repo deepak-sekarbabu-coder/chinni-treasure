@@ -299,26 +299,42 @@ function CatalogueProductLightbox({ product, onClose }: { product: Product; onCl
 
   const [activeIdx, setActiveIdx] = useState(0);
   const currentUrl = images[activeIdx] || "";
+  const hasMultiple = images.length > 1;
+
+  const goPrev = () => setActiveIdx((i) => (i - 1 + images.length) % images.length);
+  const goNext = () => setActiveIdx((i) => (i + 1) % images.length);
 
   return (
     <div className="lightbox-overlay active" onClick={onClose} style={{ opacity: 1, visibility: "visible" }}>
       <div className="lightbox-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
-        <button type="button" className="lightbox-close" onClick={onClose} aria-label="Close preview">
-          <X size={18} weight="bold" aria-hidden="true" />
-        </button>
         <div className="catalogue-lightbox-card">
           <div className="catalogue-lightbox-header">
             <h3>{product.name}</h3>
-            {product.category?.name && <span className="category-pill-badge">{product.category.name}</span>}
+            <div className="catalogue-lightbox-header-right">
+              {product.category?.name && <span className="category-pill-badge">{product.category.name}</span>}
+              <button type="button" className="catalogue-lightbox-close" onClick={onClose} aria-label="Close preview">
+                <X size={18} weight="bold" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className="catalogue-lightbox-main-img">
+            {hasMultiple && (
+              <button type="button" className="catalogue-lightbox-nav catalogue-lightbox-nav-prev" onClick={goPrev} aria-label="Previous image">
+                <CaretLeft size={22} weight="bold" aria-hidden="true" />
+              </button>
+            )}
             {currentUrl ? (
               <FallbackImage src={currentUrl} alt={product.name} width={500} height={500} className="lightbox-image" />
             ) : (
               <div className="product-img-placeholder" style={{ width: 250, height: 250 }} />
             )}
+            {hasMultiple && (
+              <button type="button" className="catalogue-lightbox-nav catalogue-lightbox-nav-next" onClick={goNext} aria-label="Next image">
+                <CaretRight size={22} weight="bold" aria-hidden="true" />
+              </button>
+            )}
           </div>
-          {images.length > 1 && (
+          {hasMultiple && (
             <div className="catalogue-lightbox-thumbs">
               {images.map((url, idx) => (
                 <button

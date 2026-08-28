@@ -583,22 +583,23 @@
 .image-preview-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 4px;
-    padding: 8px;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 8px;
     background: var(--white);
     border-top: 1px solid var(--cream);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .image-preview-actions .btn {
-    padding: 4px 8px;
-    font-size: 0.7rem;
-    min-height: 28px;
+    padding: 3px 6px;
+    font-size: 0.68rem;
+    min-height: 26px;
+    min-width: 26px;
+    flex: 0 0 auto;
 }
 
 .image-preview-actions .image-delete-btn {
-    margin-left: auto;
     background: #e74c3c;
     color: #fff;
     border-color: #e74c3c;
@@ -942,6 +943,7 @@
     .image-preview-actions .btn {
         min-height: 32px;
         padding: 4px 6px;
+        flex: 0 0 auto;
     }
 
     .lightbox-overlay {
@@ -1015,14 +1017,14 @@
     }
 
     .image-preview-actions {
-        flex-wrap: wrap;
-        gap: 3px;
-        padding: 5px;
+        flex-wrap: nowrap;
+        gap: 2px;
+        padding: 4px 5px;
     }
 
     .image-preview-actions .btn {
-        min-height: 30px;
-        padding: 3px 5px;
+        min-height: 28px;
+        padding: 2px 4px;
         font-size: 0.65rem;
     }
 
