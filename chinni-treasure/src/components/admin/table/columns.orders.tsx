@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import StatusBadge from "@/src/components/ui/StatusBadge";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Order } from "@/src/lib/api/schemas";
 
 export interface OrdersTableMeta {
@@ -22,6 +24,28 @@ export const STATE_TO_ORDER_SORT: Record<string, OrderSortKey> = {
   totalAmount: "total-asc",
 };
 
+export function OrderThumbCell({ order }: { order: Order }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const imageUrl = order.items?.[0]?.product?.imageUrl;
+  const hasValidImage = imageUrl && !imgFailed && /^https?:\/\//.test(imageUrl);
+  return (
+    <div className="order-thumb" aria-hidden="true">
+      {hasValidImage ? (
+        <FallbackImage
+          src={imageUrl}
+          alt=""
+          width={32}
+          height={40}
+          className="order-thumb-img"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <div className="product-img-placeholder" style={{ width: 32, height: 40, borderRadius: 0 }} />
+      )}
+    </div>
+  );
+}
+
 export function createOrderColumns(_meta: OrdersTableMeta): ColumnDef<Order>[] {
   void _meta;
   return [
@@ -30,7 +54,12 @@ export function createOrderColumns(_meta: OrdersTableMeta): ColumnDef<Order>[] {
       accessorKey: "orderNumber",
       header: "Order #",
       enableSorting: false,
-      cell: ({ row }) => <span className="fw-500">{row.original.orderNumber}</span>,
+      cell: ({ row }) => (
+        <div className="order-number-cell">
+          <OrderThumbCell order={row.original} />
+          <span className="fw-500">{row.original.orderNumber}</span>
+        </div>
+      ),
     },
     {
       id: "customer",
