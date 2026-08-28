@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import Markdown from "@/src/components/ui/Markdown";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
@@ -49,7 +50,21 @@ export default function ProductDetailsContent({ product }: Props) {
             ? [{ id: "primary", url: product.imageUrl, isPrimary: true, displayOrder: 0 }]
             : [];
 
-    const handleAddToCart = useCallback(() => {
+    const addBtnRef = useRef<HTMLButtonElement>(null);
+    const [btnSuccess, setBtnSuccess] = useState(false);
+
+    const handleRipple = useCallback((e: ReactMouseEvent<HTMLButtonElement>) => {
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement("span");
+        ripple.className = "btn-ripple";
+        ripple.style.left = `${e.clientX - rect.left}px`;
+        ripple.style.top = `${e.clientY - rect.top}px`;
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 500);
+    }, []);
+
+    const handleAddToCart = useCallback((e: ReactMouseEvent<HTMLButtonElement>) => {
         if (product.stockQuantity <= 0) {
             showToast(`${product.name} is out of stock`, "error");
             return;
@@ -79,6 +94,8 @@ export default function ProductDetailsContent({ product }: Props) {
         }
         triggerShippingNudge(Number(product.price), quantity);
         showToast(`${quantity} × ${product.name} added to cart`, "success");
+        setBtnSuccess(true);
+        setTimeout(() => setBtnSuccess(false), 600);
     }, [product, quantity, selectedGiftBoxes, addItem, showToast, triggerShippingNudge]);
 
     return (
@@ -164,8 +181,9 @@ export default function ProductDetailsContent({ product }: Props) {
                             </button>
                         </div>
                         <button
-                            className="btn btn-primary btn-lg product-details-add-btn"
-                            onClick={handleAddToCart}
+                            ref={addBtnRef}
+                            className={`btn btn-primary btn-lg product-details-add-btn${btnSuccess ? " btn-success" : ""}`}
+                            onClick={(e) => { handleRipple(e); handleAddToCart(e); }}
                             disabled={product.stockQuantity <= 0}
                         >
                             {product.stockQuantity <= 0 ? "Sold Out" : "Add to Cart"}

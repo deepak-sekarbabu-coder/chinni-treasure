@@ -26,6 +26,18 @@
     margin-bottom: 16px;
     font-weight: 400;
     letter-spacing: 0.01em;
+    position: relative;
+    display: inline-block;
+}
+
+.section-header h2::after {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 2px;
+    background: var(--gold);
+    margin: 16px auto 0;
+    border-radius: 1px;
 }
 
 .section-header p {

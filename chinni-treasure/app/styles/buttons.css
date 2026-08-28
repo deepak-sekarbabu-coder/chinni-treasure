@@ -400,6 +400,29 @@
 
 .product-add-btn {
     transition: all var(--transition) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ripple effect on press */
+.product-add-btn .btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    margin-left: -10px;
+    animation: btnRipple 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+/* Success flash on add-to-cart */
+.product-add-btn.btn-success {
+    background: linear-gradient(90deg, var(--gold), #c9a52e, var(--gold)) !important;
+    background-size: 200% 100% !important;
+    animation: btnSuccessFlash 0.6s ease-out;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
 }
 
 .product-add-btn.cancel {

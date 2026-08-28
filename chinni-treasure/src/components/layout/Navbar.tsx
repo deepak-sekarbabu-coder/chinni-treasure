@@ -12,6 +12,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [bounceKey, setBounceKey] = useState(0);
+  const [cartPulse, setCartPulse] = useState(false);
   const { items, removeItem, updateQuantity, getTotal, getCount } = useCart();
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const showAdmin = useSyncExternalStore(
@@ -45,6 +46,9 @@ export default function Navbar() {
   useEffect(() => {
     if (count > 0 && count !== prevCount.current) {
       setBounceKey((k) => k + 1);
+      setCartPulse(true);
+      const timer = setTimeout(() => setCartPulse(false), 600);
+      return () => clearTimeout(timer);
     }
     prevCount.current = count;
   }, [count]);
@@ -140,7 +144,7 @@ export default function Navbar() {
               />
               <button
                 onClick={() => setCartOpen(!cartOpen)}
-                className="cart-btn"
+                className={`cart-btn${cartPulse ? " cart-pulse" : ""}`}
                 aria-label="Shopping cart"
               >
                 <svg className="cart-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
