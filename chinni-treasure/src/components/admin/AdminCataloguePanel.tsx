@@ -1,6 +1,7 @@
 "use client";
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
 import {
   useReactTable,
@@ -156,7 +157,7 @@ export default function AdminCataloguePanel({
               onClick={() => onFilterChange({ search: "" })}
               aria-label="Clear search"
             >
-              ✕
+              <X size={14} weight="bold" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -235,25 +236,25 @@ export default function AdminCataloguePanel({
             {filters.search && (
               <span className="filter-chip">
                 Search: &quot;{filters.search}&quot;
-                <button type="button" onClick={() => onFilterChange({ search: "" })}>✕</button>
+                <button type="button" onClick={() => onFilterChange({ search: "" })}><X size={12} weight="bold" aria-hidden="true" /></button>
               </span>
             )}
             {filters.categoryId && (
               <span className="filter-chip">
                 Category: {categories.find((c) => c.id === filters.categoryId)?.name || filters.categoryId}
-                <button type="button" onClick={() => onFilterChange({ categoryId: "" })}>✕</button>
+                <button type="button" onClick={() => onFilterChange({ categoryId: "" })}><X size={12} weight="bold" aria-hidden="true" /></button>
               </span>
             )}
             {filters.badge !== "all" && (
               <span className="filter-chip">
                 Badge: {filters.badge}
-                <button type="button" onClick={() => onFilterChange({ badge: "all" })}>✕</button>
+                <button type="button" onClick={() => onFilterChange({ badge: "all" })}><X size={12} weight="bold" aria-hidden="true" /></button>
               </span>
             )}
             {filters.status !== "all" && (
               <span className="filter-chip">
                 Status: {filters.status === "active" ? "Active" : "Inactive"}
-                <button type="button" onClick={() => onFilterChange({ status: "all" })}>✕</button>
+                <button type="button" onClick={() => onFilterChange({ status: "all" })}><X size={12} weight="bold" aria-hidden="true" /></button>
               </span>
             )}
           </div>
@@ -265,6 +266,15 @@ export default function AdminCataloguePanel({
         isLoading={productsLoading}
         skeletonRowCount={5}
         emptyMessage="No products match your filters."
+      />
+
+      <CatalogueCards
+        products={products}
+        loading={productsLoading}
+        loadingProductId={loadingProductId}
+        onPreviewImages={setLightboxProduct}
+        onEdit={onEdit}
+        onRequestDelete={onRequestDelete}
       />
 
       <PaginationBar page={productPage} totalPages={productTotalPages} onPageChange={onPageChange} />
@@ -294,7 +304,7 @@ function CatalogueProductLightbox({ product, onClose }: { product: Product; onCl
     <div className="lightbox-overlay active" onClick={onClose} style={{ opacity: 1, visibility: "visible" }}>
       <div className="lightbox-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
         <button type="button" className="lightbox-close" onClick={onClose} aria-label="Close preview">
-          ✕
+          <X size={18} weight="bold" aria-hidden="true" />
         </button>
         <div className="catalogue-lightbox-card">
           <div className="catalogue-lightbox-header">
@@ -332,9 +342,173 @@ function PaginationBar({ page, totalPages, onPageChange }: { page: number; total
   if (totalPages <= 1) return null;
   return (
     <div className="pagination-bar">
-      <button className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>← Prev</button>
+      <button className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+        <CaretLeft size={14} weight="bold" aria-hidden="true" />
+        Prev
+      </button>
       <span className="pagination-text">Page {page} of {totalPages}</span>
-      <button className="btn btn-secondary btn-sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next →</button>
+      <button className="btn btn-secondary btn-sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+        Next
+        <CaretRight size={14} weight="bold" aria-hidden="true" />
+      </button>
     </div>
+  );
+}
+
+const CARD_PRICE_FORMAT = new Intl.NumberFormat("en-IN", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function CatalogueCardsSkeleton() {
+  return (
+    <div className="admin-catalogue-cards" aria-hidden="true">
+      {Array.from({ length: 4 }, (_, idx) => (
+        <div key={idx} className="catalogue-card">
+          <div className="catalogue-card-thumb">
+            <div className="skeleton-text" style={{ width: 72, height: 72 }} />
+          </div>
+          <div className="catalogue-card-body">
+            <div className="skeleton-text" style={{ width: "60%", height: 14 }} />
+            <div className="skeleton-text" style={{ width: "40%", height: 12, marginTop: 8 }} />
+            <div className="skeleton-text" style={{ width: "30%", height: 12, marginTop: 14 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CatalogueCards({
+  products,
+  loading,
+  loadingProductId,
+  onPreviewImages,
+  onEdit,
+  onRequestDelete,
+}: {
+  products: Product[];
+  loading: boolean;
+  loadingProductId: string | null;
+  onPreviewImages: (product: Product) => void;
+  onEdit: (product: Product) => void;
+  onRequestDelete: (product: Product) => void;
+}) {
+  if (loading) return <CatalogueCardsSkeleton />;
+
+  if (products.length === 0) {
+    return (
+      <div className="admin-catalogue-cards">
+        <p className="empty-state">No products match your filters.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="admin-catalogue-cards">
+      {products.map((product) => {
+        const primaryImage =
+          product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
+        const hasValidImage = !!primaryImage && /^https?:\/\//.test(primaryImage);
+        const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
+        const priceNum = Number(product.price) || 0;
+        const compareNum = Number(product.compareAtPrice) || 0;
+        const hasDiscount = compareNum > priceNum;
+        const savingsPercent = hasDiscount
+          ? Math.round(((compareNum - priceNum) / compareNum) * 100)
+          : 0;
+        const qty = product.stockQuantity;
+        const isDeleting = loadingProductId === product.id;
+
+        return (
+          <li key={product.id} className="catalogue-card">
+            <button
+              type="button"
+              className="catalogue-card-thumb"
+              onClick={() => onPreviewImages(product)}
+              aria-label={`View gallery for ${product.name}`}
+              title="Click to preview gallery images"
+            >
+              {hasValidImage ? (
+                <FallbackImage
+                  src={primaryImage}
+                  alt=""
+                  width={72}
+                  height={72}
+                  className="catalogue-card-thumb-img"
+                />
+              ) : (
+                <div className="product-img-placeholder" style={{ width: 56, height: 72 }} />
+              )}
+              {imageCount > 0 && (
+                <span className="catalogue-card-gallery-count">
+                  <Images size={12} weight="bold" aria-hidden="true" />
+                  {imageCount}
+                </span>
+              )}
+            </button>
+            <div className="catalogue-card-body">
+              <div className="catalogue-card-head">
+                <div className="catalogue-card-title">
+                  <strong className="catalogue-card-name">{product.name}</strong>
+                  {product.sku && <code className="sku-code">{product.sku}</code>}
+                </div>
+                <div className="catalogue-card-badges">
+                  {product.category?.name && (
+                    <span className="category-pill-badge">{product.category.name}</span>
+                  )}
+                  {product.badge && (
+                    <span className={`luxury-badge badge-${product.badge.toLowerCase()}`}>
+                      {product.badge}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="catalogue-card-meta">
+                <div className="table-price-cell">
+                  <div className="price-primary">₹{CARD_PRICE_FORMAT.format(priceNum)}</div>
+                  {hasDiscount && (
+                    <div className="price-secondary">
+                      <span className="price-mrp">₹{CARD_PRICE_FORMAT.format(compareNum)}</span>
+                      <span className="discount-badge">-{savingsPercent}%</span>
+                    </div>
+                  )}
+                </div>
+                <span
+                  className={`stock-health-badge ${qty <= 0 ? "out-of-stock" : qty <= 3 ? "low-stock" : "in-stock"}`}
+                >
+                  <span className="stock-dot" />
+                  {qty <= 0 ? "Out of stock" : qty <= 3 ? `Low (${qty})` : `${qty} in stock`}
+                </span>
+              </div>
+              <div className="catalogue-card-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary product-action-btn btn-sm"
+                  onClick={() => onEdit(product)}
+                  disabled={isDeleting}
+                >
+                  <PencilSimple size={15} weight="bold" aria-hidden="true" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-danger product-action-btn btn-sm ${isDeleting ? "loading" : ""}`}
+                  onClick={() => onRequestDelete(product)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <span className="btn-spinner" aria-hidden="true" />
+                  ) : (
+                    <Trash size={15} weight="bold" aria-hidden="true" />
+                  )}
+                  Delete
+                </button>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

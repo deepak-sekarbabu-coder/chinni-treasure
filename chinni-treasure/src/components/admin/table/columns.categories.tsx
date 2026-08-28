@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Eye, EyeSlash, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Category } from "@/src/lib/api/schemas";
 
 export interface CategoryTableMeta {
@@ -35,6 +36,7 @@ export function createCategoryColumns(meta: CategoryTableMeta): ColumnDef<Catego
       header: "Order",
       meta: { label: "Order" },
       sortDescFirst: false,
+      cell: ({ row }) => <span className="table-numeric">{row.original.displayOrder}</span>,
     },
     {
       id: "productCount",
@@ -44,7 +46,7 @@ export function createCategoryColumns(meta: CategoryTableMeta): ColumnDef<Catego
       cell: ({ row }) => {
         const productCount = row.original.productCount ?? 0;
         return (
-          <span className={`stock-badge ${productCount > 0 ? "in-stock" : "empty"}`}>
+          <span className={`stock-badge table-numeric ${productCount > 0 ? "in-stock" : "empty"}`}>
             {productCount}
           </span>
         );
@@ -74,29 +76,46 @@ export function createCategoryColumns(meta: CategoryTableMeta): ColumnDef<Catego
         const productCount = c.productCount ?? 0;
         const isDeleting = meta.loadingCategoryId === c.id;
         const isToggling = meta.togglePendingId === c.id;
+        const ToggleIcon = isActive ? EyeSlash : Eye;
         return (
           <div className="table-actions">
             <button
-              className="btn btn-secondary product-action-btn btn-xs"
-              disabled={isToggling}
+              type="button"
+              className={`btn btn-secondary product-action-btn icon-btn ${isToggling ? "loading" : ""}`}
+              disabled={isToggling || isDeleting}
               onClick={() => meta.onToggleActive(c)}
+              title={isActive ? "Disable category" : "Enable category"}
+              aria-label={`${isActive ? "Disable" : "Enable"} ${c.name}`}
             >
-              {isActive ? "Disable" : "Enable"}
+              {isToggling ? (
+                <span className="btn-spinner" aria-hidden="true" />
+              ) : (
+                <ToggleIcon size={15} weight="bold" aria-hidden="true" />
+              )}
             </button>
             <button
-              className="btn btn-secondary product-action-btn btn-xs"
-              disabled={isDeleting}
+              type="button"
+              className="btn btn-secondary product-action-btn icon-btn"
+              disabled={isToggling || isDeleting}
               onClick={() => meta.onEdit(c)}
+              title="Edit category"
+              aria-label={`Edit ${c.name}`}
             >
-              Edit
+              <PencilSimple size={15} weight="bold" aria-hidden="true" />
             </button>
             <button
-              className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`}
-              disabled={isDeleting}
+              type="button"
+              className={`btn btn-danger product-action-btn icon-btn ${isDeleting ? "loading" : ""}`}
+              disabled={isToggling || isDeleting}
               onClick={() => meta.onRequestDelete({ ...c, productCount })}
+              title="Delete category"
+              aria-label={`Delete ${c.name}`}
             >
-              {isDeleting && <span className="btn-spinner" />}
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? (
+                <span className="btn-spinner" aria-hidden="true" />
+              ) : (
+                <Trash size={15} weight="bold" aria-hidden="true" />
+              )}
             </button>
           </div>
         );

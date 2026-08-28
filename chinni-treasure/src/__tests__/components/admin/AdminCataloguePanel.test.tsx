@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import AdminCataloguePanel, {
   type ProductFormData,
 } from "@/src/components/admin/AdminCataloguePanel";
@@ -90,7 +90,8 @@ describe("AdminCataloguePanel header sorting", () => {
 
   it("renders rows via column cells and keeps pagination bar", () => {
     render(<AdminCataloguePanel {...buildProps()} />);
-    expect(screen.getByText("Silk Scarf")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("Silk Scarf")).toBeInTheDocument();
     expect(screen.queryByText(/page 1 of 1/i)).not.toBeInTheDocument(); // PaginationBar hides at 1 page
   });
 });

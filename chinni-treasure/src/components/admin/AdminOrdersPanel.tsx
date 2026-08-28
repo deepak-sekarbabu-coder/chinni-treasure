@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -123,7 +124,8 @@ export default function AdminOrdersPanel({
             disabled={currentPage <= 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
-            ← Prev
+            <CaretLeft size={14} weight="bold" aria-hidden="true" />
+            Prev
           </button>
           <span className="pagination-text">
             Page {currentPage} of {totalPages}
@@ -133,7 +135,8 @@ export default function AdminOrdersPanel({
             disabled={currentPage >= totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
-            Next →
+            Next
+            <CaretRight size={14} weight="bold" aria-hidden="true" />
           </button>
         </div>
       )}

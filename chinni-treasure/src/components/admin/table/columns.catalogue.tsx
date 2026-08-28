@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { Images, MagnifyingGlassPlus, PencilSimple, Trash } from "@phosphor-icons/react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Product } from "@/src/lib/api/schemas";
 
@@ -64,7 +65,9 @@ function GalleryThumbCell({
       ) : (
         <div className="product-img-placeholder" style={{ width: 52, height: 52 }} />
       )}
-      <div className="table-img-zoom-hint">🔍</div>
+      <div className="table-img-zoom-hint">
+        <MagnifyingGlassPlus size={13} weight="bold" aria-hidden="true" />
+      </div>
     </div>
   );
 }
@@ -192,7 +195,8 @@ export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Prod
             onClick={() => onPreviewImages(product)}
             title="Click to preview gallery images"
           >
-            🖼️ {imageCount}
+            <Images size={13} weight="bold" aria-hidden="true" />
+            {imageCount}
           </button>
         );
       },
@@ -230,21 +234,27 @@ export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Prod
           <div className="table-actions">
             <button
               type="button"
-              className="btn btn-secondary product-action-btn btn-xs"
+              className="btn btn-secondary product-action-btn icon-btn"
               onClick={() => onEdit(product)}
               disabled={isDeleting}
               title="Edit product"
+              aria-label={`Edit ${product.name}`}
             >
-              ✏️ Edit
+              <PencilSimple size={15} weight="bold" aria-hidden="true" />
             </button>
             <button
               type="button"
-              className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`}
+              className={`btn btn-danger product-action-btn icon-btn ${isDeleting ? "loading" : ""}`}
               onClick={() => onRequestDelete(product)}
               disabled={isDeleting}
               title="Delete product"
+              aria-label={`Delete ${product.name}`}
             >
-              {isDeleting ? "..." : "🗑️ Delete"}
+              {isDeleting ? (
+                <span className="btn-spinner" aria-hidden="true" />
+              ) : (
+                <Trash size={15} weight="bold" aria-hidden="true" />
+              )}
             </button>
           </div>
         );

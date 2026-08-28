@@ -1,17 +1,20 @@
 "use client";
 
+import { ClipboardText, Package, Tag } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
+
 export type AdminTabKey = "orders" | "catalogue" | "categories";
 
 interface TabDefinition<K extends string> {
   key: K;
   label: string;
-  icon: string;
+  icon: Icon;
 }
 
 const TABS: readonly TabDefinition<AdminTabKey>[] = [
-  { key: "orders", label: "Orders", icon: "\u{1F4CB}" },
-  { key: "catalogue", label: "Catalogue", icon: "\u{1F4E6}" },
-  { key: "categories", label: "Categories", icon: "\u{1F3F7}" },
+  { key: "orders", label: "Orders", icon: ClipboardText },
+  { key: "catalogue", label: "Catalogue", icon: Package },
+  { key: "categories", label: "Categories", icon: Tag },
 ];
 
 interface Props {
@@ -33,7 +36,8 @@ export default function AdminTabs({ activeTab, onTabChange }: Props) {
           className={`btn capitalize ${activeTab === tab.key ? "btn-primary" : "btn-secondary"} btn-lg`}
           onClick={() => onTabChange(tab.key)}
         >
-          {tab.icon} {tab.label}
+          <tab.icon size={16} weight="bold" aria-hidden="true" />
+          {tab.label}
         </button>
       ))}
     </div>
