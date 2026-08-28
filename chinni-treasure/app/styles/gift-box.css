@@ -252,13 +252,268 @@
   background: rgba(212, 175, 55, 0.04);
 }
 
+/* ========================================
+   Gift Box Modal — Popup for listing pages
+   ======================================== */
+
+/* ===== Overlay ===== */
+.gift-box-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 16px;
+  animation: gift-box-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes gift-box-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Modal panel ===== */
+.gift-box-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: gift-box-modal-slide-up 0.25s ease-out;
+}
+
+@keyframes gift-box-modal-slide-up {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== Header ===== */
+.gift-box-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.gift-box-modal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gold-deep);
+}
+
+.gift-box-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.gift-box-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--near-black);
+}
+
+/* ===== Product info ===== */
+.gift-box-modal-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--cream);
+}
+
+.gift-box-modal-product-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  flex-shrink: 0;
+}
+
+.gift-box-modal-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gift-box-modal-product-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--near-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gift-box-modal-product-price {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  color: var(--gold-deep);
+}
+
+/* ===== Body / options list ===== */
+.gift-box-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+}
+
+.gift-box-modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.gift-box-modal-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.gift-box-modal-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.gift-box-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gift-box-modal-option {
+  border-radius: 8px;
+  transition: background var(--transition-fast);
+}
+
+.gift-box-modal-option.selected {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.gift-box-modal-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.gift-box-modal-option-btn:hover {
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.gift-box-modal-option-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  flex-shrink: 0;
+}
+
+.gift-box-modal-option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gift-box-modal-option-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--near-black);
+}
+
+.gift-box-modal-option-price {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--gold-deep);
+}
+
+.gift-box-modal-option-stock {
+  font-size: 0.72rem;
+  color: var(--warning);
+}
+
+.gift-box-modal-option-check {
+  width: 22px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold-deep);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ===== Quantity controls ===== */
+.gift-box-modal-qty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 10px 10px 70px;
+}
+
+/* ===== Footer ===== */
+.gift-box-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
   .gift-box-toggle,
   .gift-box-chevron,
   .gift-box-option,
   .gift-box-option-main,
-  .gift-box-selected-tag button {
+  .gift-box-selected-tag button,
+  .gift-box-modal-overlay,
+  .gift-box-modal,
+  .gift-box-modal-option-btn,
+  .gift-box-modal-close {
     transition: none;
+    animation: none;
   }
 }

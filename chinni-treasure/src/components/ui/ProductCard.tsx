@@ -30,6 +30,7 @@ export interface ProductData {
   stockQuantity: number;
   badge: string | null;
   sku: string | null;
+  allowGiftBoxBundling?: boolean;
   images?: ProductImageData[];
 }
 

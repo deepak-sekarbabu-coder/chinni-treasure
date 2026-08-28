@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
+import GiftBoxModal, { type GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
 import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
@@ -52,6 +53,8 @@ export default function CategoryContent({
   } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortKey>("newest");
+  const [giftBoxModalOpen, setGiftBoxModalOpen] = useState(false);
+  const [giftBoxModalProduct, setGiftBoxModalProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const pageSize = useResponsivePageSize();
 
@@ -82,8 +85,8 @@ export default function CategoryContent({
   const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
   const loading = categoryQuery.isFetching;
 
-  const handleAdd = useCallback(
-    (p: ProductData) => {
+  const handleAddDirectly = useCallback(
+    (p: ProductData, giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;
@@ -95,6 +98,7 @@ export default function CategoryContent({
         image: p.imageUrl ?? "",
         stock: p.stockQuantity,
         sku: p.sku ?? undefined,
+        giftBoxes,
       });
       if (addResult === "max_one") {
         showToast(`Max 1 Qty per user for ${p.name}`, "info");
@@ -116,6 +120,56 @@ export default function CategoryContent({
     },
     [addItem, showToast, triggerShippingNudge],
   );
+
+  const handleAdd = useCallback(
+    (p: ProductData) => {
+      const productWithGift = p as ProductData & { allowGiftBoxBundling?: boolean };
+      if (productWithGift.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
+        setGiftBoxModalProduct({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          image: p.imageUrl ?? "",
+          category: p.category,
+        });
+        setGiftBoxModalOpen(true);
+        return;
+      }
+      handleAddDirectly(p);
+    },
+    [handleAddDirectly],
+  );
+
+  const handleModalConfirm = useCallback(
+    (giftBoxes: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
+      if (giftBoxModalProduct) {
+        handleAddDirectly(
+          { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as ProductData,
+          giftBoxes.length > 0 ? giftBoxes : undefined,
+        );
+      }
+      setGiftBoxModalOpen(false);
+      setGiftBoxModalProduct(null);
+    },
+    [giftBoxModalProduct, handleAddDirectly],
+  );
+
+  const handleModalSkip = useCallback(() => {
+    if (giftBoxModalProduct) {
+      handleAddDirectly(
+        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as ProductData,
+      );
+    }
+    setGiftBoxModalOpen(false);
+    setGiftBoxModalProduct(null);
+  },
+    [giftBoxModalProduct, handleAddDirectly],
+  );
+
+  const handleModalClose = useCallback(() => {
+    setGiftBoxModalOpen(false);
+    setGiftBoxModalProduct(null);
+  }, []);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -253,6 +307,15 @@ export default function CategoryContent({
           </>
         )}
       </section>
+      {giftBoxModalProduct && (
+        <GiftBoxModal
+          open={giftBoxModalOpen}
+          product={giftBoxModalProduct}
+          onConfirm={handleModalConfirm}
+          onSkip={handleModalSkip}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 }
