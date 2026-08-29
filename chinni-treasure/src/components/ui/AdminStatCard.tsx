@@ -6,28 +6,23 @@ interface Props {
 
 export default function AdminStatCard({ value, label, color }: Props) {
   return (
-    <div className="admin-stat-card" style={{ textAlign: "center" }}>
+    <div
+      className="admin-stat-card"
+      style={{
+        textAlign: "center",
+        borderTop: `3px solid ${color}`,
+      }}
+    >
       <div
         className="stat-value"
         style={{
-          fontSize: "1.5rem",
-          fontWeight: 700,
           color,
           fontFamily: "var(--font-serif)",
         }}
       >
         {value}
       </div>
-      <div
-        className="stat-label"
-        style={{
-          fontSize: "0.65rem",
-          color: "var(--text-muted)",
-          letterSpacing: "1.5px",
-          textTransform: "uppercase",
-          marginTop: "6px",
-        }}
-      >
+      <div className="stat-label">
         {label}
       </div>
     </div>

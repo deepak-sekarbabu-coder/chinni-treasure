@@ -2,21 +2,41 @@
 
 /* ── Admin Page Root ── */
 .admin-page-root {
-    padding-top: 0;
+    padding-top: 120px; /* Account for fixed navbar */
 }
 
 /* ── Stat Card ── */
 .admin-stat-card {
     background: var(--white);
-    border-radius: 4px;
-    padding: 24px;
+    border-radius: 8px;
+    padding: 20px 16px 16px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--cream);
+    border-top: 3px solid var(--gold);
     transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition-fast);
+    position: relative;
+    overflow: hidden;
 }
 
 .admin-stat-card:hover {
     box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.stat-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-weight: 500;
 }
 
 /* ===== ORDER CARD STATES ===== */
@@ -75,7 +95,13 @@
 .admin-top-header {
     background: var(--black);
     border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-    padding: 32px 0;
+    padding: 24px 0; /* Reduced since navbar is now visible */
+}
+
+/* Override .section padding inside the header — the header manages its own spacing */
+.admin-top-header .section {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .admin-header-row {
@@ -1527,7 +1553,7 @@
 /* ── Admin responsive ── */
 @media (max-width: 768px) {
     .admin-page-root {
-        padding-top: 0;
+        padding-top: 80px; /* Account for navbar on mobile */
     }
 
     .admin-page-root .section {
@@ -1596,15 +1622,31 @@
     .admin-catalogue-filters {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .admin-catalogue-search {
+        flex: none;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .admin-catalogue-search-input {
+        padding: 12px 14px;
+        font-size: 0.9rem;
     }
 
     .admin-catalogue-filter-group {
         flex-wrap: wrap;
+        gap: 8px;
     }
 
     .admin-catalogue-select {
-        flex: 1 1 calc(50% - 4px);
+        flex: 1 1 100%;
         min-width: 0;
+        padding: 12px 14px;
+        font-size: 0.9rem;
     }
 
     .pagination-bar {
@@ -1655,7 +1697,7 @@
     }
 
     .admin-top-header {
-        padding: 24px 0;
+        padding: 20px 0;
     }
 
     .admin-heading {
@@ -1668,45 +1710,62 @@
     }
 
     .admin-stat-card {
-        padding: 16px 12px;
+        padding: 12px 10px 10px;
         min-width: 0;
         overflow: hidden;
+        border-radius: 6px;
     }
 
     .admin-stat-card .stat-value {
-        font-size: 1.15rem !important;
+        font-size: 1.2rem !important;
+        font-weight: 700;
+        letter-spacing: -0.3px;
     }
 
     .admin-stat-card .stat-label {
         font-size: 0.55rem !important;
-        letter-spacing: 1px;
+        letter-spacing: 0.6px;
+        margin-top: 4px;
     }
 
     .order-card {
-        padding: 14px 16px;
+        padding: 12px 14px;
+        border-radius: 8px;
     }
 
     .order-card-main {
-        gap: 12px;
+        gap: 10px;
     }
 
     .order-card-thumb {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
     }
 
     .order-card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 6px;
     }
 
     .order-card-number {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
 
     .order-card-price {
-        font-size: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .order-card-footer {
+        gap: 8px;
+    }
+
+    .order-card-name {
+        font-size: 0.8rem;
+    }
+
+    .order-card-label {
+        font-size: 0.6rem;
     }
 
     .chart-row {
@@ -1824,19 +1883,48 @@
     }
 
     .admin-stat-card {
-        padding: 12px;
+        padding: 10px 8px 8px;
+        border-radius: 6px;
     }
 
     .admin-stat-card .stat-value {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
     }
 
     .admin-stat-card .stat-label {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
+        letter-spacing: 0.5px;
+        margin-top: 3px;
     }
 
     .admin-login-card {
         padding: 24px 16px;
+    }
+
+    .order-card {
+        padding: 10px 12px;
+        border-radius: 6px;
+    }
+
+    .order-card-main {
+        gap: 8px;
+    }
+
+    .order-card-thumb {
+        width: 40px;
+        height: 40px;
+    }
+
+    .order-card-number {
+        font-size: 0.85rem;
+    }
+
+    .order-card-price {
+        font-size: 0.9rem;
+    }
+
+    .order-card-name {
+        font-size: 0.75rem;
     }
 }
 
@@ -2800,16 +2888,19 @@
 @media (max-width: 480px) {
     .catalogue-card {
         padding: 10px 12px;
+        gap: 10px;
     }
 
     .catalogue-card-thumb {
-        width: 72px;
-        height: 72px;
-        min-width: 72px;
+        width: 64px;
+        height: 64px;
+        min-width: 64px;
+        border-radius: 6px;
     }
 
     .catalogue-card-head {
         flex-direction: column;
+        gap: 4px;
     }
 
     .catalogue-card-badges {
@@ -2820,6 +2911,81 @@
         align-items: flex-start;
         flex-direction: column;
         gap: 6px;
+    }
+
+    .catalogue-card-actions {
+        gap: 6px;
+    }
+
+    .catalogue-card-actions .btn {
+        min-height: 40px;
+        font-size: 0.65rem;
+        padding: 8px 12px;
+    }
+
+    .catalogue-card-name {
+        font-size: 0.85rem;
+    }
+
+    .catalogue-card-gallery-count {
+        font-size: 0.55rem;
+        padding: 1px 4px;
+    }
+}
+
+@media (max-width: 374px) {
+    .catalogue-card {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .catalogue-card-thumb {
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        border-radius: 5px;
+    }
+
+    .catalogue-card-name {
+        font-size: 0.8rem;
+    }
+
+    .catalogue-card-actions .btn {
+        min-height: 36px;
+        font-size: 0.6rem;
+        padding: 6px 10px;
+    }
+
+    .sku-code {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+
+    .category-pill-badge {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+    }
+
+    .luxury-badge {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+
+    .stock-health-badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+
+    .price-primary {
+        font-size: 0.85rem;
+    }
+
+    .price-secondary {
+        font-size: 0.65rem;
+    }
+
+    .discount-badge {
+        font-size: 0.55rem;
     }
 }
 
