@@ -2,7 +2,7 @@
 
 /* ── Admin Page Root ── */
 .admin-page-root {
-    padding-top: 120px; /* Account for fixed navbar */
+    padding-top: 80px; /* Account for fixed navbar */
 }
 
 /* ── Stat Card ── */
@@ -95,13 +95,19 @@
 .admin-top-header {
     background: var(--black);
     border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-    padding: 24px 0; /* Reduced since navbar is now visible */
+    padding: 16px 0; /* Compact since navbar is visible */
 }
 
 /* Override .section padding inside the header — the header manages its own spacing */
 .admin-top-header .section {
     padding-top: 0;
     padding-bottom: 0;
+}
+
+/* Compact section padding for admin content */
+.admin-page-root > .section {
+    padding-top: 24px;
+    padding-bottom: 24px;
 }
 
 .admin-header-row {
@@ -1553,7 +1559,7 @@
 /* ── Admin responsive ── */
 @media (max-width: 768px) {
     .admin-page-root {
-        padding-top: 80px; /* Account for navbar on mobile */
+        padding-top: 70px; /* Account for navbar on mobile */
     }
 
     .admin-page-root .section {
