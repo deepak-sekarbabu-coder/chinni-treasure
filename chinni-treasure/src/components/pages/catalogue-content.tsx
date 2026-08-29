@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
+import GiftBoxModal, { type GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
 import ProductCard from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
@@ -51,6 +52,8 @@ export default function CatalogueContent({
   const [pageTransitionLoading, setPageTransitionLoading] = useState(false);
   const [pageTransitionTimedOut, setPageTransitionTimedOut] = useState(false);
   const settledImageIdsRef = useRef<Set<string>>(new Set());
+  const [giftBoxModalOpen, setGiftBoxModalOpen] = useState(false);
+  const [giftBoxModalProduct, setGiftBoxModalProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const pageSize = useResponsivePageSize();
 
@@ -115,8 +118,8 @@ export default function CatalogueContent({
     [products.length, targetPageReady],
   );
 
-  const handleAdd = useCallback(
-    (p: CatalogueProduct) => {
+  const handleAddDirectly = useCallback(
+    (p: CatalogueProduct, giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;
@@ -128,6 +131,7 @@ export default function CatalogueContent({
         image: p.imageUrl ?? "",
         stock: p.stockQuantity,
         sku: p.sku ?? undefined,
+        giftBoxes,
       });
       if (addResult === "max_one") {
         showToast(`Max 1 Qty per user for ${p.name}`, "info");
@@ -146,6 +150,55 @@ export default function CatalogueContent({
     },
     [addItem, showToast, triggerShippingNudge],
   );
+
+  const handleAdd = useCallback(
+    (p: CatalogueProduct) => {
+      if (p.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
+        setGiftBoxModalProduct({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          image: p.imageUrl ?? "",
+          category: p.category,
+        });
+        setGiftBoxModalOpen(true);
+        return;
+      }
+      handleAddDirectly(p);
+    },
+    [handleAddDirectly],
+  );
+
+  const handleModalConfirm = useCallback(
+    (giftBoxes: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
+      if (giftBoxModalProduct) {
+        handleAddDirectly(
+          { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as CatalogueProduct,
+          giftBoxes.length > 0 ? giftBoxes : undefined,
+        );
+      }
+      setGiftBoxModalOpen(false);
+      setGiftBoxModalProduct(null);
+    },
+    [giftBoxModalProduct, handleAddDirectly],
+  );
+
+  const handleModalSkip = useCallback(() => {
+    if (giftBoxModalProduct) {
+      handleAddDirectly(
+        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as CatalogueProduct,
+      );
+    }
+    setGiftBoxModalOpen(false);
+    setGiftBoxModalProduct(null);
+  },
+    [giftBoxModalProduct, handleAddDirectly],
+  );
+
+  const handleModalClose = useCallback(() => {
+    setGiftBoxModalOpen(false);
+    setGiftBoxModalProduct(null);
+  }, []);
 
   const handlePageChange = useCallback((page: number) => {
     if (page === currentPage) return;
@@ -299,6 +352,15 @@ export default function CatalogueContent({
           </>
         )}
       </section>
+      {giftBoxModalProduct && (
+        <GiftBoxModal
+          open={giftBoxModalOpen}
+          product={giftBoxModalProduct}
+          onConfirm={handleModalConfirm}
+          onSkip={handleModalSkip}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 }

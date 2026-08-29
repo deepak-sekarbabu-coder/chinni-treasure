@@ -1,12 +1,20 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { Eye, EyeSlash, PencilSimple, Trash, X } from "@phosphor-icons/react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  type SortingState,
+} from "@tanstack/react-table";
+import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import { createCategoryColumns } from "@/src/components/admin/table/columns.categories";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 import CategoryFormModal from "@/src/components/admin/CategoryFormModal";
-
-const BADGE_ACTIVE = "delivered";
-const BADGE_INACTIVE = "rejected";
 
 interface Props {
   showForm: boolean;
@@ -48,6 +56,39 @@ export default function AdminCategoriesPanel({
   onToggleActive,
 }: Props) {
   const deleteTrapRef = useFocusTrap(deleteConfirm.open);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const columns = useMemo(
+    () =>
+      createCategoryColumns({
+        togglePendingId,
+        loadingCategoryId,
+        onToggleActive,
+        onEdit,
+        onRequestDelete,
+      }),
+    [togglePendingId, loadingCategoryId, onToggleActive, onEdit, onRequestDelete],
+  );
+
+  const table = useReactTable({
+    data: categories,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    sortDescFirst: false,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const q = String(filterValue).toLowerCase();
+      return (
+        row.original.name.toLowerCase().includes(q) ||
+        row.original.slug.toLowerCase().includes(q)
+      );
+    },
+  });
 
   return (
     <div id="panel-categories" role="tabpanel" aria-labelledby="tab-categories">
@@ -67,85 +108,43 @@ export default function AdminCategoriesPanel({
         onClose={onToggleForm}
       />
 
-      <div className="admin-product-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Order</th>
-              <th>Products</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categoriesLoading ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: "24px" }}>
-                  Loading categories…
-                </td>
-              </tr>
-            ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: "24px" }}>
-                  No categories yet. Create your first one above.
-                </td>
-              </tr>
-            ) : (
-              categories.map((c) => {
-                const isDeleting = loadingCategoryId === c.id;
-                const isToggling = togglePendingId === c.id;
-                const isActive = c.isActive ?? true;
-                const productCount = c.productCount ?? 0;
-                return (
-                  <tr key={c.id} className={`product-table-row ${isDeleting ? "removing" : ""}`}>
-                    <td className="fw-500">{c.name}</td>
-                    <td className="font-mono text-xs text-muted">{c.slug}</td>
-                    <td>{c.displayOrder}</td>
-                    <td>
-                      <span className={`stock-badge ${productCount > 0 ? "in-stock" : "empty"}`}>
-                        {productCount}
-                      </span>
-                    </td>
-                    <td className="active-cell">
-                      <span className={`status-badge ${isActive ? BADGE_ACTIVE : BADGE_INACTIVE}`}>
-                        {isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button
-                          className="btn btn-secondary product-action-btn btn-xs"
-                          onClick={() => onToggleActive(c)}
-                          disabled={isToggling}
-                        >
-                          {isActive ? "Disable" : "Enable"}
-                        </button>
-                        <button
-                          className="btn btn-secondary product-action-btn btn-xs"
-                          onClick={() => onEdit(c)}
-                          disabled={isDeleting}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className={`btn btn-danger product-action-btn btn-xs ${isDeleting ? "loading" : ""}`}
-                          onClick={() => onRequestDelete({ ...c, productCount })}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting && <span className="btn-spinner"></span>}
-                          {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="admin-catalogue-search">
+        <input
+          type="text"
+          className="admin-catalogue-search-input"
+          placeholder="Search by name or slug..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          aria-label="Search categories"
+        />
+        {globalFilter && (
+          <button
+            type="button"
+            className="search-clear-btn"
+            onClick={() => setGlobalFilter("")}
+            aria-label="Clear search"
+          >
+            <X size={14} weight="bold" aria-hidden="true" />
+          </button>
+        )}
       </div>
+
+      <AdminDataTable
+        table={table}
+        isLoading={categoriesLoading}
+        skeletonRowCount={4}
+        emptyMessage="No categories found."
+      />
+
+      <CategoryCards
+        categories={table.getFilteredRowModel().rows.map((row) => row.original)}
+        loading={categoriesLoading}
+        togglePendingId={togglePendingId}
+        loadingCategoryId={loadingCategoryId}
+        onToggleActive={onToggleActive}
+        onEdit={onEdit}
+        onRequestDelete={onRequestDelete}
+      />
 
       {deleteConfirm.open && (
         <div
@@ -163,7 +162,9 @@ export default function AdminCategoriesPanel({
           >
             <div className="modal-header">
               <h2 id="delete-cat-title">Confirm Delete</h2>
-              <button className="modal-close" onClick={onCancelDelete}>✕</button>
+              <button className="modal-close" onClick={onCancelDelete}>
+                <X size={16} weight="bold" aria-hidden="true" />
+              </button>
             </div>
             <div className="modal-body">
               {deleteConfirm.productCount > 0 ? (
@@ -197,5 +198,117 @@ export default function AdminCategoriesPanel({
         </div>
       )}
     </div>
+  );
+}
+
+function CategoryCardsSkeleton() {
+  return (
+    <div className="admin-category-cards" aria-hidden="true">
+      {Array.from({ length: 3 }, (_, idx) => (
+        <div key={idx} className="category-card">
+          <div className="skeleton-text" style={{ width: "45%", height: 14 }} />
+          <div className="skeleton-text" style={{ width: "30%", height: 12, marginTop: 8 }} />
+          <div className="skeleton-text" style={{ width: "25%", height: 12, marginTop: 14 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CategoryCards({
+  categories,
+  loading,
+  togglePendingId,
+  loadingCategoryId,
+  onToggleActive,
+  onEdit,
+  onRequestDelete,
+}: {
+  categories: Category[];
+  loading: boolean;
+  togglePendingId: number | null;
+  loadingCategoryId: number | null;
+  onToggleActive: (c: Category) => void;
+  onEdit: (c: Category) => void;
+  onRequestDelete: (c: Category & { productCount: number }) => void;
+}) {
+  if (loading) return <CategoryCardsSkeleton />;
+
+  if (categories.length === 0) {
+    return (
+      <div className="admin-category-cards">
+        <p className="empty-state">No categories found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="admin-category-cards">
+      {categories.map((c) => {
+        const isActive = c.isActive ?? true;
+        const productCount = c.productCount ?? 0;
+        const isToggling = togglePendingId === c.id;
+        const isDeleting = loadingCategoryId === c.id;
+        const ToggleIcon = isActive ? EyeSlash : Eye;
+        return (
+          <li key={c.id} className="category-card">
+            <div className="category-card-head">
+              <div className="category-card-title">
+                <strong className="category-card-name">{c.name}</strong>
+                <span className="font-mono text-xs text-muted">{c.slug}</span>
+              </div>
+              <span className={`status-badge ${isActive ? "delivered" : "rejected"}`}>
+                {isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+            <div className="category-card-meta">
+              <span className="category-card-order">
+                Order <strong className="table-numeric">{c.displayOrder}</strong>
+              </span>
+              <span className={`stock-badge table-numeric ${productCount > 0 ? "in-stock" : "empty"}`}>
+                {productCount} product{productCount === 1 ? "" : "s"}
+              </span>
+            </div>
+            <div className="category-card-actions">
+              <button
+                type="button"
+                className="btn btn-secondary product-action-btn btn-sm"
+                disabled={isToggling || isDeleting}
+                onClick={() => onToggleActive(c)}
+              >
+                {isToggling ? (
+                  <span className="btn-spinner" aria-hidden="true" />
+                ) : (
+                  <ToggleIcon size={15} weight="bold" aria-hidden="true" />
+                )}
+                {isActive ? "Disable" : "Enable"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary product-action-btn btn-sm"
+                disabled={isToggling || isDeleting}
+                onClick={() => onEdit(c)}
+              >
+                <PencilSimple size={15} weight="bold" aria-hidden="true" />
+                Edit
+              </button>
+              <button
+                type="button"
+                className={`btn btn-danger product-action-btn btn-sm ${isDeleting ? "loading" : ""}`}
+                disabled={isToggling || isDeleting}
+                onClick={() => onRequestDelete({ ...c, productCount })}
+              >
+                {isDeleting ? (
+                  <span className="btn-spinner" aria-hidden="true" />
+                ) : (
+                  <Trash size={15} weight="bold" aria-hidden="true" />
+                )}
+                Delete
+              </button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

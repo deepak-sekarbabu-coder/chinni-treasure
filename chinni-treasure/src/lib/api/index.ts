@@ -62,6 +62,7 @@ export interface OrdersQueryParams {
   page: number;
   limit: number;
   status?: string;
+  sort?: string;
 }
 
 export function fetchOrders(params: OrdersQueryParams, signal?: AbortSignal) {
@@ -71,6 +72,9 @@ export function fetchOrders(params: OrdersQueryParams, signal?: AbortSignal) {
   });
   if (params.status && params.status !== "all") {
     search.set("status", params.status);
+  }
+  if (params.sort && params.sort !== "date-desc") {
+    search.set("sort", params.sort);
   }
   return apiFetch<OrdersResponse>(`/api/orders?${search.toString()}`, {
     signal,

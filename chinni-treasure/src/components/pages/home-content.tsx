@@ -125,7 +125,7 @@ export default function HomeContent({ latestCategories }: Props) {
       >
         <div className="section-header">
           <p id="features-heading" className="section-subtitle">Why Choose Us</p>
-          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(1.8rem, 3vw, 2.8rem)", color: "var(--near-black)", marginBottom: "16px", fontWeight: 400 }}>
+          <h2>
             Crafted With Passion, Delivered With Care
           </h2>
         </div>

@@ -400,17 +400,43 @@
 
 .product-add-btn {
     transition: all var(--transition) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ripple effect on press */
+.product-add-btn .btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    margin-left: -10px;
+    animation: btnRipple 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+/* Success flash on add-to-cart */
+.product-add-btn.btn-success {
+    background: linear-gradient(90deg, var(--gold), #c9a52e, var(--gold)) !important;
+    background-size: 200% 100% !important;
+    animation: btnSuccessFlash 0.6s ease-out;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
 }
 
 .product-add-btn.cancel {
-    background: transparent !important;
-    color: var(--error) !important;
-    border: 1px solid var(--error) !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid rgba(212, 175, 55, 0.25) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .product-add-btn.cancel:hover {
-    background: var(--error) !important;
-    color: var(--white) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: var(--near-black) !important;
+    border-color: var(--gold) !important;
 }
 
 /* ── Footer link button ── */

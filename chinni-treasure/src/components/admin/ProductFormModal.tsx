@@ -203,213 +203,244 @@ export default function ProductFormModal({
         </div>
         <div className="modal-body">
           <form onSubmit={onSave} className="product-form-modal-form">
-            <div className="admin-product-form-grid">
-              <div className="form-group">
-                <label>Name *</label>
-                <input type="text" value={productForm.name} onChange={(e) => setFormField("name", e.target.value)} required className="input-cream" />
+            {/* Section: Product Info */}
+            <div className="form-section-group">
+              <h3 className="form-section-title">Product Info</h3>
+              <div className="admin-product-form-grid">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input type="text" value={productForm.name} onChange={(e) => setFormField("name", e.target.value)} required className="input-cream" />
+                </div>
+                <div className="form-group">
+                  <label>Code</label>
+                  <input type="text" value={productForm.sku} onChange={(e) => setFormField("sku", e.target.value)} className="input-cream" />
+                </div>
+                <div className="form-group">
+                  <label>Category</label>
+                  <select value={productForm.categoryId} onChange={(e) => setFormField("categoryId", e.target.value)} className="input-cream" disabled={categoriesLoading}>
+                    <option value="">{categoriesLoading ? "Loading..." : "None"}</option>
+                    {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Badge</label>
+                  <select value={productForm.badge} onChange={(e) => setFormField("badge", e.target.value)} className="input-cream">
+                    {BADGE_OPTIONS.map((b) => (<option key={b.value} value={b.value}>{b.label}</option>))}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label>Code</label>
-                <input type="text" value={productForm.sku} onChange={(e) => setFormField("sku", e.target.value)} className="input-cream" />
-              </div>
-              <div className="form-group">
-                <label>Price *</label>
-                <input type="number" step="0.01" min="0" value={productForm.price} onChange={(e) => setFormField("price", e.target.value)} required className="input-cream" />
-              </div>
-              <div className="form-group">
-                <label>Compare At Price (MRP)</label>
-                <input type="number" step="0.01" min="0" value={productForm.compareAtPrice} onChange={(e) => setFormField("compareAtPrice", e.target.value)} className="input-cream" placeholder="Original price before discount" />
-              </div>
-              <div className="form-group">
-                <label>Stock Quantity</label>
-                <input type="number" min="0" value={productForm.stockQuantity} onChange={(e) => setFormField("stockQuantity", e.target.value)} className="input-cream" />
-              </div>
-              <div className="form-group toggle-form-group">
-                <label>Active Status</label>
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={productForm.isActive}
-                    onChange={(e) => onFormChange({ ...productForm, isActive: e.target.checked })}
-                  />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-label">{productForm.isActive ? "Active" : "Inactive"}</span>
-                </label>
-              </div>
-              <div className="form-group toggle-form-group">
-                <label>Gift-Box Bundling</label>
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={productForm.allowGiftBoxBundling}
-                    onChange={(e) => onFormChange({ ...productForm, allowGiftBoxBundling: e.target.checked })}
-                    disabled={isGiftBoxCategory}
-                  />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-label">
-                    {productForm.allowGiftBoxBundling ? "Enabled" : "Disabled"}
-                  </span>
-                </label>
-                {isGiftBoxCategory && (
-                  <p className="form-hint" style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "4px" }}>
-                    Gift Box products cannot enable bundling
-                  </p>
-                )}
-              </div>
-              <div className="form-group">
-                <label>Category</label>
-                <select value={productForm.categoryId} onChange={(e) => setFormField("categoryId", e.target.value)} className="input-cream" disabled={categoriesLoading}>
-                  <option value="">{categoriesLoading ? "Loading..." : "None"}</option>
-                  {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Badge</label>
-                <select value={productForm.badge} onChange={(e) => setFormField("badge", e.target.value)} className="input-cream">
-                  {BADGE_OPTIONS.map((b) => (<option key={b.value} value={b.value}>{b.label}</option>))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Visible Hostnames</label>
-                <input type="text" value={productForm.visibleHostnames} onChange={(e) => setFormField("visibleHostnames", e.target.value)} className="input-cream" placeholder="Leave empty for all domains, comma-separated" />
-              </div>
-              <div className="form-group">
-                <label>Primary Image URL</label>
-                <input type="url" value={productForm.imageUrl} onChange={(e) => setFormField("imageUrl", e.target.value)} className="input-cream" placeholder="Fallback primary image URL" />
-              </div>
-              <div className="form-group full-width">
-                <label>Description</label>
-                <textarea value={productForm.description} onChange={(e) => setFormField("description", e.target.value)} className="input-cream" />
-              </div>
+            </div>
 
-              {/* Product Images Section */}
-              <div className="form-group full-width">
-                <label>Product Images</label>
-                <div className="product-image-manager">
-                  <div className="image-add-row">
+            {/* Section: Pricing & Inventory */}
+            <div className="form-section-group">
+              <h3 className="form-section-title">Pricing & Inventory</h3>
+              <div className="admin-product-form-grid">
+                <div className="form-group">
+                  <label>Price *</label>
+                  <input type="number" step="0.01" min="0" value={productForm.price} onChange={(e) => setFormField("price", e.target.value)} required className="input-cream" />
+                </div>
+                <div className="form-group">
+                  <label>Compare At Price (MRP)</label>
+                  <input type="number" step="0.01" min="0" value={productForm.compareAtPrice} onChange={(e) => setFormField("compareAtPrice", e.target.value)} className="input-cream" placeholder="Original price before discount" />
+                </div>
+                <div className="form-group">
+                  <label>Stock Quantity</label>
+                  <input type="number" min="0" value={productForm.stockQuantity} onChange={(e) => setFormField("stockQuantity", e.target.value)} className="input-cream" />
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Visibility */}
+            <div className="form-section-group">
+              <h3 className="form-section-title">Visibility</h3>
+              <div className="admin-product-form-grid">
+                <div className="form-group toggle-form-group">
+                  <label>Active Status</label>
+                  <label className="toggle-switch">
                     <input
-                      type="url"
-                      value={newImageUrl}
-                      onChange={(e) => { setNewImageUrl(e.target.value); setImageUrlError(""); }}
-                      className="input-cream"
-                      placeholder="Enter image URL..."
-                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
+                      type="checkbox"
+                      checked={productForm.isActive}
+                      onChange={(e) => onFormChange({ ...productForm, isActive: e.target.checked })}
                     />
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={addImage} disabled={!newImageUrl.trim()}>
-                      Add
-                    </button>
-                  </div>
-                  {imageUrlError && <p className="text-danger text-sm mt-4">{imageUrlError}</p>}
-
-                  {productForm.images.length > 0 ? (
-                    <div className="image-grid-preview">
-                      {productForm.images.map((img, idx) => (
-                        <div key={idx} className={`image-preview-card ${img.isPrimary ? "primary" : ""} ${editingIndex === idx ? "editing" : ""}`}>
-                          <div className="image-preview-card-header">
-                            <span className="image-preview-order">#{idx + 1}</span>
-                            {img.isPrimary && <span className="image-primary-badge">★ Primary</span>}
-                          </div>
-                          <div
-                            className="image-preview-thumb"
-                            onClick={() => {
-                              if (!failedImages.has(idx) && isValidImageUrl(img.url)) {
-                                openLightbox(img.url);
-                              }
-                            }}
-                            title="Click to view high-res preview"
-                          >
-                            {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
-                              <div className="product-img-placeholder" style={{ width: "100%", height: "100%" }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
-                            ) : (
-                              <>
-                                <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={300} height={300} className="image-preview-img" onError={() => handleImageError(idx)} />
-                                <div className="image-zoom-overlay">
-                                  <span>🔍 Inspect</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                          {editingIndex === idx ? (
-                            <div className="image-preview-edit">
-                              <input
-                                type="url"
-                                value={editUrl}
-                                onChange={(e) => setEditUrl(e.target.value)}
-                                className="input-cream image-edit-input"
-                                placeholder="Edit image URL..."
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") { e.preventDefault(); saveEditImage(idx); }
-                                  if (e.key === "Escape") { cancelEditImage(); }
-                                }}
-                              />
-                              <div className="image-edit-actions">
-                                <button type="button" className="btn btn-sm btn-primary" onClick={() => saveEditImage(idx)} disabled={!editUrl.trim()}>
-                                  Save
-                                </button>
-                                <button type="button" className="btn btn-sm btn-secondary" onClick={cancelEditImage}>
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="image-preview-url" title={img.url}>{img.url}</span>
-                          )}
-                          <div className="image-preview-actions">
-                            <button
-                              type="button"
-                              className={`btn btn-xs ${img.isPrimary ? "btn-gold" : "btn-secondary"}`}
-                              onClick={() => setPrimary(idx)}
-                              disabled={img.isPrimary || editingIndex !== null}
-                              title={img.isPrimary ? "Primary image" : "Set as primary image"}
-                            >
-                              ★
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-xs btn-secondary"
-                              onClick={() => moveImage(idx, -1)}
-                              disabled={idx === 0 || editingIndex !== null}
-                              title="Move left"
-                            >
-                              ←
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-xs btn-secondary"
-                              onClick={() => moveImage(idx, 1)}
-                              disabled={idx === productForm.images.length - 1 || editingIndex !== null}
-                              title="Move right"
-                            >
-                              →
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-xs btn-secondary"
-                              onClick={() => startEditImage(idx)}
-                              disabled={editingIndex !== null}
-                              title="Edit image URL"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-xs btn-danger image-delete-btn"
-                              onClick={() => removeImage(idx)}
-                              disabled={editingIndex !== null}
-                              title="Delete image"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted text-sm">
-                      No additional images added. The primary image URL above will be used as the product image.
+                    <span className="toggle-slider"></span>
+                    <span className="toggle-label">{productForm.isActive ? "Active" : "Inactive"}</span>
+                  </label>
+                </div>
+                <div className="form-group toggle-form-group">
+                  <label>Gift-Box Bundling</label>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={productForm.allowGiftBoxBundling}
+                      onChange={(e) => onFormChange({ ...productForm, allowGiftBoxBundling: e.target.checked })}
+                      disabled={isGiftBoxCategory}
+                    />
+                    <span className="toggle-slider"></span>
+                    <span className="toggle-label">
+                      {productForm.allowGiftBoxBundling ? "Enabled" : "Disabled"}
+                    </span>
+                  </label>
+                  {isGiftBoxCategory && (
+                    <p className="form-hint" style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "4px" }}>
+                      Gift Box products cannot enable bundling
                     </p>
                   )}
+                </div>
+                <div className="form-group full-width">
+                  <label>Visible Hostnames</label>
+                  <input type="text" value={productForm.visibleHostnames} onChange={(e) => setFormField("visibleHostnames", e.target.value)} className="input-cream" placeholder="Leave empty for all domains, comma-separated" />
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Description */}
+            <div className="form-section-group">
+              <h3 className="form-section-title">Description</h3>
+              <div className="admin-product-form-grid">
+                <div className="form-group full-width">
+                  <textarea value={productForm.description} onChange={(e) => setFormField("description", e.target.value)} className="input-cream" rows={6} />
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Images */}
+            <div className="form-section-group">
+              <h3 className="form-section-title">Images</h3>
+              <div className="admin-product-form-grid">
+                <div className="form-group">
+                  <label>Primary Image URL</label>
+                  <input type="url" value={productForm.imageUrl} onChange={(e) => setFormField("imageUrl", e.target.value)} className="input-cream" placeholder="Fallback primary image URL" />
+                </div>
+
+                {/* Product Images Section */}
+                <div className="form-group full-width">
+                  <label>Product Images</label>
+                  <div className="product-image-manager">
+                    <div className="image-add-row">
+                      <input
+                        type="url"
+                        value={newImageUrl}
+                        onChange={(e) => { setNewImageUrl(e.target.value); setImageUrlError(""); }}
+                        className="input-cream"
+                        placeholder="Enter image URL..."
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
+                      />
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={addImage} disabled={!newImageUrl.trim()}>
+                        Add
+                      </button>
+                    </div>
+                    {imageUrlError && <p className="text-danger text-sm mt-4">{imageUrlError}</p>}
+
+                    {productForm.images.length > 0 ? (
+                      <div className="image-grid-preview">
+                        {productForm.images.map((img, idx) => (
+                          <div key={idx} className={`image-preview-card ${img.isPrimary ? "primary" : ""} ${editingIndex === idx ? "editing" : ""}`}>
+                            <div className="image-preview-card-header">
+                              <span className="image-preview-order">#{idx + 1}</span>
+                              {img.isPrimary && <span className="image-primary-badge">★ Primary</span>}
+                            </div>
+                            <div
+                              className="image-preview-thumb"
+                              onClick={() => {
+                                if (!failedImages.has(idx) && isValidImageUrl(img.url)) {
+                                  openLightbox(img.url);
+                                }
+                              }}
+                              title="Click to view high-res preview"
+                            >
+                              {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
+                                <div className="product-img-placeholder" style={{ width: "100%", height: "100%" }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
+                              ) : (
+                                <>
+                                  <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={300} height={300} className="image-preview-img" onError={() => handleImageError(idx)} />
+                                  <div className="image-zoom-overlay">
+                                    <span>🔍 Inspect</span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            {editingIndex === idx ? (
+                              <div className="image-preview-edit">
+                                <input
+                                  type="url"
+                                  value={editUrl}
+                                  onChange={(e) => setEditUrl(e.target.value)}
+                                  className="input-cream image-edit-input"
+                                  placeholder="Edit image URL..."
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") { e.preventDefault(); saveEditImage(idx); }
+                                    if (e.key === "Escape") { cancelEditImage(); }
+                                  }}
+                                />
+                                <div className="image-edit-actions">
+                                  <button type="button" className="btn btn-sm btn-primary" onClick={() => saveEditImage(idx)} disabled={!editUrl.trim()}>
+                                    Save
+                                  </button>
+                                  <button type="button" className="btn btn-sm btn-secondary" onClick={cancelEditImage}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="image-preview-url" title={img.url}>{img.url}</span>
+                            )}
+                            <div className="image-preview-actions">
+                              <button
+                                type="button"
+                                className={`btn btn-xs ${img.isPrimary ? "btn-gold" : "btn-secondary"}`}
+                                onClick={() => setPrimary(idx)}
+                                disabled={img.isPrimary || editingIndex !== null}
+                                title={img.isPrimary ? "Primary image" : "Set as primary image"}
+                              >
+                                ★
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-secondary"
+                                onClick={() => moveImage(idx, -1)}
+                                disabled={idx === 0 || editingIndex !== null}
+                                title="Move left"
+                              >
+                                ←
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-secondary"
+                                onClick={() => moveImage(idx, 1)}
+                                disabled={idx === productForm.images.length - 1 || editingIndex !== null}
+                                title="Move right"
+                              >
+                                →
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-secondary"
+                                onClick={() => startEditImage(idx)}
+                                disabled={editingIndex !== null}
+                                title="Edit image URL"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-danger image-delete-btn"
+                                onClick={() => removeImage(idx)}
+                                disabled={editingIndex !== null}
+                                title="Delete image"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted text-sm">
+                        No additional images added. The primary image URL above will be used as the product image.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

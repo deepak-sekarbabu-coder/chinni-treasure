@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BookOpenText, FileXls, SignOut } from "@phosphor-icons/react";
 
 interface Props {
   isExporting: boolean;
@@ -19,6 +20,7 @@ export default function AdminHeader({ isExporting, isLoggingOut, onExport, onLog
         </div>
         <div className="admin-header-actions">
           <Link href="/docs" className="btn btn-secondary btn-link btn-lg">
+            <BookOpenText size={16} aria-hidden="true" />
             API Docs
           </Link>
           <button
@@ -26,13 +28,21 @@ export default function AdminHeader({ isExporting, isLoggingOut, onExport, onLog
             onClick={onExport}
             disabled={isExporting || isLoggingOut}
           >
-            {isExporting ? "Exporting..." : "Export Excel"}
+            {isExporting ? (
+              "Exporting..."
+            ) : (
+              <>
+                <FileXls size={16} aria-hidden="true" />
+                Export Excel
+              </>
+            )}
           </button>
           <button
             className="btn btn-secondary btn-lg"
             onClick={onLogout}
             disabled={isLoggingOut}
           >
+            <SignOut size={16} aria-hidden="true" />
             Logout
           </button>
         </div>

@@ -460,8 +460,8 @@
     }
 
     .feature-item {
-        background: var(--gold);
-        transition: border-color var(--motion-snappy), background var(--motion-snappy);
+        background: #fff;
+        transition: border-color var(--motion-snappy);
     }
 
 

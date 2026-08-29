@@ -1,7 +1,20 @@
 "use client";
 
-import StatusBadge from "@/src/components/ui/StatusBadge";
-import FallbackImage from "@/src/components/ui/FallbackImage";
+import { useCallback, useMemo } from "react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  type SortingState,
+  type OnChangeFn,
+} from "@tanstack/react-table";
+import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import {
+  createOrderColumns,
+  ORDER_SORT_TO_STATE,
+  STATE_TO_ORDER_SORT,
+  type OrderSortKey,
+} from "@/src/components/admin/table/columns.orders";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
 import type { Order } from "@/src/lib/api/schemas";
 
@@ -16,6 +29,8 @@ interface Props {
   advancingOrderId: string | null;
   selectedOrder: Order | null;
   onSelectOrder: (order: Order | null) => void;
+  sort: OrderSortKey;
+  onSortChange: (sort: OrderSortKey) => void;
 }
 
 export default function AdminOrdersPanel({
@@ -29,18 +44,47 @@ export default function AdminOrdersPanel({
   advancingOrderId,
   selectedOrder,
   onSelectOrder,
+  sort,
+  onSortChange,
 }: Props) {
-  function handleFilterClick(key: string) {
-    onStatusFilterChange(key);
-  }
+  const sorting = useMemo(() => ORDER_SORT_TO_STATE[sort] ?? [], [sort]);
 
-  function handlePageChange(page: number) {
-    onPageChange(page);
-    const element = document.getElementById("panel-orders");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  }
+  const handleSortingChange: OnChangeFn<SortingState> = useCallback(
+    (updater) => {
+      const next = typeof updater === "function" ? updater(sorting) : updater;
+      const head = next[0];
+      if (!head) {
+        onSortChange("date-desc");
+        return;
+      }
+      const base = STATE_TO_ORDER_SORT[head.id];
+      if (!base) return;
+      onSortChange(head.desc ? (base.replace("-asc", "-desc") as OrderSortKey) : base);
+    },
+    [sorting, onSortChange],
+  );
+
+  const columns = useMemo(() => createOrderColumns({ onSelectOrder }), [onSelectOrder]);
+
+  const table = useReactTable({
+    data: orders,
+    columns,
+    state: { sorting },
+    onSortingChange: handleSortingChange,
+    manualSorting: true,
+    manualPagination: true,
+    pageCount: totalPages,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      onPageChange(page);
+      const element = document.getElementById("panel-orders");
+      if (element) element.scrollIntoView({ behavior: "smooth" });
+    },
+    [onPageChange],
+  );
 
   return (
     <div id="panel-orders" role="tabpanel" aria-labelledby="tab-orders">
@@ -49,98 +93,29 @@ export default function AdminOrdersPanel({
           <button
             key={f.key}
             className={`btn btn-sm ${statusFilter === f.key ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => handleFilterClick(f.key)}
+            onClick={() => onStatusFilterChange(f.key)}
           >
             {f.label}
           </button>
         ))}
       </div>
 
-      <div id="orders-list">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, idx) => (
-            <div
-              key={`order-skeleton-${idx}`}
-              className="admin-stat-card order-card order-card-skeleton text-left"
-              style={{ marginBottom: "16px", animationDelay: `${idx * 0.06}s` }}
-            >
-              <div className="order-card-main">
-                <div className="skeleton-block order-card-thumb" />
-                <div className="order-card-body">
-                  <div className="order-card-header">
-                    <div className="skeleton-grow">
-                      <div className="skeleton-text" style={{ width: "60px", height: "10px", marginBottom: "8px" }} />
-                      <div className="skeleton-text" style={{ width: "140px", height: "16px" }} />
-                    </div>
-                    <div className="skeleton-block" style={{ width: "80px", height: "26px", borderRadius: "2px" }} />
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "6px" }} />
-                      <div className="skeleton-text" style={{ width: "90px", height: "12px" }} />
-                    </div>
-                    <div className="skeleton-text" style={{ width: "80px", height: "18px" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : orders.length === 0 ? (
-          <p className="empty-state">No orders found.</p>
-        ) : (
-          orders.map((order) => {
-            const isAdvancing = advancingOrderId === order.id;
-            const firstItem = order.items?.[0];
-            const thumbSrc = firstItem?.product?.imageUrl || null;
-            const extraItemCount = Math.max(0, (order.items?.length ?? 0) - 1);
-            return (
-              <div
-                key={order.id}
-                className={`admin-stat-card order-card text-left ${isAdvancing ? "order-card-advancing" : ""} ${selectedOrder?.id === order.id ? "order-card-selected" : ""}`}
-                style={{ marginBottom: "16px", cursor: isAdvancing ? "default" : "pointer" }}
-                onClick={() => !isAdvancing && onSelectOrder(order)}
-              >
-                <div className="order-card-main">
-                  <div className="order-card-thumb" aria-hidden="true">
-                    {thumbSrc ? (
-                      <FallbackImage
-                        src={thumbSrc}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="order-card-thumb-img"
-                      />
-                    ) : (
-                      <span className="order-card-thumb-placeholder">🛍️</span>
-                    )}
-                    {extraItemCount > 0 && (
-                      <span className="order-card-thumb-count">+{extraItemCount}</span>
-                    )}
-                  </div>
-                  <div className="order-card-body">
-                    <div className="order-card-header">
-                      <div>
-                        <div className="order-card-label">Order ID</div>
-                        <h3 className="order-card-number">{order.orderNumber}</h3>
-                      </div>
-                      <StatusBadge status={order.status} />
-                    </div>
-                    <div className="flex justify-between items-end gap-12">
-                      <div style={{ minWidth: 0 }}>
-                        <p className="order-card-name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.customerName}</p>
-                        <p className="order-card-date">{new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
-                      </div>
-                      <div className="text-right" style={{ flexShrink: 0 }}>
-                        <span className="order-card-price">₹{Number(order.totalAmount).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+      <AdminDataTable
+        table={table}
+        isLoading={loading}
+        skeletonRowCount={6}
+        emptyMessage="No orders found."
+        getRowProps={(row) => {
+          const isAdvancing = advancingOrderId === row.original.id;
+          const isSelected = selectedOrder?.id === row.original.id;
+          return {
+            "data-testid": `order-row-${row.original.id}`,
+            className: `order-table-row${isAdvancing ? " order-table-row--advancing" : ""}${isSelected ? " order-table-row--selected" : ""}`,
+            onClick: () => !isAdvancing && onSelectOrder(row.original),
+            style: { cursor: isAdvancing ? ("default" as const) : ("pointer" as const) },
+          };
+        }}
+      />
 
       {totalPages > 1 && (
         <div className="pagination-bar">
@@ -149,15 +124,19 @@ export default function AdminOrdersPanel({
             disabled={currentPage <= 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
-            ← Prev
+            <CaretLeft size={14} weight="bold" aria-hidden="true" />
+            Prev
           </button>
-          <span className="pagination-text">Page {currentPage} of {totalPages}</span>
+          <span className="pagination-text">
+            Page {currentPage} of {totalPages}
+          </span>
           <button
             className="btn btn-secondary btn-sm"
             disabled={currentPage >= totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
-            Next →
+            Next
+            <CaretRight size={14} weight="bold" aria-hidden="true" />
           </button>
         </div>
       )}

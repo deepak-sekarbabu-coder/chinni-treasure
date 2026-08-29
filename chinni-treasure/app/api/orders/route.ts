@@ -43,6 +43,22 @@ const CreateOrderSchema = z.object({
     .min(1, "At least one item is required"),
 });
 
+const ORDERS_LIST_SCHEMA = z.object({
+  sort: z
+    .enum(["date-desc", "date-asc", "total-desc", "total-asc"])
+    .default("date-desc"),
+});
+
+const ORDER_SORTS: Record<
+  "date-desc" | "date-asc" | "total-desc" | "total-asc",
+  Prisma.OrderOrderByWithRelationInput
+> = {
+  "date-desc": { createdAt: "desc" },
+  "date-asc": { createdAt: "asc" },
+  "total-desc": { totalAmount: "desc" },
+  "total-asc": { totalAmount: "asc" },
+};
+
 // GET /api/orders — List paginated orders (admin only)
 export async function GET(request: Request) {
   const admin = await checkAuth();
@@ -56,6 +72,12 @@ export async function GET(request: Request) {
   const status = searchParams.get("status");
   const skip = (page - 1) * limit;
 
+  const sortParse = validateOr400(ORDERS_LIST_SCHEMA, {
+    sort: searchParams.get("sort") ?? undefined,
+  });
+  if (!sortParse.ok) return sortParse.response;
+  const sort = sortParse.data.sort;
+
   try {
     const where = status ? { status: status as OrderStatus } : {};
 
@@ -64,7 +86,7 @@ export async function GET(request: Request) {
     const orders = await prisma.order.findMany({
       where,
       include: { items: { include: { product: true } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: ORDER_SORTS[sort],
       skip,
       take: limit,
     });

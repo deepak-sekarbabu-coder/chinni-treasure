@@ -560,6 +560,17 @@ export const openApiSpec = {
             },
             description: "Filter by order status",
           },
+          {
+            name: "sort",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["date-desc", "date-asc", "total-desc", "total-asc"],
+              default: "date-desc",
+            },
+            description:
+              "Sort orders. date-* sorts by createdAt, total-* by totalAmount.",
+          },
         ],
         responses: {
           "200": {

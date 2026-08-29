@@ -332,6 +332,97 @@
     padding-right: 8px;
 }
 
+/* ── Orders Chart (Last 30 Days) ── */
+.orders-chart-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.orders-chart-header h2 {
+    margin: 0;
+}
+
+.orders-chart-summary {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.orders-chart-summary strong {
+    color: var(--gold-deep);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.orders-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.orders-chart-gridline {
+    stroke: var(--cream);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+}
+
+.orders-chart-baseline {
+    stroke: var(--cream);
+    stroke-width: 1.5;
+}
+
+.orders-chart-caption {
+    fill: var(--text-muted);
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+}
+
+.orders-chart-axis-label {
+    fill: var(--text-muted);
+    font-size: 9px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+}
+
+.orders-chart-axis-label--strong {
+    fill: var(--gold-deep);
+    font-weight: 700;
+}
+
+.orders-chart-bar {
+    fill: var(--gold);
+    transform-origin: center bottom;
+    transform-box: fill-box;
+    animation: ordersChartGrow 0.35s var(--ease-out) both;
+}
+
+.orders-chart-bar--today {
+    fill: var(--gold-deep);
+    filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.35));
+}
+
+@keyframes ordersChartGrow {
+    from {
+        transform: scaleY(0);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .orders-chart-bar {
+        animation: none;
+    }
+}
+
 /* ── Pagination ── */
 .pagination-bar {
     display: flex;
@@ -370,6 +461,30 @@
     border-top: 1px solid var(--cream);
 }
 
+/* ── Form Section Grouping ── */
+.form-section-group {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cream);
+}
+
+.form-section-group:last-of-type {
+    border-bottom: none;
+    margin-bottom: 8px;
+    padding-bottom: 0;
+}
+
+.form-section-title {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gold-deep);
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    letter-spacing: 0.02em;
+}
+
 /* ── Product Form Grid ── */
 .admin-product-form-grid {
     display: grid;
@@ -387,7 +502,7 @@
 }
 
 .admin-product-form-grid textarea {
-    min-height: 200px;
+    min-height: 140px;
 }
 
 /* ── Product Management Animations ── */
@@ -436,7 +551,9 @@
     margin-top: 8px;
     position: sticky;
     bottom: 0;
-    background: var(--white);
+    background: transparent;
+    padding-top: 0;
+    border-top: none;
 }
 
 .product-form-inner {
@@ -467,7 +584,9 @@
     margin-top: 8px;
     position: sticky;
     bottom: 0;
-    background: var(--white);
+    background: transparent;
+    padding-top: 0;
+    border-top: none;
 }
 
 /* ── Admin Catalogue Filters ── */
@@ -484,6 +603,7 @@
 }
 
 .admin-catalogue-search {
+    position: relative;
     flex: 1 1 240px;
     min-width: 200px;
 }
@@ -663,6 +783,48 @@
     display: flex;
     gap: 6px;
     align-items: center;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn svg {
+    flex-shrink: 0;
+}
+
+/* Align icon+label buttons in the admin chrome */
+.admin-header-actions .btn,
+.admin-tab-buttons .btn,
+.pagination-bar .btn,
+.catalogue-card-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.catalogue-card-actions .btn {
+    min-height: 44px;
+}
+
+/* Right-align numeric table cells */
+.admin-table td:has(.table-price-cell),
+.admin-table td:has(.stock-health-badge) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+#panel-categories .admin-table td:has(.table-numeric),
+#panel-orders .admin-table td:has(.table-numeric) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Table Cells & Badges ── */
@@ -854,6 +1016,10 @@
 }
 
 .image-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background: var(--cream-light);
     border: 1px solid var(--cream);
     border-radius: 12px;
@@ -970,6 +1136,85 @@
 
 .catalogue-lightbox-thumb.active {
     border-color: var(--gold);
+}
+
+/* Navigation arrows on catalogue lightbox main image */
+.catalogue-lightbox-main-img {
+    position: relative;
+}
+
+.catalogue-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--cream);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--near-black);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.catalogue-lightbox-nav:hover {
+    background: var(--gold);
+    color: var(--black);
+    box-shadow: var(--shadow-gold);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.catalogue-lightbox-nav:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.catalogue-lightbox-nav-prev {
+    left: 10px;
+}
+
+.catalogue-lightbox-nav-next {
+    right: 10px;
+}
+
+/* Header right side (badge + close button) */
+.catalogue-lightbox-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Close button inside catalogue lightbox card */
+.catalogue-lightbox-close {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--error);
+    background: var(--error);
+    color: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.catalogue-lightbox-close:hover {
+    background: #c0392b;
+    transform: scale(1.08);
+}
+
+.catalogue-lightbox-close svg {
+    stroke: currentColor;
 }
 
 /* ── Product Images ── */
@@ -1379,9 +1624,36 @@
     .admin-product-form-grid .full-width {
         grid-column: span 1;
     }
+
+    .form-section-group {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+
+    .form-section-title {
+        font-size: 0.88rem;
+        margin-bottom: 12px;
+    }
+
+    .product-form-modal .modal-body {
+        padding: 20px;
+    }
+
+    .product-form-footer {
+        position: sticky;
+        bottom: 0;
+        background: transparent;
+        margin: 16px -20px -20px;
+        padding: 14px 20px;
+        z-index: 1;
+    }
 }
 
 @media (max-width: 480px) {
+    .admin-catalogue-select {
+        flex: 1 1 100%;
+    }
+
     .admin-top-header {
         padding: 24px 0;
     }
@@ -1500,6 +1772,31 @@
     .admin-product-form-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .product-form-modal .modal-body {
+        padding: 14px;
+    }
+
+    .form-section-group {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+    }
+
+    .form-section-title {
+        font-size: 0.82rem;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+    }
+
+    .product-form-footer {
+        margin: 12px -14px -14px;
+        padding: 12px 14px;
+    }
+
+    .product-form-footer .btn {
+        flex: 1;
+        min-height: 44px;
     }
 
     .admin-order-list .admin-stat-card {
@@ -2181,5 +2478,338 @@
         flex: 1 1 100%;
         padding: 12px 20px;
         font-size: 0.7rem;
+    }
+}
+/* ── Sortable Table Headers ── */
+.th-sort-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color var(--transition-fast) var(--ease-out);
+}
+
+.th-sort-btn:hover {
+    color: var(--gold-deep);
+}
+
+.th-sort-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    color: var(--gold-deep);
+}
+
+.admin-table th[data-sort] {
+    color: var(--gold-deep);
+}
+
+.admin-table th[data-sort]::after {
+    content: "↑";
+    font-size: 0.7rem;
+    margin-left: 2px;
+}
+
+.admin-table th[data-sort="desc"]::after {
+    content: "↓";
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .th-sort-btn {
+        transition: none;
+    }
+}
+
+/* ── Orders Table Rows ── */
+.order-number-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.order-thumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 32px;
+    height: 40px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--cream);
+    background: var(--cream-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.order-table-row {
+    cursor: pointer;
+}
+
+.order-table-row--selected {
+    background: rgba(212, 175, 55, 0.08);
+}
+
+.order-table-row--advancing {
+    opacity: 0.85;
+    cursor: default;
+    pointer-events: none;
+    animation: orderAdvanceShimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Catalogue Cards (mobile table replacement) ── */
+.admin-catalogue-cards {
+    display: none;
+}
+
+.catalogue-card {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    background: var(--white);
+    border: 1px solid var(--cream);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.catalogue-card:active {
+    box-shadow: var(--shadow-md);
+    border-color: var(--gold-light);
+}
+
+.catalogue-card-thumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--cream);
+    background: var(--cream-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.catalogue-card-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.catalogue-card-gallery-count {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(13, 13, 13, 0.82);
+    color: var(--white);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+.catalogue-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.catalogue-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.catalogue-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.catalogue-card-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--near-black);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.catalogue-card-badges {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+.catalogue-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.catalogue-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.catalogue-card-actions .btn {
+    flex: 1;
+}
+
+/* ── Category Cards (mobile table replacement) ── */
+.admin-category-cards {
+    display: none;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.category-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--white);
+    border: 1px solid var(--cream);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.category-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.category-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.category-card-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--near-black);
+}
+
+.category-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.category-card-order {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.category-card-order strong {
+    color: var(--near-black);
+    font-size: 0.85rem;
+}
+
+.category-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.category-card-actions .btn {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .admin-catalogue-cards {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    #panel-catalogue .admin-product-table-wrap {
+        display: none;
+    }
+
+    #panel-categories .admin-category-cards {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    #panel-categories .admin-product-table-wrap,
+    #panel-orders .admin-product-table-wrap {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .catalogue-card {
+        padding: 10px 12px;
+    }
+
+    .catalogue-card-thumb {
+        width: 72px;
+        height: 72px;
+        min-width: 72px;
+    }
+
+    .catalogue-card-head {
+        flex-direction: column;
+    }
+
+    .catalogue-card-badges {
+        justify-content: flex-start;
+    }
+
+    .catalogue-card-meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .catalogue-card {
+        transition: none;
     }
 }
