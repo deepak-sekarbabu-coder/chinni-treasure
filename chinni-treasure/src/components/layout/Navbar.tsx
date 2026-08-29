@@ -58,6 +58,9 @@ export default function Navbar() {
     return pathname.startsWith(href);
   };
 
+  // Hide the public navbar on admin pages — admin has its own header
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <nav
       className={`navbar${scrolled ? " scrolled" : ""}`}
