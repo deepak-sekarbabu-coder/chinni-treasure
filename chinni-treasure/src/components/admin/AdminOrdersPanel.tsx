@@ -9,6 +9,8 @@ import {
   type OnChangeFn,
 } from "@tanstack/react-table";
 import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import StatusBadge from "@/src/components/ui/StatusBadge";
+import FallbackImage from "@/src/components/ui/FallbackImage";
 import {
   createOrderColumns,
   ORDER_SORT_TO_STATE,
@@ -31,6 +33,76 @@ interface Props {
   onSelectOrder: (order: Order | null) => void;
   sort: OrderSortKey;
   onSortChange: (sort: OrderSortKey) => void;
+}
+
+function OrderCard({
+  order,
+  isAdvancing,
+  isSelected,
+  onSelect,
+}: {
+  order: Order;
+  isAdvancing: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const imageUrl = order.items?.[0]?.product?.imageUrl;
+  const hasValidImage = imageUrl && /^https?:\/\//.test(imageUrl);
+
+  return (
+    <div
+      className={`order-card${isAdvancing ? " order-card-advancing" : ""}${isSelected ? " order-card-selected" : ""}`}
+      onClick={() => !isAdvancing && onSelect()}
+      style={{ cursor: isAdvancing ? "default" : "pointer" }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (!isAdvancing) onSelect();
+        }
+      }}
+    >
+      <div className="order-card-main">
+        <div className="order-card-thumb">
+          {hasValidImage ? (
+            <FallbackImage
+              src={imageUrl}
+              alt=""
+              width={56}
+              height={56}
+              className="order-card-thumb-img"
+            />
+          ) : (
+            <span className="order-card-thumb-placeholder">📦</span>
+          )}
+          {(order.items?.length ?? 0) > 1 && (
+            <span className="order-card-thumb-count">
+              {order.items?.length}
+            </span>
+          )}
+        </div>
+        <div className="order-card-body">
+          <div className="order-card-header">
+            <div>
+              <div className="order-card-label">Order</div>
+              <div className="order-card-number">{order.orderNumber}</div>
+            </div>
+            <div className="order-card-price">
+              ₹{Number(order.totalAmount).toFixed(2)}
+            </div>
+          </div>
+          <div className="order-card-footer">
+            <div>
+              <div className="order-card-label">Customer</div>
+              <div className="order-card-name">{order.customerName}</div>
+            </div>
+            <StatusBadge status={order.status} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminOrdersPanel({
@@ -100,6 +172,7 @@ export default function AdminOrdersPanel({
         ))}
       </div>
 
+      {/* Desktop table */}
       <AdminDataTable
         table={table}
         isLoading={loading}
@@ -116,6 +189,41 @@ export default function AdminOrdersPanel({
           };
         }}
       />
+
+      {/* Mobile cards */}
+      <div className="admin-order-cards">
+        {loading ? (
+          Array.from({ length: 4 }, (_, idx) => (
+            <div
+              key={`skeleton-${idx}`}
+              className="order-card order-card-skeleton"
+              style={{ animationDelay: `${idx * 0.06}s` }}
+            >
+              <div className="order-card-main">
+                <div className="order-card-thumb">
+                  <div className="skeleton-block" style={{ width: "100%", height: "100%" }} />
+                </div>
+                <div className="order-card-body" style={{ flex: 1 }}>
+                  <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "8px" }} />
+                  <div className="skeleton-text" style={{ width: "80px", height: "12px" }} />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : orders.length === 0 ? (
+          <div className="empty-state">No orders found.</div>
+        ) : (
+          orders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isAdvancing={advancingOrderId === order.id}
+              isSelected={selectedOrder?.id === order.id}
+              onSelect={() => onSelectOrder(order)}
+            />
+          ))
+        )}
+      </div>
 
       {totalPages > 1 && (
         <div className="pagination-bar">

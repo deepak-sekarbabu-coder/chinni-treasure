@@ -2,7 +2,7 @@
 
 /* ── Admin Page Root ── */
 .admin-page-root {
-    padding-top: 80px;
+    padding-top: 0;
 }
 
 /* ── Stat Card ── */
@@ -1527,7 +1527,7 @@
 /* ── Admin responsive ── */
 @media (max-width: 768px) {
     .admin-page-root {
-        padding-top: 72px;
+        padding-top: 0;
     }
 
     .admin-page-root .section {
@@ -2571,6 +2571,14 @@
     animation: orderAdvanceShimmer 1.5s ease-in-out infinite;
 }
 
+/* ── Order Cards (mobile table replacement) ── */
+.admin-order-cards {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
 /* ── Catalogue Cards (mobile table replacement) ── */
 .admin-catalogue-cards {
     display: none;
@@ -2760,6 +2768,14 @@
 }
 
 @media (max-width: 768px) {
+    .admin-order-cards {
+        display: flex;
+    }
+
+    #panel-orders .admin-product-table-wrap {
+        display: none;
+    }
+
     .admin-catalogue-cards {
         display: grid;
         gap: 12px;
@@ -2776,8 +2792,7 @@
         margin-bottom: 16px;
     }
 
-    #panel-categories .admin-product-table-wrap,
-    #panel-orders .admin-product-table-wrap {
+    #panel-categories .admin-product-table-wrap {
         display: none;
     }
 }
