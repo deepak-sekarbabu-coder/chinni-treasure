@@ -208,7 +208,9 @@ export async function GET(request: Request) {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
       },
-      orderBy: [{ stockQuantity: "desc" }, ...sort, { id: "desc" }],
+      orderBy: sortParam === "newest"
+        ? [{ stockQuantity: "desc" as const }, ...sort, { id: "desc" as const }]
+        : [...sort, { id: "desc" as const }],
       skip,
       take: limit,
     });
