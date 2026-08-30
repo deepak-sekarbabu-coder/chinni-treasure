@@ -6,17 +6,20 @@
 
 - **Framework:** [Next.js 16.3.1](https://nextjs.org/) (App Router, React 19.2.8)
 - **Database:** PostgreSQL with [Prisma ORM 7.9.1](https://www.prisma.io/) via `@prisma/adapter-pg`
-- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into **31 component-specific files** under `app/styles/`, orchestrated via `@import` statements in the entry point.
+- **Styling:** Modular raw CSS with CSS Variables (no Tailwind). The monolithic `app/globals.css` has been decomposed into **32 component-specific files** under `app/styles/`, orchestrated via `@import` statements in the entry point.
 - **Authentication:** JWT-based admin auth stored in an `HttpOnly` `session` cookie
 - **State Management:** React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
 - **Server State:** React Query (`@tanstack/react-query` v5.101.4 + devtools) for client-side caching and data fetch orchestration
 - **Validation:** Zod v4.4.3 for checkout, cart, and API request/response validation
-- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue/order/stats caches are owned by dedicated modules under `src/lib/`
+- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue (products/categories/latest/page/recent/gift-boxes), order, and stats caches are owned by dedicated modules under `src/lib/`
 - **Observability:** Axiom structured logging (`@axiomhq/*`) for page traffic, route events, Web Vitals, and errors when configured
 - **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual UPI/bank-transfer fallback
 - **Analytics & Insights:** Vercel Analytics (`@vercel/analytics` v2.0.1) + Speed Insights (`@vercel/speed-insights` v2.0.0)
 - **Markdown:** `react-markdown` v10.1.0 for rendering rich product/legal content
 - **Export:** ExcelJS v4.4.0 for admin data export; jsPDF v4.2.1 for invoice generation; jsBarcode v3.12.3 for barcode generation
+- **Admin tables:** `@tanstack/react-table` v8.21.3 for the Orders / Catalogue / Categories data grids (server-side sorting)
+- **Icons:** `@phosphor-icons/react` v2.1.10 for the admin UI and feature icons
+- **3D Graphics:** `@react-three/fiber` v9 + `three` v0.185 for the animated gold-particle hero (with `prefers-reduced-motion` support)
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
 - **Testing:** Vitest v4.1.7 with @testing-library/react v16.3.2, @testing-library/jest-dom v6.9.1, @testing-library/user-event v14.6.4, and jsdom
 
@@ -28,7 +31,9 @@
 - **Guest + authenticated shopping** with a persistent cart (React Context + `localStorage` + cookie sync for server-side access)
 - **Razorpay payments** via Standard Checkout with server-side HMAC-SHA256 signature verification, plus a manual UPI/bank-transfer fallback
 - **Multi-step checkout** with delivery form, Indian address validation (states, PIN codes), shipping calculation, and a confirmation page with a downloadable PDF invoice
-- **Admin dashboard** with order management, catalogue CRUD, **category management** (create/edit/delete/toggle active, display order), status advancement, Excel export, and pure-CSS charts
+- **Gift box bundling** on the product page *and* at checkout: eligible products (`allowGiftBoxBundling`) let customers attach a free/extra gift-box catalogue item, driven by a dedicated `/api/gift-boxes` endpoint
+- **Animated 3D hero:** a gold-particle canvas background on the homepage built with React Three Fiber, with full `prefers-reduced-motion` fallback
+- **Admin dashboard** with order management, catalogue CRUD, **category management** (create/edit/delete/toggle active, display order), status advancement, Excel export, and pure-CSS charts — with Orders / Catalogue / Categories rendered via **TanStack Table** (server-side sorting) and **Phosphor** icons
 - **Category browsing** with dedicated `/category/[slug]` pages, paginated/sortable listings, and a homepage "Latest in Every Category" section showing the newest in-stock product per active category
 - **Order tracking** portal and shareable confirmation pages (by Order ID or customer phone number)
 - **Surprise gift** (optional via `NEXT_PUBLIC_ENABLE_SURPRISE_GIFT`): a free complementary gift is auto-added to the cart, announced with a popup
@@ -146,7 +151,7 @@ npm run db:seed
 The seed script creates:
 
 - **6 categories** (Clutches, Bangles, Jewellery, Bangle Organizer, Bracelets, Gift Boxes)
-- **47 products** with pricing, stock, multiple images, and rich markdown descriptions
+- **46 products** with pricing, stock, multiple images, and rich markdown descriptions
 - **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
 - **3 sample orders** with full status history (for demo/testing)
 
@@ -224,6 +229,7 @@ chinni-treasure/
 │   │   │   └── db-health/route.ts    # Daily database keep-alive ping (Vercel cron, CRON_SECRET)
 │   │   ├── docs/route.ts             # OpenAPI spec endpoint
 │   │   ├── export/route.ts           # Excel export endpoint (cursor-based batching)
+│   │   ├── gift-boxes/route.ts       # Active gift-box category products (cached, for checkout bundling)
 │   │   ├── health/db/route.ts        # Database health check
 │   │   ├── health/redis/route.ts     # Redis connectivity health check
 │   │   ├── orders/
@@ -267,7 +273,7 @@ chinni-treasure/
 │   ├── loading.tsx                   # Root loading state
 │   ├── not-found.tsx                 # Root 404
 │   ├── sitemap.ts                    # Dynamic sitemap generation (products + categories)
-│   ├── styles/                       # Decomposed modular CSS files (**31 files**)
+│   ├── styles/                       # Decomposed modular CSS files (**32 files**)
 │   │   ├── variables.css             # CSS custom properties (colors, fonts, shadows)
 │   │   ├── base.css                  # Reset, HTML/body, scrollbar, skip link
 │   │   ├── keyframes.css             # All @keyframes animations
@@ -298,13 +304,14 @@ chinni-treasure/
 │   │   ├── gallery.css               # Product image gallery
 │   │   ├── breadcrumbs.css           # Breadcrumb navigation
 │   │   ├── complementary-gift.css    # Surprise/complementary gift popup
+│   │   ├── gift-box.css              # Gift box selector / bundling modal
 │   │   └── shipping-nudge.css        # Free-shipping threshold progress popup
 │   ├── globals.css                   # Entry point — @import statements importing styles/
 │   ├── layout.tsx                    # Root layout (Navbar, Footer, Providers, fonts, Analytics)
 │   └── page.tsx                      # Homepage (server component)
 ├── prisma/
 │   ├── schema.prisma                 # Database schema (**7 models + 3 enums**)
-│   ├── seed.ts                       # Database seeder (**47 products + 6 categories + admin + 3 sample orders**)
+│   ├── seed.ts                       # Database seeder (**46 products + 6 categories + admin + 3 sample orders**)
 │   ├── seed-data.ts                  # Seed data constants (products, categories, orders)
 │   └── migrations/                   # Database migration history (4 migrations)
 ├── scripts/
@@ -341,7 +348,12 @@ chinni-treasure/
 │   │   │   ├── AdminTrackingModal.tsx    # Tracking ID input modal
 │   │   │   ├── CategoryFormModal.tsx     # Category create/edit form modal
 │   │   │   ├── PrintShippingLabelModal.tsx # Shipping label PDF/print modal
-│   │   │   └── ProductFormModal.tsx      # Product create/edit form modal
+│   │   │   ├── ProductFormModal.tsx      # Product create/edit form modal
+│   │   │   └── table/                    # TanStack Table kit (shared data grids)
+│   │   │       ├── AdminDataTable.tsx    # Shared table component (sorting, pagination)
+│   │   │       ├── columns.catalogue.tsx # Catalogue table column definitions
+│   │   │       ├── columns.categories.tsx# Categories table column definitions
+│   │   │       └── columns.orders.tsx    # Orders table column definitions
 │   │   ├── order/
 │   │   │   ├── CheckoutProgress.tsx     # Multi-step progress indicator
 │   │   │   ├── ConfirmationDetails.tsx  # Order confirmation with invoice PDF + barcode
@@ -352,10 +364,13 @@ chinni-treasure/
 │   │   │   └── TrackOrderCard.tsx       # Track order result card
 │   │   ├── pages/
 │   │   │   ├── home-content.tsx         # Client homepage hero + features
+│   │   │   ├── HeroParticles3D.tsx      # Animated gold-particle hero (React Three Fiber)
 │   │   │   ├── category-content.tsx     # Category page content (pagination, sort)
 │   │   │   ├── LatestInEveryCategory.tsx # Homepage latest-per-category carousel/grid
 │   │   │   ├── catalogue-content.tsx    # Client catalogue grid with cart interactions
-│   │   │   ├── ProductDetailsContent.tsx # Product detail gallery, add-to-cart, info
+│   │   │   ├── ProductDetailsContent.tsx # Product detail gallery, add-to-cart, info + gift box selector
+│   │   │   ├── GiftBoxSelector.tsx      # Gift box bundling selector (product page + checkout)
+│   │   │   ├── GiftBoxModal.tsx         # Gift box selection modal
 │   │   │   └── __tests__/catalogue-pagination.test.tsx
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx        # React Query provider (with devtools in dev)
@@ -397,7 +412,7 @@ chinni-treasure/
 │   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
 │   │   ├── cache.ts                  # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
-│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/page/recent)
+│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/page/recent/gift-boxes)
 │   │   ├── constants.ts              # Indian states, status flow, labels, icons
 │   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
 │   │   ├── csrf-helpers.ts           # CSRF host validation helpers
@@ -424,8 +439,8 @@ chinni-treasure/
 │   │   ├── razorpay.d.ts             # Razorpay response/constructor types
 │   │   └── index.ts                  # Re-exports
 │   └── __tests__/
-│       ├── api/                      # API route handler tests (14 files)
-│       ├── lib/                      # Lib module tests (13 files)
+│       ├── api/                      # API route handler tests (16 files)
+│       ├── lib/                      # Lib module tests (18 files)
 │       ├── mocks/                    # Shared mock implementations (prisma.ts)
 │       ├── setup.ts                  # Vitest global setup
 │       └── utils/                    # Test helper utilities (api-test.ts)
@@ -603,6 +618,7 @@ rejected (stock restored)
 | DELETE | `/api/categories/[id]` | Delete category (blocked if active products exist) | Yes |
 | GET | `/api/categories/latest` | Latest in-stock product per active category (homepage) | No |
 | GET | `/api/category/[slug]/products` | Paginated, sortable product listing for a category | No |
+| GET | `/api/gift-boxes` | List active gift-box products for checkout bundling (cached) | No |
 | POST | `/api/orders` | Place new order (serializable transaction; captures `transactionId` from Razorpay or manual payment) | No |
 | POST | `/api/create-order` | Create a Razorpay order for Standard Checkout | No |
 | POST | `/api/verify-payment` | Verify Razorpay payment signature (HMAC-SHA256) | No |
@@ -638,7 +654,7 @@ npm run test:coverage # With coverage report
 
 **Test locations:**
 
-- `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, Pages, UI — 14 test files)
+- `src/components/*/__tests__/` — Component tests (Cart, Layout, Order, Pages, UI — 15 test files)
 - `src/lib/hooks/__tests__/` — Custom hook tests (5 files)
 - `src/__tests__/api/` — API route handler tests (16 files)
 - `src/__tests__/lib/` — Lib module tests (18 files)
@@ -667,6 +683,9 @@ npm run test:coverage # With coverage report
 | `exceljs` | Data export to Excel |
 | `razorpay` | Razorpay Standard Checkout payment gateway |
 | `react-markdown` | Markdown rendering for product/legal content |
+| `@tanstack/react-table` | Headless data tables for admin Orders / Catalogue / Categories grids |
+| `@phosphor-icons/react` | Icon set used across the admin UI and site features |
+| `@react-three/fiber` + `three` | 3D rendering for the animated gold-particle homepage hero |
 
 ---
 
