@@ -28,9 +28,14 @@ import type { ImageLoaderProps } from "next/image";
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   const q = quality ?? 75;
 
-  // For local / absolute-path images, just return them as-is.
+  // For local / absolute-path images, append width/quality as query params
+  // so the loader satisfies Next.js's width-implementation check.
   if (src.startsWith("/") || src.startsWith("data:")) {
-    return src;
+    if (src.startsWith("data:")) return src;
+    const localUrl = new URL(src, "http://localhost");
+    localUrl.searchParams.set("w", String(width));
+    localUrl.searchParams.set("q", String(q));
+    return localUrl.pathname + localUrl.search;
   }
 
   // Append width and quality as query params so the browser (and any CDN

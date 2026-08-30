@@ -386,7 +386,11 @@
 
     .hero-content {
         padding-top: 60px;
-        padding-bottom: 80px;
+        padding-bottom: 40px;
+    }
+
+    .hero-story {
+        padding-top: 0;
     }
 
     .hero-content h1 {
@@ -422,7 +426,11 @@
     }
 
     .hero {
-        padding: 92px 16px 68px;
+        padding: 72px 16px 48px;
+    }
+
+    .hero-content {
+        padding-bottom: 24px;
     }
 
     .hero-actions {
@@ -549,11 +557,11 @@
 
     .features-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 16px;
     }
 
     .feature-item {
-        padding: 24px 16px;
+        padding: 20px 16px;
     }
 
     .footer-grid {
@@ -803,7 +811,7 @@
 
     .hero-content {
         padding-top: 50px;
-        padding-bottom: 60px;
+        padding-bottom: 20px;
     }
 
     .hero-content h1 {

@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Chinni Treasure — Runtime Architecture",
+    "locale": "en",
+    "output": "runtime-architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [1232, 780],
+    "repository": {
+      "url": "https://github.com/deepak-sekarbabu-coder/chinni-treasure.git",
+      "revision": "58160f814ba3f28ecbcb623586bb05c05c663174"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Primary request path",
+        "focus": ["browser", "edge", "next-app", "api", "prisma", "postgres"],
+        "note": "Follow a customer request from the storefront browser to durable order state in PostgreSQL."
+      },
+      {
+        "id": "trust-boundary",
+        "label": "Trust boundaries",
+        "focus": ["edge", "auth", "api", "admin"],
+        "note": "JWT session guard at the edge; CSRF-checked admin mutations run inside the trusted server runtime."
+      },
+      {
+        "id": "payments",
+        "label": "Payments",
+        "focus": ["browser", "razorpay", "api"],
+        "note": "Razorpay Standard Checkout runs in the browser; order creation and HMAC verification stay server-side."
+      },
+      {
+        "id": "cache-observability",
+        "label": "Cache and observability",
+        "focus": ["redis", "axiom", "api"],
+        "note": "Optional Redis cache behind the in-memory fallback; structured logs stream to Axiom."
+      }
+    ]
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Storefront Browser", "sublabel": "React 19 · Cart + Query", "pos": [50, 400], "size": [150, 80] },
+    { "id": "edge", "type": "cloud", "label": "Vercel Edge", "sublabel": "proxy.ts middleware", "tag": "JWT page guard", "brand": "vercel", "sources": [{ "path": "chinni-treasure/proxy.ts" }], "pos": [250, 400], "size": [150, 80] },
+    { "id": "next-app", "type": "backend", "label": "Next.js 16 App", "sublabel": "App Router · RSC + SSR", "brand": "next-js", "sources": [{ "path": "chinni-treasure/app/layout.tsx" }], "pos": [450, 400], "size": [150, 80] },
+    { "id": "api", "type": "backend", "label": "API Routes", "sublabel": "/api/* route handlers", "sources": [{ "path": "chinni-treasure/app/api/orders/route.ts" }], "pos": [650, 400], "size": [150, 80] },
+    { "id": "prisma", "type": "backend", "label": "Prisma ORM", "sublabel": "@prisma/adapter-pg", "tag": "serializable tx", "brand": "prisma", "sources": [{ "path": "chinni-treasure/src/lib/prisma.ts" }], "pos": [835, 400], "size": [150, 80] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "Product · Order · Category", "tag": "source of truth", "brand": "postgresql", "sources": [{ "path": "chinni-treasure/prisma/schema.prisma" }], "pos": [1040, 400], "size": [150, 80] },
+    { "id": "admin", "type": "frontend", "label": "Admin Dashboard", "sublabel": "/admin · TanStack Table", "sources": [{ "path": "chinni-treasure/app/admin/page.tsx" }], "pos": [650, 205], "size": [150, 80] },
+    { "id": "auth", "type": "security", "label": "JWT Auth", "sublabel": "jose · HttpOnly session", "tag": "bcrypt", "sources": [{ "path": "chinni-treasure/src/lib/auth.ts" }], "pos": [850, 205], "size": [150, 80] },
+    { "id": "redis", "type": "database", "label": "Redis (optional)", "sublabel": "ioredis · TTL cache", "tag": "in-memory fallback", "brand": "redis", "sources": [{ "path": "chinni-treasure/src/lib/redis-cache.ts" }], "pos": [250, 610], "size": [150, 80] },
+    { "id": "razorpay", "type": "external", "label": "Razorpay", "sublabel": "Standard Checkout", "tag": "HMAC-SHA256 verify", "sources": [{ "path": "chinni-treasure/app/api/verify-payment/route.ts" }], "pos": [650, 610], "size": [150, 80] },
+    { "id": "axiom", "type": "external", "label": "Axiom", "sublabel": "logs · web vitals", "sources": [{ "path": "chinni-treasure/lib/axiom/client.ts" }], "pos": [930, 610], "size": [150, 80] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Vercel Platform · serverless", "wraps": ["edge", "next-app", "api", "prisma", "auth", "admin"] },
+    { "kind": "security-group", "label": "Edge Ingress — proxy.ts", "wraps": ["edge"] },
+    { "kind": "security-group", "label": "Trusted Server Runtime", "wraps": ["next-app", "api", "prisma"] }
+  ],
+  "connections": [
+    { "id": "browser-edge", "from": "browser", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "edge-app", "from": "edge", "to": "next-app", "label": "serve" },
+    { "id": "app-api", "from": "next-app", "to": "api", "label": "RSC fetch" },
+    { "id": "api-prisma", "from": "api", "to": "prisma", "label": "Prisma ORM", "labelDy": 64 },
+    { "id": "prisma-pg", "from": "prisma", "to": "postgres", "label": "SQL" },
+    { "id": "api-auth", "from": "api", "to": "auth", "label": "verify JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "admin-api", "from": "admin", "to": "api", "label": "React Query", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [718, 300] },
+    { "id": "api-redis", "from": "api", "to": "redis", "label": "cache get / set", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "via": [[725, 575], [325, 575]] },
+    { "id": "api-razorpay", "from": "api", "to": "razorpay", "label": "orders + verify", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [755, 589] },
+    { "id": "browser-razorpay", "from": "browser", "to": "razorpay", "label": "Checkout SDK", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "api-axiom", "from": "api", "to": "axiom", "label": "structured logs", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Storefront runtime",
+      "items": [
+        "Guest cart via React Context + localStorage, synced to a signed cart cookie for SSR hydration",
+        "React Query v5 caches server state; order confirmation exports PDF invoice + barcode",
+        "Tracking portal resolves by order number or phone, served from the order cache"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data and API governance",
+      "items": [
+        "Zod v4 schemas validate every /api input and output; OpenAPI spec at /api/docs",
+        "Serializable transactions and versioned order transitions; rejection restores stock",
+        "Cache ownership split across catalogue / order / stats caches; Redis with in-memory fallback"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security",
+      "items": [
+        "proxy.ts guards /admin/* with jose-verified JWT in an HttpOnly session cookie; bcrypt passwords",
+        "CSRF origin + referer checks and rate-limited login; admin mutations verify the same JWT",
+        "Razorpay HMAC-SHA256 signature verification runs server-side only"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Operations",
+      "items": [
+        "Axiom structured logging for page traffic, route events, Web Vitals, and errors",
+        "Daily /api/cron/db-health keep-alive; Vercel Analytics + Speed Insights",
+        "Admin Excel export is cursor-batched; Lighthouse budgets live in lighthouse/budgets.json"
+      ]
+    }
+  ]
+}

@@ -2,8 +2,6 @@
 
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useCart } from "@/src/components/cart/CartProvider";
-import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import GiftBoxModal, { type GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
 import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
@@ -12,6 +10,7 @@ import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
+import { useAddToCart } from "@/src/lib/hooks/useAddToCart";
 import type { CategoryProductsResponse, Product } from "@/src/lib/api/schemas";
 
 interface CategoryInfo {
@@ -42,8 +41,6 @@ export default function CategoryContent({
   initialTotal,
   initialTotalPages,
 }: Props) {
-  const { addItem } = useCart();
-  const { showToast } = useToast();
   const {
     show: shippingNudgeShow,
     newTotal: shippingNudgeTotal,
@@ -85,86 +82,38 @@ export default function CategoryContent({
   const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
   const loading = categoryQuery.isFetching;
 
-  const handleAddDirectly = useCallback(
-    (p: ProductData, giftBoxes?: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
-      if (p.stockQuantity <= 0) {
-        showToast(`${p.name} is out of stock`, "error");
-        return;
-      }
-      const addResult = addItem({
+  const { handleAddDirectly, handleAdd, handleModalConfirm } = useAddToCart<ProductData>({
+    triggerShippingNudge,
+    onOpenGiftBoxModal: (p) => {
+      setGiftBoxModalProduct({
         id: p.id,
         name: p.name,
         price: Number(p.price),
         image: p.imageUrl ?? "",
-        stock: p.stockQuantity,
-        sku: p.sku ?? undefined,
-        giftBoxes,
+        category: p.category,
       });
-      if (addResult === "max_one") {
-        showToast(`Max 1 Qty per user for ${p.name}`, "info");
-        return;
-      }
-      if (addResult === "max_reached") {
-        showToast(
-          `Maximum available quantity reached for ${p.name} (${p.stockQuantity})`,
-          "info",
-        );
-        return;
-      }
-      if (addResult === "out_of_stock") {
-        showToast(`${p.name} is out of stock`, "error");
-        return;
-      }
-      triggerShippingNudge(Number(p.price), 1);
-      showToast(`${p.name} added to cart`, "success");
+      setGiftBoxModalOpen(true);
     },
-    [addItem, showToast, triggerShippingNudge],
-  );
+  });
 
-  const handleAdd = useCallback(
-    (p: ProductData) => {
-      const productWithGift = p as ProductData & { allowGiftBoxBundling?: boolean };
-      if (productWithGift.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
-        setGiftBoxModalProduct({
-          id: p.id,
-          name: p.name,
-          price: Number(p.price),
-          image: p.imageUrl ?? "",
-          category: p.category,
-        });
-        setGiftBoxModalOpen(true);
-        return;
-      }
-      handleAddDirectly(p);
-    },
-    [handleAddDirectly],
-  );
-
-  const handleModalConfirm = useCallback(
+  const handleModalConfirmWithClose = useCallback(
     (giftBoxes: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
-      if (giftBoxModalProduct) {
-        handleAddDirectly(
-          { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as ProductData,
-          giftBoxes.length > 0 ? giftBoxes : undefined,
-        );
-      }
+      handleModalConfirm(giftBoxModalProduct, giftBoxes);
       setGiftBoxModalOpen(false);
       setGiftBoxModalProduct(null);
     },
-    [giftBoxModalProduct, handleAddDirectly],
+    [giftBoxModalProduct, handleModalConfirm],
   );
 
   const handleModalSkip = useCallback(() => {
     if (giftBoxModalProduct) {
       handleAddDirectly(
-        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null } as ProductData,
+        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null, category: null } as ProductData,
       );
     }
     setGiftBoxModalOpen(false);
     setGiftBoxModalProduct(null);
-  },
-    [giftBoxModalProduct, handleAddDirectly],
-  );
+  }, [giftBoxModalProduct, handleAddDirectly]);
 
   const handleModalClose = useCallback(() => {
     setGiftBoxModalOpen(false);
@@ -311,7 +260,7 @@ export default function CategoryContent({
         <GiftBoxModal
           open={giftBoxModalOpen}
           product={giftBoxModalProduct}
-          onConfirm={handleModalConfirm}
+          onConfirm={handleModalConfirmWithClose}
           onSkip={handleModalSkip}
           onClose={handleModalClose}
         />
