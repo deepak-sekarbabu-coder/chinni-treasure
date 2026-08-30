@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import LatestInEveryCategory from "./LatestInEveryCategory";
 import type { LatestCategoriesResponse } from "@/src/lib/api/schemas";
+
+const HeroParticles3D = dynamic(() => import("./HeroParticles3D"), {
+  ssr: false,
+});
 
 interface Props {
   latestCategories?: LatestCategoriesResponse;
@@ -32,6 +37,7 @@ export default function HomeContent({ latestCategories }: Props) {
       {/* Hero Section */}
       <section className="hero" aria-labelledby="hero-heading">
         <div className="hero-pattern"></div>
+        <HeroParticles3D />
         <div className="hero-content">
           <h1 id="hero-heading">
             &ldquo;Own The Art Of

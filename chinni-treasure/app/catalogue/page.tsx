@@ -4,6 +4,7 @@ import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
 import { headers } from "next/headers";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
+import { productsCache, categoriesCache } from "@/src/lib/catalogue-cache";
 import type { Metadata } from "next";
 
 // Content depends on the request's Host header (visibleHostnames domain
@@ -35,6 +36,20 @@ interface CategoryOption {
   slug: string;
 }
 
+type ProductRow = {
+  id: string;
+  name: string;
+  price: number;
+  compareAtPrice?: number | null;
+  imageUrl: string;
+  description: string;
+  category: { name: string } | null;
+  stockQuantity: number;
+  badge: string | null;
+  sku: string | null;
+  images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
+};
+
 export default async function CataloguePage(props: {
   searchParams: Promise<{ search?: string; category?: string }>;
 }) {
@@ -43,19 +58,8 @@ export default async function CataloguePage(props: {
   const initialCategoryId = searchParams.category ? Number.parseInt(searchParams.category, 10) : undefined;
   const validCategoryId = initialCategoryId && Number.isFinite(initialCategoryId) ? initialCategoryId : undefined;
 
-  let products: Array<{
-    id: string;
-    name: string;
-    price: number;
-    compareAtPrice?: number | null;
-    imageUrl: string;
-    description: string;
-    category: { name: string } | null;
-    stockQuantity: number;
-    badge: string | null;
-    sku: string | null;
-    images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
-  }> = [];
+  let products: ProductRow[] = [];
+  let categories: CategoryOption[] = [];
   let total = 0;
   let totalPages = 1;
 
@@ -70,53 +74,77 @@ export default async function CataloguePage(props: {
     ...domainFilter,
   };
 
-  let categories: CategoryOption[] = [];
+  // Build cache keys that include the hostname + category for proper isolation
+  const cacheKeySuffix = `${hostname ?? "default"}:${validCategoryId ?? "all"}`;
+  const { get: getCachedProducts, set: setProductsCache } = productsCache;
+  const { get: getCachedCategories, set: setCategoriesCache } = categoriesCache;
+
   try {
-    const categoriesData = await prisma.category
-      .findMany({
+    // Try cache first for categories (they change rarely — 5 min TTL)
+    const cachedCategories = (await getCachedCategories(`cats:${cacheKeySuffix}`)) as CategoryOption[] | null;
+    if (cachedCategories) {
+      categories = cachedCategories;
+    } else {
+      const categoriesData = await prisma.category.findMany({
         where: { isActive: true },
         select: { id: true, name: true, slug: true },
         orderBy: { displayOrder: "asc" },
-      })
-      .then((found) => found.map((c) => ({ id: c.id, name: c.name, slug: c.slug })));
-    categories = categoriesData;
+      });
+      categories = categoriesData.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+      await setCategoriesCache(`cats:${cacheKeySuffix}`, categories);
+    }
 
-    const productsData = await prisma.product.findMany({
-      where,
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-      orderBy: [
-        { stockQuantity: "desc" },
-        { createdAt: "desc" },
-        { id: "desc" },
-      ],
-      take: CATALOGUE_PAGE_SIZE,
-      skip: 0,
-    });
-    const count = await prisma.product.count({ where });
+    // Try cache for products (30s TTL — short enough to stay fresh)
+    const productCacheKey = `cat:${cacheKeySuffix}:${initialSearch || "nosearch"}`;
+    const cached = (await getCachedProducts(productCacheKey)) as { products: ProductRow[]; total: number } | null;
 
-    products = productsData.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price),
-      compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
-      imageUrl: p.imageUrl ?? "",
-      description: p.description ?? "",
-      category: p.category,
-      stockQuantity: p.stockQuantity,
-      badge: p.badge,
-      sku: p.sku,
-      images: p.images.map((img) => ({
-        id: img.id,
-        url: img.url,
-        isPrimary: img.isPrimary,
-        displayOrder: img.displayOrder,
-      })),
-    }));
-    total = count;
-    totalPages = Math.max(1, Math.ceil(count / CATALOGUE_PAGE_SIZE));
+    if (cached) {
+      products = cached.products;
+      total = cached.total;
+    } else {
+      // Parallelize the two DB queries instead of running sequentially
+      const [productsData, count] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: {
+            category: { select: { name: true } },
+            images: { orderBy: { displayOrder: "asc" } },
+          },
+          orderBy: [
+            { stockQuantity: "desc" },
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
+          take: CATALOGUE_PAGE_SIZE,
+          skip: 0,
+        }),
+        prisma.product.count({ where }),
+      ]);
+
+      products = productsData.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        imageUrl: p.imageUrl ?? "",
+        description: p.description ?? "",
+        category: p.category,
+        stockQuantity: p.stockQuantity,
+        badge: p.badge,
+        sku: p.sku,
+        images: p.images.map((img) => ({
+          id: img.id,
+          url: img.url,
+          isPrimary: img.isPrimary,
+          displayOrder: img.displayOrder,
+        })),
+      }));
+      total = count;
+
+      await setProductsCache(productCacheKey, { products, total });
+    }
+
+    totalPages = Math.max(1, Math.ceil(total / CATALOGUE_PAGE_SIZE));
   } catch (err) {
     console.error("Failed to fetch catalogue data:", err);
   }
@@ -144,7 +172,7 @@ export default async function CataloguePage(props: {
         initialTotal={total}
         initialTotalPages={totalPages}
         initialSearch={initialSearch}
-        initialCategories={categories}
+        initialCategories={categories ?? []}
         initialCategoryId={validCategoryId}
       />
     </>
