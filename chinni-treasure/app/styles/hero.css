@@ -264,6 +264,12 @@
     background: rgba(212, 175, 55, 0.12);
 }
 
+/* ── Hero Story wrapper ── */
+.hero-story {
+    align-self: start;
+    padding-top: 100px;
+}
+
 /* ── Hero Story Card ── */
 .hero-story-card {
     background: linear-gradient(135deg, rgba(15, 15, 15, 0.85) 0%, rgba(20, 18, 10, 0.9) 100%);

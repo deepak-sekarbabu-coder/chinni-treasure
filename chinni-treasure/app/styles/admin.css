@@ -1563,7 +1563,11 @@
     }
 
     .admin-page-root .section {
-        padding: 32px 16px;
+        padding: 24px 16px;
+    }
+
+    .admin-page-root > .section:last-of-type {
+        padding-bottom: 0;
     }
 
     .admin-header-row {
