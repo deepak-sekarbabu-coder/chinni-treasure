@@ -24,7 +24,7 @@ export const STATE_TO_ORDER_SORT: Record<string, OrderSortKey> = {
   totalAmount: "total-asc",
 };
 
-export function OrderThumbCell({ order }: { order: Order }) {
+function OrderThumbCell({ order }: { order: Order }) {
   const [imgFailed, setImgFailed] = useState(false);
   const imageUrl = order.items?.[0]?.product?.imageUrl;
   const hasValidImage = imageUrl && !imgFailed && /^https?:\/\//.test(imageUrl);

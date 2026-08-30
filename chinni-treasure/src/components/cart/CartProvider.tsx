@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { CartItem } from "@/src/types";
 
-export const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
+const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
 const SURPRISE_GIFT_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_SURPRISE_GIFT !== "false";
 

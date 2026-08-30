@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 
-export interface GiftBox {
+interface GiftBox {
   id: string;
   name: string;
   price: number;

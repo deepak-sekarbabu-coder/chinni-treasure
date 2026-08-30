@@ -15,6 +15,10 @@
 
 .shipping-nudge-sheet {
     width: min(100%, 560px);
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: linear-gradient(180deg, var(--white) 0%, #fcf8f0 100%);
     border: 1px solid rgba(212, 175, 55, 0.18);
     border-radius: 24px 24px 0 0;
