@@ -88,7 +88,10 @@ export default function CatalogueContent({
   const catalogueQuery = useCatalogueProducts(currentPage, pageSize, searchQuery || undefined, initialData, selectedCategory);
 
   const products: CatalogueProduct[] = catalogueQuery.data?.products ?? initialProducts;
-  const totalPages = catalogueQuery.data?.totalPages ?? initialTotalPages;
+  // Use client-side calculation so the fallback matches the responsive page
+  // size instead of the server's fixed CATALOGUE_PAGE_SIZE.
+  const totalPages = catalogueQuery.data?.totalPages ?? Math.max(1, Math.ceil(initialTotal / pageSize));
+  const total = catalogueQuery.data?.total ?? initialTotal;
   const loading = catalogueQuery.isFetching;
   const targetPageReady = catalogueQuery.data?.page === currentPage;
 
@@ -114,6 +117,15 @@ export default function CatalogueContent({
     },
     [products.length, targetPageReady],
   );
+
+  // When the target page data arrives, some images may have already settled
+  // before targetPageReady became true — their onImageSettled callbacks won't
+  // re-fire. Clear the loading overlay immediately if everything is ready.
+  useEffect(() => {
+    if (pageTransitionLoading && targetPageReady && settledImageIdsRef.current.size >= products.length) {
+      setPageTransitionLoading(false);
+    }
+  }, [pageTransitionLoading, targetPageReady, products.length]);
 
   const { handleAddDirectly, handleAdd, handleModalConfirm } = useAddToCart<CatalogueProduct>({
     triggerShippingNudge,
@@ -271,35 +283,63 @@ export default function CatalogueContent({
             )}
 
             {products.length > 0 && (
-              <nav className="pagination-bar catalogue-pagination" aria-label="Catalogue pagination">
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={currentPage <= 1 || pageTransitionLoading}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  aria-label="Previous page"
-                >
-                  ← Prev
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <nav className="catalogue-pagination" aria-label="Catalogue pagination">
+                <div className="catalogue-pagination-info" aria-live="polite">
+                  <span className="catalogue-pagination-count">
+                    Showing {Math.min((currentPage - 1) * pageSize + 1, total)}–{Math.min(currentPage * pageSize, total)} of {total} products
+                  </span>
+                </div>
+                <div className="catalogue-pagination-controls">
                   <button
-                    key={pageNum}
-                    className={`btn btn-sm ${pageNum === currentPage ? "btn-primary" : "btn-secondary"}`}
-                    onClick={() => handlePageChange(pageNum)}
-                    disabled={pageTransitionLoading}
-                    aria-current={pageNum === currentPage ? "page" : undefined}
-                    aria-label={`Page ${pageNum}`}
+                    className="catalogue-pagination-btn catalogue-pagination-prev"
+                    disabled={currentPage <= 1 || pageTransitionLoading}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    aria-label="Previous page"
                   >
-                    {pageNum}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                   </button>
-                ))}
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={currentPage >= totalPages || pageTransitionLoading}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  aria-label="Next page"
-                >
-                  Next →
-                </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((pageNum) => {
+                      if (totalPages <= 7) return true;
+                      if (pageNum === 1 || pageNum === totalPages) return true;
+                      if (Math.abs(pageNum - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .reduce<(number | string)[]>((acc, pageNum, idx, arr) => {
+                      if (idx > 0) {
+                        const prev = arr[idx - 1] as number;
+                        if (pageNum - prev > 1) acc.push("…");
+                      }
+                      acc.push(pageNum);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      typeof item === "string" ? (
+                        <span key={`ellipsis-${idx}`} className="catalogue-pagination-ellipsis" aria-hidden="true">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          className={`catalogue-pagination-btn ${item === currentPage ? "catalogue-pagination-active" : ""}`}
+                          onClick={() => handlePageChange(item)}
+                          disabled={pageTransitionLoading}
+                          aria-current={item === currentPage ? "page" : undefined}
+                          aria-label={`Page ${item}`}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
+                  <button
+                    className="catalogue-pagination-btn catalogue-pagination-next"
+                    disabled={currentPage >= totalPages || pageTransitionLoading}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    aria-label="Next page"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                </div>
               </nav>
             )}
           </>

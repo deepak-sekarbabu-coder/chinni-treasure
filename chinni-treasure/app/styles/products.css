@@ -221,47 +221,100 @@
 
 /* ── Catalogue Pagination ── */
 .catalogue-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
     margin-top: 48px;
     padding-bottom: 24px;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
 }
 
-.catalogue-pagination .btn {
+.catalogue-pagination-info {
+    display: flex;
+    justify-content: center;
+}
+
+.catalogue-pagination-count {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.catalogue-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.catalogue-pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 40px;
     min-height: 40px;
+    padding: 0 10px;
+    font-family: var(--font-sans);
     font-size: 0.85rem;
-    border-radius: 4px;
+    font-weight: 500;
+    color: var(--charcoal);
+    background: #fff;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 6px;
+    cursor: pointer;
     transition:
         background var(--motion-smooth),
         color var(--motion-smooth),
-        border-color var(--motion-smooth);
+        border-color var(--motion-smooth),
+        box-shadow var(--motion-smooth);
 }
 
-.catalogue-pagination .btn-primary {
-    background: var(--gold);
-    color: var(--black);
-    border-color: var(--gold);
+.catalogue-pagination-btn:hover:not(:disabled):not(.catalogue-pagination-active) {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: var(--gold-light);
 }
 
-.catalogue-pagination .btn-primary:hover {
-    background: var(--gold-dark);
-    border-color: var(--gold-dark);
-    color: var(--cream);
+.catalogue-pagination-active {
+    background: var(--gold) !important;
+    color: var(--black) !important;
+    border-color: var(--gold) !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
 }
 
-.catalogue-pagination .btn:disabled {
-    opacity: 0.4;
+.catalogue-pagination-active:hover {
+    background: var(--gold-dark) !important;
+    border-color: var(--gold-dark) !important;
+    color: var(--cream) !important;
+}
+
+.catalogue-pagination-btn:disabled {
+    opacity: 0.35;
     cursor: not-allowed;
     pointer-events: none;
 }
 
-.catalogue-pagination .btn:focus-visible {
+.catalogue-pagination-btn:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+}
+
+.catalogue-pagination-prev,
+.catalogue-pagination-next {
+    padding: 0;
+    min-width: 40px;
+}
+
+.catalogue-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 40px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    user-select: none;
 }
 
 /* ── Catalogue Search ── */
@@ -514,6 +567,29 @@
     color: var(--text-muted);
     font-size: 0.78rem;
     text-align: center;
+}
+
+@media (max-width: 480px) {
+    .catalogue-pagination-controls {
+        gap: 4px;
+    }
+
+    .catalogue-pagination-btn {
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 0.8rem;
+        padding: 0 8px;
+        border-radius: 4px;
+    }
+
+    .catalogue-pagination-prev,
+    .catalogue-pagination-next {
+        min-width: 36px;
+    }
+
+    .catalogue-pagination-count {
+        font-size: 0.75rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
