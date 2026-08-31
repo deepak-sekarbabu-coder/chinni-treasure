@@ -114,14 +114,30 @@ function Particles({ reducedMotion }: { reducedMotion: boolean }) {
     if (colorAttr) colorAttr.needsUpdate = true;
   });
 
-  /* ── Shared geometry + material ── */
-  const geometry = useMemo(() => new THREE.SphereGeometry(1, 6, 6), []);
+  /* ── Heart-shaped geometry ── */
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    const x = 0;
+    const y = 0;
+    shape.moveTo(x, y + 0.5);
+    shape.bezierCurveTo(x, y + 0.5, x - 0.1, y, x - 0.5, y);
+    shape.bezierCurveTo(x - 1.0, y, x - 1.0, y + 0.7, x - 1.0, y + 0.7);
+    shape.bezierCurveTo(x - 1.0, y + 1.1, x - 0.6, y + 1.54, x, y + 1.9);
+    shape.bezierCurveTo(x + 0.6, y + 1.54, x + 1.0, y + 1.1, x + 1.0, y + 0.7);
+    shape.bezierCurveTo(x + 1.0, y + 0.7, x + 1.0, y, x + 0.5, y);
+    shape.bezierCurveTo(x + 0.25, y, x, y + 0.5, x, y + 0.5);
+    const geom = new THREE.ShapeGeometry(shape);
+    geom.center();
+    geom.scale(0.8, -0.8, 1);
+    return geom;
+  }, []);
   const material = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
       }),
     [],
   );
