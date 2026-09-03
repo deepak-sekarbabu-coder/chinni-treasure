@@ -471,8 +471,7 @@
         background: #fff;
         transition: border-color var(--motion-snappy);
     }
-
-
+} /* end @media (max-width: 768px) */
 
 /* ── 640px–767px Phablet / Small Tablet ── */
 @media (max-width: 640px) {

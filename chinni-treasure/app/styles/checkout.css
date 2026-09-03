@@ -196,9 +196,12 @@
     /* hidden on desktop */
 }
 
-/* Prevent content from being hidden under sticky checkout bar on mobile */
+/* Prevent content from being hidden under sticky checkout bar on mobile.
+   Scoped with :has() so only the order page (which renders
+   .sticky-checkout-bar) gets the offset — other mobile pages would otherwise
+   show a 76px light strip below the black footer. */
 @media (max-width: 768px) {
-    body {
+    body:has(.sticky-checkout-bar) {
         padding-bottom: 76px; /* height of .sticky-checkout-bar */
     }
 }
