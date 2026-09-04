@@ -94,6 +94,27 @@ export default function CatalogueContent({
   const total = catalogueQuery.data?.total ?? initialTotal;
   const loading = catalogueQuery.isFetching;
   const targetPageReady = catalogueQuery.data?.page === currentPage;
+  // Changing the category or committing a search swaps the query key to one
+  // with no cached results, so React Query keeps exposing the previous set as
+  // placeholder data while it fetches. That makes the grid never empty and the
+  // initial skeleton branch never fire — the old category silently lingers
+  // until the new products arrive. Show skeletons for that explicit "filter
+  // change" load. Pagination is excluded: it drives its own reveal-until-
+  // images-settle overlay via pageTransitionLoading below.
+  const filterLoading = catalogueQuery.isPlaceholderData && !pageTransitionLoading;
+  // If that fetch ultimately fails there is no real data for the new key —
+  // surface an error instead of leaving stale products (or an endless
+  // skeleton) on screen. Only after retries finish: loading stays true while
+  // React Query is retrying the failed request.
+  const queryHasError = catalogueQuery.isError;
+  const queryShowingPlaceholder = catalogueQuery.isPlaceholderData;
+  const filterFailed = queryHasError && queryShowingPlaceholder && !loading;
+  // Capture the retry fn before the filterFailed alias below narrows the
+  // query result union to an impossible combination (never) inside the JSX
+  // branch, which would otherwise make this call a type error.
+  const retryFilterFetch = () => {
+    void catalogueQuery.refetch();
+  };
 
   // Never leave the customer looking at a permanent spinner if a remote image
   // hangs. The individual card's error handler settles failed images normally.
@@ -240,9 +261,19 @@ export default function CatalogueContent({
           </select>
         </div>
 
-        {loading && products.length === 0 ? (
-          <div className="products-grid" role="list" aria-label="Product list">
-            {Array.from({ length: 3 }).map((_, i) => (
+        {filterFailed ? (
+          <div className="catalogue-filter-error" role="status">
+            <p>We couldn’t load products for this selection. Please try again.</p>
+            <button type="button" className="btn btn-secondary" onClick={retryFilterFetch}>
+              Try again
+            </button>
+          </div>
+        ) : (loading && products.length === 0) || filterLoading ? (
+          <div className="products-grid" role="list" aria-label="Product list" aria-busy="true">
+            <p className="sr-only" role="status">
+              Loading products…
+            </p>
+            {Array.from({ length: 6 }).map((_, i) => (
               <ProductCardSkeleton key={i} animationDelay={i * 0.06} />
             ))}
           </div>
