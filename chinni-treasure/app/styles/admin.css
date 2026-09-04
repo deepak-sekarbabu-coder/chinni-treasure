@@ -859,6 +859,19 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Numeric columns keep their values right-aligned, so keep the header flush
+   with them too. Row-reverse pulls the sort arrow to the left of the label,
+   letting the digits line up directly beneath the column title instead of
+   trailing an arrow-width away from it. */
+.admin-table th.th-right {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: right;
+    white-space: nowrap;
+}
+
 /* ── Table Cells & Badges ── */
 .table-img-cell {
     width: 64px;

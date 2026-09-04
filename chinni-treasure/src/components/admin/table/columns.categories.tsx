@@ -34,7 +34,7 @@ export function createCategoryColumns(meta: CategoryTableMeta): ColumnDef<Catego
       id: "displayOrder",
       accessorKey: "displayOrder",
       header: "Order",
-      meta: { label: "Order" },
+      meta: { label: "Order", align: "right" },
       sortDescFirst: false,
       cell: ({ row }) => <span className="table-numeric">{row.original.displayOrder}</span>,
     },
@@ -42,7 +42,7 @@ export function createCategoryColumns(meta: CategoryTableMeta): ColumnDef<Catego
       id: "productCount",
       accessorFn: (c) => c.productCount ?? 0,
       header: "Products",
-      meta: { label: "Products" },
+      meta: { label: "Products", align: "right" },
       cell: ({ row }) => {
         const productCount = row.original.productCount ?? 0;
         return (

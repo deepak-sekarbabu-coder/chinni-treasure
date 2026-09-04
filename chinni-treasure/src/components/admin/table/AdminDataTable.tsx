@@ -13,6 +13,8 @@ declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
     /** Accessible label used for "Sort by {label}" button names. */
     label?: string;
+    /** Right-align this column's header (used for right-aligned numeric data). */
+    align?: "right";
   }
 }
 
@@ -51,7 +53,12 @@ export default function AdminDataTable<T>({
                       ? "descending"
                       : undefined;
                 return (
-                  <th key={header.id} data-sort={sorted || undefined} aria-sort={ariaSort}>
+                  <th
+                    key={header.id}
+                    className={column.columnDef.meta?.align === "right" ? "th-right" : undefined}
+                    data-sort={sorted || undefined}
+                    aria-sort={ariaSort}
+                  >
                     {column.getCanSort() ? (
                       <button
                         type="button"
