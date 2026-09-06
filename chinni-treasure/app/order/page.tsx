@@ -8,7 +8,8 @@ import { useToast } from "@/src/components/ui/ToastProvider";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
-import { INDIAN_STATES, INDIAN_CITIES, calcShippingCost, FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
+import { computePricing } from "@/src/lib/pricing";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
@@ -378,13 +379,15 @@ export default function OrderPage() {
 
 
   const total = getTotal();
-  const hasTestProduct = items.some((i) => i.sku === "0000");
-  const shippingCost = hasTestProduct || total >= FREE_SHIPPING_THRESHOLD
-    ? 0
-    : form.state
-      ? calcShippingCost(total, form.state)
-      : -1;
-  const grandTotal = shippingCost >= 0 ? total + shippingCost : total;
+  const pricedLines = items
+    .filter((i) => !i.isGift)
+    .flatMap((i) => [
+      { price: i.price, quantity: i.quantity, sku: i.sku },
+      ...(i.giftBoxes?.map((gb) => ({ price: gb.price, quantity: gb.quantity })) ?? []),
+    ]);
+  const pricing = form.state ? computePricing(pricedLines, form.state) : null;
+  const shippingCost = pricing ? pricing.shippingCost : -1;
+  const grandTotal = pricing ? pricing.totalAmount : total;
 
   if (items.length === 0) {
     return (

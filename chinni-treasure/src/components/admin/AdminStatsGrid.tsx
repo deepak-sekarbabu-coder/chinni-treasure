@@ -2,15 +2,11 @@
 
 import AdminStatCard from "@/src/components/ui/AdminStatCard";
 import type { Stats } from "@/src/lib/api/schemas";
+import { formatINR } from "@/src/lib/format";
 
 interface Props {
   stats: Stats | null;
 }
-
-const REVENUE_FORMAT = new Intl.NumberFormat("en-IN", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 function buildStatTiles(stats: Stats) {
   return [
@@ -21,7 +17,7 @@ function buildStatTiles(stats: Stats) {
     { label: "Delivered", value: stats.deliveredOrders, color: "var(--success)" },
     {
       label: "Revenue",
-      value: `₹${REVENUE_FORMAT.format(Number(stats.totalRevenue))}`,
+      value: `₹${formatINR(Number(stats.totalRevenue))}`,
       color: "var(--gold-deep)",
     },
   ];

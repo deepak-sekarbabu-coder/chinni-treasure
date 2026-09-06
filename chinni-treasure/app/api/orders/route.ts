@@ -8,7 +8,8 @@ import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { z } from "zod";
-import { INDIAN_STATES, calcShippingCost } from "@/src/lib/constants";
+import { INDIAN_STATES } from "@/src/lib/constants";
+import { computePricing } from "@/src/lib/pricing";
 
 const GiftBoxItemSchema = z.object({
   id: z.string().min(1),
@@ -159,8 +160,6 @@ export async function POST(request: Request) {
           quantity: number;
         }> = [];
 
-        let subtotal = 0;
-
         for (const item of items) {
           const product = productMap.get(item.id);
           if (!product) {
@@ -221,12 +220,21 @@ export async function POST(request: Request) {
             unitPrice: Number(product.price),
             quantity: item.quantity,
           });
-          subtotal += Number(product.price) * item.quantity;
         }
 
-        const hasTestProduct = products.some((p) => p.sku === "0000");
-        const shippingCost = hasTestProduct ? 0 : calcShippingCost(subtotal, stateCode);
-        const totalAmount = subtotal + shippingCost;
+        // Build flat priced lines (parents + gift boxes) for the pricing module
+        const lines: Array<{ price: number; quantity: number; sku?: string }> = [];
+        for (const item of items) {
+          const product = productMap.get(item.id)!;
+          lines.push({ price: Number(product.price), quantity: item.quantity, sku: product.sku ?? undefined });
+          if (item.giftBoxes) {
+            for (const gb of item.giftBoxes) {
+              const gbProduct = productMap.get(gb.id)!;
+              lines.push({ price: Number(gbProduct.price), quantity: gb.quantity, sku: gbProduct.sku ?? undefined });
+            }
+          }
+        }
+        const { subtotal, shippingCost, totalAmount } = computePricing(lines, stateCode);
 
         const created = await tx.order.create({
           data: {

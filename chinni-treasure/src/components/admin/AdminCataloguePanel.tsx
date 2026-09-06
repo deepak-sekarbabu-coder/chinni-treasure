@@ -1,6 +1,7 @@
 "use client";
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { formatINR } from "@/src/lib/format";
 import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -371,11 +372,6 @@ function PaginationBar({ page, totalPages, onPageChange }: { page: number; total
   );
 }
 
-const CARD_PRICE_FORMAT = new Intl.NumberFormat("en-IN", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 function CatalogueCardsSkeleton() {
   return (
     <div className="admin-catalogue-cards" aria-hidden="true">
@@ -482,10 +478,10 @@ function CatalogueCards({
               </div>
               <div className="catalogue-card-meta">
                 <div className="table-price-cell">
-                  <div className="price-primary">₹{CARD_PRICE_FORMAT.format(priceNum)}</div>
+                  <div className="price-primary">₹{formatINR(priceNum)}</div>
                   {hasDiscount && (
                     <div className="price-secondary">
-                      <span className="price-mrp">₹{CARD_PRICE_FORMAT.format(compareNum)}</span>
+                      <span className="price-mrp">₹{formatINR(compareNum)}</span>
                       <span className="discount-badge">-{savingsPercent}%</span>
                     </div>
                   )}

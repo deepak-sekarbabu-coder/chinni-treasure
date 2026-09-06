@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import AdminOrdersPanel from "@/src/components/admin/AdminOrdersPanel";
 import type { Order } from "@/src/lib/api/schemas";
 
@@ -67,8 +67,9 @@ describe("AdminOrdersPanel", () => {
     expect(screen.getByRole("columnheader", { name: /total/i })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /status/i })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /date/i })).toBeInTheDocument();
-    expect(screen.getByText("ORD-001")).toBeInTheDocument();
-    expect(screen.getByText("Grace Hopper")).toBeInTheDocument();
+    const table = within(screen.getByRole("table"));
+    expect(table.getByText("ORD-001")).toBeInTheDocument();
+    expect(table.getByText("Grace Hopper")).toBeInTheDocument();
   });
 
   it("opens the detail flow on row click", () => {

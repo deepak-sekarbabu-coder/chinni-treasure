@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 
-import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/pricing";
+import { formatRupees } from "@/src/lib/format";
 
 interface CartItem {
   productId: string;
@@ -26,13 +27,6 @@ interface Props {
   onUpdateQuantity: (id: string, delta: number) => void;
 }
 
-function formatRupees(value: number) {
-  const normalized = Math.max(0, Math.round(value * 100) / 100);
-  return new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: Number.isInteger(normalized) ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(normalized);
-}
 
 export default function OrderSummaryCard({ items, total, shippingCost, grandTotal, onRemove, onUpdateQuantity }: Props) {
   const [summaryOpen, setSummaryOpen] = useState(true);

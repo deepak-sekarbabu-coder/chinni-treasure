@@ -5,6 +5,7 @@ import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Images, MagnifyingGlassPlus, PencilSimple, Trash } from "@phosphor-icons/react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Product } from "@/src/lib/api/schemas";
+import { formatINR } from "@/src/lib/format";
 
 export interface CatalogueTableMeta {
   loadingProductId: string | null;
@@ -74,7 +75,6 @@ function GalleryThumbCell({
 
 export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Product>[] {
   const { loadingProductId, onPreviewImages, onEdit, onRequestDelete } = meta;
-  const inr = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2 });
   return [
     {
       id: "image",
@@ -126,10 +126,10 @@ export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Prod
           : 0;
         return (
           <div className="table-price-cell">
-            <div className="price-primary">₹{inr(priceNum)}</div>
+            <div className="price-primary">₹{formatINR(priceNum)}</div>
             {hasDiscount && (
               <div className="price-secondary">
-                <span className="price-mrp">₹{inr(compareNum)}</span>
+                <span className="price-mrp">₹{formatINR(compareNum)}</span>
                 <span className="discount-badge">-{savingsPercent}%</span>
               </div>
             )}

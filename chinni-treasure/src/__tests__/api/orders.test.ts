@@ -197,6 +197,16 @@ describe("POST /api/orders", () => {
     const response = await POST(req);
     expect(response.status).toBe(201);
 
+    expect(mockTx.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subtotal: 400,
+          shippingCost: 200,
+          totalAmount: 600,
+        }),
+      }),
+    );
+
     const body = await response.json();
     expect(body.customerName).toBe("Test User");
   });
@@ -307,6 +317,9 @@ describe("POST /api/orders", () => {
     expect(mockTx.order.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          subtotal: 600,
+          shippingCost: 0,
+          totalAmount: 600,
           items: {
             create: [
               expect.objectContaining({ productId: "p1", quantity: 2 }),

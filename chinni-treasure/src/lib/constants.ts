@@ -112,16 +112,4 @@ export const INDIAN_CITIES: Record<string, string[]> = {
   WB: ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Barrackpore", "Kamarhati", "Halisahar", "Naihati", "Bhatpara", "Ghusuri", "Chandannagar", "Rishra", "Serampore", "Titagarh", "Bally", "Uluberia", "Shrirampore", "Konnagar", "Amta", "Uttarpara Kotrung", "Belgharia"],
 } as const;
 
-const TAMIL_NADU_STATE_CODE = "TN";
-export const FREE_SHIPPING_THRESHOLD = 599;
-const SHIPPING_CHARGES = {
-  WITHIN_TAMIL_NADU: 150,
-  OUTSIDE_TAMIL_NADU: 200,
-} as const;
-
-export function calcShippingCost(subtotal: number, stateCode: string): number {
-  if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-  return stateCode === TAMIL_NADU_STATE_CODE
-    ? SHIPPING_CHARGES.WITHIN_TAMIL_NADU
-    : SHIPPING_CHARGES.OUTSIDE_TAMIL_NADU;
-}
+export { FREE_SHIPPING_THRESHOLD } from "./pricing";

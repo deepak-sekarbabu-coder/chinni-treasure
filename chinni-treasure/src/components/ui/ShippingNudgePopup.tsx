@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/pricing";
+import { formatRupees } from "@/src/lib/format";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { ShippingNudgeState } from "@/src/lib/hooks/useShippingNudge";
 
@@ -12,13 +13,6 @@ interface Props {
   dismiss: ShippingNudgeState["dismiss"];
 }
 
-function formatRupees(value: number) {
-  const normalized = Math.max(0, Math.round(value * 100) / 100);
-  return new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: Number.isInteger(normalized) ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(normalized);
-}
 
 export default function ShippingNudgePopup({
   show,

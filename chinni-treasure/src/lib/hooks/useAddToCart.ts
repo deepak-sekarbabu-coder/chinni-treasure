@@ -65,7 +65,8 @@ export function useAddToCart<T extends AddableProduct>(options: {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      options.triggerShippingNudge(Number(p.price), 1);
+      const giftQty = giftBoxes?.reduce((sum, b) => sum + b.quantity, 0) ?? 0;
+      options.triggerShippingNudge(Number(p.price), giftQty);
       showToast(`${p.name} added to cart`, "success");
     },
     [addItem, showToast, options.triggerShippingNudge],
@@ -100,6 +101,12 @@ export function useAddToCart<T extends AddableProduct>(options: {
           } as unknown as T,
           giftBoxes.length > 0 ? giftBoxes : undefined,
         );
+        // Trigger the shipping nudge so the popup reflects the cart total
+        // including any gift boxes the customer just selected.
+        const giftBoxTotal = giftBoxes.reduce((sum, b) => sum + b.price * b.quantity, 0);
+        if (giftBoxes.length > 0) {
+          options.triggerShippingNudge(Number(modalProduct.price), 1 + giftBoxes.reduce((sum, b) => sum + b.quantity, 0));
+        }
       }
     },
     [handleAddDirectly],
