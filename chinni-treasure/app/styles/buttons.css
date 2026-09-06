@@ -73,6 +73,24 @@
     box-shadow: var(--shadow-gold);
 }
 
+/* Admin header uses outlined secondary buttons on the dark header.
+   Keep them all the same size, force the link-style button to match,
+   and prevent background bleed on the panel border. */
+.admin-top-header .btn-secondary {
+    min-height: 44px;
+    padding: 0 20px;
+}
+
+.admin-top-header .btn-link.btn-secondary {
+    border-color: var(--gold);
+    background: transparent !important;
+}
+
+.admin-top-header .btn-link.btn-secondary:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
 /* ── Dark — deep black with gold accent ── */
 .btn-dark {
     background: var(--near-black);
@@ -133,6 +151,8 @@
 
 .btn-link {
     text-decoration: none;
+    background: transparent;
+    border-color: transparent;
 }
 
 .btn-full {

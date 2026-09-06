@@ -95,7 +95,7 @@
 .admin-top-header {
     background: var(--black);
     border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-    padding: 16px 0; /* Compact since navbar is visible */
+    padding: 36px 0 30px;
 }
 
 /* Override .section padding inside the header — the header manages its own spacing */
@@ -106,7 +106,7 @@
 
 /* Compact section padding for admin content */
 .admin-page-root > .section {
-    padding-top: 24px;
+    padding-top: 36px;
     padding-bottom: 24px;
 }
 
@@ -114,11 +114,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 32px;
+    padding-bottom: 2px;
 }
 
 .admin-header-actions {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 16px;
 }
 
 .admin-heading {
@@ -126,6 +129,46 @@
     font-size: 1.8rem;
     color: var(--cream);
     margin: 0;
+}
+
+/* Ensure the dark-header action buttons always read as proper buttons.
+   The secondary style is an outlined gold button, so force a matching touch target,
+   vertical alignment, and explicit padding instead of collapsing to text-like sizing. */
+.admin-top-header .btn-secondary {
+    padding: 14px 24px;
+    min-height: 48px;
+    align-self: center;
+}
+
+.admin-top-header .btn-link.btn-secondary {
+    border-width: 2px;
+    background: transparent;
+}
+
+/* Subtle vertical breathing room between the row and the action buttons on smaller screens */
+@media (max-width: 768px) {
+    .admin-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 22px;
+        padding-bottom: 0;
+    }
+
+    .admin-header-actions {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .admin-header-actions .btn-secondary {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .admin-top-header .btn-secondary {
+        padding: 14px 18px;
+        min-height: 50px;
+        font-size: 0.78rem;
+    }
 }
 
 /* ── Grids ── */
@@ -148,7 +191,7 @@
     align-items: center;
     justify-content: center;
     background: var(--black);
-    padding: 24px;
+    padding: 48px 24px;
 }
 
 .login-card {
@@ -156,25 +199,26 @@
     max-width: 420px;
     background: var(--near-black);
     border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 8px;
-    padding: 48px 36px;
+    border-radius: 10px;
+    padding: 56px 40px 48px;
 }
 
 .login-card-title {
     text-align: center;
-    margin-bottom: 36px;
+    margin-bottom: 40px;
 }
 
 .login-heading {
     font-family: var(--font-serif);
-    font-size: 1.6rem;
+    font-size: 1.75rem;
     color: var(--gold);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .login-subtitle {
     color: var(--text-light);
     font-size: 0.85rem;
+    line-height: 1.5;
 }
 
 /* ── Filters ── */
@@ -1720,11 +1764,15 @@
     }
 
     .admin-top-header {
-        padding: 20px 0;
+        padding: 36px 0 30px;
     }
 
     .admin-heading {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
+    }
+
+    .admin-header-row {
+        gap: 28px;
     }
 
     .stats-grid {
