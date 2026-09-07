@@ -1,32 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
-import { z } from "zod";
-
-const UpdateTrackingSchema = z.object({
-  trackingId: z.string().min(1, "Tracking ID is required"),
-});
+import { withAdmin } from "@/src/lib/admin-route";
+import { UpdateTrackingInputSchema } from "@/src/lib/api/schemas";
 
 // PATCH /api/orders/[id]/tracking — Update tracking ID (admin only)
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
-    const body = await request.json();
-    const parsed = validateOr400(UpdateTrackingSchema, body);
+export const PATCH = withAdmin<{ id: string }>(
+  async ({ body, params }) => {
+    const { id } = params;
+    const parsed = validateOr400(UpdateTrackingInputSchema, body);
     if (!parsed.ok) return parsed.response;
 
     const order = await prisma.order.findUnique({ where: { id } });
@@ -43,8 +26,12 @@ export async function PATCH(
     await invalidateOrderCache(id);
 
     return NextResponse.json(updated);
-  } catch (error) {
-    console.error("Failed to update tracking ID:", error);
-    return NextResponse.json({ error: "Failed to update tracking ID" }, { status: 500 });
-  }
-}
+  },
+  {
+    parseBody: true,
+    fallbackError: "Failed to update tracking ID",
+    errorMessages: {
+      p2025: "Order not found",
+    },
+  },
+);

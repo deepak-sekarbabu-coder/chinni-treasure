@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { productsCache, catIndexCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
@@ -131,7 +129,7 @@ function filterActiveIndex(
   return filtered;
 }
 
-// GET /api/products — List products (optionally paginated)
+// GET /api/products — List products (optionally paginated). Public: no admin guard.
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -269,17 +267,8 @@ function buildCreateData(input: CreateProductInput) {
 }
 
 // POST /api/products — Create a new product (admin only)
-export async function POST(request: Request) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const body = await request.json();
+export const POST = withAdmin(
+  async ({ body }) => {
     const parsed = validateOr400(CreateProductSchema, body);
     if (!parsed.ok) return parsed.response;
 
@@ -316,19 +305,15 @@ export async function POST(request: Request) {
     });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json(product, { status: 201 });
-  } catch (error) {
-    console.error("Failed to create product:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        const target = (error.meta?.target as string[])?.join(", ") || "field";
-        return NextResponse.json({ error: `A product with this ${target} already exists` }, { status: 409 });
-      }
-    }
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
-  }
-}
+  },
+  {
+    parseBody: true,
+    revalidateCatalogue: true,
+    fallbackError: "Failed to create product",
+    errorMessages: {
+      p2002: (target) => `A product with this ${target} already exists`,
+    },
+  },
+);

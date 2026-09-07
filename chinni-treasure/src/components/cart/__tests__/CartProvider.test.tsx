@@ -206,6 +206,59 @@ describe("CartProvider", () => {
     expect(result.current.getTotal()).toBeCloseTo(29.99 * 2 + 49.99);
   });
 
+  it("addItem returns the post-add total computed from fresh state", () => {
+    const { result } = renderCart();
+
+    let first: ReturnType<typeof result.current.addItem>;
+    act(() => {
+      first = result.current.addItem(mockProduct);
+    });
+    expect(first!.result).toBe("added");
+    expect(first!.newTotal).toBeCloseTo(29.99);
+
+    // Second add of the same product: quantity 2 — the stale pre-add total
+    // would have reported 29.99 again; the fresh-state total is 59.98.
+    let second: ReturnType<typeof result.current.addItem>;
+    act(() => {
+      second = result.current.addItem(mockProduct);
+    });
+    expect(second!.result).toBe("added");
+    expect(second!.newTotal).toBeCloseTo(59.98);
+  });
+
+  it("addItem includes gift-box revenue in the returned total", () => {
+    const { result } = renderCart();
+
+    let outcome: ReturnType<typeof result.current.addItem>;
+    act(() => {
+      outcome = result.current.addItem({
+        ...mockProduct,
+        giftBoxes: [{ productId: "box-1", name: "Velvet Box", price: 75, image: "/box.jpg", quantity: 2 }],
+      });
+    });
+
+    expect(outcome!.result).toBe("added");
+    // 29.99 parent + 75 × 2 gift box = 179.99
+    expect(outcome!.newTotal).toBeCloseTo(179.99);
+  });
+
+  it("failed adds (stock limits) do not change the total", () => {
+    const { result } = renderCart();
+    const lowStock = { ...mockProduct, stock: 1 };
+
+    act(() => {
+      result.current.addItem(lowStock);
+    });
+
+    let blocked: ReturnType<typeof result.current.addItem>;
+    act(() => {
+      blocked = result.current.addItem(lowStock);
+    });
+
+    expect(blocked!.result).toBe("max_one");
+    expect(blocked!.newTotal).toBeCloseTo(29.99);
+  });
+
   it("getCount sums quantities", () => {
     const { result } = renderCart();
 

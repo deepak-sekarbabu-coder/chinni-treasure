@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
 
@@ -30,26 +28,14 @@ async function generateUniqueSlug(base: string, ignoreId: number): Promise<strin
 }
 
 // PUT /api/categories/[id] — Update a category (admin only)
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
+export const PUT = withAdmin<{ id: string }>(
+  async ({ body, params }) => {
+    const { id } = params;
     const categoryId = Number.parseInt(id, 10);
     if (!Number.isFinite(categoryId)) {
       return NextResponse.json({ error: "Invalid category id" }, { status: 400 });
     }
 
-    const body = await request.json();
     const parsed = validateOr400(UpdateCategorySchema, body);
     if (!parsed.ok) return parsed.response;
 
@@ -74,51 +60,25 @@ export async function PUT(
     });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json(category);
-  } catch (error) {
-    console.error("Failed to update category:", error);
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 });
-    }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "A category with this slug already exists" },
-        { status: 409 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to update category" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    parseBody: true,
+    revalidateCatalogue: true,
+    fallbackError: "Failed to update category",
+    errorMessages: {
+      p2025: "Category not found",
+      p2002: "A category with this slug already exists",
+    },
+  },
+);
 
 // DELETE /api/categories/[id] — Delete a category (admin only)
 // Blocked if any non-deleted product still references it.
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
+export const DELETE = withAdmin<{ id: string }>(
+  async ({ params }) => {
+    const { id } = params;
     const categoryId = Number.parseInt(id, 10);
     if (!Number.isFinite(categoryId)) {
       return NextResponse.json({ error: "Invalid category id" }, { status: 400 });
@@ -140,22 +100,14 @@ export async function DELETE(
     await prisma.category.delete({ where: { id: categoryId } });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete category:", error);
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: "Failed to delete category" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    revalidateCatalogue: true,
+    fallbackError: "Failed to delete category",
+    errorMessages: {
+      p2025: "Category not found",
+    },
+  },
+);

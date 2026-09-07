@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { buildWorkbook } from "@/src/lib/excel-export";
+import { withAdmin } from "@/src/lib/admin-route";
 
 const BATCH_SIZE = 1000;
 
@@ -23,12 +23,8 @@ async function batchedFetch<T extends { id: string }>(
   return results;
 }
 
-export async function GET() {
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+// GET /api/export — Full data export as Excel (admin only)
+export const GET = withAdmin(async () => {
   try {
     const [categories, products, productImages, admins] = await Promise.all([
       prisma.category.findMany({ orderBy: { displayOrder: "asc" } }),
@@ -73,4 +69,4 @@ export async function GET() {
     console.error("Export failed:", error);
     return NextResponse.json({ error: "Failed to generate export" }, { status: 500 });
   }
-}
+});

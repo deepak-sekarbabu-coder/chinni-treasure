@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { createMockPrisma } from "@/src/__tests__/mocks/prisma";
+import { createNextRequest } from "@/src/__tests__/utils/api-test";
 
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 vi.mock("@/src/lib/redis-cache", () => ({
@@ -39,7 +40,7 @@ describe("GET /api/stats", () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
     vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
 
-    const response = await GET();
+    const response = await GET(createNextRequest("/api/stats"));
     expect(response.status).toBe(200);
 
     const body = await response.json();
@@ -66,7 +67,7 @@ describe("GET /api/stats", () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
     vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
 
-    const response = await GET();
+    const response = await GET(createNextRequest("/api/stats"));
     const body = await response.json();
 
     expect(body.chartData).toHaveLength(30);

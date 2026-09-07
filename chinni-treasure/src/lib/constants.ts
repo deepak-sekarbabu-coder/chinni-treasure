@@ -6,6 +6,18 @@ export const ORDER_STATUS_FLOW = [
   "delivered",
 ] as const;
 
+/**
+ * The next status in the forward fulfilment flow, or null when the order is
+ * terminal (delivered) or unknown. `rejected` orders cannot advance — the
+ * server's `validateTransition` owns the full policy; this is the client-side
+ * mirror used only to decide which affordances to render.
+ */
+export function nextOrderStatus(status: string): (typeof ORDER_STATUS_FLOW)[number] | null {
+  const idx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(status);
+  if (idx < 0 || idx >= ORDER_STATUS_FLOW.length - 1) return null;
+  return ORDER_STATUS_FLOW[idx + 1];
+}
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: "Pending",
   approved: "Approved",

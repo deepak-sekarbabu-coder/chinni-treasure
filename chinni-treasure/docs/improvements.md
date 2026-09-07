@@ -1,6 +1,6 @@
 # Chinni Treasure — Improvement Tracker
 
-> Last updated: 2026-08-05 | Project: chinni-treasure | Docs validated against live codebase
+> Last updated: 2026-09-07 | Project: chinni-treasure | Docs validated against live codebase
 
 ---
 
@@ -72,10 +72,11 @@
 - **Typed API client** with Zod schemas for both input and response validation
 - **React Query** for server state with proper query key management
 - **Clean separation**: `src/lib/`, `src/components/`, `src/types/` with a typed API layer
-- **32 test files** covering API, library, components, and hooks
+- **68 test files / 542 tests** covering API, library, deep modules, components, and hooks
+- **Deep modules with interface tests**: `order-intake` (Order lifecycle), `admin-route` (`withAdmin` security adapter), `checkout-fields` (one field contract, three surfaces), `pricing` (one money computation), Cart (`addItem` returns the authoritative post-add total)
 - **Comprehensive accessibility**: skip links, ARIA labels, `prefers-reduced-motion`, `prefers-contrast`, focus management
 - **Prisma migrations** with incremental improvements (versioning, stock constraints, category query indexes)
-- **30 modular CSS files** under `app/styles/` with consistent CSS variable tokens
+- **32 modular CSS files** under `app/styles/` with consistent CSS variable tokens
 - **Product image gallery + multi-image support** with primary image management
 - **Shipping nudge** (free-shipping threshold progress) for conversion uplift
 - **Category platform**: `/category/[slug]` pages, "Latest in Every Category" homepage section, full admin CRUD
@@ -96,3 +97,4 @@
 | 2026-07-18 | validation | Docs re-validated against live codebase; all category features confirmed implemented; gallery, breadcrumbs, latest-category CSS module confirmed |
 | 2026-07-25 | validation | Docs re-validated; CSS modules count updated to 30, product detail pages, shipping nudge, FallbackImage, SkeletonLoader, Markdown/JsonLd/Breadcrumbs/ProductImageGallery components, DIRECT_URL & NEXT_PUBLIC_IMAGE_UNOPTIMIZED env vars, jsbarcode for labels, Speed Insights, product/category form modals, shipping label modal |
 | 2026-08-05 | validation | Docs re-validated; test file count corrected to 32 (183 cases); #5 Redis-backed rate limiter, #10 client-side cart hydration, #11 Redis cache, #16 Axiom observability marked Fixed; fallow report scripts (`npm run fallow:report`) + DB keep-alive cron added |
+| 2026-09-07 | architecture | Sep 2026 architecture review executed end to end: Order intake deepening (`src/lib/order-intake.ts` — placeOrder, versioned transitions, `OrderError` taxonomy), paid==stored invariant via `assertPaidAmountMatchesTotal` + `razorpay-server.ts` (ADR-0002 follow-up closed), admin route adapter (`src/lib/admin-route.ts` — one `withAdmin` owns CSRF/auth/body-parse/error mapping/revalidation across all admin routes), shared checkout field contract (`src/lib/checkout-fields.ts`), Cart seam (`addItem` returns post-add total — kills the stale-total nudge bug class), shared `nextOrderStatus` client helper; CONTEXT.md seams all closed; suite grown 508 → 542 tests |

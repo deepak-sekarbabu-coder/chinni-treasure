@@ -1,8 +1,8 @@
 # ADR-0002: Pricing basis — gift-box prices included in order totals
 
-- **Status:** Accepted
+- **Status:** Accepted — implemented, and the paid==stored enforcement follow-up is closed (2026-09-06)
 - **Date:** 2026-09-05
-- **Related:** `CONTEXT.md` → *Pricing* (domain concept), *Pricing module — seam*; ADR-0001 (cache ownership)
+- **Related:** `CONTEXT.md` → *Pricing* (domain concept), *Pricing module — seam*, *Order intake module — seam*; ADR-0001 (cache ownership)
 
 ## Context
 
@@ -20,6 +20,16 @@ Subtotal and totalAmount on the `Order` record include **all revenue-bearing lin
 > `totalAmount = subtotal + shippingCost`.
 
 This ensures paid == stored for every new order. The exact paid-to-stored comparison (integer-paise, Razorpay-amount-to-`totalAmount`) is owned by the **Order intake seam** (review candidate 1); the Pricing module carries rupee floats as today.
+
+### Enforcement (closed 2026-09-06)
+
+The paid==stored invariant is now **enforced server-side** at the Order intake seam, not merely assigned to it:
+
+1. `POST /api/orders` accepts `paymentGateway` (default `razorpay`) and `razorpayOrderId`. For razorpay placements it resolves the **authoritative charged amount** from Razorpay's own records via `fetchRazorpayPayment` (`src/lib/razorpay-server.ts`) — a client-claimed amount is never trusted — and verifies the payment belongs to the given Razorpay order and is `captured`/`authorized`.
+2. Inside the placement transaction, `placeOrder` calls `assertPaidAmountMatchesTotal(resolvedPaidPaise, totalAmount)` (integer paise on both sides) **before** the order is created. A mismatch aborts the order entirely — nothing is stored, no stock is deducted.
+3. Manual bank-transfer placements (`paymentGateway: "manual"`) skip the gateway check: there is no gateway record to compare against. Their reference is stored as `transactionId` and reconciliation remains an admin concern.
+
+This also closes the integer-paise follow-up named under Consequences: the comparison is integer-paise on both sides (`Math.round(rupees × 100)`), while the Pricing module continues to carry rupee floats. Regression coverage lives in `src/lib/__tests__/order-intake.test.ts` (module interface) and `src/__tests__/api/orders.test.ts` (adapter: mismatch, wrong Razorpay order, failed payment, manual bypass).
 
 ### Scope and exclusions
 
@@ -39,4 +49,5 @@ This ensures paid == stored for every new order. The exact paid-to-stored compar
 **Negative / trade-offs**
 
 - **Historical totals are stale.** Existing orders' stored totals exclude gift-box revenue. This is acknowledged; the totals were accurate at the time they were computed, and the gap is visible only when comparing historical orders against the current basis. If exact historical reconciliation is ever needed, it is a backfill-script concern, not a real-time-invariant concern.
-- **Rounding behaviour unchanged.** The module carries rupee floats. Float rounding is deferred to the Order intake seam (integer-paise comparison). See CONTEXT.md for the planned integer-paise follow-up.
+- **Rounding behaviour unchanged.** The module carries rupee floats. ~~Float rounding is deferred to the Order intake seam (integer-paise comparison).~~ **Closed 2026-09-06:** the integer-paise comparison is implemented in `assertPaidAmountMatchesTotal` and enforced before persistence (see *Enforcement* above).
+- **Gateway lookup on placement.** Razorpay placements now make one additional server-to-server call (`payments.fetch`) before the order transaction. This adds latency and a gateway-availability dependency to order placement; a gateway outage fails placement with a 502-mapped error rather than storing an unverifiable order — the deliberate trade-off.

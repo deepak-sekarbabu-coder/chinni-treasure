@@ -95,7 +95,7 @@
 .admin-top-header {
     background: var(--black);
     border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-    padding: 36px 0 30px;
+    padding: 56px 0 44px;
 }
 
 /* Override .section padding inside the header — the header manages its own spacing */
@@ -904,16 +904,23 @@
 }
 
 /* Numeric columns keep their values right-aligned, so keep the header flush
-   with them too. Row-reverse pulls the sort arrow to the left of the label,
-   letting the digits line up directly beneath the column title instead of
-   trailing an arrow-width away from it. */
+   with them too. The sort arrow is pulled to the left of the label (absolutely
+   positioned inside the header's left padding) so the digits line up directly
+   beneath the column title. The `th` itself must stay a table-cell — making it
+   flex breaks the table layout and wraps consecutive right-aligned headers
+   onto separate visual rows. */
 .admin-table th.th-right {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    justify-content: flex-start;
+    position: relative;
     text-align: right;
     white-space: nowrap;
+}
+
+.admin-table th.th-right[data-sort]::after {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
 }
 
 /* ── Table Cells & Badges ── */
@@ -1764,7 +1771,7 @@
     }
 
     .admin-top-header {
-        padding: 36px 0 30px;
+        padding: 56px 0 44px;
     }
 
     .admin-heading {

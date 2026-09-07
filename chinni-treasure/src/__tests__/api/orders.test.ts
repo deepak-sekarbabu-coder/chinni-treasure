@@ -13,6 +13,21 @@ vi.mock("isomorphic-dompurify", () => ({
     sanitize: (input: string) => input.trim(),
   },
 }));
+vi.mock("@/src/lib/razorpay-server", () => ({
+  fetchRazorpayPayment: vi.fn().mockResolvedValue({
+    id: "pay_TEST123",
+    orderId: "order_TEST123",
+    amount: 60000,
+    status: "captured",
+  }),
+  RazorpayGatewayError: class extends Error {
+    statusCode: number;
+    constructor(message: string, statusCode = 502) {
+      super(message);
+      this.statusCode = statusCode;
+    }
+  },
+}));
 
 import { prisma } from "@/src/lib/prisma";
 import { GET, POST } from "@/app/api/orders/route";
@@ -187,6 +202,7 @@ describe("POST /api/orders", () => {
         stateCode: "MH",
         postalCode: "400001",
         transactionId: "TXN001",
+        razorpayOrderId: "order_TEST123",
         items: [
           { id: "p1", quantity: 2 },
           { id: "p2", quantity: 1 },
@@ -246,6 +262,7 @@ describe("POST /api/orders", () => {
         stateCode: "MH",
         postalCode: "400001",
         transactionId: "TXN001",
+        razorpayOrderId: "order_TEST123",
         items: [{ id: "p1", quantity: 99 }],
       },
     });
@@ -308,6 +325,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 2 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -382,6 +400,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 3 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -425,6 +444,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 1 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -468,6 +488,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 1 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -512,6 +533,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 5 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -555,6 +577,7 @@ describe("POST /api/orders", () => {
             giftBoxes: [{ id: "p2", quantity: 1 }],
           },
         ],
+        razorpayOrderId: "order_TEST123",
       },
     });
 
@@ -601,11 +624,173 @@ describe("POST /api/orders", () => {
         stateCode: "MH",
         postalCode: "400001",
         transactionId: "TXN003",
+        razorpayOrderId: "order_TEST123",
         items: [{ id: "p1", quantity: 1 }],
       },
     });
 
     const response = await POST(req);
     expect(response.status).toBe(500);
+  });
+
+  it("rejects a razorpay placement when the paid amount does not match the server total (ADR-0002)", async () => {
+    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
+    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
+      id: "pay_TEST123",
+      orderId: "order_TEST123",
+      amount: 99999, // ₹999.99 charged vs ₹600 computed server-side
+      status: "captured",
+    });
+    vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
+    vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
+    vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
+    vi.mocked(prisma.$transaction).mockImplementation(
+      async (cb: (tx: typeof mockTx) => unknown) => cb(mockTx),
+    );
+
+    const req = createNextRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "9999999999",
+        addressLine1: "123 Main St",
+        city: "Mumbai",
+        stateCode: "MH",
+        postalCode: "400001",
+        transactionId: "pay_TEST123",
+        razorpayOrderId: "order_TEST123",
+        items: [
+          { id: "p1", quantity: 2 },
+          { id: "p2", quantity: 1 },
+        ],
+      },
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain("does not match the order total");
+    // The order must not have been persisted
+    expect(mockTx.order.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects a razorpay placement whose payment belongs to a different razorpay order", async () => {
+    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
+    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
+      id: "pay_TEST123",
+      orderId: "order_OTHER",
+      amount: 60000,
+      status: "captured",
+    });
+
+    const req = createNextRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "9999999999",
+        addressLine1: "123 Main St",
+        city: "Mumbai",
+        stateCode: "MH",
+        postalCode: "400001",
+        transactionId: "pay_TEST123",
+        razorpayOrderId: "order_TEST123",
+        items: [{ id: "p1", quantity: 2 }],
+      },
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain("does not match this order");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects a razorpay placement whose payment is not captured", async () => {
+    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
+    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
+      id: "pay_TEST123",
+      orderId: "order_TEST123",
+      amount: 60000,
+      status: "failed",
+    });
+
+    const req = createNextRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "9999999999",
+        addressLine1: "123 Main St",
+        city: "Mumbai",
+        stateCode: "MH",
+        postalCode: "400001",
+        transactionId: "pay_TEST123",
+        razorpayOrderId: "order_TEST123",
+        items: [{ id: "p1", quantity: 2 }],
+      },
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain("has not been completed");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("skips the gateway amount check for manual (bank transfer) placements", async () => {
+    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
+    vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
+    vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
+    vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
+    vi.mocked(prisma.$transaction).mockImplementation(
+      async (cb: (tx: typeof mockTx) => unknown) => cb(mockTx),
+    );
+
+    const req = createNextRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "9999999999",
+        addressLine1: "123 Main St",
+        city: "Mumbai",
+        stateCode: "MH",
+        postalCode: "400001",
+        transactionId: "NEFT-REF-001",
+        paymentGateway: "manual",
+        items: [
+          { id: "p1", quantity: 2 },
+          { id: "p2", quantity: 1 },
+        ],
+      },
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(201);
+    expect(fetchRazorpayPayment).not.toHaveBeenCalled();
+  });
+
+  it("requires razorpayOrderId for razorpay placements", async () => {
+    const req = createNextRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "9999999999",
+        addressLine1: "123 Main St",
+        city: "Mumbai",
+        stateCode: "MH",
+        postalCode: "400001",
+        transactionId: "pay_TEST123",
+        items: [{ id: "p1", quantity: 2 }],
+      },
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain("Razorpay order ID is required");
   });
 });

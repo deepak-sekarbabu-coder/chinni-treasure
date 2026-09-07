@@ -69,8 +69,9 @@ export default function ProductDetailsContent({ product }: Props) {
             showToast(`${product.name} is out of stock`, "error");
             return;
         }
+        let newTotal = 0;
         for (let i = 0; i < quantity; i++) {
-            const result = addItem({
+            const { result, newTotal: totalAfterAdd } = addItem({
                 id: product.id,
                 name: product.name,
                 price: Number(product.price),
@@ -91,8 +92,11 @@ export default function ProductDetailsContent({ product }: Props) {
                 showToast(`${product.name} is out of stock`, "error");
                 return;
             }
+            newTotal = totalAfterAdd;
         }
-        triggerShippingNudge(Number(product.price), quantity);
+        // The Cart module computed the total from the fresh state on each add;
+        // the last successful add's total is the cart total now.
+        triggerShippingNudge(newTotal);
         showToast(`${quantity} × ${product.name} added to cart`, "success");
         setBtnSuccess(true);
         setTimeout(() => setBtnSuccess(false), 600);

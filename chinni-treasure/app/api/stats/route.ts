@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { statsCache } from "@/src/lib/stats-cache";
+import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
 
 const { get: getCached, set: setCache } = statsCache;
@@ -31,12 +31,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
 }
 
 // GET /api/stats — Dashboard statistics (admin only)
-export async function GET() {
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   try {
     const cached = await getCached("stats");
     if (cached) {
@@ -142,4 +137,4 @@ export async function GET() {
     console.error("Failed to fetch stats:", error);
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
-}
+});

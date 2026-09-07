@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod"
-import { Prisma, ProductBadge } from "@prisma/client"
+import { ProductBadge } from "@prisma/client"
 
 const ImageInputSchema = z.object({
   url: z.string().min(1),
@@ -56,21 +54,9 @@ function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknow
 }
 
 // PUT /api/products/[id] — Update a product (admin only)
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const PUT = withAdmin<{ id: string }>(
+  async ({ body, params }) => {
+    const { id } = params;
     const parsed = validateOr400(UpdateProductSchema, body);
     if (!parsed.ok) return parsed.response;
 
@@ -125,60 +111,38 @@ export async function PUT(
     });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json(product);
-  } catch (error) {
-    console.error("Failed to update product:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        const target = (error.meta?.target as string[])?.join(", ") || "field";
-        if (target.includes("sku")) {
-          return NextResponse.json(
-            { error: "A product with this SKU already exists. Please use a unique SKU or leave it blank." },
-            { status: 409 },
-          );
-        }
-        return NextResponse.json({ error: `A product with this ${target} already exists` }, { status: 409 });
-      }
-      if (error.code === "P2025") {
-        return NextResponse.json({ error: "Product not found" }, { status: 404 });
-      }
-    }
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
-  }
-}
+  },
+  {
+    parseBody: true,
+    revalidateCatalogue: true,
+    fallbackError: "Failed to update product",
+    errorMessages: {
+      p2002: (target) =>
+        target.includes("sku")
+          ? "A product with this SKU already exists. Please use a unique SKU or leave it blank."
+          : `A product with this ${target} already exists`,
+      p2025: "Product not found",
+    },
+  },
+);
 
 // DELETE /api/products/[id] — Delete a product (admin only)
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
+export const DELETE = withAdmin<{ id: string }>(
+  async ({ params }) => {
+    const { id } = params;
     await prisma.product.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete product:", error);
-    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
-  }
-}
+  },
+  {
+    revalidateCatalogue: true,
+    fallbackError: "Failed to delete product",
+  },
+);

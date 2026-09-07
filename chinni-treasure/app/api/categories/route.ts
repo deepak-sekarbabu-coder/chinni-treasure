@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
-import { checkAuth } from "@/src/lib/auth";
 import { sanitize } from "@/src/lib/sanitize";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { categoriesCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
-import { Prisma } from "@prisma/client";
+import { withAdmin } from "@/src/lib/admin-route";
+import { checkAuth } from "@/src/lib/auth";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 
 const { get: getCached, set: setCache } = categoriesCache;
@@ -29,6 +27,11 @@ export async function GET(request: Request) {
             "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
           },
         });
+      }
+    } else {
+      const admin = await checkAuth();
+      if (!admin) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
 
@@ -101,17 +104,8 @@ async function generateUniqueSlug(base: string): Promise<string> {
 }
 
 // POST /api/categories — Create a category (admin only)
-export async function POST(request: Request) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const admin = await checkAuth();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const body = await request.json();
+export const POST = withAdmin(
+  async ({ body }) => {
     const parsed = validateOr400(CreateCategorySchema, body);
     if (!parsed.ok) return parsed.response;
 
@@ -133,25 +127,15 @@ export async function POST(request: Request) {
     });
 
     await invalidateCatalogCaches();
-    revalidatePath("/catalogue");
-    revalidatePath("/");
-    revalidatePath("/category", "layout");
 
     return NextResponse.json(category, { status: 201 });
-  } catch (error) {
-    console.error("Failed to create category:", error);
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "A category with this slug already exists" },
-        { status: 409 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to create category" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    parseBody: true,
+    revalidateCatalogue: true,
+    fallbackError: "Failed to create category",
+    errorMessages: {
+      p2002: "A category with this slug already exists",
+    },
+  },
+);

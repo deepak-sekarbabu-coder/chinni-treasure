@@ -1,141 +1,37 @@
-import { useCallback, useMemo, useState } from "react";
+"use client";
+
+import { useCallback, useState } from "react";
 import type { AdminTabKey } from "@/src/components/admin/AdminTabs";
-import {
-  ADMIN_PAGE_SIZES,
-  useAdminCategories,
-  useAdminOrders,
-  useAdminProducts,
-  useAdminStats,
-} from "@/src/lib/hooks/useAdminData";
-import { useAdminCatalogueController } from "@/src/lib/hooks/useAdminCatalogueController";
-import { useAdminCategoriesController } from "@/src/lib/hooks/useAdminCategoriesController";
-import { useAdminHeaderActions } from "@/src/lib/hooks/useAdminHeaderActions";
-import { useAdminOrdersController } from "@/src/lib/hooks/useAdminOrdersController";
+import { useAdminStats } from "@/src/lib/hooks/useAdminData";
 import { useAdminSession } from "@/src/lib/hooks/useAdminSession";
-import type { OrderSortKey } from "@/src/components/admin/table/columns.orders";
 
-const PRODUCTS_PER_PAGE = ADMIN_PAGE_SIZES.products;
-const ITEMS_PER_PAGE = ADMIN_PAGE_SIZES.orders;
-
-export interface ProductFilters {
-  search: string;
-  categoryId: number | "";
-  badge: string;
-  status: "all" | "active" | "inactive";
-  sort: string;
-}
-
-const DEFAULT_FILTERS: ProductFilters = { search: "", categoryId: "", badge: "all", status: "all", sort: "newest" };
-
+/**
+ * Admin page aggregate state.
+ *
+ * Deliberately small: this owns only what is shared across panels — the
+ * session gate, the active tab, the dashboard stats/charts, and the
+ * selected-order state (the order-detail and tracking modals render at the
+ * page level, outside the orders panel). Per-panel state lives in the
+ * `useAdmin<Panel>` modules co-located with each panel.
+ */
 export function useAdminPageState() {
   const { authenticated, authLoading, ready } = useAdminSession();
-
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [orderSort, setOrderSort] = useState<OrderSortKey>("date-desc");
-  const [productPage, setProductPage] = useState(1);
   const [activeTab, setActiveTab] = useState<AdminTabKey>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [productFilters, setProductFilters] = useState<ProductFilters>(DEFAULT_FILTERS);
-
-  const isCatalogueTab = activeTab === "catalogue";
-
-  // Admin needs the full category list (including inactive) for management + product form.
-  const categoriesQuery = useAdminCategories(authenticated, true);
 
   const statsQuery = useAdminStats(authenticated);
-  const ordersQuery = useAdminOrders(
-    { page: currentPage, limit: ITEMS_PER_PAGE, status: statusFilter, sort: orderSort },
-    authenticated,
-  );
-  const productsQuery = useAdminProducts(
-    {
-      page: productPage,
-      limit: PRODUCTS_PER_PAGE,
-      isActive: productFilters.status,
-      search: productFilters.search || undefined,
-      categoryId: typeof productFilters.categoryId === "number" ? productFilters.categoryId : undefined,
-      badge: productFilters.badge !== "all" ? productFilters.badge : undefined,
-      sort: productFilters.sort,
-    },
-    authenticated && isCatalogueTab,
-  );
-
-  const orders = useMemo(() => ordersQuery.data?.orders ?? [], [ordersQuery.data?.orders]);
-  const totalPages = ordersQuery.data?.totalPages ?? 1;
-  const products = useMemo(() => productsQuery.data?.products ?? [], [productsQuery.data?.products]);
-  const productTotalPages = productsQuery.data?.totalPages ?? 1;
-  const stats = statsQuery.data?.stats ?? null;
-  const chartData = statsQuery.data?.chartData ?? [];
-  const productSales = statsQuery.data?.productSalesData ?? [];
-  const selectedOrder = useMemo(
-    () => (selectedOrderId ? orders.find((o) => o.id === selectedOrderId) ?? null : null),
-    [orders, selectedOrderId],
-  );
 
   const clearSelectedOrder = useCallback(() => setSelectedOrderId(null), []);
-  const handleProductSaved = useCallback(
-    (wasCreate: boolean) => {
-      if (wasCreate) setProductPage(1);
-    },
-    [],
-  );
-
-  const handleProductFilterChange = useCallback((updates: Partial<ProductFilters>) => {
-    setProductFilters((prev) => ({ ...prev, ...updates }));
-    setProductPage(1);
-  }, []);
-
-  const handleProductFilterReset = useCallback(() => {
-    setProductFilters(DEFAULT_FILTERS);
-    setProductPage(1);
-  }, []);
-
-  const ordersController = useAdminOrdersController(orders, clearSelectedOrder);
-  const catalogueController = useAdminCatalogueController({ onAfterSave: handleProductSaved });
-  const categoriesController = useAdminCategoriesController();
-  const headerActions = useAdminHeaderActions();
-
-  const handleStatusFilterChange = useCallback((key: string) => {
-    setStatusFilter(key);
-    setCurrentPage(1);
-  }, []);
 
   return {
     authenticated,
     authLoading,
     ready,
-    statusFilter,
-    orderSort,
-    currentPage,
-    productPage,
     activeTab,
-    selectedOrderId,
-    productFilters,
-    statsQuery,
-    ordersQuery,
-    productsQuery,
-    categoriesQuery,
-    orders,
-    totalPages,
-    products,
-    productTotalPages,
-    stats,
-    chartData,
-    productSales,
-    selectedOrder,
-    ordersController,
-    catalogueController,
-    categoriesController,
-    headerActions,
     setActiveTab,
-    setCurrentPage,
-    setOrderSort,
-    setProductPage,
+    selectedOrderId,
     setSelectedOrderId,
     clearSelectedOrder,
-    handleStatusFilterChange,
-    handleProductFilterChange,
-    handleProductFilterReset,
+    statsQuery,
   };
 }

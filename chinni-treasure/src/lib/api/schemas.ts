@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CheckoutFields } from "@/src/lib/checkout-fields";
 
 const OrderStatusSchema = z.enum([
   "pending",
@@ -173,6 +174,17 @@ export const AuthMeResponseSchema = z.union([
 ]);
 
 export const CreateOrderInputSchema = z.object({
+  // Per-field checkout rules come from the shared contract
+  // (checkout-fields.ts) — the same one the server intake and the checkout
+  // page use, so client and server messages cannot drift.
+  customerName: CheckoutFields.customerName,
+  customerEmail: CheckoutFields.customerEmail,
+  customerPhone: CheckoutFields.customerPhone,
+  addressLine1: CheckoutFields.addressLine1,
+  addressLine2: z.string().optional(),
+  city: CheckoutFields.city,
+  stateCode: CheckoutFields.stateCode,
+  postalCode: CheckoutFields.postalCode,
   items: z
     .array(
       z.object({
@@ -189,17 +201,11 @@ export const CreateOrderInputSchema = z.object({
       }),
     )
     .min(1, "At least one item is required"),
-  customerName: z.string().min(1, "Customer name is required"),
-  customerEmail: z.string().email("Invalid email address"),
-  customerPhone: z.string().regex(/^\d{10}$/, "Phone must be exactly 10 digits"),
-  addressLine1: z.string().min(1, "Address line 1 is required"),
-  addressLine2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  stateCode: z
-    .string()
-    .length(2, "State code must be 2 characters"),
-  postalCode: z.string().regex(/^\d{6}$/, "Postal code must be 6 digits"),
   transactionId: z.string().optional(),
+  /** Which channel recorded `transactionId`. Drives the server-side paid==stored check. */
+  paymentGateway: z.enum(["razorpay", "manual"]).default("razorpay"),
+  /** Razorpay order id (`order_…`) the payment was made against; required for razorpay. */
+  razorpayOrderId: z.string().optional(),
   customerNotes: z.string().optional(),
 });
 

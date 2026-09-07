@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import { useUpdateOrderStatus, useUpdateTrackingId } from "@/src/lib/hooks/useAdminMutations";
-import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
+import { nextOrderStatus } from "@/src/lib/constants";
 import { extractApiErrorMessage } from "@/src/lib/utils";
 import type { Order } from "@/src/lib/api/schemas";
 
@@ -31,9 +31,8 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
     async (orderId: string) => {
       const order = ordersById.get(orderId);
       if (!order) return;
-      const currentIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(order.status);
-      if (currentIdx < 0 || currentIdx >= ORDER_STATUS_FLOW.length - 1) return;
-      const nextStatus = ORDER_STATUS_FLOW[currentIdx + 1];
+      const nextStatus = nextOrderStatus(order.status);
+      if (!nextStatus) return;
       if (nextStatus === "shipped") {
         setTrackingModal({ orderId: order.id, open: true });
         return;

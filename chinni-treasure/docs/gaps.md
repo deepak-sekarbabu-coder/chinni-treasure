@@ -1,6 +1,8 @@
 # Codebase Architectural Gaps & Technical Debt
 
-> **Last validated:** August 5, 2026 — Gaps and statuses re-validated against current codebase.
+> **Last validated:** September 7, 2026 — Gaps and statuses re-validated against current codebase.
+>
+> **Architecture review status (Sep 2026):** all deepening candidates from the Sep 2026 architecture review are closed — Order intake (`src/lib/order-intake.ts`), the admin route adapter (`src/lib/admin-route.ts`), the shared checkout field contract (`src/lib/checkout-fields.ts`), and the Cart seam (`addItem` returns the authoritative post-add total). The open seams live in `CONTEXT.md`, which supersedes this document for architecture tracking.
 
 This document outlines identified areas for architectural improvement, technical debt, and inconsistencies found during a codebase analysis, categorized by severity.
 
@@ -23,7 +25,7 @@ None currently identified.
 ## 3. Minor Gaps (Improvement / Best Practice)
 
 * **Incomplete Testing Coverage**
-  * **Issue:** Unit and integration tests are strong — **32 test files** under `src/__tests__/` cover utilities, API routes, components, and hooks — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@testing-library/jest-dom` and `@testing-library/user-event` are dev dependencies; `@playwright/test` could be added for E2E groundwork.
+  * **Issue:** Unit and integration tests are strong — **68 test files / 542 tests** cover utilities, API routes, components, hooks, and the deep modules (`admin-route`, `checkout-fields`, `order-intake`, `order-fulfilment`, `excel-export`) — but end-to-end coverage of complex multi-step UI workflows (checkout, admin catalogue CRUD) is absent. `@testing-library/jest-dom` and `@testing-library/user-event` are dev dependencies; `@playwright/test` could be added for E2E groundwork.
   * **Recommendation:** Implement E2E tests with Playwright covering critical user journeys (browse → checkout → payment, admin order advancement).
 
 * **Lack of Dynamic Metadata** (Mostly Resolved)

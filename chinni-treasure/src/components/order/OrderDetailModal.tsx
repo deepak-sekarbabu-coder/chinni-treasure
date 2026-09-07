@@ -5,6 +5,7 @@ import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
   ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
+  nextOrderStatus,
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
@@ -60,10 +61,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
         0,
         ORDER_STATUS_FLOW.indexOf(order.status as (typeof ORDER_STATUS_FLOW)[number]) + 1,
       );
-  const currentIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(order.status);
-  const nextStatus = currentIdx >= 0 && currentIdx < ORDER_STATUS_FLOW.length - 1
-    ? ORDER_STATUS_FLOW[currentIdx + 1]
-    : null;
+  const nextStatus = nextOrderStatus(order.status);
 
   return (
     <div className="modal-overlay active" ref={trapRef} onClick={onClose}>

@@ -17,7 +17,7 @@ import {
   createCatalogueColumns,
 } from "@/src/components/admin/table/columns.catalogue";
 import type { Category, Product } from "@/src/lib/api/schemas";
-import type { ProductFilters } from "@/app/admin/useAdminPageState";
+import type { ProductFilters } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
 
 export interface ProductFormData {

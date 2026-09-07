@@ -626,7 +626,20 @@ export const openApiSpec = {
                   city: { type: "string" },
                   stateCode: { type: "string", description: "2-letter Indian state code" },
                   postalCode: { type: "string", description: "6-digit PIN" },
-                  transactionId: { type: "string" },
+                  transactionId: {
+                    type: "string",
+                    description: "Razorpay payment id (pay_…) for razorpay payments, or the bank-transfer reference for manual payments",
+                  },
+                  paymentGateway: {
+                    type: "string",
+                    enum: ["razorpay", "manual"],
+                    default: "razorpay",
+                    description: "Which channel recorded transactionId. Razorpay placements are verified against the gateway (paid == stored).",
+                  },
+                  razorpayOrderId: {
+                    type: "string",
+                    description: "Razorpay order id (order_…) the payment was made against. Required for razorpay payments.",
+                  },
                   customerNotes: { type: "string", nullable: true },
                   items: {
                     type: "array",
@@ -665,7 +678,10 @@ export const openApiSpec = {
               },
             },
           },
-          "400": { description: "Missing required fields or insufficient stock" },
+          "400": {
+            description:
+              "Missing required fields, insufficient stock, payment not completed, or paid amount does not match the order total",
+          },
           "404": { description: "Product not found" },
           "409": { description: "Conflict — retry your order" },
         },

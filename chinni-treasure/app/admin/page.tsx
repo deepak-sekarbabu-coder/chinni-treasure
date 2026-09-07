@@ -6,6 +6,10 @@ import AdminHeader from "@/src/components/admin/AdminHeader";
 import AdminStatsGrid from "@/src/components/admin/AdminStatsGrid";
 import AdminTabs from "@/src/components/admin/AdminTabs";
 import { useAdminPageState } from "./useAdminPageState";
+import { useAdminOrdersPanel } from "@/src/components/admin/useAdminOrdersPanel";
+import { useAdminCataloguePanel } from "@/src/components/admin/useAdminCataloguePanel";
+import { useAdminCategoriesPanel } from "@/src/components/admin/useAdminCategoriesPanel";
+import { useAdminHeaderActions } from "@/src/lib/hooks/useAdminHeaderActions";
 
 const AdminOrdersPanel = dynamic(() => import("@/src/components/admin/AdminOrdersPanel"), {
   ssr: false,
@@ -32,16 +36,25 @@ const OrderDetailModal = dynamic(() => import("@/src/components/order/OrderDetai
 export default function AdminPage() {
   const {
     authenticated, authLoading, ready,
-    statusFilter, orderSort, currentPage, productPage, activeTab,
-    productFilters,
-    statsQuery, ordersQuery, productsQuery, categoriesQuery,
-    orders, totalPages, products, productTotalPages,
-    stats, chartData, productSales, selectedOrder,
-    ordersController, catalogueController, categoriesController, headerActions,
-    setActiveTab, setCurrentPage, setOrderSort, setProductPage, setSelectedOrderId,
-    clearSelectedOrder, handleStatusFilterChange,
-    handleProductFilterChange, handleProductFilterReset,
+    activeTab, setActiveTab,
+    selectedOrderId, setSelectedOrderId, clearSelectedOrder,
+    statsQuery,
   } = useAdminPageState();
+  const headerActions = useAdminHeaderActions();
+
+  const isCatalogueTab = activeTab === "catalogue";
+
+  const ordersPanel = useAdminOrdersPanel({
+    authenticated,
+    selectedOrderId,
+    setSelectedOrderId,
+    clearSelectedOrder,
+  });
+  const cataloguePanel = useAdminCataloguePanel({
+    authenticated,
+    enabled: isCatalogueTab,
+  });
+  const categoriesPanel = useAdminCategoriesPanel({ authenticated });
 
   if (authLoading || !ready || !authenticated) {
     return authLoading ? <LoadingSpinner fullPage /> : null;
@@ -56,12 +69,12 @@ export default function AdminPage() {
         onLogout={headerActions.handleLogout}
       />
 
-      <AdminStatsGrid stats={stats} />
+      <AdminStatsGrid stats={statsQuery.data?.stats ?? null} />
 
       <AdminChartsSection
         loading={statsQuery.isLoading}
-        chartData={chartData}
-        productSales={productSales}
+        chartData={statsQuery.data?.chartData ?? []}
+        productSales={statsQuery.data?.productSalesData ?? []}
       />
 
       <section className="section section-top-md">
@@ -69,94 +82,94 @@ export default function AdminPage() {
 
         {activeTab === "orders" && (
           <AdminOrdersPanel
-            orders={orders}
-            loading={ordersQuery.isLoading || ordersQuery.isFetching}
-            statusFilter={statusFilter}
-            onStatusFilterChange={handleStatusFilterChange}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            advancingOrderId={ordersController.advancingOrderId}
-            selectedOrder={selectedOrder}
-            onSelectOrder={(order) => setSelectedOrderId(order?.id ?? null)}
-            sort={orderSort}
-            onSortChange={setOrderSort}
+            orders={ordersPanel.data.orders}
+            loading={ordersPanel.loading}
+            statusFilter={ordersPanel.data.statusFilter}
+            onStatusFilterChange={ordersPanel.actions.onStatusFilterChange}
+            currentPage={ordersPanel.data.currentPage}
+            totalPages={ordersPanel.data.totalPages}
+            onPageChange={ordersPanel.actions.onPageChange}
+            advancingOrderId={ordersPanel.data.advancingOrderId}
+            selectedOrder={ordersPanel.data.selectedOrder}
+            onSelectOrder={ordersPanel.actions.onSelectOrder}
+            sort={ordersPanel.data.sort}
+            onSortChange={ordersPanel.actions.onSortChange}
           />
         )}
 
         {activeTab === "catalogue" && (
           <AdminCataloguePanel
-            showForm={catalogueController.showProductForm}
-            formClosing={catalogueController.productFormClosing}
-            productForm={catalogueController.productForm}
-            productLoading={catalogueController.productLoading}
-            products={products}
-            productsLoading={productsQuery.isLoading || productsQuery.isFetching}
-            loadingProductId={catalogueController.loadingProductId}
-            productPage={productPage}
-            productTotalPages={productTotalPages}
-            categories={categoriesQuery.data ?? []}
-            categoriesLoading={categoriesQuery.isLoading}
-            filters={productFilters}
-            onFilterChange={handleProductFilterChange}
-            onFilterReset={handleProductFilterReset}
-            onToggleForm={catalogueController.toggleProductForm}
-            onFormChange={catalogueController.onFormChange}
-            onSave={catalogueController.handleProductSave}
-            onEdit={catalogueController.editProduct}
-            onRequestDelete={catalogueController.requestProductDelete}
-            onPageChange={setProductPage}
+            showForm={cataloguePanel.data.showForm}
+            formClosing={cataloguePanel.data.formClosing}
+            productForm={cataloguePanel.data.productForm}
+            productLoading={cataloguePanel.formSaving}
+            products={cataloguePanel.data.products}
+            productsLoading={cataloguePanel.loading}
+            loadingProductId={cataloguePanel.data.loadingProductId}
+            productPage={cataloguePanel.data.currentPage}
+            productTotalPages={cataloguePanel.data.productTotalPages}
+            categories={cataloguePanel.data.categories}
+            categoriesLoading={false}
+            filters={cataloguePanel.data.filters}
+            onFilterChange={cataloguePanel.actions.onFilterChange}
+            onFilterReset={cataloguePanel.actions.onFilterReset}
+            onToggleForm={cataloguePanel.actions.onToggleForm}
+            onFormChange={cataloguePanel.actions.onFormChange}
+            onSave={cataloguePanel.actions.onSave}
+            onEdit={cataloguePanel.actions.onEdit}
+            onRequestDelete={cataloguePanel.actions.onRequestDelete}
+            onPageChange={cataloguePanel.actions.onPageChange}
           />
         )}
 
         {activeTab === "categories" && (
           <AdminCategoriesPanel
-            showForm={categoriesController.showForm}
-            formClosing={categoriesController.formClosing}
-            form={categoriesController.form}
-            productLoading={categoriesController.productLoading}
-            categories={categoriesQuery.data ?? []}
-            categoriesLoading={categoriesQuery.isLoading}
-            deleteConfirm={categoriesController.deleteConfirm}
-            loadingCategoryId={categoriesController.loadingCategoryId}
-            togglePendingId={categoriesController.togglePendingId}
-            onToggleForm={categoriesController.toggleForm}
-            onFormChange={categoriesController.onFormChange}
-            onSave={categoriesController.handleSave}
-            onEdit={categoriesController.editCategory}
-            onRequestDelete={categoriesController.requestDelete}
-            onCancelDelete={categoriesController.closeDeleteConfirm}
-            onConfirmDelete={categoriesController.handleDeleteConfirmed}
-            onToggleActive={categoriesController.handleToggleActive}
+            showForm={categoriesPanel.data.showForm}
+            formClosing={categoriesPanel.data.formClosing}
+            form={categoriesPanel.data.form}
+            productLoading={categoriesPanel.formSaving}
+            categories={categoriesPanel.data.categories}
+            categoriesLoading={categoriesPanel.loading}
+            deleteConfirm={categoriesPanel.data.deleteConfirm}
+            loadingCategoryId={categoriesPanel.data.loadingCategoryId}
+            togglePendingId={categoriesPanel.data.togglePendingId}
+            onToggleForm={categoriesPanel.actions.onToggleForm}
+            onFormChange={categoriesPanel.actions.onFormChange}
+            onSave={categoriesPanel.actions.onSave}
+            onEdit={categoriesPanel.actions.onEdit}
+            onRequestDelete={categoriesPanel.actions.onRequestDelete}
+            onCancelDelete={categoriesPanel.actions.onCancelDelete}
+            onConfirmDelete={categoriesPanel.actions.onConfirmDelete}
+            onToggleActive={categoriesPanel.actions.onToggleActive}
           />
         )}
       </section>
 
-      {selectedOrder && (
+      {ordersPanel.data.selectedOrder && (
         <OrderDetailModal
-          order={selectedOrder}
+          order={ordersPanel.data.selectedOrder}
           onClose={clearSelectedOrder}
           showActions
-          onAdvance={ordersController.handleAdvance}
-          onReject={ordersController.handleReject}
-          isTransitioning={ordersController.isTransitioning}
-          onUpdateTracking={ordersController.handleUpdateTracking}
+          onAdvance={ordersPanel.actions.handleAdvance}
+          onReject={ordersPanel.actions.handleReject}
+          isTransitioning={ordersPanel.isTransitioning}
+          onUpdateTracking={ordersPanel.actions.handleUpdateTracking}
         />
       )}
 
-      {ordersController.trackingModal.open && (
+      {ordersPanel.data.trackingModal.open && (
         <AdminTrackingModal
-          onClose={ordersController.closeTrackingModal}
-          onSubmit={ordersController.handleTrackingSubmit}
+          onClose={ordersPanel.actions.closeTrackingModal}
+          onSubmit={ordersPanel.actions.handleTrackingSubmit}
         />
       )}
 
-      {catalogueController.deleteConfirm.open && (
+      {cataloguePanel.data.deleteConfirm.open && (
         <AdminDeleteConfirm
-          productName={catalogueController.deleteConfirm.productName}
-          loading={catalogueController.isDeleting}
-          onConfirm={catalogueController.handleProductDeleteConfirmed}
-          onCancel={catalogueController.closeDeleteConfirm}
+          productName={cataloguePanel.data.deleteConfirm.productName}
+          loading={cataloguePanel.isDeleting}
+          onConfirm={cataloguePanel.actions.onConfirmDelete}
+          onCancel={cataloguePanel.actions.onCancelDelete}
         />
       )}
     </div>

@@ -10,6 +10,7 @@ import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
+import { fieldIssue, type CheckoutFieldKey } from "@/src/lib/checkout-fields";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
@@ -35,28 +36,45 @@ interface OrderForm {
 
 const STEP_LABELS = ["Personal Details", "Delivery Details", "Payment & Review"] as const;
 
-type ValidationRule = {
-  field: string;
-  test: (form: OrderForm) => string | undefined;
+/**
+ * Step grouping only — the field rules and their messages come from the
+ * shared checkout-field contract (src/lib/checkout-fields.ts), the same one
+ * the server intake validates against, so the form and the server 400s
+ * always say the same thing.
+ */
+const FORM_FIELD_RULES: Array<{
+  field: keyof OrderForm;
+  /** The shared-contract field this form field validates against. */
+  contractField: CheckoutFieldKey | null;
   step: number;
-};
-
-const VALIDATION_RULES: ValidationRule[] = [
-  { field: "fullName", step: 1, test: (f) => !f.fullName.trim() ? "Full name is required" : undefined },
-  { field: "email", step: 1, test: (f) => !f.email.trim() ? "Email is required" : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) ? "Invalid email address" : undefined },
-  { field: "phone", step: 1, test: (f) => !f.phone.trim() ? "Phone is required" : f.phone.replace(/\D/g, "").length !== 10 ? "Enter a valid 10-digit phone number" : undefined },
-  { field: "address", step: 2, test: (f) => !f.address.trim() ? "Address is required" : undefined },
-  { field: "city", step: 2, test: (f) => !f.city.trim() ? "City is required" : undefined },
-  { field: "state", step: 2, test: (f) => !f.state ? "State/UT is required" : undefined },
-  { field: "zipCode", step: 2, test: (f) => !f.zipCode.trim() ? "PIN code is required" : f.zipCode.replace(/\D/g, "").length !== 6 ? "Enter a valid 6-digit PIN code" : undefined },
-  { field: "acceptedTerms", step: 3, test: (f) => !f.acceptedTerms ? "You must accept the terms and conditions" : undefined },
+  message: string;
+}> = [
+  { field: "fullName", contractField: "customerName", step: 1, message: "Full name is required" },
+  { field: "email", contractField: "customerEmail", step: 1, message: "Email is required" },
+  { field: "phone", contractField: "customerPhone", step: 1, message: "Phone is required" },
+  { field: "address", contractField: "addressLine1", step: 2, message: "Address is required" },
+  { field: "city", contractField: "city", step: 2, message: "City is required" },
+  { field: "state", contractField: "stateCode", step: 2, message: "State/UT is required" },
+  { field: "zipCode", contractField: "postalCode", step: 2, message: "PIN code is required" },
+  { field: "acceptedTerms", contractField: null, step: 3, message: "You must accept the terms and conditions" },
 ];
 
 function runValidation(form: OrderForm, step?: number): Record<string, string> {
   const errs: Record<string, string> = {};
-  for (const rule of VALIDATION_RULES) {
+  for (const rule of FORM_FIELD_RULES) {
     if (step !== undefined && rule.step !== step) continue;
-    const msg = rule.test(form);
+    if (rule.contractField === null) {
+      // Non-contract rule (terms checkbox) — plain required check.
+      const value = form[rule.field];
+      const blank = typeof value === "string" ? !value.trim() : !value;
+      if (blank) errs[rule.field] = rule.message;
+      continue;
+    }
+    const value = form[rule.field];
+    if (typeof value !== "string") continue;
+    // Empty → the rule's friendly "X is required" message; anything else
+    // → the shared contract's shape message (same words the server uses).
+    const msg = value.trim() === "" ? rule.message : fieldIssue(rule.contractField, value);
     if (msg) errs[rule.field] = msg;
   }
   return errs;
@@ -487,6 +505,9 @@ export default function OrderPage() {
     customerNotes: form.notes.trim() || undefined,
   };
 
+  /** Manual placements carry no gateway reference for paid==stored; razorpay does (set in the handler). */
+  const manualOrderPayload = { ...orderPayload, paymentGateway: "manual" as const };
+
   async function handleRazorpayPayment() {
     if (items.length === 0) {
       showToast("Your cart is empty", "error");
@@ -544,8 +565,10 @@ export default function OrderPage() {
               return;
             }
             const order = await placeOrder.mutateAsync({
-              ...orderPayload,
+              ...manualOrderPayload,
+              paymentGateway: "razorpay",
               transactionId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
             });
             clearCart();
             showToast("Payment successful! Order placed.", "success");
@@ -597,7 +620,7 @@ export default function OrderPage() {
 
     try {
       const order = await placeOrder.mutateAsync({
-        ...orderPayload,
+        ...manualOrderPayload,
         transactionId: form.transactionId.trim(),
       });
       clearCart();

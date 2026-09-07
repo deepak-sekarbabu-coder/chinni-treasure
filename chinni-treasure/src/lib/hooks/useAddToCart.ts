@@ -27,10 +27,15 @@ interface GiftBoxItem {
 /**
  * Shared add-to-cart logic for catalogue and category pages.
  * Returns handleAddDirectly, handleAdd, and handleModalConfirm.
+ *
+ * The Cart module owns the post-add total: addItem returns it computed from
+ * the fresh state, so callers never re-derive "total after this add" and the
+ * stale-cart-read bug class (the ₹0 shipping-nudge popup) is structurally
+ * impossible here.
  */
 export function useAddToCart<T extends AddableProduct>(options: {
   onOpenGiftBoxModal: (product: T) => void;
-  triggerShippingNudge: (productPrice: number, quantity: number) => void;
+  triggerShippingNudge: (newTotal: number) => void;
 }) {
   const { addItem } = useCart();
   const { showToast } = useToast();
@@ -41,7 +46,7 @@ export function useAddToCart<T extends AddableProduct>(options: {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      const addResult = addItem({
+      const { result: addResult, newTotal } = addItem({
         id: p.id,
         name: p.name,
         price: Number(p.price),
@@ -65,8 +70,7 @@ export function useAddToCart<T extends AddableProduct>(options: {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      const giftQty = giftBoxes?.reduce((sum, b) => sum + b.quantity, 0) ?? 0;
-      options.triggerShippingNudge(Number(p.price), giftQty);
+      options.triggerShippingNudge(newTotal);
       showToast(`${p.name} added to cart`, "success");
     },
     [addItem, showToast, options.triggerShippingNudge],
@@ -101,12 +105,6 @@ export function useAddToCart<T extends AddableProduct>(options: {
           } as unknown as T,
           giftBoxes.length > 0 ? giftBoxes : undefined,
         );
-        // Trigger the shipping nudge so the popup reflects the cart total
-        // including any gift boxes the customer just selected.
-        const giftBoxTotal = giftBoxes.reduce((sum, b) => sum + b.price * b.quantity, 0);
-        if (giftBoxes.length > 0) {
-          options.triggerShippingNudge(Number(modalProduct.price), 1 + giftBoxes.reduce((sum, b) => sum + b.quantity, 0));
-        }
       }
     },
     [handleAddDirectly],
