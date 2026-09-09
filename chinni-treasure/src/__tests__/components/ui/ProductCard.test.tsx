@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import ProductCard from "../ProductCard";
+import ProductCard from "../../../components/ui/ProductCard";
 
-vi.mock("../Markdown", () => ({
+vi.mock("../../../components/ui/Markdown", () => ({
   default: ({ children }: { children: string }) => <span>{children}</span>,
 }));
 

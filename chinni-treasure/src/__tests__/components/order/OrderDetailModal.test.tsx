@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import OrderDetailModal from "../OrderDetailModal";
+import OrderDetailModal from "../../../components/order/OrderDetailModal";
 
 const baseOrder = {
   id: "order-1",

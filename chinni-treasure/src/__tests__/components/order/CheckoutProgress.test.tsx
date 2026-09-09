@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import CheckoutProgress from "../CheckoutProgress";
+import CheckoutProgress from "../../../components/order/CheckoutProgress";
 
 describe("CheckoutProgress", () => {
   it("renders all 3 step labels", () => {

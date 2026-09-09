@@ -4,7 +4,7 @@ import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useState, useCallback } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
-import type { ProductFormData } from "@/src/components/admin/AdminCataloguePanel";
+import type { ProductFormData } from "@/src/types";
 
 const BADGE_OPTIONS = [
   { value: "", label: "None" },

@@ -28,10 +28,7 @@ export function useAdminHeaderActions() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const match = "" .match(/filename="?(.+?)"?$/);
-      a.download = match
-        ? match[1]
-        : `chinni-treasure-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `chinni-treasure-export-${new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5)}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

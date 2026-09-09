@@ -6,7 +6,7 @@ vi.hoisted(() => {
   vi.stubEnv("NEXT_PUBLIC_ENABLE_SURPRISE_GIFT", "false");
 });
 
-import { CartProvider, useCart } from "../CartProvider";
+import { CartProvider, useCart } from "../../../components/cart/CartProvider";
 
 const mockProduct = {
   id: "prod-1",

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ADMIN_PAGE_SIZES, useAdminCategories, useAdminProducts } from "@/src/lib/hooks/useAdminData";
 import { useAdminCatalogueController } from "@/src/lib/hooks/useAdminCatalogueController";
 import type { Category, Product } from "@/src/lib/api/schemas";
-import type { ProductFormData } from "@/src/components/admin/AdminCataloguePanel";
+import type { ProductFormData } from "@/src/types";
 
 export interface ProductFilters {
   search: string;

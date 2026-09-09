@@ -11,7 +11,7 @@ vi.mock("@/src/components/ui/ToastProvider", () => ({
 }));
 
 import { useExportToExcel, useLogout } from "@/src/lib/hooks/useAdminMutations";
-import { useAdminHeaderActions } from "../useAdminHeaderActions";
+import { useAdminHeaderActions } from "../../../lib/hooks/useAdminHeaderActions";
 
 const mockUseExportToExcel = vi.mocked(useExportToExcel);
 const mockUseLogout = vi.mocked(useLogout);

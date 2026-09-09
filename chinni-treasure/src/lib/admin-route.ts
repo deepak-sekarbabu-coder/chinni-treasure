@@ -40,7 +40,7 @@ import { checkAuth, type AdminSession } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 
 /** What the handler receives. `body`/`params` are present when the caller opts in. */
-export interface AdminHandlerContext<P> {
+interface AdminHandlerContext<P> {
   request: Request;
   /** The verified admin session — guaranteed non-null when the handler runs. */
   admin: AdminSession;

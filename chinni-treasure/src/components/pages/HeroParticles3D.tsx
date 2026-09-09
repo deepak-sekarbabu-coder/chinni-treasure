@@ -31,7 +31,11 @@ function Particles({ reducedMotion }: { reducedMotion: boolean }) {
   const mouseRef = useRef({ x: 0, y: 0 });
   const { viewport } = useThree();
 
-  /* ── Generate particle data once ── */
+  /* Particle layout is deliberately random per mount: cosmetic, client-only
+     background (component renders null until the hero scrolls into view), so
+     render-side randomness has no hydration surface. */
+  // ponytail: random-once-per-mount layout; precompute a module-scope seed if render determinism ever matters.
+  /* eslint-disable react-hooks/purity */
   const particles = useMemo<ParticleData[]>(() => {
     const arr: ParticleData[] = [];
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -56,6 +60,7 @@ function Particles({ reducedMotion }: { reducedMotion: boolean }) {
     }
     return arr;
   }, [viewport.width, viewport.height]);
+  /* eslint-enable react-hooks/purity */
 
   /* ── Track mouse for parallax ── */
   const handlePointerMove = useCallback((e: PointerEvent) => {
@@ -68,7 +73,9 @@ function Particles({ reducedMotion }: { reducedMotion: boolean }) {
     return () => window.removeEventListener("pointermove", handlePointerMove);
   }, [handlePointerMove]);
 
-  /* ── Animation loop ── */
+  /* Per-frame imperative particle mutation is the standard R3F animation pattern. */
+  // ponytail: mutation-based particle updates; switch to a Float32 instancing buffer if particle count grows past ~1k.
+  /* eslint-disable react-hooks/immutability */
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
     const t = clock.getElapsedTime();
@@ -113,6 +120,7 @@ function Particles({ reducedMotion }: { reducedMotion: boolean }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
     if (colorAttr) colorAttr.needsUpdate = true;
   });
+  /* eslint-enable react-hooks/immutability */
 
   /* ── Heart-shaped geometry ── */
   const geometry = useMemo(() => {
@@ -181,13 +189,14 @@ function GoldRing({ reducedMotion }: { reducedMotion: boolean }) {
 
 /* ── Main exported component ── */
 export default function HeroParticles3D() {
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [reducedMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-
     /* Suppress the THREE.Clock deprecation warning from @react-three/fiber
        internals (R3F issue #3741 — waiting for upstream fix). */
     const origWarn = console.warn;
@@ -208,8 +217,15 @@ export default function HeroParticles3D() {
     );
 
     const hero = document.querySelector(".hero");
-    if (hero) observer.observe(hero);
-    else setVisible(true); // fallback: mount immediately
+    if (!hero) {
+      // No hero on this page: mount immediately (deferred a tick to keep the
+      // state update asynchronous)
+      setTimeout(() => setVisible(true), 0);
+      return () => {
+        console.warn = origWarn;
+      };
+    }
+    observer.observe(hero);
 
     return () => {
       console.warn = origWarn;

@@ -42,12 +42,21 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
+// Reset selection and reload gift boxes each time the modal opens. React's
+  // documented "adjust state when a prop changes" render-phase pattern — avoids
+  // synchronous setState inside the fetch effect below.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setSelected([]);
+      setLoading(true);
+    }
+  }
+
   // Fetch gift boxes when modal opens
   useEffect(() => {
     if (!open) return;
-    setSelected([]);
-    setLoading(true);
-
     let cancelled = false;
     async function fetchGiftBoxes() {
       try {

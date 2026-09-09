@@ -64,7 +64,7 @@ interface AddItemProduct {
   giftBoxes?: CartGiftBox[];
 }
 
-export interface AddItemResult {
+interface AddItemResult {
   result: "added" | "max_reached" | "max_one" | "out_of_stock";
   /**
    * Cart total immediately after this add — computed from the fresh state

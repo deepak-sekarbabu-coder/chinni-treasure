@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import AdminStatCard from "../AdminStatCard";
+import AdminStatCard from "../../../components/ui/AdminStatCard";
 
 describe("AdminStatCard", () => {
   it("renders value and label", () => {

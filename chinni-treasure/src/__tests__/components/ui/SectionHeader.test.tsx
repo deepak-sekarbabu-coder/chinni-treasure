@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import SectionHeader from "../SectionHeader";
+import SectionHeader from "../../../components/ui/SectionHeader";
 
 describe("SectionHeader", () => {
   it("renders subtitle and title", () => {

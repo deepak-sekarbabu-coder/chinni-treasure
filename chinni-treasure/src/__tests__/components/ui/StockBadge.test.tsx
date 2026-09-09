@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import StockBadge from "../StockBadge";
+import StockBadge from "../../../components/ui/StockBadge";
 
 describe("StockBadge", () => {
   it('renders "Out of Stock" when stockQuantity is 0', () => {

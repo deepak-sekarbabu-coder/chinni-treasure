@@ -353,7 +353,7 @@ export async function placeOrder(
 // pending → approved → packaging → shipped → delivered
 //       ↘ rejected (restores stock)
 
-export const OrderStatusSchema = z.enum([
+const OrderStatusSchema = z.enum([
   "pending",
   "approved",
   "packaging",

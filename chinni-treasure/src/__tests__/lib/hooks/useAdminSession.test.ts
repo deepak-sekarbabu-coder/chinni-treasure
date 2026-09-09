@@ -6,7 +6,7 @@ vi.mock("@/src/lib/hooks/useAdminData", () => ({
 }));
 
 import { useAuthMe } from "@/src/lib/hooks/useAdminData";
-import { useAdminSession } from "../useAdminSession";
+import { useAdminSession } from "../../../lib/hooks/useAdminSession";
 
 const mockUseAuthMe = vi.mocked(useAuthMe);
 

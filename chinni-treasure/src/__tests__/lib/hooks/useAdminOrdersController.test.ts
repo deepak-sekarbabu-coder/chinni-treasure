@@ -11,7 +11,7 @@ vi.mock("@/src/components/ui/ToastProvider", () => ({
 }));
 
 import { useUpdateOrderStatus, useUpdateTrackingId } from "@/src/lib/hooks/useAdminMutations";
-import { useAdminOrdersController } from "../useAdminOrdersController";
+import { useAdminOrdersController } from "../../../lib/hooks/useAdminOrdersController";
 
 const mockUseUpdateOrderStatus = vi.mocked(useUpdateOrderStatus);
 const mockUseUpdateTrackingId = vi.mocked(useUpdateTrackingId);

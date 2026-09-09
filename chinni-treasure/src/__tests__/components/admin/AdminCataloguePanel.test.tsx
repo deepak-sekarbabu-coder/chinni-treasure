@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import AdminCataloguePanel, {
-  type ProductFormData,
-} from "@/src/components/admin/AdminCataloguePanel";
+import AdminCataloguePanel from "@/src/components/admin/AdminCataloguePanel";
+import type { ProductFormData } from "@/src/types";
 import type { Product } from "@/src/lib/api/schemas";
 
 const emptyForm: ProductFormData = {

@@ -17,25 +17,9 @@ import {
   createCatalogueColumns,
 } from "@/src/components/admin/table/columns.catalogue";
 import type { Category, Product } from "@/src/lib/api/schemas";
+import type { ProductFormData } from "@/src/types";
 import type { ProductFilters } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
-
-export interface ProductFormData {
-  id: string;
-  name: string;
-  sku: string;
-  description: string;
-  price: string;
-  compareAtPrice: string;
-  stockQuantity: string;
-  imageUrl: string;
-  badge: string;
-  categoryId: string;
-  isActive: boolean;
-  allowGiftBoxBundling: boolean;
-  visibleHostnames: string;
-  images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
-}
 
 interface Props {
   showForm: boolean;

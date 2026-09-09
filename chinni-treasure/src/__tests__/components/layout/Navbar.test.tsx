@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
-import Navbar from "../Navbar";
+import Navbar from "../../../components/layout/Navbar";
 import { CartProvider, useCart } from "@/src/components/cart/CartProvider";
 
 function renderNavbar() {

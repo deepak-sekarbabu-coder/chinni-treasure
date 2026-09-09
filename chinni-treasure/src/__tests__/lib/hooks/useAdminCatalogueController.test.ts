@@ -16,7 +16,7 @@ import {
   useDeleteProduct,
   useUpdateProduct,
 } from "@/src/lib/hooks/useAdminMutations";
-import { useAdminCatalogueController } from "../useAdminCatalogueController";
+import { useAdminCatalogueController } from "../../../lib/hooks/useAdminCatalogueController";
 
 const mockUseCreateProduct = vi.mocked(useCreateProduct);
 const mockUseUpdateProduct = vi.mocked(useUpdateProduct);
