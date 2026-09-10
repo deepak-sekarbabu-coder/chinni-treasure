@@ -39,19 +39,20 @@ export default function HomeContent({ latestCategories }: Props) {
         <div className="hero-pattern"></div>
         <HeroParticles3D />
         <div className="hero-content">
+          <p className="hero-badge">Chinni Treasure · Little Love</p>
           <h1 id="hero-heading">
-            &ldquo;Own The Art Of
+            Made for the moments
             <br />
-            <span className="highlight">Timeless Luxury</span>
-            <br />
-            For Everyday Elegance.&rdquo;
+            <span className="highlight">you keep.</span>
           </h1>
-          <p> Artisan-made 🪄 Premium materials 💎 Unrivaled design ✍️ </p>
-          <p> Discover handcrafted items that make a statement, paired with a seamless shopping experience you&apos;ll fall in love. </p>
-          <div className="hero-trust" aria-label="brand highlights">
-            <span>⭐Handcrafted Originals⭐</span>
-            <span>⏳Limited Batch Drops⏳</span>
-            <span>🎁Concierge Support🎁</span>
+          <p className="hero-kicker">Thoughtfully made pieces for gifting and every day.</p>
+          <p className="hero-description">
+            Discover considered accessories and gifts, chosen to make ordinary moments feel personal.
+          </p>
+          <div className="hero-trust" aria-label="Shopping benefits">
+            <span>Handcrafted details</span>
+            <span>Limited-batch finds</span>
+            <span>Personal support</span>
           </div>
 
           <form className="hero-search" onSubmit={handleSearch}>
@@ -65,7 +66,7 @@ export default function HomeContent({ latestCategories }: Props) {
               <input
                 type="text"
                 className="hero-search-input"
-                placeholder="Search by product code..."
+                placeholder="Search products or codes..."
                 aria-label="Search products"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -90,27 +91,25 @@ export default function HomeContent({ latestCategories }: Props) {
 
 
         </div>
-        <div className="hero-story" aria-hidden="true">
+        <div className="hero-story">
           <div className="hero-story-card">
-            <div className="hero-story-label"><h2>Signature Edit</h2></div>
-            <h3>Designed To Be Gifted And Kept Forever</h3>
+            <p className="hero-story-label">The Chinni promise</p>
+            <h2>Designed to be gifted and kept</h2>
             <p>
-              Designed for today, crafted to last generations. Every piece in our signature collection is chosen to elevate your everyday moments.
+              Pieces with a personal point of view, selected for meaningful gifting and everyday rituals.
             </p>
-            <div className="hero-story-stats">
+            <div className="hero-story-stats" aria-label="Shopping information">
               <div>
-                <strong>4.9/5</strong>
-                <span>Customer Delight</span>
+                <strong>5–7 business days</strong>
+                <span>Delivery time</span>
               </div>
               <div>
-                <strong>5 -7</strong>
-                <span>(Business Days)</span>
-                <span>Delivery Time</span>
-
+                <strong>₹599+</strong>
+                <span>Free shipping above ₹599</span>
               </div>
               <div>
-                <strong>100%</strong>
-                <span>Enjoy free shipping on all orders above ₹599</span>
+                <strong>Secure</strong>
+                <span>Checkout with Razorpay</span>
               </div>
             </div>
           </div>
