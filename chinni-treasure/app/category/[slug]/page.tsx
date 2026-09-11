@@ -1,9 +1,9 @@
-import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { headers } from "next/headers";
-import { domainFilterWhere } from "@/src/lib/domain-filter";
+import { prisma } from "@/src/lib/prisma";
+import { listByCategory } from "@/src/lib/product-read";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -58,8 +58,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-const CATEGORY_PAGE_SIZE = 12;
-
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
 
@@ -69,85 +67,24 @@ export default async function CategoryPage({ params }: Props) {
     slug: string;
     description: string | null;
   } | null = null;
-  let products: Array<{
-    id: string;
-    name: string;
-    price: number;
-    compareAtPrice?: number | null;
-    imageUrl: string | null;
-    description: string | null;
-    stockQuantity: number;
-    badge: string | null;
-    category: { name: string } | null;
-    categoryId: number | null;
-    sku: string | null;
-    isActive: boolean;
-    createdAt: string;
-    images?: Array<{ id: string; url: string; isPrimary: boolean; displayOrder: number }>;
-  }> = [];
+  let products: Awaited<ReturnType<typeof listByCategory>>["products"] = [];
   let total = 0;
   let totalPages = 1;
 
   try {
-    const found = await getCategoryBySlug(slug);
+    const headersList = await headers();
+    const hostname = headersList.get("host");
 
-    if (!found || !found.isActive) {
+    const result = await listByCategory(slug, hostname);
+
+    if (!result.category) {
       notFound();
     }
 
-    category = {
-      id: found.id,
-      name: found.name,
-      slug: found.slug,
-      description: found.description,
-    };
-
-    const headersList = await headers();
-    const hostname = headersList.get("host");
-    const domainFilter = domainFilterWhere(hostname);
-
-    const where = {
-      categoryId: found.id,
-      isActive: true,
-      deletedAt: null,
-      ...domainFilter,
-    };
-
-    const data = await prisma.product.findMany({
-      where,
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-      orderBy: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
-      take: CATEGORY_PAGE_SIZE,
-      skip: 0,
-    });
-    const count = await prisma.product.count({ where });
-
-    products = data.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price),
-      compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
-      imageUrl: p.imageUrl ?? null,
-      description: p.description ?? null,
-      stockQuantity: p.stockQuantity,
-      badge: p.badge,
-      category: p.category,
-      categoryId: p.categoryId,
-      sku: p.sku,
-      isActive: p.isActive,
-      createdAt: p.createdAt.toISOString(),
-      images: p.images.map((img) => ({
-        id: img.id,
-        url: img.url,
-        isPrimary: img.isPrimary,
-        displayOrder: img.displayOrder,
-      })),
-    }));
-    total = count;
-    totalPages = Math.max(1, Math.ceil(count / CATEGORY_PAGE_SIZE));
+    category = result.category;
+    products = result.products;
+    total = result.total;
+    totalPages = result.totalPages;
   } catch (err) {
     console.error("Failed to fetch category page:", err);
   }

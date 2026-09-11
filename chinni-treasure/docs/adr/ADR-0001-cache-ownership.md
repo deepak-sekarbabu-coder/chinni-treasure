@@ -73,9 +73,10 @@ and never invalidated by a central hardcoded list.
   not share state across serverless instances. That is a pre-existing property
   of the dual-path design, now documented rather than hidden; Redis remains the
   source of truth across instances.
-- The `stats` cache is cleared on order status changes but **not** on order
-  placement (`POST /api/orders`) — that gap is deliberately left open and is
-  tracked under the Order module deepening opportunity (review candidate 1).
+- Order placement (`POST /api/orders`) now runs the same cache epilogue as the
+  fulfilment adapters, so tracking searches and dashboard stats see fresh
+  orders immediately. The stats cache is no longer left for TTL-only expiry on
+  placement.
 
 ## Alternatives considered
 

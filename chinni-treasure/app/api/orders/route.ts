@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { validateOr400 } from "@/src/lib/validate";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma, OrderStatus } from "@prisma/client";
-import { z } from "zod";
 import { placeOrder, parseCreateOrderInput, OrderError } from "@/src/lib/order-intake";
 import { fetchRazorpayPayment, RazorpayGatewayError } from "@/src/lib/razorpay-server";
-
-const ORDERS_LIST_SCHEMA = z.object({
-  sort: z
-    .enum(["date-desc", "date-asc", "total-desc", "total-asc"])
-    .default("date-desc"),
-});
+import { invalidateOrderCache } from "@/src/lib/order-cache";
+import { parseListQuery, totalPages } from "@/src/lib/list-query";
 
 const ORDER_SORTS: Record<
   "date-desc" | "date-asc" | "total-desc" | "total-asc",
@@ -26,17 +20,16 @@ const ORDER_SORTS: Record<
 
 // GET /api/orders — List paginated orders (admin only)
 export const GET = withAdmin(async ({ request }) => {
-  const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10")));
-  const status = searchParams.get("status");
-  const skip = (page - 1) * limit;
-
-  const sortParse = validateOr400(ORDERS_LIST_SCHEMA, {
-    sort: searchParams.get("sort") ?? undefined,
+  const parsedQuery = parseListQuery(new URL(request.url).searchParams, {
+    defaultLimit: 10,
+    maxLimit: 100,
+    defaultSort: "date-desc",
+    sortMap: ORDER_SORTS,
   });
-  if (!sortParse.ok) return sortParse.response;
-  const sort = sortParse.data.sort;
+  if (parsedQuery instanceof NextResponse) return parsedQuery;
+  const { page, limit, skip, sort } = parsedQuery;
+  const status = new URL(request.url).searchParams.get("status");
+  const sortOrder = ORDER_SORTS[sort as keyof typeof ORDER_SORTS];
 
   const where = status ? { status: status as OrderStatus } : {};
 
@@ -45,7 +38,7 @@ export const GET = withAdmin(async ({ request }) => {
   const orders = await prisma.order.findMany({
     where,
     include: { items: { include: { product: true } } },
-    orderBy: ORDER_SORTS[sort],
+    orderBy: sortOrder,
     skip,
     take: limit,
   });
@@ -56,7 +49,7 @@ export const GET = withAdmin(async ({ request }) => {
     total,
     page,
     limit,
-    totalPages: Math.ceil(total / limit),
+    totalPages: totalPages(total, limit),
   });
 }, { fallbackError: "Failed to fetch orders" });
 
@@ -103,6 +96,7 @@ export async function POST(request: Request) {
     }
 
     const order = await placeOrder(input, { resolvedPaidPaise });
+    await invalidateOrderCache(order.id);
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof OrderError) {

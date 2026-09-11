@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
+import { listGiftBoxes } from "@/src/lib/product-read";
 import { giftBoxCache } from "@/src/lib/catalogue-cache";
 
 const { get: getCached, set: setCache } = giftBoxCache;
@@ -15,35 +15,7 @@ export async function GET() {
       });
     }
 
-    const products = await prisma.product.findMany({
-      where: {
-        isActive: true,
-        deletedAt: null,
-        stockQuantity: { gt: 0 },
-        category: { slug: "box" },
-      },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        imageUrl: true,
-        stockQuantity: true,
-        images: {
-          where: { isPrimary: true },
-          select: { url: true },
-          take: 1,
-        },
-      },
-      orderBy: { name: "asc" },
-    });
-
-    const payload = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price),
-      imageUrl: p.images[0]?.url || p.imageUrl,
-      stockQuantity: p.stockQuantity,
-    }));
+    const payload = await listGiftBoxes();
 
     await setCache(cacheKey, payload);
 

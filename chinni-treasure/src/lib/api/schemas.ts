@@ -52,12 +52,15 @@ export const OrderSchema = z.object({
   countryCode: z.string().optional(),
 });
 
-export const OrdersResponseSchema = z.object({
-  orders: z.array(OrderSchema),
+export const PageMetaSchema = z.object({
   total: z.number(),
   page: z.number(),
   limit: z.number(),
   totalPages: z.number(),
+});
+
+export const OrdersResponseSchema = PageMetaSchema.extend({
+  orders: z.array(OrderSchema),
 });
 
 const TrackOrderResultSchema = z.object({
@@ -100,12 +103,8 @@ export const ProductSchema = z.object({
   images: z.array(ProductImageSchema).optional(),
 });
 
-export const ProductsResponseSchema = z.object({
+export const ProductsResponseSchema = PageMetaSchema.extend({
   products: z.array(ProductSchema),
-  total: z.number(),
-  page: z.number(),
-  limit: z.number(),
-  totalPages: z.number(),
 });
 
 const CatalogueProductSchema = z.object({
@@ -122,11 +121,6 @@ const CatalogueProductSchema = z.object({
   allowGiftBoxBundling: z.boolean().optional(),
   images: z.array(ProductImageSchema).optional(),
 });
-
-const CatalogueProductsResponseSchema = z.union([
-  z.object({ products: z.array(CatalogueProductSchema) }),
-  z.array(CatalogueProductSchema),
-]);
 
 const StatsSchema = z.object({
   totalOrders: z.number(),
@@ -318,13 +312,9 @@ export const LatestCategorySectionSchema = z.object({
 
 export const LatestCategoriesResponseSchema = z.array(LatestCategorySectionSchema);
 
-export const CategoryProductsResponseSchema = z.object({
+export const CategoryProductsResponseSchema = PageMetaSchema.extend({
   category: CategoryDetailSchema,
   products: z.array(ProductSchema),
-  total: z.number(),
-  page: z.number(),
-  limit: z.number(),
-  totalPages: z.number(),
 });
 
 export const ApiErrorSchema = z.object({
@@ -339,9 +329,6 @@ export type TrackOrdersResponse = z.infer<typeof TrackOrdersResponseSchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductsResponse = z.infer<typeof ProductsResponseSchema>;
 export type CatalogueProduct = z.infer<typeof CatalogueProductSchema>;
-type CatalogueProductsResponse = z.infer<
-  typeof CatalogueProductsResponseSchema
->;
 export type Stats = z.infer<typeof StatsSchema>;
 export type ChartPoint = z.infer<typeof ChartPointSchema>;
 export type ProductSales = z.infer<typeof ProductSalesSchema>;

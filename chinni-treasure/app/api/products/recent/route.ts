@@ -1,24 +1,23 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
-import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { getHostFromRequest } from "@/src/lib/domain-filter";
+import { listRecent } from "@/src/lib/product-read";
 import { recentCache } from "@/src/lib/catalogue-cache";
-
-const MAX_LIMIT = 20;
+import { parseListQuery, totalPages, type PageEnvelope } from "@/src/lib/list-query";
 
 const { get: getCached, set: setCache } = recentCache;
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const rawLimit = parseInt(searchParams.get("limit") || "8", 10);
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(MAX_LIMIT, Math.max(1, rawLimit))
-      : 8;
+    const parsedQuery = parseListQuery(searchParams, {
+      defaultLimit: 8,
+      maxLimit: 20,
+    });
+    if (parsedQuery instanceof NextResponse) return parsedQuery;
+    const { limit } = parsedQuery;
 
     const hostname = getHostFromRequest(request);
-    const domainFilter = domainFilterWhere(hostname);
 
-    // Include the hostname because the domain filter can change the result set.
     const cacheKey = `${hostname ?? "default"}:${limit}`;
     const cached = await getCached(cacheKey);
     if (cached) {
@@ -27,19 +26,18 @@ export async function GET(request: Request) {
       });
     }
 
-    const products = await prisma.product.findMany({
-      where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 }, ...domainFilter },
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-    });
+    const products = await listRecent(hostname, limit);
+    const payload: PageEnvelope<{ products: typeof products }> = {
+      products,
+      total: products.length,
+      page: 1,
+      limit,
+      totalPages: totalPages(products.length, limit),
+    };
 
-    await setCache(cacheKey, products);
+    await setCache(cacheKey, payload);
 
-    return NextResponse.json(products, {
+    return NextResponse.json(payload, {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {

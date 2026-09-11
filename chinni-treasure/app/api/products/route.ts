@@ -7,6 +7,7 @@ import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { parseListQuery, totalPages } from "@/src/lib/list-query";
 
 const { get: getCached, set: setCache } = productsCache;
 const { get: getIndexCached, set: setIndexCache } = catIndexCache;
@@ -133,11 +134,16 @@ function filterActiveIndex(
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const rawPage = parseInt(searchParams.get("page") || "1", 10);
-    const rawLimit = parseInt(searchParams.get("limit") || "10", 10);
-    const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
-    const limit = Number.isFinite(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 10;
-    const skip = (page - 1) * limit;
+    const parsedQuery = parseListQuery(searchParams, {
+      defaultLimit: 10,
+      maxLimit: 100,
+      defaultSort: "newest",
+      sortMap: SORT_OPTIONS,
+    });
+    if (parsedQuery instanceof NextResponse) return parsedQuery;
+    const { page, limit, skip } = parsedQuery;
+    const sortParam = (parsedQuery.sort ?? "newest") as SortKey;
+    const sort = SORT_OPTIONS[sortParam];
 
     const isActiveParam = searchParams.get("isActive");
     const statusFilter = isActiveParam === "all" || isActiveParam === "inactive" ? isActiveParam : "active";
@@ -145,8 +151,6 @@ export async function GET(request: Request) {
     const rawCategoryId = searchParams.get("categoryId");
     const categoryId = rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined;
     const badgeFilter = searchParams.get("badge") || "";
-    const sortParam = (searchParams.get("sort") || "newest") as SortKey;
-    const sort = SORT_OPTIONS[sortParam] ?? SORT_OPTIONS.newest;
 
     const hostname = getHostFromRequest(request);
     const domainFilter = domainFilterWhere(hostname);
@@ -165,7 +169,7 @@ export async function GET(request: Request) {
           total,
           page,
           limit,
-          totalPages: Math.ceil(total / limit),
+          totalPages: totalPages(total, limit),
         },
         { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } },
       );
@@ -219,7 +223,7 @@ export async function GET(request: Request) {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: totalPages(total, limit),
     };
 
     await setCache(cacheKey, payload);

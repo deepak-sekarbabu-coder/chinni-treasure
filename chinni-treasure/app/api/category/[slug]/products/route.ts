@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { getHostFromRequest } from "@/src/lib/domain-filter";
+import { listByCategory, CATEGORY_SORT_MAP } from "@/src/lib/product-read";
+import { parseListQuery } from "@/src/lib/list-query";
 import { catPageCache } from "@/src/lib/catalogue-cache";
-
-const MAX_LIMIT = 60;
 
 const { get: getCached, set: setCache } = catPageCache;
 
 type SortKey = "newest" | "price-asc" | "price-desc";
-
-const SORT_MAP: Record<SortKey, Prisma.ProductOrderByWithRelationInput[]> = {
-  newest: [{ stockQuantity: "desc" }, { createdAt: "desc" }, { id: "desc" }],
-  "price-asc": [{ stockQuantity: "desc" }, { price: "asc" }, { id: "asc" }],
-  "price-desc": [{ stockQuantity: "desc" }, { price: "desc" }, { id: "desc" }],
-};
 
 // GET /api/category/[slug]/products
 // Public listing of active, non-deleted products in a category with pagination + sort.
@@ -26,33 +18,17 @@ export async function GET(
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
 
-    const rawPage = parseInt(searchParams.get("page") || "1", 10);
-    const rawLimit = parseInt(searchParams.get("limit") || "12", 10);
-    const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(MAX_LIMIT, Math.max(1, rawLimit))
-      : 12;
-    const skip = (page - 1) * limit;
-
-    const rawSort = searchParams.get("sort") || "newest";
-    const sort: SortKey = (SORT_MAP as Record<string, unknown>)[rawSort]
-      ? (rawSort as SortKey)
-      : "newest";
-
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      select: { id: true, name: true, slug: true, description: true, isActive: true },
+    const parsedQuery = parseListQuery(searchParams, {
+      defaultLimit: 12,
+      maxLimit: 60,
+      defaultSort: "newest",
+      sortMap: CATEGORY_SORT_MAP,
     });
-
-    if (!category || !category.isActive) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 },
-      );
-    }
+    if (parsedQuery instanceof NextResponse) return parsedQuery;
+    const { page, limit } = parsedQuery;
+    const sort = (parsedQuery.sort ?? "newest") as SortKey;
 
     const hostname = getHostFromRequest(request);
-    const domainFilter = domainFilterWhere(hostname);
 
     const cacheKey = `${hostname ?? "default"}:${slug}:${page}:${limit}:${sort}`;
     const cached = await getCached(cacheKey);
@@ -64,61 +40,22 @@ export async function GET(
       });
     }
 
-    const where: Prisma.ProductWhereInput = {
-      categoryId: category.id,
-      isActive: true,
-      deletedAt: null,
-      ...domainFilter,
-    };
+    const result = await listByCategory(slug, hostname, { page, limit, sort });
 
-    // Sequential queries to avoid saturating Nhost's pooler with
-    // concurrent connections.
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-      orderBy: SORT_MAP[sort],
-      skip,
-      take: limit,
-    });
-    const total = await prisma.product.count({ where });
+    if (!result.category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
+    }
 
     const payload = {
-      category: {
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        description: category.description,
-        isActive: category.isActive,
-      },
-      products: products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
-        imageUrl: p.imageUrl ?? null,
-        description: p.description ?? null,
-        stockQuantity: p.stockQuantity,
-        badge: p.badge ?? null,
-        category: p.category,
-        categoryId: p.categoryId,
-        sku: p.sku,
-        isActive: p.isActive,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-        images: p.images.map((img) => ({
-          id: img.id,
-          url: img.url,
-          isPrimary: img.isPrimary,
-          displayOrder: img.displayOrder,
-        })),
-      })),
-      total,
-      page,
-      limit,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
+      category: result.category,
+      products: result.products,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
     };
 
     await setCache(cacheKey, payload);

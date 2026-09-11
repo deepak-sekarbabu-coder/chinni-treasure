@@ -4,6 +4,9 @@ import { createMockPrisma, mockTx } from "@/src/__tests__/mocks/prisma";
 import { Prisma } from "@prisma/client";
 
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
+vi.mock("@/src/lib/order-cache", () => ({
+  invalidateOrderCache: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@/src/lib/rate-limiter", () => ({
   checkRateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 3 }),
   getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
@@ -30,6 +33,7 @@ vi.mock("@/src/lib/razorpay-server", () => ({
 }));
 
 import { prisma } from "@/src/lib/prisma";
+import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { GET, POST } from "@/app/api/orders/route";
 
 // Override getSession / checkAuth for admin-auth routes
@@ -225,6 +229,7 @@ describe("POST /api/orders", () => {
 
     const body = await response.json();
     expect(body.customerName).toBe("Test User");
+    expect(invalidateOrderCache).toHaveBeenCalledWith("order-uuid");
   });
 
   it("returns 400 for missing required fields", async () => {
@@ -673,6 +678,7 @@ describe("POST /api/orders", () => {
     expect(body.error).toContain("does not match the order total");
     // The order must not have been persisted
     expect(mockTx.order.create).not.toHaveBeenCalled();
+    expect(invalidateOrderCache).not.toHaveBeenCalled();
   });
 
   it("rejects a razorpay placement whose payment belongs to a different razorpay order", async () => {
