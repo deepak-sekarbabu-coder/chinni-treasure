@@ -6,15 +6,7 @@ import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 100);
-}
+import { slugify } from "@/src/lib/utils";
 
 async function generateUniqueSlug(base: string, ignoreId: number): Promise<string> {
   let slug = base || "category";

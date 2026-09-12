@@ -28,11 +28,6 @@ const backtick = (s) => `\`${s}\``;
 const cloneLines = (g) =>
   g.instances.reduce((acc, i) => acc + (i.end_line - i.start_line + 1), 0);
 
-const groupKey = (g) =>
-  g.instances
-    .map((i) => `${fileOf(i.file)}:${i.start_line}-${i.end_line}`)
-    .join(" + ");
-
 /* ---------- header ---------- */
 const today = new Date().toISOString().slice(0, 10);
 push(`# Fallow Analysis Report — Chinni Treasure`);

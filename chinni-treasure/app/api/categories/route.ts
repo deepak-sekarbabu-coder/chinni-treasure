@@ -6,6 +6,7 @@ import { categoriesCache, invalidateCatalogCaches } from "@/src/lib/catalogue-ca
 import { withAdmin } from "@/src/lib/admin-route";
 import { checkAuth } from "@/src/lib/auth";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
+import { slugify } from "@/src/lib/utils";
 
 const { get: getCached, set: setCache } = categoriesCache;
 
@@ -81,15 +82,6 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 100);
 }
 
 async function generateUniqueSlug(base: string): Promise<string> {

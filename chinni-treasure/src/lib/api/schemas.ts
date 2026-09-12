@@ -107,7 +107,7 @@ export const ProductsResponseSchema = PageMetaSchema.extend({
   products: z.array(ProductSchema),
 });
 
-const CatalogueProductSchema = z.object({
+export const CatalogueProductSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.coerce.number(),
@@ -368,14 +368,11 @@ export type UpdateOrderStatusInput = z.infer<
 >;
 export type UpdateTrackingInput = z.infer<typeof UpdateTrackingInputSchema>;
 export type ProductInput = z.infer<typeof ProductInputSchema>;
-type ProductImage = z.infer<typeof ProductImageSchema>;
-type ProductImageInput = z.infer<typeof ProductImageInputSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoriesResponse = z.infer<typeof CategoriesResponseSchema>;
 export type CategoryDetail = z.infer<typeof CategoryDetailSchema>;
 export type CreateCategoryInput = z.infer<typeof CreateCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>;
-type LatestCategoryProduct = z.infer<typeof LatestCategoryProductSchema>;
 export type LatestCategorySection = z.infer<typeof LatestCategorySectionSchema>;
 export type LatestCategoriesResponse = z.infer<typeof LatestCategoriesResponseSchema>;
 export type CategoryProductsResponse = z.infer<typeof CategoryProductsResponseSchema>;

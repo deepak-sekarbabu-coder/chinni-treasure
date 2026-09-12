@@ -65,7 +65,7 @@ export default function ProductDetailsContent({ product }: Props) {
         setTimeout(() => ripple.remove(), 500);
     }, []);
 
-    const handleAddToCart = useCallback((e: ReactMouseEvent<HTMLButtonElement>) => {
+    const handleAddToCart = useCallback(() => {
         if (product.stockQuantity <= 0) {
             showToast(`${product.name} is out of stock`, "error");
             return;
@@ -188,7 +188,7 @@ export default function ProductDetailsContent({ product }: Props) {
                         <button
                             ref={addBtnRef}
                             className={`btn btn-primary btn-lg product-details-add-btn${btnSuccess ? " btn-success" : ""}`}
-                            onClick={(e) => { handleRipple(e); handleAddToCart(e); }}
+                            onClick={(e) => { handleRipple(e); handleAddToCart(); }}
                             disabled={product.stockQuantity <= 0}
                         >
                             {product.stockQuantity <= 0 ? "Sold Out" : "Add to Cart"}

@@ -30,7 +30,6 @@ interface Props {
 export default function CatalogueContent({
   initialProducts,
   initialTotal,
-  initialTotalPages,
   initialSearch = "",
   initialCategories = [],
   initialCategoryId,

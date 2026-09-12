@@ -37,6 +37,7 @@ export function useAddToCart<T extends AddableProduct>(options: {
   onOpenGiftBoxModal: (product: T) => void;
   triggerShippingNudge: (newTotal: number) => void;
 }) {
+  const { onOpenGiftBoxModal, triggerShippingNudge } = options;
   const { addItem } = useCart();
   const { showToast } = useToast();
 
@@ -70,21 +71,21 @@ export function useAddToCart<T extends AddableProduct>(options: {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      options.triggerShippingNudge(newTotal);
+      triggerShippingNudge(newTotal);
       showToast(`${p.name} added to cart`, "success");
     },
-    [addItem, showToast, options.triggerShippingNudge],
+    [addItem, showToast, triggerShippingNudge],
   );
 
   const handleAdd = useCallback(
     (p: T) => {
       if (p.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
-        options.onOpenGiftBoxModal(p);
+        onOpenGiftBoxModal(p);
         return;
       }
       handleAddDirectly(p);
     },
-    [handleAddDirectly, options.onOpenGiftBoxModal],
+    [handleAddDirectly, onOpenGiftBoxModal],
   );
 
   const handleModalConfirm = useCallback(

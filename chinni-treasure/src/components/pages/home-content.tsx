@@ -92,7 +92,7 @@ export default function HomeContent({ latestCategories }: Props) {
         </div>
         <div className="hero-story" aria-hidden="true">
           <div className="hero-story-card">
-            <div className="hero-story-label"><h2>Chinni's Promise</h2></div>
+            <div className="hero-story-label"><h2>Chinni&apos;s Promise</h2></div>
             <h3>Designed To Be Gifted And Kept Forever</h3>
             <p>
               Designed for today, crafted to last generations. Every piece in our signature collection is chosen to elevate your everyday moments.
