@@ -2,6 +2,7 @@ import { createRedisCache } from "@/src/lib/redis-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
+import type { LatestCategorySection } from "@/src/lib/api/schemas";
 
 /**
  * The Catalogue cache module.
@@ -43,6 +44,77 @@ const CATALOGUE_CACHES = [
  */
 export async function invalidateCatalogCaches(): Promise<void> {
   await Promise.all(CATALOGUE_CACHES.map((cache) => cache.clear()));
+}
+
+/**
+ * Latest in-stock product per active category — the data behind both the
+ * homepage block and GET /api/categories/latest. Owned here so the two
+ * surfaces share one cached fetch instead of each hitting Postgres per
+ * request. Purged with every catalogue mutation via invalidateCatalogCaches().
+ * ponytail: the 60s cache is per-instance when Redis is off, so cold
+ * serverless instances still pay one query per request; a CDN/ISR layer
+ * needs the root-layout cookies() call removed first.
+ */
+export async function loadLatestCategories(): Promise<LatestCategorySection[]> {
+  const cached = (await catLatestCache.get("latest")) as LatestCategorySection[] | null;
+  if (cached) return cached;
+
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { displayOrder: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      products: {
+        where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          compareAtPrice: true,
+          imageUrl: true,
+          description: true,
+          stockQuantity: true,
+          badge: true,
+          images: {
+            orderBy: { displayOrder: "asc" },
+            select: { id: true, url: true, isPrimary: true, displayOrder: true },
+          },
+        },
+      },
+    },
+  });
+
+  const payload: LatestCategorySection[] = categories
+    .filter((c) => c.products.length > 0)
+    .map((c) => {
+      const [product] = c.products;
+      return {
+        category: { id: c.id, name: c.name, slug: c.slug },
+        product: {
+          id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+          imageUrl: product.imageUrl ?? null,
+          description: product.description ?? null,
+          stockQuantity: product.stockQuantity,
+          badge: product.badge ?? null,
+          images: product.images.map((img) => ({
+            id: img.id,
+            url: img.url,
+            isPrimary: img.isPrimary,
+            displayOrder: img.displayOrder,
+          })),
+        },
+      };
+    });
+
+  await catLatestCache.set("latest", payload);
+  return payload;
 }
 
 // ---------------------------------------------------------------------------
