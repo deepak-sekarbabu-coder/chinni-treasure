@@ -2,27 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { catLatestCache } from "@/src/lib/catalogue-cache";
 
-const RETRY_COUNT = 2;
-
 const { get: getCached, set: setCache } = catLatestCache;
-
-async function queryWithRetry<T>(
-  fn: () => Promise<T>,
-  retries = RETRY_COUNT,
-): Promise<T> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt === retries) throw err;
-      console.warn(
-        `[categories/latest] Query attempt ${attempt + 1} failed, retrying...`,
-      );
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-    }
-  }
-  throw new Error("unreachable");
-}
 
 // GET /api/categories/latest
 // Returns the newest in-stock, active product for every active category.
@@ -39,45 +19,43 @@ export async function GET() {
       });
     }
 
-    const categories = await queryWithRetry(() =>
-      prisma.category.findMany({
-        where: { isActive: true },
-        orderBy: { displayOrder: "asc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          products: {
-            where: {
-              isActive: true,
-              deletedAt: null,
-              stockQuantity: { gt: 0 },
-            },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              compareAtPrice: true,
-              imageUrl: true,
-              description: true,
-              stockQuantity: true,
-              badge: true,
-              images: {
-                orderBy: { displayOrder: "asc" },
-                select: {
-                  id: true,
-                  url: true,
-                  isPrimary: true,
-                  displayOrder: true,
-                },
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        products: {
+          where: {
+            isActive: true,
+            deletedAt: null,
+            stockQuantity: { gt: 0 },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            compareAtPrice: true,
+            imageUrl: true,
+            description: true,
+            stockQuantity: true,
+            badge: true,
+            images: {
+              orderBy: { displayOrder: "asc" },
+              select: {
+                id: true,
+                url: true,
+                isPrimary: true,
+                displayOrder: true,
               },
             },
           },
         },
-      }),
-    );
+      },
+    });
 
     // Filter out categories that have no eligible product, and map to the
     // requested { category, product } envelope.

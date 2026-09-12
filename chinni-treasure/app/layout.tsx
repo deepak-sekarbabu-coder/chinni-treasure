@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/src/components/layout/Navbar";
 import Footer from "@/src/components/layout/Footer";
 import { CartProvider, type CartItemDisplay } from "@/src/components/cart/CartProvider";
+import { hydrateInitialCartItems } from "@/src/lib/cart-cookie";
 import { ToastProvider } from "@/src/components/ui/ToastProvider";
 import ComplementaryGiftPopup from "@/src/components/ui/ComplementaryGiftPopup";
 import { QueryProvider } from "@/src/components/providers/QueryProvider";
@@ -113,10 +114,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Cart is hydrated on the client by CartProvider (localStorage / cookie) in a
-  // useEffect. Reading cookies() here would force every page (including static
-  // ISR pages like /category/[slug]) to become dynamic at request time.
-  const initialItems: CartItemDisplay[] = [];
+  // SSR cart: hydrate the cart badge and drawer from the cart cookie on the
+  // first HTML frame (server joins product rows; clients remount from
+  // localStorage afterwards). Trade-off, kept deliberately: calling cookies()
+  // here opts every route into request-time rendering. The empty-cookie fast
+  // path in hydrateInitialCartItems skips the database query entirely.
+  const initialItems: CartItemDisplay[] = await hydrateInitialCartItems().catch(() => []);
 
   const organizationSchema = {
     "@context": "https://schema.org",

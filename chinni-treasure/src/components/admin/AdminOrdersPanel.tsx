@@ -18,6 +18,7 @@ import {
   type OrderSortKey,
 } from "@/src/components/admin/table/columns.orders";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
+import { formatMoney } from "@/src/lib/format";
 import type { Order } from "@/src/lib/api/schemas";
 
 interface Props {
@@ -89,7 +90,7 @@ function OrderCard({
               <div className="order-card-number">{order.orderNumber}</div>
             </div>
             <div className="order-card-price">
-              ₹{Number(order.totalAmount).toFixed(2)}
+              {formatMoney(Number(order.totalAmount))}
             </div>
           </div>
           <div className="order-card-footer">

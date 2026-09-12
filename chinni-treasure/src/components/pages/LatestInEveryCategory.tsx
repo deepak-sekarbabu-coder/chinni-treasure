@@ -6,6 +6,7 @@ import Link from "next/link";
 import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER } from "@/src/lib/images";
 import { fetchLatestCategories } from "@/src/lib/api";
 import type { LatestCategoriesResponse, LatestCategorySection } from "@/src/lib/api/schemas";
+import { formatMoney } from "@/src/lib/format";
 
 const PLACEHOLDER_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";
@@ -80,12 +81,12 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
               {hasDiscount ? (
                 <>
                   <span className="latest-category-card-price-original">
-                    ₹{Number(product.compareAtPrice).toFixed(2)}
+                    {formatMoney(Number(product.compareAtPrice))}
                   </span>
-                  ₹{Number(product.price).toFixed(2)}
+                  {formatMoney(Number(product.price))}
                 </>
               ) : (
-                <>₹{Number(product.price).toFixed(2)}</>
+                <>{formatMoney(Number(product.price))}</>
               )}
             </span>
             {hasDiscount && (

@@ -436,7 +436,7 @@ chinni-treasure/
 │   │   ├── prisma.ts                 # Prisma client singleton (global caching)
 │   │   ├── query-keys.ts             # React Query key factory
 │   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts, eviction)
-│   │   ├── razorpay-server.ts        # Server Razorpay adapter (authoritative payment snapshot)
+│   │   ├── razorpay-server.ts        # Server Razorpay Payment module (create order, HMAC verify, accept placement)
 │   │   ├── razorpay.ts               # Loads the Razorpay Standard Checkout script (browser)
 │   │   ├── redis-cache.ts            # Redis-backed cache with in-memory fallback
 │   │   ├── redis.ts                  # Shared ioredis client (null when REDIS_URL unset)

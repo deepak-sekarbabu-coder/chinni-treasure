@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
   ORDER_STATUS_FLOW,
@@ -9,6 +9,8 @@ import {
 } from "@/src/lib/constants";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
+import { formatMoney, formatShipping } from "@/src/lib/format";
+import { orderLineViews } from "@/src/lib/pricing";
 import PrintShippingLabelModal from "@/src/components/admin/PrintShippingLabelModal";
 
 interface Props {
@@ -232,45 +234,29 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
                 </tr>
               </thead>
               <tbody>
-                {(order.items || [])
-                  .filter((item) => !item.parentOrderItemId)
-                  .map((item) => {
-                    const linkedGiftBoxes = (order.items || []).filter(
-                      (gb) => gb.parentOrderItemId === item.id
-                    );
-                    return (
-                      <Fragment key={item.id}>
-                        <tr>
-                          <td>{item.productName}</td>
-                          <td>{item.quantity}</td>
-                          <td>₹{Number(item.unitPrice * item.quantity).toFixed(2)}</td>
-                        </tr>
-                        {linkedGiftBoxes.map((gb) => (
-                          <tr key={gb.id} className="gift-box-order-row">
-                            <td style={{ paddingLeft: "24px", fontSize: "0.82rem", color: "var(--text-muted)" }}>
-                              📦 {gb.productName}
-                            </td>
-                            <td style={{ fontSize: "0.82rem" }}>{gb.quantity}</td>
-                            <td style={{ fontSize: "0.82rem" }}>₹{Number(gb.unitPrice * gb.quantity).toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </Fragment>
-                    );
-                  })}
+                {orderLineViews(order.items ?? []).map((line) => (
+                  <tr key={line.id} className={line.parentId ? "gift-box-order-row" : undefined}>
+                    <td style={line.parentId ? { paddingLeft: "24px", fontSize: "0.82rem", color: "var(--text-muted)" } : undefined}>
+                      {line.parentId ? `📦 ${line.productName}` : line.productName}
+                    </td>
+                    <td style={line.parentId ? { fontSize: "0.82rem" } : undefined}>{line.quantity}</td>
+                    <td style={line.parentId ? { fontSize: "0.82rem" } : undefined}>{formatMoney(line.lineTotal)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <div className="modal-totals">
               <div className="modal-total-row">
                 <span>Subtotal</span>
-                <span>₹{Number(order.subtotal).toFixed(2)}</span>
+                <span>{formatMoney(Number(order.subtotal))}</span>
               </div>
               <div className="modal-total-row">
                 <span>Shipping</span>
-                <span>{Number(order.shippingCost) === 0 ? "Free" : `₹${Number(order.shippingCost).toFixed(2)}`}</span>
+                <span>{formatShipping(Number(order.shippingCost))}</span>
               </div>
               <div className="modal-total-row grand">
                 <span>Total</span>
-                <span>₹{Number(order.totalAmount).toFixed(2)}</span>
+                <span>{formatMoney(Number(order.totalAmount))}</span>
               </div>
             </div>
           </div>

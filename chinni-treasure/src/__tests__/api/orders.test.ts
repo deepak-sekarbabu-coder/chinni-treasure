@@ -17,7 +17,7 @@ vi.mock("isomorphic-dompurify", () => ({
   },
 }));
 vi.mock("@/src/lib/razorpay-server", () => ({
-  fetchRazorpayPayment: vi.fn().mockResolvedValue({
+  acceptPlacementPayment: vi.fn().mockResolvedValue({
     id: "pay_TEST123",
     orderId: "order_TEST123",
     amount: 60000,
@@ -639,8 +639,8 @@ describe("POST /api/orders", () => {
   });
 
   it("rejects a razorpay placement when the paid amount does not match the server total (ADR-0002)", async () => {
-    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
-    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
+    const { acceptPlacementPayment } = await import("@/src/lib/razorpay-server");
+    vi.mocked(acceptPlacementPayment).mockResolvedValueOnce({
       id: "pay_TEST123",
       orderId: "order_TEST123",
       amount: 99999, // ₹999.99 charged vs ₹600 computed server-side
@@ -682,13 +682,10 @@ describe("POST /api/orders", () => {
   });
 
   it("rejects a razorpay placement whose payment belongs to a different razorpay order", async () => {
-    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
-    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
-      id: "pay_TEST123",
-      orderId: "order_OTHER",
-      amount: 60000,
-      status: "captured",
-    });
+    const { acceptPlacementPayment, RazorpayGatewayError } = await import("@/src/lib/razorpay-server");
+    vi.mocked(acceptPlacementPayment).mockRejectedValueOnce(
+      new RazorpayGatewayError("Payment does not match this order. Please contact support.", 400),
+    );
 
     const req = createNextRequest("/api/orders", {
       method: "POST",
@@ -714,13 +711,10 @@ describe("POST /api/orders", () => {
   });
 
   it("rejects a razorpay placement whose payment is not captured", async () => {
-    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
-    vi.mocked(fetchRazorpayPayment).mockResolvedValueOnce({
-      id: "pay_TEST123",
-      orderId: "order_TEST123",
-      amount: 60000,
-      status: "failed",
-    });
+    const { acceptPlacementPayment, RazorpayGatewayError } = await import("@/src/lib/razorpay-server");
+    vi.mocked(acceptPlacementPayment).mockRejectedValueOnce(
+      new RazorpayGatewayError("Payment has not been completed. Please try again or contact support.", 400),
+    );
 
     const req = createNextRequest("/api/orders", {
       method: "POST",
@@ -746,7 +740,7 @@ describe("POST /api/orders", () => {
   });
 
   it("skips the gateway amount check for manual (bank transfer) placements", async () => {
-    const { fetchRazorpayPayment } = await import("@/src/lib/razorpay-server");
+    const { acceptPlacementPayment } = await import("@/src/lib/razorpay-server");
     vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
     vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
     vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
@@ -775,7 +769,7 @@ describe("POST /api/orders", () => {
 
     const response = await POST(req);
     expect(response.status).toBe(201);
-    expect(fetchRazorpayPayment).not.toHaveBeenCalled();
+    expect(acceptPlacementPayment).not.toHaveBeenCalled();
   });
 
   it("requires razorpayOrderId for razorpay placements", async () => {
@@ -800,3 +794,4 @@ describe("POST /api/orders", () => {
     expect(body.error).toContain("Razorpay order ID is required");
   });
 });
+

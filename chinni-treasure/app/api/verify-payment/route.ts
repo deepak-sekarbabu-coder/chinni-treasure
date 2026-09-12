@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createHmac, timingSafeEqual } from "crypto";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { verifyCheckoutSignature, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
 
@@ -12,17 +12,11 @@ const VerifyPaymentSchema = z.object({
   razorpay_signature: z.string().min(1, "razorpay_signature is required"),
 });
 
-// POST /api/verify-payment — Verify the Razorpay payment signature
-// Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+// POST /api/verify-payment — Verify the Razorpay payment signature.
+// Thin adapter: parse, then the Payment module owns the HMAC check.
 export async function POST(request: Request) {
   const csrfError = validateCsrfOrigin(request);
   if (csrfError) return csrfError;
-
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (!keySecret) {
-    console.error("[verify-payment] Razorpay secret is not configured");
-    return NextResponse.json({ error: "Payment gateway is not configured" }, { status: 500 });
-  }
 
   let raw: unknown;
   try {
@@ -41,16 +35,20 @@ export async function POST(request: Request) {
 
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = parsed.data;
 
-  const expectedSignature = createHmac("sha256", keySecret)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
-
-  const expectedBuffer = Buffer.from(expectedSignature);
-  const receivedBuffer = Buffer.from(razorpay_signature);
-
-  const signatureMatches =
-    expectedBuffer.length === receivedBuffer.length &&
-    timingSafeEqual(expectedBuffer, receivedBuffer);
+  let signatureMatches: boolean;
+  try {
+    signatureMatches = verifyCheckoutSignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    );
+  } catch (error) {
+    if (error instanceof RazorpayGatewayError) {
+      console.error("[verify-payment] Razorpay secret is not configured");
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+    throw error;
+  }
 
   if (!signatureMatches) {
     console.warn("[verify-payment] Signature mismatch for order", razorpay_order_id);

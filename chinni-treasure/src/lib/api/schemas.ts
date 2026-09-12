@@ -337,7 +337,7 @@ export type AuthMeResponse = z.infer<typeof AuthMeResponseSchema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
 
 export const CreateRazorpayOrderInputSchema = z.object({
-  amount: z.number().int().positive(),
+  amount: z.number().finite().positive(),
   currency: z.string().length(3).default("INR"),
   receipt: z.string().optional(),
 });

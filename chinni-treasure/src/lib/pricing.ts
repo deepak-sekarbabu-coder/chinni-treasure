@@ -77,3 +77,54 @@ export function computePricing(lines: PricedLine[], stateCode: string): PricingR
     totalAmount: subtotal + shippingCost,
   };
 }
+
+/**
+ * A display line in an order: a parent product line or one of its gift
+ * boxes, in render order (each parent immediately followed by its boxes).
+ */
+export interface OrderLineView {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  /** Set when this line is a gift box — the owning parent's id. */
+  parentId: string | null;
+}
+
+/**
+ * Flatten an order's flat item list into display rows, nesting each parent's
+ * gift-box lines directly under it. The shared projection every order-line
+ * renderer (admin modal, confirmation, PDF invoice) consumes instead of
+ * each rebuilding the parent + gift-box hierarchy.
+ */
+export function orderLineViews(
+  items: readonly {
+    id: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    parentOrderItemId?: string | null;
+  }[],
+): OrderLineView[] {
+  const parents: OrderLineView[] = [];
+  const giftBoxesByParent = new Map<string, OrderLineView[]>();
+  for (const item of items) {
+    const line: OrderLineView = {
+      id: item.id,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: Number(item.unitPrice),
+      lineTotal: Number(item.unitPrice) * item.quantity,
+      parentId: item.parentOrderItemId ?? null,
+    };
+    if (line.parentId) {
+      const siblings = giftBoxesByParent.get(line.parentId) ?? [];
+      siblings.push(line);
+      giftBoxesByParent.set(line.parentId, siblings);
+    } else {
+      parents.push(line);
+    }
+  }
+  return parents.flatMap((parent) => [parent, ...(giftBoxesByParent.get(parent.id) ?? [])]);
+}

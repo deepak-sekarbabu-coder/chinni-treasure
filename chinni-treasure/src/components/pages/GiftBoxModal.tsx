@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { formatMoney } from "@/src/lib/format";
 
 interface GiftBox {
   id: string;
@@ -176,7 +177,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
           <div className="gift-box-modal-product-info">
             <span className="gift-box-modal-product-name">{product.name}</span>
             <span className="gift-box-modal-product-price">
-              ₹{product.price.toFixed(2)}
+              {formatMoney(product.price)}
             </span>
           </div>
         </div>
@@ -214,7 +215,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
                       <div className="gift-box-modal-option-info">
                         <span className="gift-box-modal-option-name">{box.name}</span>
                         <span className="gift-box-modal-option-price">
-                          ₹{box.price.toFixed(2)}
+                          {formatMoney(box.price)}
                         </span>
                         {box.stockQuantity <= 3 && box.stockQuantity > 0 && (
                           <span className="gift-box-modal-option-stock">
@@ -266,7 +267,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
             className="btn btn-primary"
             onClick={() => onConfirm(selected)}
           >
-            Add to Cart{giftBoxTotal > 0 ? ` (+₹${giftBoxTotal.toFixed(2)})` : ""}
+            Add to Cart{giftBoxTotal > 0 ? ` (+${formatMoney(giftBoxTotal)})` : ""}
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { formatMoney } from "@/src/lib/format";
 
 interface GiftBox {
   id: string;
@@ -134,7 +135,7 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
                   />
                   <div className="gift-box-option-info">
                     <span className="gift-box-option-name">{box.name}</span>
-                    <span className="gift-box-option-price">₹{box.price.toFixed(2)}</span>
+                    <span className="gift-box-option-price">{formatMoney(box.price)}</span>
                     {box.stockQuantity <= 3 && box.stockQuantity > 0 && (
                       <span className="gift-box-option-stock">Only {box.stockQuantity} left</span>
                     )}

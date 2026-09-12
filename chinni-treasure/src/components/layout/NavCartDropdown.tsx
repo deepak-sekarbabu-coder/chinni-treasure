@@ -3,6 +3,7 @@
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { formatMoney } from "@/src/lib/format";
 
 interface CartItem {
   productId: string;
@@ -55,7 +56,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
                   <p className="cart-dropdown-item-price cart-gift-price">Complimentary</p>
                 ) : (
                   <>
-                    <p className="cart-dropdown-item-price">₹{item.price.toFixed(2)} each</p>
+                    <p className="cart-dropdown-item-price">{formatMoney(item.price)} each</p>
                     <div className="cart-dropdown-item-qty">
                       <button
                         className="cart-dropdown-qty-btn"
@@ -86,7 +87,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
                             <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
                             <span className="gift-box-linked-name">📦 {gb.name}</span>
                             <span className="gift-box-linked-qty">×{gb.quantity}</span>
-                            <span className="gift-box-linked-price">₹{(gb.price * gb.quantity).toFixed(2)}</span>
+                            <span className="gift-box-linked-price">{formatMoney(gb.price * gb.quantity)}</span>
                           </div>
                         ))}
                       </div>
@@ -112,7 +113,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
       )}
       <div className="cart-dropdown-total">
         <span>Total</span>
-        <span id="cart-dropdown-total">₹{total.toFixed(2)}</span>
+        <span id="cart-dropdown-total">{formatMoney(total)}</span>
       </div>
       {items.length > 0 && (
         <div className="cart-dropdown-actions">

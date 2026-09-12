@@ -5,7 +5,7 @@ import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 
 import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/pricing";
-import { formatRupees } from "@/src/lib/format";
+import { formatMoney, formatRupees, formatShipping } from "@/src/lib/format";
 
 interface CartItem {
   productId: string;
@@ -98,7 +98,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                       <p className="order-summary-item-price cart-gift-price">Complimentary</p>
                     ) : (
                       <>
-                        <p className="order-summary-item-price">₹{item.price.toFixed(2)} each</p>
+                        <p className="order-summary-item-price">{formatMoney(item.price)} each</p>
                         <div className="order-summary-item-qty">
                           <button
                             className="btn-secondary qty-btn"
@@ -142,7 +142,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                                 <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
                                 <span className="gift-box-linked-name">📦 {gb.name}</span>
                                 <span className="gift-box-linked-qty">×{gb.quantity}</span>
-                                <span className="gift-box-linked-price">₹{(gb.price * gb.quantity).toFixed(2)}</span>
+                                <span className="gift-box-linked-price">{formatMoney(gb.price * gb.quantity)}</span>
                               </div>
                             ))}
                           </div>
@@ -191,21 +191,20 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
             <div className="order-summary-totals">
               <div className="order-summary-total-row">
                 <span>Subtotal</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>{formatMoney(total)}</span>
               </div>
               <div className="order-summary-total-row">
                 <span>Shipping</span>
-                {shippingCost < 0 ? (
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>&#x2014;</span>
-                ) : shippingCost === 0 ? (
-                  <span className="order-summary-free-shipping">Free</span>
-                ) : (
-                  <span>₹{shippingCost.toFixed(2)}</span>
-                )}
+                <span
+                  className={shippingCost === 0 ? "order-summary-free-shipping" : undefined}
+                  style={shippingCost < 0 ? { color: "var(--text-muted)", fontSize: "0.8rem" } : undefined}
+                >
+                  {formatShipping(shippingCost)}
+                </span>
               </div>
               <div className="order-summary-grand-total">
                 <span>Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+                <span>{formatMoney(grandTotal)}</span>
               </div>
             </div>
           </>

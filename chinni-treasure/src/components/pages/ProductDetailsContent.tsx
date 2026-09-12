@@ -11,6 +11,7 @@ import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
 import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/GiftBoxSelector";
 import type { ProductImageData } from "@/src/components/ui/ProductCard";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
+import { formatMoney } from "@/src/lib/format";
 
 interface ProductDetails {
     id: string;
@@ -132,11 +133,11 @@ export default function ProductDetailsContent({ product }: Props) {
                     <p className="product-details-price">
                         {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) ? (
                             <>
-                                <span className="product-details-price-original">₹{Number(product.compareAtPrice).toFixed(2)}</span>
-                                ₹{Number(product.price).toFixed(2)}
+                                <span className="product-details-price-original">{formatMoney(Number(product.compareAtPrice))}</span>
+                                {formatMoney(Number(product.price))}
                             </>
                         ) : (
-                            <>₹{Number(product.price).toFixed(2)}</>
+                            <>{formatMoney(Number(product.price))}</>
                         )}
                     </p>
 

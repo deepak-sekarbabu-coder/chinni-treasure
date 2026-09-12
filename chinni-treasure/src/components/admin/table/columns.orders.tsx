@@ -5,6 +5,7 @@ import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Order } from "@/src/lib/api/schemas";
+import { formatMoney } from "@/src/lib/format";
 
 export interface OrdersTableMeta {
   onSelectOrder: (order: Order) => void;
@@ -93,7 +94,7 @@ export function createOrderColumns(_meta: OrdersTableMeta): ColumnDef<Order>[] {
       meta: { label: "Total" },
       sortDescFirst: false,
       cell: ({ row }) => (
-        <span className="order-card-price">₹{Number(row.original.totalAmount).toFixed(2)}</span>
+        <span className="order-card-price">{formatMoney(Number(row.original.totalAmount))}</span>
       ),
     },
     {

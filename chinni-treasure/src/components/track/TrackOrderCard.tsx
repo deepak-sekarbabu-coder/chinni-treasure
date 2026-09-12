@@ -2,6 +2,7 @@
 
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import type { TrackOrderResult } from "@/src/lib/api/schemas";
+import { formatMoney } from "@/src/lib/format";
 
 interface Props {
   order: TrackOrderResult;
@@ -41,7 +42,7 @@ export default function TrackOrderCard({ order, onClick }: Props) {
         </div>
         <div style={{ textAlign: "right" }}>
           <span style={{ fontFamily: "var(--font-serif)", fontSize: "1.2rem", fontWeight: 600, color: "var(--gold-dark)" }}>
-            ₹{Number(order.totalAmount).toFixed(2)}
+            {formatMoney(Number(order.totalAmount))}
           </span>
         </div>
       </div>

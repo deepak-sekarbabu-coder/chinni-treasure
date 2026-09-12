@@ -15,6 +15,7 @@ import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
 import { loadRazorpayScript } from "@/src/lib/razorpay";
+import { formatMoney } from "@/src/lib/format";
 import type { RazorpayResponse } from "@/src/types/razorpay";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
@@ -258,7 +259,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, on
           <div className="razorpay-payment-block">
             <p className="razorpay-payment-hint">
               You&apos;ll be redirected to Razorpay&apos;s secure checkout to complete your payment of{" "}
-              <strong>₹{total.toFixed(2)}</strong>. After successful payment, your order will be placed automatically.
+              <strong>{formatMoney(total)}</strong>. After successful payment, your order will be placed automatically.
             </p>
             <button
               type="button"
@@ -266,7 +267,7 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, on
               onClick={onRazorpayPay}
               disabled={processing || total <= 0}
             >
-              {processing ? "Redirecting to Razorpay..." : `Pay ₹${total.toFixed(2)} securely with Razorpay`}
+              {processing ? "Redirecting to Razorpay..." : `Pay ${formatMoney(total)} securely with Razorpay`}
             </button>
             <p className="razorpay-secure-note">🔒 Secured by Razorpay. We never store your card details.</p>
           </div>
@@ -328,7 +329,7 @@ function StepNavigation({ currentStep, submitting, total, onNext, onPrev, isRazo
         <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
       ) : isRazorpay ? (
         <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onRazorpayPay} disabled={submitting}>
-          {submitting ? "Processing..." : `Pay ₹${total.toFixed(2)} with Razorpay`}
+          {submitting ? "Processing..." : `Pay ${formatMoney(total)} with Razorpay`}
         </button>
       ) : (
         <button type="submit" className="btn btn-dark step-nav-btn step-nav-next" disabled={submitting}>
@@ -352,17 +353,17 @@ function StickyCheckoutBar({ currentStep, submitting, total, onNext, isRazorpay,
       <div className="sticky-checkout-bar-inner">
         <div className="sticky-checkout-info">
           <span className="sticky-checkout-label">Total</span>
-          <span className="sticky-checkout-price">₹{total.toFixed(2)}</span>
+          <span className="sticky-checkout-price">{formatMoney(total)}</span>
         </div>
         {currentStep < 3 ? (
           <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
         ) : isRazorpay ? (
           <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onRazorpayPay} disabled={submitting}>
-            {submitting ? "Processing..." : `Pay ₹${total.toFixed(2)}`}
+            {submitting ? "Processing..." : `Pay ${formatMoney(total)}`}
           </button>
         ) : (
           <button type="submit" form="order-form" className="btn btn-dark sticky-checkout-btn" disabled={submitting}>
-            {submitting ? "Placing Order..." : `Place Order — ₹${total.toFixed(2)}`}
+{submitting ? "Placing Order..." : `Place Order — ${formatMoney(total)}`}
           </button>
         )}
       </div>
@@ -534,7 +535,7 @@ export default function OrderPage() {
 
       const Razorpay = await loadRazorpayScript();
       const createdOrder = await createRazorpayOrder({
-        amount: Math.round(grandTotal * 100),
+        amount: grandTotal,
         currency: "INR",
         receipt: `CT-${Date.now()}`,
       });

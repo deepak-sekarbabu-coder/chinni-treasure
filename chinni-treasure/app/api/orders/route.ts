@@ -4,7 +4,7 @@ import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma, OrderStatus } from "@prisma/client";
 import { placeOrder, parseCreateOrderInput, OrderError } from "@/src/lib/order-intake";
-import { fetchRazorpayPayment, RazorpayGatewayError } from "@/src/lib/razorpay-server";
+import { acceptPlacementPayment, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
 
@@ -74,24 +74,13 @@ export async function POST(request: Request) {
     const input = parseCreateOrderInput(raw);
 
     // Resolve the authoritative paid amount from the gateway. The client's
-    // claimed amount is never trusted: for Razorpay placements the payment
-    // reference is looked up server-side, and the Order intake asserts
-    // paid == stored (ADR-0002) before persisting.
+    // claimed amount is never trusted: the Payment module applies the
+    // acceptance policy (payment belongs to this order, captured/authorized)
+    // and returns the snapshot, then the Order intake asserts paid == stored
+    // (ADR-0002) before persisting.
     let resolvedPaidPaise: number | undefined;
     if (input.paymentGateway === "razorpay") {
-      const payment = await fetchRazorpayPayment(input.transactionId);
-      if (payment.orderId !== input.razorpayOrderId) {
-        return NextResponse.json(
-          { error: "Payment does not match this order. Please contact support." },
-          { status: 400 },
-        );
-      }
-      if (payment.status !== "captured" && payment.status !== "authorized") {
-        return NextResponse.json(
-          { error: "Payment has not been completed. Please try again or contact support." },
-          { status: 400 },
-        );
-      }
+      const payment = await acceptPlacementPayment(input.transactionId, input.razorpayOrderId!);
       resolvedPaidPaise = payment.amount;
     }
 
