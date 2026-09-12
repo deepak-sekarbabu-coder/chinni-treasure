@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 
 const SHOW_DELAY_MS = 600;
-const AUTO_DISMISS_MS = 6000;
+const AUTO_DISMISS_MS = 10000;
 const EXIT_MS = 300;
 const SESSION_SHOWN_KEY = "gift-popup-shown";
 

@@ -218,39 +218,38 @@ export default function CategoryContent({
             </div>
 
             {products.length > 0 && totalPages > 1 && (
-              <nav
-                className="pagination-bar catalogue-pagination"
-                aria-label="Category pagination"
-              >
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={currentPage <= 1}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  aria-label="Previous page"
-                >
-                  ← Prev
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <nav className="catalogue-pagination" aria-label="Category pagination">
+                <div className="catalogue-pagination-controls">
                   <button
-                    key={pageNum}
-                    className={`btn btn-sm ${
-                      pageNum === currentPage ? "btn-primary" : "btn-secondary"
-                    }`}
-                    onClick={() => handlePageChange(pageNum)}
-                    aria-current={pageNum === currentPage ? "page" : undefined}
-                    aria-label={`Page ${pageNum}`}
+                    className="btn btn-secondary btn-sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    aria-label="Previous page"
                   >
-                    {pageNum}
+                    ← Prev
                   </button>
-                ))}
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  aria-label="Next page"
-                >
-                  Next →
-                </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      className={`btn btn-sm ${
+                        pageNum === currentPage ? "btn-primary" : "btn-secondary"
+                      }`}
+                      onClick={() => handlePageChange(pageNum)}
+                      aria-current={pageNum === currentPage ? "page" : undefined}
+                      aria-label={`Page ${pageNum}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    aria-label="Next page"
+                  >
+                    Next →
+                  </button>
+                </div>
               </nav>
             )}
           </>
