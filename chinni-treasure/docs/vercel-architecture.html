@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chinni Treasure on Vercel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f0e8;
+      --color-ink:     #1a1a1a;
+      --color-muted:   #6d6d6d;
+      --color-accent:  #b8960f;
+      --font-sans:     'Albert Sans', system-ui, sans-serif;
+      --font-serif:    'Cormorant Garamond', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1260px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Deployment Architecture · Next.js on Vercel</p>
+    <h1>Chinni Treasure on Vercel</h1>
+
+    <svg viewBox="0 0 1232 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vercel-arch-title vercel-arch-desc">
+      <title id="vercel-arch-title">Chinni Treasure on Vercel</title>
+      <desc id="vercel-arch-desc">Architecture of the Chinni Treasure storefront: a Next.js App Router and edge proxy running on Vercel Layers-backed PostgreSQL and a Redis cache, with Razorpay payments, Axiom observability, and a scheduled database health check.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6d6d6d"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f0e8"/>
+
+      <!-- ZONES -->
+      <rect x="28" y="72" width="224" height="336" rx="8" fill="rgba(26,26,26,0.02)" stroke="rgba(26,26,26,0.10)" stroke-width="0.8"/>
+      <rect x="88" y="76" width="104" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="140" y="85" fill="rgba(26,26,26,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CLIENT</text>
+
+      <rect x="280" y="72" width="392" height="336" rx="8" fill="rgba(26,26,26,0.02)" stroke="rgba(26,26,26,0.10)" stroke-width="0.8"/>
+      <rect x="420" y="76" width="112" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="476" y="85" fill="rgba(26,26,26,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">VERCEL</text>
+
+      <rect x="700" y="72" width="504" height="336" rx="8" fill="rgba(26,26,26,0.02)" stroke="rgba(26,26,26,0.10)" stroke-width="0.8"/>
+      <rect x="864" y="76" width="176" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="952" y="85" fill="rgba(26,26,26,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DATA &amp; SERVICES</text>
+
+      <!-- ARROWS -->
+      <path d="M 228,260 H 304" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="242" y="240" width="48" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="266" y="249" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SSR · API</text>
+
+      <path d="M 760,260 V 248 Q 760,240 752,240 H 720 a 8,8 0 0 1 -16,0 H 696 a 8,8 0 0 1 -16,0 H 668 Q 660,240 660,248 V 292 Q 660,300 668,300 H 656" fill="none" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-link)"/>
+      <rect x="752" y="248" width="48" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="776" y="257" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VERIFY</text>
+
+      <path d="M 656,332 H 680 Q 688,332 688,324 V 120 Q 688,112 696,112 H 940 Q 948,112 948,120 V 164 Q 948,172 940,172 H 972" fill="none" stroke="#6d6d6d" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="772" y="92" width="56" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="800" y="101" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CACHE</text>
+
+      <path d="M 656,320 H 704 Q 712,320 712,312 V 236 Q 712,228 720,228 H 812 Q 820,228 820,236 V 220" fill="none" stroke="#6d6d6d" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="756" y="236" width="56" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="784" y="245" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PRISMA</text>
+
+      <path d="M 656,140 H 668 Q 676,140 676,132 V 108 Q 676,100 668,100 H 792 Q 800,100 800,108 V 128" fill="none" stroke="#6d6d6d" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="714" y="80" width="68" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="748" y="89" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">KEEP-ALIVE</text>
+
+      <path d="M 400,188 V 208 Q 400,216 408,216 H 696 a 8,8 0 0 1 -16,0 H 920 Q 928,216 928,224 V 282 Q 928,290 920,290 H 972" fill="none" stroke="#6d6d6d" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="460" y="196" width="44" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="482" y="205" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOGS</text>
+
+      <path d="M 120,296 V 372 Q 120,380 128,380 H 798 Q 806,380 806,372 V 328" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="440" y="360" width="60" height="12" rx="2" fill="#f5f0e8"/>
+      <text x="470" y="369" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CHECKOUT</text>
+
+      <!-- NODES -->
+      <g>
+        <rect x="52" y="184" width="176" height="112" rx="6" fill="#f5f0e8"/>
+        <rect x="52" y="184" width="176" height="112" rx="6" fill="rgba(109,109,109,0.10)" stroke="#a0a0a0" stroke-width="1"/>
+        <rect x="60" y="190" width="28" height="12" rx="2" fill="transparent" stroke="rgba(160,160,160,0.5)" stroke-width="0.8"/>
+        <text x="74" y="199" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">WEB</text>
+        <text x="140" y="216" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">Storefront</text>
+        <text x="140" y="232" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">React 19 · cart sync</text>
+      </g>
+
+      <g>
+        <rect x="304" y="112" width="152" height="76" rx="6" fill="#f5f0e8"/>
+        <rect x="304" y="112" width="152" height="76" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+        <rect x="312" y="118" width="30" height="12" rx="2" fill="transparent" stroke="rgba(26,26,26,0.30)" stroke-width="0.8"/>
+        <text x="327" y="127" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EDGE</text>
+        <text x="380" y="144" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">Edge Proxy</text>
+        <text x="380" y="160" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">proxy.ts · admin guard</text>
+      </g>
+
+      <g>
+        <rect x="504" y="112" width="152" height="76" rx="6" fill="#f5f0e8"/>
+        <rect x="504" y="112" width="152" height="76" rx="6" fill="rgba(26,26,26,0.02)" stroke="rgba(26,26,26,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="512" y="118" width="31" height="12" rx="2" fill="transparent" stroke="rgba(26,26,26,0.25)" stroke-width="0.8"/>
+        <text x="527" y="127" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CRON</text>
+        <text x="580" y="144" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">DB Keep-Alive</text>
+        <text x="580" y="160" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">daily /api/cron</text>
+      </g>
+
+      <g>
+        <rect x="304" y="244" width="352" height="108" rx="6" fill="#f5f0e8"/>
+        <rect x="304" y="244" width="352" height="108" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+        <rect x="312" y="250" width="40" height="12" rx="2" fill="transparent" stroke="rgba(26,26,26,0.30)" stroke-width="0.8"/>
+        <text x="332" y="259" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEXT.JS</text>
+        <text x="480" y="276" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">App Router</text>
+        <text x="480" y="292" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SSR · API · JWT · cache ownership</text>
+      </g>
+
+      <g>
+        <rect x="724" y="128" width="200" height="92" rx="6" fill="#f5f0e8"/>
+        <rect x="724" y="128" width="200" height="92" rx="6" fill="rgba(184,150,15,0.10)" stroke="#b8960f" stroke-width="1.2"/>
+        <rect x="732" y="134" width="26" height="12" rx="2" fill="transparent" stroke="rgba(184,150,15,0.5)" stroke-width="0.8"/>
+        <text x="745" y="143" fill="#8a6d0f" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SQL</text>
+        <text x="824" y="160" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">PostgreSQL</text>
+        <text x="824" y="176" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">source of truth · Prisma</text>
+      </g>
+
+      <g>
+        <rect x="972" y="128" width="200" height="92" rx="6" fill="#f5f0e8"/>
+        <rect x="972" y="128" width="200" height="92" rx="6" fill="rgba(184,150,15,0.10)" stroke="#b8960f" stroke-width="1.2"/>
+        <rect x="980" y="134" width="24" height="12" rx="2" fill="transparent" stroke="rgba(184,150,15,0.5)" stroke-width="0.8"/>
+        <text x="992" y="143" fill="#8a6d0f" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">KV</text>
+        <text x="1072" y="160" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">Redis Cache</text>
+        <text x="1072" y="176" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">catalogue · order · stats</text>
+      </g>
+
+      <g>
+        <rect x="724" y="260" width="200" height="68" rx="6" fill="#f5f0e8"/>
+        <rect x="724" y="260" width="200" height="68" rx="6" fill="rgba(26,26,26,0.03)" stroke="rgba(26,26,26,0.30)" stroke-width="1"/>
+        <rect x="732" y="266" width="28" height="12" rx="2" fill="transparent" stroke="rgba(26,26,26,0.25)" stroke-width="0.8"/>
+        <text x="746" y="275" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PAY</text>
+        <text x="824" y="292" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">Razorpay</text>
+        <text x="824" y="308" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Standard Checkout</text>
+      </g>
+
+      <g>
+        <rect x="972" y="260" width="200" height="68" rx="6" fill="#f5f0e8"/>
+        <rect x="972" y="260" width="200" height="68" rx="6" fill="rgba(26,26,26,0.03)" stroke="rgba(26,26,26,0.30)" stroke-width="1"/>
+        <rect x="980" y="266" width="28" height="12" rx="2" fill="transparent" stroke="rgba(26,26,26,0.25)" stroke-width="0.8"/>
+        <text x="994" y="275" fill="#6d6d6d" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OBS</text>
+        <text x="1072" y="292" fill="#1a1a1a" font-size="12" font-weight="600" font-family="'Albert Sans', sans-serif" text-anchor="middle">Axiom</text>
+        <text x="1072" y="308" fill="#6d6d6d" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">logs · web vitals</text>
+      </g>
+
+      <!-- LEGEND -->
+      <line x1="28" y1="460" x2="1204" y2="460" stroke="rgba(26,26,26,0.12)" stroke-width="0.8"/>
+      <text x="28" y="472" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <line x1="112" y1="474" x2="138" y2="474" stroke="#6d6d6d" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="146" y="478" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">DATA FLOW</text>
+
+      <line x1="296" y1="474" x2="322" y2="474" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <text x="330" y="478" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">HTTPS</text>
+
+      <line x1="470" y1="474" x2="498" y2="474" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-link)"/>
+      <text x="506" y="478" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">CALLBACK</text>
+
+      <line x1="648" y1="474" x2="676" y2="474" stroke="#6d6d6d" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="684" y="478" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">SCHEDULED</text>
+
+      <rect x="824" y="466" width="36" height="16" rx="4" fill="rgba(184,150,15,0.10)" stroke="#b8960f" stroke-width="1.2"/>
+      <text x="868" y="478" fill="#6d6d6d" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">FOCAL STORE</text>
+    </svg>
+  </div>
+</body>
+</html>
