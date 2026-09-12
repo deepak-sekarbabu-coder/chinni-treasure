@@ -10,7 +10,7 @@ import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
-import { fieldIssue, type CheckoutFieldKey } from "@/src/lib/checkout-fields";
+import { useCheckoutForm, type OrderForm } from "@/src/lib/hooks/useCheckoutForm";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { ApiError } from "@/src/lib/api/client";
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
@@ -20,66 +20,7 @@ import type { RazorpayResponse } from "@/src/types/razorpay";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
-interface OrderForm {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  transactionId: string;
-  notes: string;
-  acceptedTerms: boolean;
-  paymentMethod: "razorpay" | "manual";
-}
-
-const STEP_LABELS = ["Personal Details", "Delivery Details", "Payment & Review"] as const;
-
-/**
- * Step grouping only — the field rules and their messages come from the
- * shared checkout-field contract (src/lib/checkout-fields.ts), the same one
- * the server intake validates against, so the form and the server 400s
- * always say the same thing.
- */
-const FORM_FIELD_RULES: Array<{
-  field: keyof OrderForm;
-  /** The shared-contract field this form field validates against. */
-  contractField: CheckoutFieldKey | null;
-  step: number;
-  message: string;
-}> = [
-  { field: "fullName", contractField: "customerName", step: 1, message: "Full name is required" },
-  { field: "email", contractField: "customerEmail", step: 1, message: "Email is required" },
-  { field: "phone", contractField: "customerPhone", step: 1, message: "Phone is required" },
-  { field: "address", contractField: "addressLine1", step: 2, message: "Address is required" },
-  { field: "city", contractField: "city", step: 2, message: "City is required" },
-  { field: "state", contractField: "stateCode", step: 2, message: "State/UT is required" },
-  { field: "zipCode", contractField: "postalCode", step: 2, message: "PIN code is required" },
-  { field: "acceptedTerms", contractField: null, step: 3, message: "You must accept the terms and conditions" },
-];
-
-function runValidation(form: OrderForm, step?: number): Record<string, string> {
-  const errs: Record<string, string> = {};
-  for (const rule of FORM_FIELD_RULES) {
-    if (step !== undefined && rule.step !== step) continue;
-    if (rule.contractField === null) {
-      // Non-contract rule (terms checkbox) — plain required check.
-      const value = form[rule.field];
-      const blank = typeof value === "string" ? !value.trim() : !value;
-      if (blank) errs[rule.field] = rule.message;
-      continue;
-    }
-    const value = form[rule.field];
-    if (typeof value !== "string") continue;
-    // Empty → the rule's friendly "X is required" message; anything else
-    // → the shared contract's shape message (same words the server uses).
-    const msg = value.trim() === "" ? rule.message : fieldIssue(rule.contractField, value);
-    if (msg) errs[rule.field] = msg;
-  }
-  return errs;
-}
+import CheckoutActions from "@/src/components/order/CheckoutActions";
 
 function PersonalDetailsStep({ form, errors, handleChange, setForm, setErrors }: {
   form: OrderForm;
@@ -298,76 +239,25 @@ function PaymentStep({ form, errors, handleChange, setForm, setErrors, total, on
             </div>
           </>
         )}
-      </fieldset>
-      <fieldset className="order-fieldset step-fade-in">
-        <legend className="order-legend">Personalized Notes for Gifting</legend>
-        <div className="form-group">
-          <label htmlFor="notes">Send a Little Love</label>
-          <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
-        </div>
-      </fieldset>
-      <ReturnsPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />
-    </>
-  );
-}
-
-function StepNavigation({ currentStep, submitting, total, onNext, onPrev, isRazorpay, onRazorpayPay }: {
-  currentStep: number;
-  submitting: boolean;
-  total: number;
-  onNext: () => void;
-  onPrev: () => void;
-  isRazorpay: boolean;
-  onRazorpayPay: () => void;
-}) {
-  return (
-    <div className="step-navigation">
-      {currentStep > 1 && (
-        <button type="button" className="btn btn-secondary step-nav-btn" onClick={onPrev}>← Back</button>
-      )}
-      {currentStep < 3 ? (
-        <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
-      ) : isRazorpay ? (
-        <button type="button" className="btn btn-dark step-nav-btn step-nav-next" onClick={onRazorpayPay} disabled={submitting}>
-          {submitting ? "Processing..." : `Pay ${formatMoney(total)} with Razorpay`}
-        </button>
-      ) : (
-        <button type="submit" className="btn btn-dark step-nav-btn step-nav-next" disabled={submitting}>
-          {submitting ? "Placing Order..." : `Place Order — ₹${total.toFixed(2)}`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function StickyCheckoutBar({ currentStep, submitting, total, onNext, isRazorpay, onRazorpayPay }: {
-  currentStep: number;
-  submitting: boolean;
-  total: number;
-  onNext: () => void;
-  isRazorpay: boolean;
-  onRazorpayPay: () => void;
-}) {
-  return (
-    <div className="sticky-checkout-bar" aria-label="Checkout summary bar">
-      <div className="sticky-checkout-bar-inner">
-        <div className="sticky-checkout-info">
-          <span className="sticky-checkout-label">Total</span>
-          <span className="sticky-checkout-price">{formatMoney(total)}</span>
-        </div>
-        {currentStep < 3 ? (
-          <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onNext}>Next — {STEP_LABELS[currentStep]}</button>
-        ) : isRazorpay ? (
-          <button type="button" className="btn btn-dark sticky-checkout-btn" onClick={onRazorpayPay} disabled={submitting}>
-            {submitting ? "Processing..." : `Pay ${formatMoney(total)}`}
-          </button>
-        ) : (
-          <button type="submit" form="order-form" className="btn btn-dark sticky-checkout-btn" disabled={submitting}>
-{submitting ? "Placing Order..." : `Place Order — ${formatMoney(total)}`}
-          </button>
+      </fieldset>        <fieldset className="order-fieldset step-fade-in">
+          <legend className="order-legend">Personalized Notes for Gifting</legend>
+          <div className="form-group">
+            <label htmlFor="notes">Send a Little Love</label>
+            <textarea id="notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special requests or notes for your order" />
+          </div>
+        </fieldset>
+        {form.paymentMethod === "manual" && (
+          <fieldset className="order-fieldset step-fade-in">
+            <legend className="order-legend">Bank Transfer Reference</legend>
+            <div className="form-group">
+              <label htmlFor="transactionId">Transaction ID / SIP Reference <span className="required">*</span></label>
+              <input type="text" id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={errors.transactionId ? "error" : ""} placeholder="e.g. NEFT-REF-001 or SIP confirmation number" autoComplete="off" aria-describedby={errors.transactionId ? "transactionId-error" : undefined} aria-invalid={!!errors.transactionId} />
+              {errors.transactionId && <span id="transactionId-error" className="form-error visible">{errors.transactionId}</span>}
+            </div>
+          </fieldset>
         )}
-      </div>
-    </div>
+        <ReturnsPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />
+    </>
   );
 }
 
@@ -378,23 +268,10 @@ export default function OrderPage() {
   const placeOrder = usePlaceOrder();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [form, setForm] = useState<OrderForm>({
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    transactionId: "",
-    notes: "",
-    acceptedTerms: false,
-    paymentMethod: "razorpay",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isCustomCity, setIsCustomCity] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  const checkout = useCheckoutForm(items);
+  const { form, setForm, errors, setErrors, isCustomCity, setIsCustomCity, handleChange, validate, manualOrderPayload } = checkout;
 
 
   const total = getTotal();
@@ -454,7 +331,7 @@ export default function OrderPage() {
   }
 
   function validateStep(step: number): boolean {
-    const errs = runValidation(form, step);
+    const errs = validate(step);
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       requestAnimationFrame(() => focusFirstError(errs));
@@ -473,7 +350,7 @@ export default function OrderPage() {
   }
 
   function validateAll() {
-    return runValidation(form);
+    return validate();
   }
 
   function getErrorMessage(err: unknown): string {
@@ -484,30 +361,7 @@ export default function OrderPage() {
         : "Something went wrong";
   }
 
-  const orderPayload = {
-    items: items
-      .filter((i) => !i.isGift)
-      .map((i) => ({
-        id: i.productId,
-        quantity: i.quantity,
-        giftBoxes: i.giftBoxes?.map((gb) => ({
-          id: gb.productId,
-          quantity: gb.quantity,
-        })),
-      })),
-    customerName: form.fullName.trim(),
-    customerEmail: form.email.trim(),
-    customerPhone: form.phone.trim(),
-    addressLine1: form.address.trim(),
-    addressLine2: form.addressLine2.trim() || undefined,
-    city: form.city.trim(),
-    stateCode: form.state,
-    postalCode: form.zipCode.trim(),
-    customerNotes: form.notes.trim() || undefined,
-  };
-
   /** Manual placements carry no gateway reference for paid==stored; razorpay does (set in the handler). */
-  const manualOrderPayload = { ...orderPayload, paymentGateway: "manual" as const };
 
   async function handleRazorpayPayment() {
     if (items.length === 0) {
@@ -632,18 +486,6 @@ export default function OrderPage() {
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
-  }
-
   return (
     <div style={{ paddingTop: "72px" }}>
       <section className="section order-checkout-section" aria-labelledby="order-heading">
@@ -663,7 +505,7 @@ export default function OrderPage() {
               {currentStep === 2 && <DeliveryDetailsStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} isCustomCity={isCustomCity} setIsCustomCity={setIsCustomCity} />}
               {currentStep === 3 && <PaymentStep form={form} errors={errors} handleChange={handleChange} setForm={setForm} setErrors={setErrors} total={grandTotal} onRazorpayPay={handleRazorpayPayment} processing={processing} />}
 
-              <StepNavigation
+              <CheckoutActions
                 currentStep={currentStep}
                 submitting={form.paymentMethod === "razorpay" ? processing : placeOrder.isPending}
                 total={grandTotal}
@@ -689,13 +531,14 @@ export default function OrderPage() {
       </section>
 
       {items.length > 0 && (
-        <StickyCheckoutBar
+        <CheckoutActions
           currentStep={currentStep}
           submitting={form.paymentMethod === "razorpay" ? processing : placeOrder.isPending}
           total={grandTotal}
           onNext={goToNextStep}
           isRazorpay={form.paymentMethod === "razorpay"}
           onRazorpayPay={handleRazorpayPayment}
+          sticky
         />
       )}
     </div>

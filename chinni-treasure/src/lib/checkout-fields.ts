@@ -24,6 +24,16 @@
 import { z } from "zod";
 import { INDIAN_STATES } from "@/src/lib/constants";
 
+/**
+ * Transaction reference — required for manual bank-transfer placements.
+ * Razorpay placements get theirs from the gateway (razorpay_payment_id);
+ * manual placements must paste the bank reference they used.
+ */
+export const TransactionIdSchema = z
+  .string()
+  .trim()
+  .min(1, "Transaction ID is required");
+
 /** Full name — non-blank. */
 export const CustomerNameSchema = z.string().trim().min(1, "Full name is required");
 
@@ -75,6 +85,7 @@ export const CheckoutFields = {
   city: CitySchema,
   stateCode: StateCodeSchema,
   postalCode: PostalCodeSchema,
+  transactionId: TransactionIdSchema,
 } as const;
 
 export type CheckoutFieldKey = keyof typeof CheckoutFields;

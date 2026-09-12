@@ -40,13 +40,14 @@ export function formatINR(value: number): string {
 }
 
 /**
- * Format a rupee amount as `₹1234.56` (always two decimals, ungrouped —
- * matches the inline `₹X.toFixed(2)` convention). Normalized to 0 floor, so
- * every surface renders money identically.
+ * Format a rupee amount as `₹1234.56` (always two decimals, ungrouped).
+ * Pass `{ bare: true }` for table cells that render their own currency label.
+ * Normalized to 0 floor, so every surface renders money identically.
  */
-export function formatMoney(value: number): string {
+export function formatMoney(value: number, options?: { bare?: boolean }): string {
   const normalized = Math.max(0, Math.round(value * 100) / 100);
-  return `₹${normalized.toFixed(2)}`;
+  const formatted = normalized.toFixed(2);
+  return options?.bare ? formatted : `₹${formatted}`;
 }
 
 /**

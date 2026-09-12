@@ -22,15 +22,13 @@ function makeMutation(overrides: Partial<{ isPending: boolean; mutateAsync: Retu
     mutateAsync: vi.fn().mockResolvedValue({}),
     ...overrides,
   } as unknown as ReturnType<typeof useUpdateOrderStatus>;
-}
-
-const sampleOrder = {
+}  const sampleOrder = {
   id: "order-1",
   orderNumber: "ORD-1",
   customerName: "Customer",
   customerEmail: "c@example.com",
   customerPhone: "1234567890",
-  status: "approved" as const,
+  status: "pending" as const,
   version: 3,
   trackingId: null,
   totalAmount: 100,
@@ -53,7 +51,7 @@ describe("useAdminOrdersController", () => {
     mockUseUpdateTrackingId.mockReturnValue(makeMutation({ mutateAsync: vi.fn().mockResolvedValue({}) }));
   });
 
-  it("advances to packaging without opening the tracking modal", async () => {
+  it("advances to approved without opening the tracking modal", async () => {
     const onClear = vi.fn();
     const { result } = renderHook(() =>
       useAdminOrdersController([sampleOrder], onClear),
@@ -65,7 +63,7 @@ describe("useAdminOrdersController", () => {
 
     expect(mutateAsync).toHaveBeenCalledWith({
       orderId: "order-1",
-      input: { status: "packaging", expectedVersion: 3 },
+      input: { status: "approved", expectedVersion: 3 },
     });
     expect(result.current.trackingModal.open).toBe(false);
   });

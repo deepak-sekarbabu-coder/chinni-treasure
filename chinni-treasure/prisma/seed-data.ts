@@ -574,7 +574,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
     "description": null,
     "badge": null,
     "isActive": true,
-    "visibleHostnames": "chinnitreasure.vercel.app",
+    "visibleHostnames": ", chinnitreasure.vercel.app, ",
     "deletedAt": null,
     "additionalImages": []
   },

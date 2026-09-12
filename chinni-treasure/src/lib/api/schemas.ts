@@ -1,14 +1,8 @@
 import { z } from "zod";
 import { CheckoutFields } from "@/src/lib/checkout-fields";
+import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 
-const OrderStatusSchema = z.enum([
-  "pending",
-  "approved",
-  "packaging",
-  "shipped",
-  "delivered",
-  "rejected",
-]);
+const OrderStatusSchema = z.enum(ORDER_STATUS_ALL);
 
 const OrderItemSchema = z.object({
   id: z.string(),
@@ -195,7 +189,7 @@ export const CreateOrderInputSchema = z.object({
       }),
     )
     .min(1, "At least one item is required"),
-  transactionId: z.string().optional(),
+  transactionId: CheckoutFields.transactionId,
   /** Which channel recorded `transactionId`. Drives the server-side paid==stored check. */
   paymentGateway: z.enum(["razorpay", "manual"]).default("razorpay"),
   /** Razorpay order id (`order_…`) the payment was made against; required for razorpay. */

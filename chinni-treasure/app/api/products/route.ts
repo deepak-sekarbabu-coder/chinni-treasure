@@ -6,7 +6,7 @@ import { productsCache, queryCatalogueIndex, invalidateCatalogCaches, SORT_OPTIO
 import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
-import { getHostFromRequest, domainFilterWhere } from "@/src/lib/domain-filter";
+import { getHostFromRequest, domainFilterWhere, normalizeVisibleHostnames } from "@/src/lib/domain-filter";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
 
 const { get: getCached, set: setCache } = productsCache;
@@ -174,7 +174,7 @@ function buildCreateData(input: CreateProductInput) {
     imageUrl: input.imageUrl || null,
     ...(input.badge !== undefined && { badge: input.badge ?? null }),
     ...(input.isActive !== undefined && { isActive: input.isActive }),
-    ...(input.visibleHostnames !== undefined && { visibleHostnames: input.visibleHostnames || null }),
+    ...(input.visibleHostnames !== undefined && { visibleHostnames: normalizeVisibleHostnames(input.visibleHostnames) }),
     ...(input.allowGiftBoxBundling !== undefined && { allowGiftBoxBundling: input.allowGiftBoxBundling }),
   };
 }

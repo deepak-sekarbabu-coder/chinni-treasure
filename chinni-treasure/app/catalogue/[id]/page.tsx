@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import ProductDetailsContent from "@/src/components/pages/ProductDetailsContent";
 import JsonLd from "@/src/components/ui/JsonLd";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
+import { isVisibleOnDomain } from "@/src/lib/domain-filter";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -71,15 +72,8 @@ export default async function ProductDetailsPage({ params }: Props) {
         notFound();
     }
 
-    if (product.visibleHostnames) {
-        const headersList = await headers();
-        const hostname = headersList.get("host")?.split(":")[0]?.toLowerCase() ?? "";
-        const allowed = product.visibleHostnames
-            .split(",")
-            .map((h) => h.trim().toLowerCase());
-        if (!allowed.some((h) => hostname === h || hostname.endsWith("." + h))) {
-            notFound();
-        }
+    if (!isVisibleOnDomain(product.visibleHostnames, (await headers()).get("host"))) {
+        notFound();
     }
 
     const price = Number(product.price);

@@ -6,6 +6,7 @@ import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod"
 import { ProductBadge } from "@prisma/client"
+import { normalizeVisibleHostnames } from "@/src/lib/domain-filter";
 
 const ImageInputSchema = z.object({
   url: z.string().min(1),
@@ -40,7 +41,7 @@ const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
   imageUrl: (v) => v || null,
   badge: (v) => v || null,
   isActive: (v) => v,
-  visibleHostnames: (v) => v || null,
+  visibleHostnames: (v) => normalizeVisibleHostnames(v as string | null),
 };
 
 function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknown> {

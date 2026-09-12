@@ -1,3 +1,21 @@
+/**
+ * Order-status vocabulary.
+ *
+ * One OrderStatus-keyed table owns both the vocabulary and the policy:
+ * `ORDER_STATUS_ACTIONS` is the allowed-next map the server's
+ * `validateTransition`, the client's `nextOrderStatus`, and the admin UI all
+ * read from; labels, icons, and filters live beside it. The Zod schemas
+ * (order-intake, api/schemas) are derived from `ORDER_STATUS_ALL` so nothing
+ * can drift from this file. Add or rename a status in exactly one place.
+ */
+
+import type { OrderStatus } from "@prisma/client";
+
+/**
+ * Ordered forward fulfilment path only — `pending → ... → delivered`.
+ * `rejected` is not part of the forward path; it is a terminal close from any
+ * non-terminal status.
+ */
 export const ORDER_STATUS_FLOW = [
   "pending",
   "approved",
@@ -6,45 +24,81 @@ export const ORDER_STATUS_FLOW = [
   "delivered",
 ] as const;
 
+export type FlowStatus = (typeof ORDER_STATUS_FLOW)[number];
+
 /**
- * The next status in the forward fulfilment flow, or null when the order is
- * terminal (delivered) or unknown. `rejected` orders cannot advance — the
- * server's `validateTransition` owns the full policy; this is the client-side
- * mirror used only to decide which affordances to render.
+ * All statuses the DB and the schemas can see, `rejected` included. This is the
+ * tuple that backs every `z.enum` so the schema layer derives from, not
+ * re-states, the vocabulary.
  */
-export function nextOrderStatus(status: string): (typeof ORDER_STATUS_FLOW)[number] | null {
-  const idx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(status);
-  if (idx < 0 || idx >= ORDER_STATUS_FLOW.length - 1) return null;
-  return ORDER_STATUS_FLOW[idx + 1];
+export const ORDER_STATUS_ALL = [...ORDER_STATUS_FLOW, "rejected"] as const;
+
+/**
+ * Allowed statuses from each status — the transition policy itself, shared by
+ * the server `validateTransition` and the client quick-action UI. Forward step
+ * is first when one exists; `rejected` is available from any non-terminal
+ * status; terminal statuses allow nothing.
+ */
+export const ORDER_STATUS_ACTIONS = {
+  pending: ["approved", "rejected"],
+  approved: ["packaging", "rejected"],
+  packaging: ["shipped", "rejected"],
+  shipped: ["delivered", "rejected"],
+  delivered: [],
+  rejected: [],
+} as const satisfies Record<OrderStatus, readonly OrderStatus[]>;
+
+/**
+ * The forward step an order advances to — the first non-terminal allowed
+ * transition from `ORDER_STATUS_ACTIONS`. Null for terminal or unknown statuses.
+ */
+export function nextOrderStatus(status: string): FlowStatus | null {
+  const nexts = ORDER_STATUS_ACTIONS[status as OrderStatus] ?? [];
+  return (nexts.find((s) => s !== "rejected") as FlowStatus | undefined) ?? null;
 }
 
-export const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  packaging: "Packaging",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  rejected: "Rejected",
-};
+/**
+ * One vocabulary for the fulfilment half of the Order lifecycle.
+ * The DB enum and order-intake Zod enum derive from this; the server's
+ * `validateTransition` and the admin UI share `actions` as the policy.
+ */
+export const ORDER_STATUS_VOCABULARY = {
+  flow: ORDER_STATUS_FLOW,
+  labels: {
+    pending: "Pending",
+    approved: "Approved",
+    packaging: "Packaging",
+    shipped: "Shipped",
+    delivered: "Delivered",
+    rejected: "Rejected",
+  },
+  icons: {
+    pending: "⏳",
+    approved: "✓",
+    packaging: "📦",
+    shipped: "🚚",
+    delivered: "✅",
+    rejected: "✕",
+  },
+  filters: [
+    { key: "all", label: "All Orders" },
+    { key: "pending", label: "Pending" },
+    { key: "approved", label: "Approved" },
+    { key: "packaging", label: "Packaging" },
+    { key: "shipped", label: "Shipped" },
+    { key: "delivered", label: "Delivered" },
+    { key: "rejected", label: "Rejected" },
+  ],
+  actions: ORDER_STATUS_ACTIONS,
+} as const;
 
-export const ORDER_STATUS_FILTERS = [
-  { key: "all", label: "All Orders" },
-  { key: "pending", label: "Pending" },
-  { key: "approved", label: "Approved" },
-  { key: "packaging", label: "Packaging" },
-  { key: "shipped", label: "Shipped" },
-  { key: "delivered", label: "Delivered" },
-  { key: "rejected", label: "Rejected" },
-];
-
-export const ORDER_STATUS_ICONS: Record<string, string> = {
-  pending: "⏳",
-  approved: "✓",
-  packaging: "📦",
-  shipped: "🚚",
-  delivered: "✅",
-  rejected: "✕",
-};
+/**
+ * Re-export the friendly names for components that still import them directly.
+ * The canonical shape is ORDER_STATUS_VOCABULARY.labels/icons/filters/actions.
+ */
+export const ORDER_STATUS_LABELS = ORDER_STATUS_VOCABULARY.labels;
+export const ORDER_STATUS_ICONS = ORDER_STATUS_VOCABULARY.icons;
+export const ORDER_STATUS_FILTERS = ORDER_STATUS_VOCABULARY.filters;
 
 export const INDIAN_STATES = [
   { code: "AN", name: "Andaman and Nicobar Islands" },

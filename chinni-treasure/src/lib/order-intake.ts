@@ -2,7 +2,10 @@ import { Prisma, PrismaClient, OrderStatus } from "@prisma/client";
 import { z } from "zod";
 import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
-import { ORDER_STATUS_FLOW } from "@/src/lib/constants";
+import {
+  ORDER_STATUS_ACTIONS,
+  ORDER_STATUS_ALL,
+} from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
 import { CheckoutFields } from "@/src/lib/checkout-fields";
 import { prisma } from "@/src/lib/prisma";
@@ -43,7 +46,7 @@ const CreateOrderSchema = z.object({
   city: CheckoutFields.city,
   stateCode: CheckoutFields.stateCode,
   postalCode: CheckoutFields.postalCode,
-  transactionId: z.string().min(1, "Transaction ID is required"),
+  transactionId: CheckoutFields.transactionId,
   customerNotes: z.string().optional(),
   /** Which channel recorded `transactionId`. Razorpay placements enforce paid == stored. */
   paymentGateway: PaymentGatewaySchema.default("razorpay"),
@@ -353,14 +356,7 @@ export async function placeOrder(
 // pending → approved → packaging → shipped → delivered
 //       ↘ rejected (restores stock)
 
-const OrderStatusSchema = z.enum([
-  "pending",
-  "approved",
-  "packaging",
-  "shipped",
-  "delivered",
-  "rejected",
-]);
+const OrderStatusSchema = z.enum(ORDER_STATUS_ALL);
 
 const UpdateOrderStatusSchema = z.object({
   status: OrderStatusSchema,
@@ -393,13 +389,15 @@ export function parseUpdateOrderStatusInput(raw: unknown): UpdateOrderStatusInpu
 }
 
 /**
- * Validate a transition from `current` to `next` against the fulfilment flow.
- * Returns an error message when the transition is not allowed, else null.
+ * Validate a transition from `current` to `next` against the shared
+ * `ORDER_STATUS_ACTIONS` table. Returns an error message when the transition
+ * is not allowed, else null.
  */
 export function validateTransition(current: OrderStatus, next: OrderStatus): string | null {
   if (current === next) {
     return `Order is already ${current}`;
   }
+
   // Terminal states first — nothing may leave `rejected` or `delivered`.
   if (current === "rejected") {
     return "A rejected order cannot be re-opened";
@@ -407,18 +405,12 @@ export function validateTransition(current: OrderStatus, next: OrderStatus): str
   if (current === "delivered") {
     return "A delivered order is final";
   }
-  // rejected is reachable from any non-terminal status.
-  if (next === "rejected") {
-    return null;
-  }
-  const currentIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(current);
-  const nextIdx = (ORDER_STATUS_FLOW as readonly string[]).indexOf(next);
-  if (currentIdx < 0 || nextIdx < 0) {
-    return `Unknown status ${next}`;
-  }
-  if (nextIdx !== currentIdx + 1) {
+
+  const allowed: readonly OrderStatus[] = ORDER_STATUS_ACTIONS[current];
+  if (!allowed.includes(next)) {
     return `Cannot move from ${current} to ${next}`;
   }
+
   return null;
 }
 
