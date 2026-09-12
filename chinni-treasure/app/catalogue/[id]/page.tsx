@@ -23,7 +23,12 @@ const getProductById = unstable_cache(
             },
         }),
     ["product-by-id"],
-    { revalidate: 60 },
+    {
+        revalidate: 60,
+        // Cleared by invalidateCatalogCaches() (revalidateTag) on any
+        // catalogue mutation so an admin edit is visible immediately.
+        tags: ["product-detail"],
+    },
 );
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

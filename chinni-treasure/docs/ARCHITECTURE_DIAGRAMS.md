@@ -19,7 +19,7 @@ graph TB
         Middleware["proxy.ts Middleware<br/>JWT Auth + Axiom Logging"]
         AppRouter["App Router Pages<br/>RSC + Client Components"]
         APIRoutes["API Route Handlers<br/>/api/*"]
-        PrismaClient["Prisma Client 7.8"]
+        PrismaClient["Prisma Client 7.9"]
     end
 
     subgraph Security["🔒 Security Layer"]
@@ -111,6 +111,7 @@ erDiagram
         boolean isActive "Catalogue visibility"
         varchar(500) visibleHostnames "Domain filtering"
         datetime deletedAt "Soft delete"
+        boolean allowGiftBoxBundling "Gift-box bundling flag"
         datetime createdAt
         datetime updatedAt
     }
@@ -156,6 +157,7 @@ erDiagram
         varchar(255) productName "Snapshot name"
         decimal unitPrice "Snapshot price"
         int quantity "Ordered qty"
+        uuid parentOrderItemId "Gift-box bundle parent (optional)"
         datetime createdAt
     }
 
@@ -319,18 +321,19 @@ flowchart LR
 
     subgraph Invalidations["🗑️ Invalidation Patterns"]
         CatMutation["Catalog Mutation<br/>Create/Update/Delete Product or Category"]
-        CatMutation --> ScanDEL["SCAN + DEL<br/>products:*<br/>categories:*<br/>catlatest:*<br/>catpage:*<br/>recent:*"]
+        CatMutation --> ScanDEL["SCAN + DEL<br/>products:*<br/>catindex:*<br/>categories:*<br/>catlatest:*<br/>catpage:*<br/>giftboxes:*"]
         
         OrderMutation["Order Status Change"]
-        OrderMutation --> OrderDEL["DEL order:{id}<br/>SCAN + DEL track:*"]
+        OrderMutation --> OrderDEL["DEL order:{id}<br/>SCAN + DEL track:*<br/>SCAN + DEL stats:*"]
     end
 
     subgraph TTLs["⏱️ Cache TTLs (from route Cache-Control headers)"]
         Products["Products Listing<br/>30s"]
+        CatIndex["Active-Product Index<br/>60s"]
         Categories["Categories List<br/>300s"]
         CatPage["Category Page<br/>60s"]
         CatLatest["Latest in Category<br/>60s"]
-        Recent["Recent Products<br/>60s"]
+        GiftBoxes["Gift Boxes<br/>60s"]
         OrderDetail["Order Detail<br/>30s"]
         Tracking["Tracking Lookup<br/>15s"]
         Stats["Admin Stats<br/>30s (private)"]
@@ -344,7 +347,7 @@ flowchart LR
     class API,RedisSet,MemSet writeStyle
     class Consumer,RedisGet,ReturnRedis,MemGet,ReturnMem,FetchDB,Populate readStyle
     class CatMutation,ScanDEL,OrderMutation,OrderDEL invalidStyle
-    class Products,Categories,CatPage,CatLatest,Recent,OrderDetail,Tracking,Stats ttlStyle
+    class Products,CatIndex,Categories,CatPage,CatLatest,GiftBoxes,OrderDetail,Tracking,Stats ttlStyle
 ```
 
 ---
@@ -558,6 +561,7 @@ graph TB
         JsonLd["JsonLd (SEO)"]
         Markdown["Markdown"]
         ShippingNudge["ShippingNudgePopup"]
+        GiftPopup["ComplementaryGiftPopup"]
     end
 
     subgraph Hooks["🪝 Custom Hooks"]
@@ -577,7 +581,7 @@ graph TB
         AuthLib["auth.ts<br/>JWT + bcrypt"]
         PrismaLib["prisma.ts<br/>Database Client"]
         RedisLib["redis.ts + redis-cache.ts<br/>cache.ts fallback"]
-        CatalogueCache["catalogue-cache.ts<br/>products · categories · catlatest · catpage · recent"]
+        CatalogueCache["catalogue-cache.ts<br/>products · catindex · categories · catlatest · catpage · giftboxes"]
         OrderCache["order-cache.ts<br/>order · track (+ stats invalidation)"]
         StatsCache["stats-cache.ts"]
         RateLimit["rate-limiter.ts"]
@@ -604,7 +608,7 @@ graph TB
     class Providers,Navbar,Footer layoutStyle
     class Home,Catalogue,CatalogueDetail,Category,Order,Confirmation,Track,Admin,AdminLogin,Docs pageStyle
     class AdminTabs,AdminHeader,AdminCatalogue,AdminCategories,AdminOrders,AdminCharts,AdminStats,ProductForm,CategoryForm,OrderDetail,TrackingModal,PrintLabel adminStyle
-    class ProductCard,ProductImage,FallbackImage,StatusBadge,StockBadge,LoadingSpinner,Skeleton,Breadcrumbs,SectionHeader,Toast,JsonLd,Markdown,ShippingNudge uiStyle
+    class ProductCard,ProductImage,FallbackImage,StatusBadge,StockBadge,LoadingSpinner,Skeleton,Breadcrumbs,SectionHeader,Toast,JsonLd,Markdown,ShippingNudge,GiftPopup uiStyle
     class AdminData,AdminSession,AdminMutations,AdminCatalogueCtrl,AdminCategoriesCtrl,AdminOrdersCtrl,AdminHeaderActions,TrackSearch,ResponsivePage,ShippingNudgeHook hookStyle
     class AuthLib,PrismaLib,RedisLib,CatalogueCache,OrderCache,StatsCache,RateLimit,CSRFLib,Sanitize,RazorpayLib,CartCookie libStyle
 ```

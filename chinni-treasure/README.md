@@ -11,7 +11,7 @@
 - **State Management:** React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
 - **Server State:** React Query (`@tanstack/react-query` v5.101.4 + devtools) for client-side caching and data fetch orchestration
 - **Validation:** Zod v4.4.3 for checkout, cart, and API request/response validation
-- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue (products/categories/latest/page/recent/gift-boxes), order, and stats caches are owned by dedicated modules under `src/lib/`
+- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue (products/categories/latest/page/gift-boxes), order, and stats caches are owned by dedicated modules under `src/lib/`
 - **Observability:** Axiom structured logging (`@axiomhq/*`) for page traffic, route events, Web Vitals, and errors when configured
 - **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual UPI/bank-transfer fallback
 - **Analytics & Insights:** Vercel Analytics (`@vercel/analytics` v2.0.1) + Speed Insights (`@vercel/speed-insights` v2.0.0)
@@ -240,8 +240,7 @@ chinni-treasure/
 │   │   │       └── tracking/route.ts # Order tracking ID retrieval/update
 │   │   ├── products/
 │   │   │   ├── route.ts              # Product CRUD (with pagination)
-│   │   │   ├── [id]/route.ts         # Single product update/delete
-│   │   │   └── recent/route.ts       # Recent products listing
+│   │   │   └── [id]/route.ts         # Single product update/delete
 │   │   ├── stats/route.ts            # Dashboard statistics (cached, SQL aggregation)
 │   │   ├── track/route.ts            # Order tracking by order number or phone (cached)
 │   │   └── verify-payment/route.ts   # Verify Razorpay payment signature (HMAC-SHA256)
@@ -417,7 +416,7 @@ chinni-treasure/
 │   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
 │   │   ├── cache.ts                  # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
-│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/page/recent/gift-boxes)
+│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/category-page/gift-boxes)
 │   │   ├── checkout-fields.ts        # One shared per-field checkout validation contract (client + server)
 │   │   ├── constants.ts              # Indian states, status flow, labels, icons
 │   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
@@ -624,7 +623,6 @@ rejected (stock restored)
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
 | DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
-| GET | `/api/products/recent` | List recent products | No |
 | GET | `/api/categories` | List active categories (cached); `?includeInactive=true` for admin | No |
 | POST | `/api/categories` | Create category (auto-generates slug) | Yes |
 | PUT | `/api/categories/[id]` | Update category | Yes |
@@ -677,7 +675,7 @@ npm run test:coverage # With coverage report
 - `src/__tests__/mocks/` — Shared mock implementations (Prisma, Redis)
 - `src/__tests__/utils/` — Test helper utilities (API test harness)
 
-**Total: 68 test files / 542 tests** (Vitest single run, Sep 2026).
+**Total: 73 test files / 591 tests** (Vitest single run, Sep 2026).
 
 ---
 

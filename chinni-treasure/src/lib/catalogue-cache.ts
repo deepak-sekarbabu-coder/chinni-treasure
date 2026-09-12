@@ -2,13 +2,14 @@ import { createRedisCache } from "@/src/lib/redis-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
+import { revalidateTag } from "next/cache";
 import type { LatestCategorySection } from "@/src/lib/api/schemas";
 
 /**
  * The Catalogue cache module.
  *
  * The catalogue is ONE concept: products, categories, the latest-per-category
- * block, category pages, and recent products are all invalidated together on
+ * block, and category pages are all invalidated together on
  * any catalogue mutation. Every namespace below is owned by this module —
  * routes import their caches from here instead of calling createRedisCache()
  * themselves, and invalidation clears exactly what this module owns (never a
@@ -24,7 +25,6 @@ export const catIndexCache = createRedisCache(60_000, "catindex");
 export const categoriesCache = createRedisCache(300_000, "categories");
 export const catLatestCache = createRedisCache(60_000, "catlatest");
 export const catPageCache = createRedisCache(60_000, "catpage");
-export const recentCache = createRedisCache(60_000, "recent");
 export const giftBoxCache = createRedisCache(60_000, "giftboxes");
 
 const CATALOGUE_CACHES = [
@@ -33,7 +33,6 @@ const CATALOGUE_CACHES = [
   categoriesCache,
   catLatestCache,
   catPageCache,
-  recentCache,
   giftBoxCache,
 ] as const;
 
@@ -41,9 +40,15 @@ const CATALOGUE_CACHES = [
  * Clear every cache owned by the catalogue — the namespace in Redis (SCAN +
  * DEL) plus the module's local in-memory fallback. Call after any product or
  * category create / update / delete.
+ *
+ * Also revalidates the SSR product-detail page (app/catalogue/[id]), which
+ * reads through Next's data cache (unstable_cache) rather than Redis — without
+ * this tag it would keep serving a stale product for up to 60s after an edit.
  */
 export async function invalidateCatalogCaches(): Promise<void> {
   await Promise.all(CATALOGUE_CACHES.map((cache) => cache.clear()));
+  // expire: 0 purges the tagged product-detail cache immediately.
+  revalidateTag("product-detail", { expire: 0 });
 }
 
 /**
@@ -54,6 +59,9 @@ export async function invalidateCatalogCaches(): Promise<void> {
  * ponytail: the 60s cache is per-instance when Redis is off, so cold
  * serverless instances still pay one query per request; a CDN/ISR layer
  * needs the root-layout cookies() call removed first.
+ * retrigger: if the prod boot warning in instrumentation.ts fires while
+ * deployed (REDIS_URL would be set) — first set REDIS_URL, no code change;
+ * only pursue the ISR path if Redis is in place and cold-start latency shows.
  */
 export async function loadLatestCategories(): Promise<LatestCategorySection[]> {
   const cached = (await catLatestCache.get("latest")) as LatestCategorySection[] | null;

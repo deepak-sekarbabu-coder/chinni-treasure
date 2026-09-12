@@ -178,20 +178,6 @@ export async function listByCategory(
   };
 }
 
-export async function listRecent(
-  hostname: string | null,
-  limit: number = 8,
-): Promise<ProductView[]> {
-  const rows = await prisma.product.findMany({
-    where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 }, ...domainFilterWhere(hostname) },
-    include: INCLUDE,
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
-
-  return rows.map(toProductView);
-}
-
 export async function listGiftBoxes(): Promise<
   { id: string; name: string; price: number; imageUrl: string | null; stockQuantity: number }[]
 > {

@@ -45,7 +45,7 @@ Chinni Treasure is a luxury e-commerce storefront built with Next.js 16, React 1
 - Pay through Razorpay or use the manual payment fallback.
 - View confirmation details and track an order by order ID or customer phone number.
 
-Customer-facing catalogue surfaces include `/catalogue`, `/catalogue/[id]`, `/category/[slug]`, recent products, and the homepage “Latest in Every Category” section.
+Customer-facing catalogue surfaces include `/catalogue`, `/catalogue/[id]`, `/category/[slug]`, and the homepage “Latest in Every Category” section.
 
 ### Admin workflow
 
@@ -92,14 +92,14 @@ Redis is optional. `src/lib/redis-cache.ts` uses Redis when `REDIS_URL` is confi
 
 Cache ownership is intentionally split by domain:
 
-- `src/lib/catalogue-cache.ts` owns products, the active-product index (`catindex`, used to serve public catalogue searches from memory via its `queryCatalogueIndex` surface), categories, latest-per-category, category-page, and recent-product caches. Any product or category mutation invalidates all six through `invalidateCatalogCaches()`.
+- `src/lib/catalogue-cache.ts` owns products, the active-product index (`catindex`, used to serve public catalogue searches from memory via its `queryCatalogueIndex` surface), categories, latest-per-category, category-page, and gift-box caches. Any product or category mutation clears all six namespaces through `invalidateCatalogCaches()`, which also `revalidateTag`s the product-detail SSR page (`app/catalogue/[id]` reads through Next's data cache, not Redis).
 - `src/lib/order-cache.ts` owns order-detail and tracking caches. It also clears the order-derived stats cache after order mutations through `invalidateOrderCache(orderId?)`.
 - `src/lib/stats-cache.ts` owns the dashboard statistics cache; invalidation is owned by `order-cache.ts` because stats derive from orders.
 - `src/lib/redis.ts` owns the shared ioredis client and is `null` when Redis is not configured.
 
 Routes must import owned caches from these modules. They should not create caches inline or maintain a separate hardcoded invalidation list.
 
-Cached routes/data include public catalogue queries, recent products, order tracking/detail lookups, and admin stats. Do not cache cart state, JWT sessions, admin CRUD responses, or binary assets.
+Cached routes/data include public catalogue queries, order tracking/detail lookups, and admin stats. Do not cache cart state, JWT sessions, admin CRUD responses, or binary assets.
 
 ### Critical server boundaries
 
