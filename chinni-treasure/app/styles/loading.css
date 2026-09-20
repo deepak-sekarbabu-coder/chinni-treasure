@@ -47,20 +47,12 @@
     animation: spin 0.6s linear infinite;
 }
 
-/* ===== SKELETON LOADING ANIMATIONS ===== */
+/* ===== SKELETON LOADING ANIMATIONS =====
+   Shared by catalogue/category/track/order/admin skeletons and the homepage
+   latest-category cards (both shimmer keyframes live in loading.css +
+   keyframes.css). */
 .skeleton-block,
 .skeleton-text {
-    background: linear-gradient(90deg,
-            var(--cream-light) 25%,
-            #e8e3d8 50%,
-            var(--cream-light) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.skeleton-text {
-    height: 14px;
-    border-radius: 3px;
     background: linear-gradient(90deg,
             var(--cream-light) 25%,
             #e8e3d8 50%,
@@ -115,7 +107,39 @@
     border-radius: 10px;
     overflow: hidden;
     padding-bottom: 16px;
+}
+
+.latest-category-skeleton-image {
+    aspect-ratio: 3 / 4;
+    background: linear-gradient(90deg, #ece5da 25%, #f3ede3 50%, #ece5da 75%);
+    background-size: 200% 100%;
     animation: skeletonShimmer 1.4s infinite;
+}
+
+.latest-category-skeleton-line {
+    height: 12px;
+    margin: 12px 16px 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #ece5da 25%, #f3ede3 50%, #ece5da 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s infinite;
+}
+
+.latest-category-skeleton-line.w-60 {
+    width: 60%;
+}
+
+.latest-category-skeleton-line.w-40 {
+    width: 40%;
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .latest-category-skeleton-image {

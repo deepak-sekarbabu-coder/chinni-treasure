@@ -1,53 +1,57 @@
 /**
  * Shared money display formatting.
  *
- * Two conventions exist in the codebase and both are preserved here:
+ * One optioned formatter, `formatMoney`, covers every surface. Three wrappers
+ * keep call sites short and their names stable:
  *
- *  - `formatRupees` — "smart" decimals: integers render without a decimal
- *    part (`₹599`), non-integers render with two (`₹599.50`).
- *  - `formatINR` — always two decimals (`1,234.56`).
- *  - `formatMoney` — always two decimals with the ₹ symbol, ungrouped
- *    (`₹1234.56`); the shared rendering for order/cart/product surfaces.
- *  - `formatShipping` — money or `Free`/em dash for a shipping-cost row.
+ *  - `formatMoney(value, opts?)` — always two decimals, no grouping.
+ *    `bare` drops the ₹ symbol (table cells that render their own currency).
+ *  - `formatRupees(value)` — "smart" decimals: integers render without a
+ *    decimal part (`599`), non-integers with two (`599.50`), with Indian
+ *    grouping. Call sites that add their own ₹.
+ *  - `formatINR(value)` — always two decimals, with Indian grouping.
+ *  - `formatShipping(value)` — money, `Free` for zero, or the em dash when
+ *    shipping has not been computed (negative sentinel).
  *
  * All values are normalized (rounded to 2 decimals, floor at 0) before
  * display so floats do not drift across surfaces.
  */
 
-function enIN(minimumFractionDigits: number) {
-  return new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits,
-    maximumFractionDigits: 2,
-  });
-}
-
-/**
- * Format a rupee amount as `₹1,234.56` (en-IN locale, smart decimals).
- * Integers render as `₹1,234`. Negative values are normalized to 0.
- */
-export function formatRupees(value: number): string {
-  const normalized = Math.max(0, Math.round(value * 100) / 100);
-  return enIN(Number.isInteger(normalized) ? 0 : 2).format(normalized);
-}
-
-/**
- * Format a rupee amount as `1,234.56` (en-IN locale, always two decimals).
- * Useful in places that add the ₹ symbol separately.
- */
-export function formatINR(value: number): string {
-  const normalized = Math.max(0, Math.round(value * 100) / 100);
-  return enIN(2).format(normalized);
+function normalize(value: number): number {
+  return Math.max(0, Math.round(value * 100) / 100);
 }
 
 /**
  * Format a rupee amount as `₹1234.56` (always two decimals, ungrouped).
  * Pass `{ bare: true }` for table cells that render their own currency label.
- * Normalized to 0 floor, so every surface renders money identically.
  */
 export function formatMoney(value: number, options?: { bare?: boolean }): string {
-  const normalized = Math.max(0, Math.round(value * 100) / 100);
-  const formatted = normalized.toFixed(2);
+  const formatted = normalize(value).toFixed(2);
   return options?.bare ? formatted : `₹${formatted}`;
+}
+
+/**
+ * Format a rupee amount with smart decimals and Indian grouping.
+ * Integers render as `1,234`, non-integers as `1,234.50`. No ₹ symbol —
+ * call sites that use it add it themselves.
+ */
+export function formatRupees(value: number): string {
+  const normalized = normalize(value);
+  return new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: Number.isInteger(normalized) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(normalized);
+}
+
+/**
+ * Format a rupee amount as `1,234.56` (Indian grouping, always two decimals).
+ * Call sites that add the ₹ symbol separately.
+ */
+export function formatINR(value: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(normalize(value));
 }
 
 /**

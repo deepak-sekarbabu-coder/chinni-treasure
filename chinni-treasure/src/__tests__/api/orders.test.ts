@@ -11,11 +11,6 @@ vi.mock("@/src/lib/rate-limiter", () => ({
   checkRateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 3 }),
   getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
 }));
-vi.mock("isomorphic-dompurify", () => ({
-  default: {
-    sanitize: (input: string) => input.trim(),
-  },
-}));
 vi.mock("@/src/lib/razorpay-server", () => ({
   acceptPlacementPayment: vi.fn().mockResolvedValue({
     id: "pay_TEST123",

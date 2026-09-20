@@ -77,7 +77,8 @@ const ProductImageSchema = z.object({
   displayOrder: z.number(),
 });
 
-export const ProductSchema = z.object({
+/** Product fields shared by every product surface (admin list, catalogue, latest-per-category). */
+const ProductCoreSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.coerce.number(),
@@ -86,11 +87,14 @@ export const ProductSchema = z.object({
   description: z.string().nullable(),
   stockQuantity: z.number(),
   badge: z.string().nullable(),
+  sku: z.string().nullable(),
+  allowGiftBoxBundling: z.boolean().optional(),
+});
+
+export const ProductSchema = ProductCoreSchema.extend({
   category: z.object({ name: z.string() }).nullable(),
   categoryId: z.number().nullable(),
-  sku: z.string().nullable(),
   isActive: z.boolean(),
-  allowGiftBoxBundling: z.boolean().optional(),
   visibleHostnames: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
@@ -101,18 +105,8 @@ export const ProductsResponseSchema = PageMetaSchema.extend({
   products: z.array(ProductSchema),
 });
 
-export const CatalogueProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  price: z.coerce.number(),
-  compareAtPrice: z.coerce.number().nullable().optional(),
-  imageUrl: z.string().nullable(),
-  description: z.string().nullable(),
+export const CatalogueProductSchema = ProductCoreSchema.extend({
   category: z.object({ name: z.string() }).nullable(),
-  stockQuantity: z.number(),
-  badge: z.string().nullable(),
-  sku: z.string().nullable(),
-  allowGiftBoxBundling: z.boolean().optional(),
   images: z.array(ProductImageSchema).optional(),
 });
 
@@ -206,6 +200,7 @@ export const UpdateOrderStatusInputSchema = z.object({
 
 export const UpdateTrackingInputSchema = z.object({
   trackingId: z.string().min(1, "Tracking ID is required"),
+  expectedVersion: z.number().int().optional(),
 });
 
 const ProductImageInputSchema = z.object({
@@ -283,15 +278,16 @@ export const UpdateCategorySchema = z.object({
 
 // ---- Latest product per active category ----
 
-const LatestCategoryProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  price: z.coerce.number(),
-  compareAtPrice: z.coerce.number().nullable().optional(),
-  imageUrl: z.string().nullable(),
-  description: z.string().nullable(),
-  stockQuantity: z.number(),
-  badge: z.string().nullable(),
+const LatestCategoryProductSchema = ProductCoreSchema.pick({
+  id: true,
+  name: true,
+  price: true,
+  compareAtPrice: true,
+  imageUrl: true,
+  description: true,
+  stockQuantity: true,
+  badge: true,
+}).extend({
   images: z.array(ProductImageSchema).optional(),
 });
 

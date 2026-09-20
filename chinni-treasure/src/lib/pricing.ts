@@ -79,6 +79,30 @@ export function computePricing(lines: PricedLine[], stateCode: string): PricingR
 }
 
 /**
+ * How far a subtotal is from free shipping — remaining rupees, a 0–100
+ * progress percent, and the unlocked flag. The one home for the ₹599
+ * threshold math; every progress bar and nudge (cart card, popup, hook)
+ * renders this result instead of recomputing it.
+ */
+export interface ShippingProgress {
+  /** Rupees left to spend before shipping is free (0 at/above threshold). */
+  remaining: number;
+  /** Progress toward the threshold, clamped to 0–100. */
+  percent: number;
+  /** True when subtotal meets or exceeds the threshold. */
+  unlocked: boolean;
+}
+
+export function shippingProgress(subtotal: number): ShippingProgress {
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  return {
+    remaining,
+    percent: Math.min(100, Math.max(0, (subtotal / FREE_SHIPPING_THRESHOLD) * 100)),
+    unlocked: subtotal >= FREE_SHIPPING_THRESHOLD,
+  };
+}
+
+/**
  * A display line in an order: a parent product line or one of its gift
  * boxes, in render order (each parent immediately followed by its boxes).
  */

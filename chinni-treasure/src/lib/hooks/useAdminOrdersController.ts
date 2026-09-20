@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import { useUpdateOrderStatus, useUpdateTrackingId } from "@/src/lib/hooks/useAdminMutations";
-import { ORDER_STATUS_ACTIONS } from "@/src/lib/constants";
+import { nextOrderStatus } from "@/src/lib/constants";
 import type { FlowStatus } from "@/src/lib/constants";
 
 
@@ -34,10 +34,10 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
     async (orderId: string) => {
       const order = ordersById.get(orderId);
       if (!order) return;
-      // Advance target = the first non-terminal transition from the shared
-      // actions table (forward step; rejected is handled by handleReject).
-      const nextStatus = (ORDER_STATUS_ACTIONS[order.status] ?? [])
-        .find((s) => s !== "rejected") as FlowStatus | undefined;
+      // Advance target comes from the shared forward-step computation
+      // (first non-terminal transition in ORDER_STATUS_ACTIONS; rejected
+      // is handled by handleReject) — same table validateTransition enforces.
+      const nextStatus = nextOrderStatus(order.status);
       if (!nextStatus) return;
       if (nextStatus === "shipped") {
         setTrackingModal({ orderId: order.id, open: true });
@@ -106,15 +106,21 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
 
   const handleUpdateTracking = useCallback(
     async (orderId: string, trackingId: string) => {
+      const order = ordersById.get(orderId);
+      if (!order) return;
       try {
-        await updateTracking.mutateAsync({ orderId, trackingId });
+        await updateTracking.mutateAsync({
+          orderId,
+          trackingId,
+          expectedVersion: order.version,
+        });
         showToast("Tracking ID updated successfully", "success");
       } catch (err) {
         showToast(extractApiErrorMessage(err, "Failed to update tracking ID"), "error");
         throw err;
       }
     },
-    [updateTracking, showToast],
+    [ordersById, updateTracking, showToast],
   );
 
   return {

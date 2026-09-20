@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { shippingProgress } from "@/src/lib/pricing";
 
 const MOBILE_BREAKPOINT = "(max-width: 768px)";
 
@@ -45,14 +45,14 @@ export function useShippingNudge(): ShippingNudgeState {
 
   const trigger = useCallback(
     (total: number) => {
-      if (total >= FREE_SHIPPING_THRESHOLD) {
+      const { unlocked, remaining } = shippingProgress(total);
+      if (unlocked) {
         setShow(false);
         setNewTotal(total);
         setShippingLeft(0);
         return;
       }
 
-      const remaining = FREE_SHIPPING_THRESHOLD - total;
       setNewTotal(total);
       setShippingLeft(remaining);
       setShow(true);

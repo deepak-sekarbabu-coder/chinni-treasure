@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/pricing";
+import { FREE_SHIPPING_THRESHOLD, shippingProgress } from "@/src/lib/pricing";
 import { formatRupees } from "@/src/lib/format";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { ShippingNudgeState } from "@/src/lib/hooks/useShippingNudge";
@@ -24,7 +24,7 @@ export default function ShippingNudgePopup({
 
   if (!show) return null;
 
-  const progress = Math.min(100, Math.max(0, (newTotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const { percent: progress } = shippingProgress(newTotal);
 
   return (
     <div

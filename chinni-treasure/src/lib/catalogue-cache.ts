@@ -133,59 +133,69 @@ export type CatalogueIndexProduct = Prisma.ProductGetPayload<{
   include: { category: { select: { name: true } }; images: true };
 }>;
 
-// Sort vocabulary — single source shared by the route's DB ordering and this
-// index's in-memory comparators, so the two can never drift apart.
+// Sort vocabulary — the ONE order contract for the catalogue. Every entry is a
+// complete orderBy: in-stock first, then the chosen field, then id desc. The
+// /api/products DB branch, the category pages (product-read), and this index's
+// in-memory comparator all derive from these exact arrays, so changing the
+// rule means editing this table — the three can't drift apart.
 export const SORT_OPTIONS = {
-  newest: [{ createdAt: "desc" as const }],
-  oldest: [{ createdAt: "asc" as const }],
-  "name-asc": [{ name: "asc" as const }],
-  "name-desc": [{ name: "desc" as const }],
-  "price-asc": [{ price: "asc" as const }],
-  "price-desc": [{ price: "desc" as const }],
-  "stock-desc": [{ stockQuantity: "desc" as const }],
-  "stock-asc": [{ stockQuantity: "asc" as const }],
-  "sku-asc": [{ sku: "asc" as const }],
-  "sku-desc": [{ sku: "desc" as const }],
+  newest: [{ stockQuantity: "desc" as const }, { createdAt: "desc" as const }, { id: "desc" as const }],
+  oldest: [{ stockQuantity: "desc" as const }, { createdAt: "asc" as const }, { id: "desc" as const }],
+  "name-asc": [{ stockQuantity: "desc" as const }, { name: "asc" as const }, { id: "desc" as const }],
+  "name-desc": [{ stockQuantity: "desc" as const }, { name: "desc" as const }, { id: "desc" as const }],
+  "price-asc": [{ stockQuantity: "desc" as const }, { price: "asc" as const }, { id: "desc" as const }],
+  "price-desc": [{ stockQuantity: "desc" as const }, { price: "desc" as const }, { id: "desc" as const }],
+  "stock-desc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
+  "stock-asc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
+  "sku-asc": [{ stockQuantity: "desc" as const }, { sku: "asc" as const }, { id: "desc" as const }],
+  "sku-desc": [{ stockQuantity: "desc" as const }, { sku: "desc" as const }, { id: "desc" as const }],
 } as const;
 
 export type SortKey = keyof typeof SORT_OPTIONS;
 
-// In-memory comparators, keyed to the shared vocabulary above so adding a sort
-// key without a comparator here is a compile error. Ordering matches the DB
-// orderBy used by the admin list: stockQuantity desc, then the chosen field,
-// then id desc. Unknown keys fall back to newest.
-const INDEX_SORT_FIELDS: Record<
-  SortKey,
-  { field: (p: CatalogueIndexProduct) => string | number | null; dir: 1 | -1 }
-> = {
-  newest: { field: (p) => new Date(p.createdAt).getTime(), dir: -1 },
-  oldest: { field: (p) => new Date(p.createdAt).getTime(), dir: 1 },
-  "name-asc": { field: (p) => p.name, dir: 1 },
-  "name-desc": { field: (p) => p.name, dir: -1 },
-  "price-asc": { field: (p) => Number(p.price), dir: 1 },
-  "price-desc": { field: (p) => Number(p.price), dir: -1 },
-  "stock-desc": { field: (p) => p.stockQuantity, dir: -1 },
-  "stock-asc": { field: (p) => p.stockQuantity, dir: 1 },
-  "sku-asc": { field: (p) => p.sku, dir: 1 },
-  "sku-desc": { field: (p) => p.sku, dir: -1 },
-};
+function sortFieldValue(p: CatalogueIndexProduct, field: string): string | number | null {
+  switch (field) {
+    case "stockQuantity":
+      return p.stockQuantity;
+    case "createdAt":
+      // Redis round-trips turn the Date into an ISO string; new Date() handles both.
+      return new Date(p.createdAt).getTime();
+    case "name":
+      return p.name;
+    case "price":
+      // Redis round-trips turn the Decimal into a string; Number() normalizes it.
+      return Number(p.price);
+    case "sku":
+      return p.sku;
+    case "id":
+      return p.id;
+  }
+  return null;
+}
 
+// In-memory comparator driven by the same SORT_OPTIONS orderBy arrays the SQL
+// branches use, so the index can never disagree with a Postgres query for the
+// same key. Nulls sort last within a field (SQL's implicit order), ties fall
+// through to the next entry, and the final id entry breaks them. Unknown keys
+// fall back to newest.
 function compareIndexProducts(a: CatalogueIndexProduct, b: CatalogueIndexProduct, sortParam: string): number {
-  if (a.stockQuantity !== b.stockQuantity) return b.stockQuantity - a.stockQuantity;
-  const { field, dir } = INDEX_SORT_FIELDS[sortParam as SortKey] ?? INDEX_SORT_FIELDS.newest;
-  const av = field(a);
-  const bv = field(b);
-  if (av !== bv) {
+  const entries = (SORT_OPTIONS[sortParam as SortKey] ??
+    SORT_OPTIONS.newest) as readonly { [field: string]: "asc" | "desc" }[];
+  for (const entry of entries) {
+    const field = Object.keys(entry)[0];
+    const dir = entry[field] === "desc" ? -1 : 1;
+    const av = sortFieldValue(a, field);
+    const bv = sortFieldValue(b, field);
+    if (av === bv) continue;
     if (av == null) return 1;
     if (bv == null) return -1;
-    if (typeof av === "string" || typeof bv === "string") {
-      const cmp = String(av).localeCompare(String(bv));
-      if (cmp !== 0) return cmp * dir;
-    } else {
-      return ((av as number) - (bv as number)) * dir;
-    }
+    const cmp =
+      typeof av === "string" || typeof bv === "string"
+        ? String(av).localeCompare(String(bv))
+        : (av as number) - (bv as number);
+    if (cmp !== 0) return cmp * dir;
   }
-  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+  return 0;
 }
 
 async function loadActiveIndex(hostname: string | null): Promise<CatalogueIndexProduct[]> {

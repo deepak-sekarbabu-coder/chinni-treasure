@@ -1352,57 +1352,6 @@
     pointer-events: none;
 }
 
-/* ── Skeleton Blocks ── */
-.skeleton-block {
-    background: linear-gradient(90deg,
-            var(--cream-light) 25%,
-            #e8e3d8 50%,
-            var(--cream-light) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.skeleton-text {
-    height: 14px;
-    border-radius: 3px;
-    background: linear-gradient(90deg,
-            var(--cream-light) 25%,
-            #e8e3d8 50%,
-            var(--cream-light) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.skeleton-text-name {
-    width: 140px;
-}
-
-.skeleton-text-sku {
-    width: 80px;
-}
-
-.skeleton-text-price {
-    width: 60px;
-}
-
-.skeleton-text-stock {
-    width: 40px;
-}
-
-.skeleton-text-badge {
-    width: 60px;
-}
-
-.skeleton-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.skeleton-grow {
-    flex: 1;
-}
-
 /* ── Stagger delays ── */
 .delay-1 {
     animation-delay: 0.05s;

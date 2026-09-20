@@ -1,37 +1,26 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
-import { validateOr400 } from "@/src/lib/validate";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { withAdmin } from "@/src/lib/admin-route";
-import { UpdateTrackingInputSchema } from "@/src/lib/api/schemas";
+import { parseUpdateTrackingInput, setTrackingId } from "@/src/lib/order-intake";
 
 // PATCH /api/orders/[id]/tracking — Update tracking ID (admin only)
+// Thin adapter over the Order intake module's fulfilment half, exactly like
+// the status route: parse → setTrackingId → error mapping. The module owns
+// the existence check, version concurrency, and tracking policy; the
+// admin-route adapter owns CSRF/auth/401 and the shared error mapping.
 export const PATCH = withAdmin<{ id: string }>(
   async ({ body, params }) => {
     const { id } = params;
-    const parsed = validateOr400(UpdateTrackingInputSchema, body);
-    if (!parsed.ok) return parsed.response;
+    const input = parseUpdateTrackingInput(body);
 
-    const order = await prisma.order.findUnique({ where: { id } });
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    const updated = await prisma.order.update({
-      where: { id },
-      data: { trackingId: parsed.data.trackingId },
-      include: { items: true, statusHistory: true },
-    });
+    const order = await setTrackingId(id, input);
 
     await invalidateOrderCache(id);
 
-    return NextResponse.json(updated);
+    return NextResponse.json(order);
   },
   {
     parseBody: true,
     fallbackError: "Failed to update tracking ID",
-    errorMessages: {
-      p2025: "Order not found",
-    },
   },
 );

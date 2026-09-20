@@ -38,7 +38,7 @@
 - **Order tracking** portal and shareable confirmation pages (by Order ID or customer phone number)
 - **Surprise gift** (optional via `NEXT_PUBLIC_ENABLE_SURPRISE_GIFT`): a free complementary gift is auto-added to the cart, announced with a popup
 - **Accessibility-first** UI: skip links, ARIA attributes, focus trapping, and `prefers-reduced-motion` / `prefers-contrast` support
-- **Production hardening**: CSRF/origin validation, rate-limited admin login, DOMPurify sanitization, Zod validation, serializable inventory transactions, and optimistic-concurrency order updates — all enforced through one shared admin route adapter (`withAdmin`) and a shared checkout field contract
+- **Production hardening**: CSRF/origin validation, rate-limited admin login, XSS sanitization, Zod validation, serializable inventory transactions, and optimistic-concurrency order updates — all enforced through one shared admin route adapter (`withAdmin`) and a shared checkout field contract
 
 ---
 
@@ -439,7 +439,7 @@ chinni-treasure/
 │   │   ├── razorpay.ts               # Loads the Razorpay Standard Checkout script (browser)
 │   │   ├── redis-cache.ts            # Redis-backed cache with in-memory fallback
 │   │   ├── redis.ts                  # Shared ioredis client (null when REDIS_URL unset)
-│   │   ├── sanitize.ts               # XSS sanitization via isomorphic-dompurify
+│   │   ├── sanitize.ts               # XSS sanitization (strips HTML angle brackets)
 │   │   ├── stats-cache.ts            # Dashboard statistics cache
 │   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
 │   │   ├── utils.ts                  # API error extraction, UUID order number generation
@@ -694,7 +694,6 @@ npm run test:coverage # With coverage report
 | `jsbarcode` | Barcode generation for shipping labels |
 | `jspdf` | PDF invoice generation |
 | `zod` | Runtime validation (API schemas, cart, checkout) |
-| `isomorphic-dompurify` | Server-side XSS sanitization |
 | `exceljs` | Data export to Excel |
 | `razorpay` | Razorpay Standard Checkout payment gateway |
 | `react-markdown` | Markdown rendering for product/legal content |

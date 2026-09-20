@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
-import { orderDetailCache } from "@/src/lib/order-cache";
-
-const { get: getCached, set: setCache } = orderDetailCache;
+import { getOrderDetail } from "@/src/lib/order-cache";
 
 // GET /api/orders/[id] — Get a single order by ID
 export async function GET(
@@ -12,24 +9,11 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const cached = await getCached(id);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: {
-          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
-        },
-      });
-    }
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: { items: { include: { product: true } }, statusHistory: true },
-    });
+    const order = await getOrderDetail(id);
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-
-    await setCache(id, order);
 
     return NextResponse.json(order, {
       headers: {

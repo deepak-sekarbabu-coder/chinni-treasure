@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 
-import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/pricing";
+import { FREE_SHIPPING_THRESHOLD, shippingProgress } from "@/src/lib/pricing";
 import { formatMoney, formatRupees, formatShipping } from "@/src/lib/format";
 
 interface CartItem {
@@ -31,8 +31,7 @@ interface Props {
 export default function OrderSummaryCard({ items, total, shippingCost, grandTotal, onRemove, onUpdateQuantity }: Props) {
   const [summaryOpen, setSummaryOpen] = useState(true);
 
-  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
-  const progressPercent = Math.min(100, Math.max(0, (total / FREE_SHIPPING_THRESHOLD) * 100));
+  const { remaining: remainingForFreeShipping, percent: progressPercent, unlocked } = shippingProgress(total);
   const displayCount = items.filter((i) => !i.isGift).length;
 
   return (
@@ -155,7 +154,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
             </div>
 
             {/* Free Shipping Nudge Box during Checkout */}
-            {total < FREE_SHIPPING_THRESHOLD ? (
+            {!unlocked ? (
               <div className="checkout-shipping-nudge-box">
                 <div className="checkout-nudge-header">
                   <span className="checkout-nudge-icon">🚚</span>

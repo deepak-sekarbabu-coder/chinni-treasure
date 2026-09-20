@@ -2,13 +2,20 @@ import { Prisma, PrismaClient, OrderStatus } from "@prisma/client";
 import { z } from "zod";
 import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
-import {
-  ORDER_STATUS_ACTIONS,
-  ORDER_STATUS_ALL,
-} from "@/src/lib/constants";
+import { ORDER_STATUS_ACTIONS } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
 import { CheckoutFields } from "@/src/lib/checkout-fields";
 import { prisma } from "@/src/lib/prisma";
+import {
+  UpdateOrderStatusInputSchema,
+  UpdateTrackingInputSchema,
+} from "@/src/lib/api/schemas";
+import type { UpdateOrderStatusInput, UpdateTrackingInput } from "@/src/lib/api/schemas";
+
+// The fulfilment input contracts live in the shared schemas module (one
+// shape for client and server) — re-export the module's inputs so its
+// tests and callers keep importing the interface from the seam.
+export type { UpdateOrderStatusInput, UpdateTrackingInput };
 
 /**
  * Order intake module.
@@ -356,17 +363,6 @@ export async function placeOrder(
 // pending → approved → packaging → shipped → delivered
 //       ↘ rejected (restores stock)
 
-const OrderStatusSchema = z.enum(ORDER_STATUS_ALL);
-
-const UpdateOrderStatusSchema = z.object({
-  status: OrderStatusSchema,
-  trackingId: z.string().optional(),
-  notes: z.string().optional(),
-  expectedVersion: z.number().int().optional(),
-});
-
-export type UpdateOrderStatusInput = z.infer<typeof UpdateOrderStatusSchema>;
-
 /** The full Order shape the transition returns (order + items + history). */
 export type OrderWithHistory = Prisma.OrderGetPayload<{ include: { items: true; statusHistory: true } }>;
 
@@ -378,7 +374,7 @@ export interface TransitionResult {
 
 /** Parse an unvalidated transition request; fails as OrderError/400. */
 export function parseUpdateOrderStatusInput(raw: unknown): UpdateOrderStatusInput {
-  const parsed = UpdateOrderStatusSchema.safeParse(raw);
+  const parsed = UpdateOrderStatusInputSchema.safeParse(raw);
   if (!parsed.success) {
     throw new OrderError(
       parsed.error.issues.map((i) => i.message).join(", "),
@@ -505,4 +501,60 @@ export async function transitionOrderStatus(
     throw new OrderError("Order not found", 404);
   }
   return { previousStatus, order: updated as OrderWithHistory };
+}
+
+/** Parse the tracking-write payload through the shared fulfilment contract. */
+export function parseUpdateTrackingInput(raw: unknown): UpdateTrackingInput {
+  const parsed = UpdateTrackingInputSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new OrderError(
+      parsed.error.issues.map((i) => i.message).join(", "),
+      400,
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Write an order's tracking ID through the module's fulfilment policy — the
+ * status-flow sibling of `transitionOrderStatus`, without a status move:
+ * versioned optimistic concurrency and the 404/409 taxonomy. A tracking ID
+ * can be set or corrected in any status (edited retroactively on delivered,
+ * pre-printed on packaging); the `shipped` tracking gate is enforced on the
+ * status transition itself, which ships in the same call.
+ */
+export async function setTrackingId(
+  orderId: string,
+  input: UpdateTrackingInput,
+  db: Pick<PrismaClient, "order"> = prisma,
+): Promise<OrderWithHistory> {
+  const { trackingId, expectedVersion } = input;
+
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, version: true },
+  });
+  if (!order) {
+    throw new OrderError("Order not found", 404);
+  }
+  if (expectedVersion !== undefined && order.version !== expectedVersion) {
+    throw new OrderError(
+      "Order was modified by another request. Please refresh and try again.",
+      409,
+    );
+  }
+
+  await db.order.update({
+    where: { id: orderId },
+    data: { trackingId, version: { increment: 1 } },
+  });
+
+  const updated = await db.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, statusHistory: true },
+  });
+  if (!updated) {
+    throw new OrderError("Order not found", 404);
+  }
+  return updated;
 }

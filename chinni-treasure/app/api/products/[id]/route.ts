@@ -7,6 +7,7 @@ import { withAdmin } from "@/src/lib/admin-route";
 import { z } from "zod"
 import { ProductBadge } from "@prisma/client"
 import { normalizeVisibleHostnames } from "@/src/lib/domain-filter";
+import { assertGiftBoxNotOnBox } from "@/src/lib/catalogue-write";
 
 const ImageInputSchema = z.object({
   url: z.string().min(1),
@@ -83,15 +84,11 @@ export const PUT = withAdmin<{ id: string }>(
     // from the current product's value.
     const existing = await prisma.product.findUnique({
       where: { id },
-      select: { sku: true, category: { select: { slug: true } }, allowGiftBoxBundling: true },
+      select: { sku: true, categoryId: true, allowGiftBoxBundling: true },
     });
 
-    // Validate gift box bundling: cannot enable on a Gift Box category product
-    if (allowGiftBoxBundling && existing?.category?.slug === "box") {
-      return NextResponse.json(
-        { error: "Gift box bundling cannot be enabled on Gift Box products" },
-        { status: 400 },
-      );
+    if (allowGiftBoxBundling) {
+      await assertGiftBoxNotOnBox(existing?.categoryId ?? null);
     }
 
     const updateData = buildUpdateData(productFields as Record<string, unknown>) as Record<string, unknown>;

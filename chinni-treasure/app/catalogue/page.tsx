@@ -1,10 +1,8 @@
-import { prisma } from "@/src/lib/prisma";
 import CatalogueContent from "@/src/components/pages/catalogue-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
 import { headers } from "next/headers";
-import { listCatalogue } from "@/src/lib/product-read";
-import { productsCache, categoriesCache } from "@/src/lib/catalogue-cache";
+import { listCatalogue, loadActiveCategories } from "@/src/lib/product-read";
 import type { Metadata } from "next";
 
 // Content depends on the request's Host header (visibleHostnames domain
@@ -52,38 +50,16 @@ export default async function CataloguePage(props: {
   const headersList = await headers();
   const hostname = headersList.get("host");
 
-  const cacheKeySuffix = `${hostname ?? "default"}:${validCategoryId ?? "all"}`;
-  const { get: getCachedProducts, set: setProductsCache } = productsCache;
-  const { get: getCachedCategories, set: setCategoriesCache } = categoriesCache;
-
+  // The catalogue and category options are fetched through the read module's
+  // owned cache surfaces (listCatalogue / loadActiveCategories) — no inline
+  // cache get/set, no bespoke keys on the module's namespaces. The search
+  // param never reaches these fetches (the client re-queries /api/products),
+  // so it is deliberately not part of any cache key.
   try {
-    const cachedCategories = (await getCachedCategories(`cats:${cacheKeySuffix}`)) as CategoryOption[] | null;
-    if (cachedCategories) {
-      categories = cachedCategories;
-    } else {
-      const categoriesData = await prisma.category.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true, slug: true },
-        orderBy: { displayOrder: "asc" },
-      });
-      categories = categoriesData.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
-      await setCategoriesCache(`cats:${cacheKeySuffix}`, categories);
-    }
-
-    const productCacheKey = `cat:${cacheKeySuffix}:${initialSearch || "nosearch"}`;
-    const cached = (await getCachedProducts(productCacheKey)) as { products: typeof products; total: number } | null;
-
-    if (cached) {
-      products = cached.products;
-      total = cached.total;
-    } else {
-      const result = await listCatalogue(hostname, validCategoryId);
-      products = result.products;
-      total = result.total;
-
-      await setProductsCache(productCacheKey, { products, total });
-    }
-
+    categories = (await loadActiveCategories()).map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+    const result = await listCatalogue(hostname, validCategoryId);
+    products = result.products;
+    total = result.total;
     totalPages = Math.max(1, Math.ceil(total / CATALOGUE_PAGE_SIZE));
   } catch (err) {
     console.error("Failed to fetch catalogue data:", err);

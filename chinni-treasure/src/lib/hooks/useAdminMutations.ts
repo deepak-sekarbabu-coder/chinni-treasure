@@ -85,8 +85,9 @@ export function useUpdateOrderStatus() {
 
 export function useUpdateTrackingId() {
   const queryClient = useQueryClient();
-  return useMutation<Order, Error, { orderId: string; trackingId: string }>({
-    mutationFn: ({ orderId, trackingId }) => updateTrackingId(orderId, { trackingId }),
+  return useMutation<Order, Error, { orderId: string; trackingId: string; expectedVersion?: number }>({
+    mutationFn: ({ orderId, trackingId, expectedVersion }) =>
+      updateTrackingId(orderId, { trackingId, expectedVersion }),
     onSuccess: () => invalidateAdminQueries(queryClient),
   });
 }

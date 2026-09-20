@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { categoriesCache, invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 import { checkAuth } from "@/src/lib/auth";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 import { slugify } from "@/src/lib/utils";
-
-const { get: getCached, set: setCache } = categoriesCache;
+import { generateUniqueSlug } from "@/src/lib/catalogue-write";
+import { loadActiveCategories } from "@/src/lib/product-read";
 
 // GET /api/categories
 // Public: returns active categories ordered by displayOrder.
@@ -18,61 +18,47 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
 
-    // Cache only the public (active) response — the admin variant
-    // (includeInactive=true) must always be fresh.
+    // Public (active) response comes through the module's loadActiveCategories
+    // surface — cached under the shared `active` key, invalidated by the module.
+    // The admin variant (includeInactive=true) must always be fresh.
     if (!includeInactive) {
-      const cached = await getCached("active");
-      if (cached) {
-        return NextResponse.json(cached, {
-          headers: {
-            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-          },
-        });
-      }
-    } else {
-      const admin = await checkAuth();
-      if (!admin) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      const categories = await loadActiveCategories();
+      return NextResponse.json(categories, {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      });
     }
 
-    const where = includeInactive ? {} : { isActive: true };
+    const admin = await checkAuth();
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const categories = await prisma.category.findMany({
-      where,
+      where: {},
       select: {
         id: true,
         name: true,
         slug: true,
-        description: includeInactive ? true : false,
+        description: true,
         displayOrder: true,
-        isActive: includeInactive ? true : false,
-        _count: includeInactive
-          ? { select: { products: { where: { deletedAt: null } } } }
-          : false,
-        createdAt: includeInactive ? true : false,
-        updatedAt: includeInactive ? true : false,
+        isActive: true,
+        _count: { select: { products: { where: { deletedAt: null } } } },
+        createdAt: true,
+        updatedAt: true,
       },
       orderBy: { displayOrder: "asc" },
     });
 
     const payload = categories.map((c) => ({
       ...c,
-      productCount:
-        "_count" in c && typeof c._count === "object" && c._count
-          ? (c._count as { products: number }).products ?? 0
-          : undefined,
+      productCount: c._count ? c._count.products ?? 0 : undefined,
     }));
-
-    if (!includeInactive) {
-      await setCache("active", payload);
-    }
 
     return NextResponse.json(payload, {
       headers: {
-        "Cache-Control": includeInactive
-          ? "no-store"
-          : "public, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
@@ -81,17 +67,6 @@ export async function GET(request: Request) {
       { error: "Failed to fetch categories" },
       { status: 500 },
     );
-  }
-}
-
-async function generateUniqueSlug(base: string): Promise<string> {
-  let slug = base || "category";
-  let attempt = 1;
-  while (true) {
-    const existing = await prisma.category.findUnique({ where: { slug } });
-    if (!existing) return slug;
-    attempt += 1;
-    slug = `${base}-${attempt}`;
   }
 }
 

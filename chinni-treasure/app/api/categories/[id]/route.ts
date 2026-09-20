@@ -7,17 +7,7 @@ import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
 import { slugify } from "@/src/lib/utils";
-
-async function generateUniqueSlug(base: string, ignoreId: number): Promise<string> {
-  let slug = base || "category";
-  let attempt = 1;
-  while (true) {
-    const existing = await prisma.category.findUnique({ where: { slug } });
-    if (!existing || existing.id === ignoreId) return slug;
-    attempt += 1;
-    slug = `${base}-${attempt}`;
-  }
-}
+import { generateUniqueSlug } from "@/src/lib/catalogue-write";
 
 // PUT /api/categories/[id] — Update a category (admin only)
 export const PUT = withAdmin<{ id: string }>(

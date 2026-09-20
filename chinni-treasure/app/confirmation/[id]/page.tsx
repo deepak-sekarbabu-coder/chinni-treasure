@@ -1,9 +1,13 @@
-import { prisma } from "@/src/lib/prisma";
 import Link from "next/link";
 import ConfirmationDetails from "@/src/components/order/ConfirmationDetails";
+import { getOrderDetail } from "@/src/lib/order-cache";
 import type { Metadata } from "next";
 
-export const revalidate = 30;
+// The order-cache (30s, keyed by order id, invalidated by invalidateOrderCache)
+// owns this page's freshness — ISR would serve stale HTML that no cache
+// invalidation can reach, and cache one customer's order detail for everyone
+// who hits the same URL. Render per request and read through the module.
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -57,14 +61,7 @@ export default async function ConfirmationPage({ params }: Props) {
   } | null = null;
 
   try {
-    const data = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          select: { id: true, productName: true, unitPrice: true, quantity: true, parentOrderItemId: true },
-        },
-      },
-    });
+    const data = await getOrderDetail(id);
 
     if (data) {
       order = {

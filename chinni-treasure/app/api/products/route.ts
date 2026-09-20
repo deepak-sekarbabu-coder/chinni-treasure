@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { getHostFromRequest, domainFilterWhere, normalizeVisibleHostnames } from "@/src/lib/domain-filter";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
+import { assertGiftBoxNotOnBox } from "@/src/lib/catalogue-write";
 
 const { get: getCached, set: setCache } = productsCache;
 
@@ -48,7 +49,6 @@ export async function GET(request: Request) {
     if (parsedQuery instanceof NextResponse) return parsedQuery;
     const { page, limit, skip } = parsedQuery;
     const sortParam = (parsedQuery.sort ?? "newest") as SortKey;
-    const sort = SORT_OPTIONS[sortParam];
 
     const isActiveParam = searchParams.get("isActive");
     const statusFilter = isActiveParam === "all" || isActiveParam === "inactive" ? isActiveParam : "active";
@@ -119,9 +119,7 @@ export async function GET(request: Request) {
         category: { select: { name: true } },
         images: { orderBy: { displayOrder: "asc" } },
       },
-      orderBy: sortParam === "newest"
-        ? [{ stockQuantity: "desc" as const }, ...sort, { id: "desc" as const }]
-        : [...sort, { id: "desc" as const }],
+      orderBy: [...SORT_OPTIONS[sortParam]],
       skip,
       take: limit,
     });
@@ -187,15 +185,8 @@ export const POST = withAdmin(
 
     const { images, allowGiftBoxBundling, ...productData } = parsed.data;
 
-    // Validate gift box bundling: cannot enable on a Gift Box category product
-    if (allowGiftBoxBundling && productData.categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: productData.categoryId }, select: { slug: true } });
-      if (category?.slug === "box") {
-        return NextResponse.json(
-          { error: "Gift box bundling cannot be enabled on Gift Box products" },
-          { status: 400 },
-        );
-      }
+    if (allowGiftBoxBundling) {
+      await assertGiftBoxNotOnBox(productData.categoryId ?? null);
     }
 
     const product = await prisma.product.create({

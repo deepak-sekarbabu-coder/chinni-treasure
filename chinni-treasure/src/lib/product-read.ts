@@ -1,3 +1,4 @@
+import { SORT_OPTIONS, categoriesCache, productsCache } from "@/src/lib/catalogue-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
@@ -43,17 +44,38 @@ export type CatalogueProductView = {
   images?: { id: string; url: string; isPrimary: boolean; displayOrder: number }[];
 };
 
-const DEFAULT_ORDER: Prisma.ProductOrderByWithRelationInput[] = [
-  { stockQuantity: "desc" },
-  { createdAt: "desc" },
-  { id: "desc" },
-];
+// The category page's allowed sort keys, read straight from the shared
+// catalogue sort table — an allow-list, not a re-declaration of the rule.
+export const CATEGORY_SORT_MAP = {
+  newest: SORT_OPTIONS.newest,
+  "price-asc": SORT_OPTIONS["price-asc"],
+  "price-desc": SORT_OPTIONS["price-desc"],
+} as const;
 
-export const CATEGORY_SORT_MAP: Record<string, Prisma.ProductOrderByWithRelationInput[]> = {
-  newest: DEFAULT_ORDER,
-  "price-asc": [{ stockQuantity: "desc" }, { price: "asc" }, { id: "asc" }],
-  "price-desc": [{ stockQuantity: "desc" }, { price: "desc" }, { id: "desc" }],
+export type ActiveCategoryOption = {
+  id: number;
+  name: string;
+  slug: string;
+  displayOrder: number;
 };
+
+/**
+ * Active categories for the catalogue filter dropdown / public /api/categories,
+ * cached through the module-owned `categoriesCache` under the same `active` key
+ * both consumers share — one pipeline, one invalidation hit. The shape matches
+ * the public API contract exactly (id/name/slug/displayOrder).
+ */
+export async function loadActiveCategories(): Promise<ActiveCategoryOption[]> {
+  const cached = (await categoriesCache.get("active")) as ActiveCategoryOption[] | null;
+  if (cached) return cached;
+  const rows = await prisma.category.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, slug: true, displayOrder: true },
+    orderBy: { displayOrder: "asc" },
+  });
+  await categoriesCache.set("active", rows);
+  return rows;
+}
 
 function toProductView(row: ProductRow): ProductView {
   return {
@@ -107,6 +129,14 @@ export async function listCatalogue(
   hostname: string | null,
   categoryId?: number,
 ): Promise<{ products: CatalogueProductView[]; total: number }> {
+  // Cache-through through the module-owned productsCache. The key is host +
+  // category only — the reset of the query (listCatalogue has no search) never
+  // varies, so a search param must not enter the key (that was the old
+  // per-URL cache thrash). Invalidation is the module's own.
+  const cacheKey = `${hostname ?? "default"}:list:${categoryId ?? "all"}`;
+  const cached = (await productsCache.get(cacheKey)) as { products: CatalogueProductView[]; total: number } | null;
+  if (cached) return cached;
+
   const where: Prisma.ProductWhereInput = {
     isActive: true,
     deletedAt: null,
@@ -118,14 +148,16 @@ export async function listCatalogue(
     prisma.product.findMany({
       where,
       include: INCLUDE,
-      orderBy: DEFAULT_ORDER,
+      orderBy: [...SORT_OPTIONS.newest],
       take: 6,
       skip: 0,
     }),
     prisma.product.count({ where }),
   ]);
 
-  return { products: rows.map(toCatalogueProductView), total };
+  const result = { products: rows.map(toCatalogueProductView), total };
+  await productsCache.set(cacheKey, result);
+  return result;
 }
 
 export async function listByCategory(
@@ -145,7 +177,7 @@ export async function listByCategory(
   const skip = (page - 1) * limit;
 
   const sortKey = opts.sort ?? "newest";
-  const orderBy = CATEGORY_SORT_MAP[sortKey] ?? DEFAULT_ORDER;
+  const orderBy = [...(CATEGORY_SORT_MAP[sortKey as keyof typeof CATEGORY_SORT_MAP] ?? SORT_OPTIONS.newest)];
 
   const category = await prisma.category.findUnique({
     where: { slug },
