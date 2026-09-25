@@ -12,11 +12,9 @@ import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
 import { useCheckoutForm, type OrderForm } from "@/src/lib/hooks/useCheckoutForm";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
-import { ApiError } from "@/src/lib/api/client";
-import { createRazorpayOrder, verifyRazorpayPayment } from "@/src/lib/api";
-import { loadRazorpayScript } from "@/src/lib/razorpay";
+import { useCheckoutPayment } from "@/src/lib/hooks/useCheckoutPayment";
+import { getErrorMessage } from "@/src/lib/api/client";
 import { formatMoney } from "@/src/lib/format";
-import type { RazorpayResponse } from "@/src/types/razorpay";
 
 import ReturnsPolicyModal from "@/src/components/ui/ReturnsPolicyModal";
 
@@ -266,9 +264,9 @@ export default function OrderPage() {
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
   const { showToast } = useToast();
   const placeOrder = usePlaceOrder();
+  const { processing, payWithRazorpay } = useCheckoutPayment();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [processing, setProcessing] = useState(false);
 
   const checkout = useCheckoutForm(items);
   const { form, setForm, errors, setErrors, isCustomCity, setIsCustomCity, handleChange, validate, manualOrderPayload } = checkout;
@@ -353,15 +351,7 @@ export default function OrderPage() {
     return validate();
   }
 
-  function getErrorMessage(err: unknown): string {
-    return err instanceof ApiError
-      ? err.message
-      : err instanceof Error
-        ? err.message
-        : "Something went wrong";
-  }
-
-  /** Manual placements carry no gateway reference for paid==stored; razorpay does (set in the handler). */
+  /** Manual placements carry no gateway reference for paid==stored; razorpay does (set in the hook). */
 
   async function handleRazorpayPayment() {
     if (items.length === 0) {
@@ -380,76 +370,26 @@ export default function OrderPage() {
       return;
     }
 
-    setProcessing(true);
-    try {
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      if (!razorpayKey) {
-        throw new Error("Razorpay is not configured on this site");
-      }
+    // The capture sequence — create gateway order, open checkout, verify the
+    // signature, place the order — lives behind the checkout payment seam.
+    const outcome = await payWithRazorpay({
+      amount: grandTotal,
+      prefill: {
+        name: form.fullName.trim(),
+        email: form.email.trim(),
+        contact: form.phone.trim(),
+      },
+      placeOrder: (placement) => placeOrder.mutateAsync({ ...manualOrderPayload, ...placement }),
+    });
 
-      const Razorpay = await loadRazorpayScript();
-      const createdOrder = await createRazorpayOrder({
-        amount: grandTotal,
-        currency: "INR",
-        receipt: `CT-${Date.now()}`,
-      });
-
-      const options = {
-        key: razorpayKey,
-        amount: createdOrder.amount,
-        currency: createdOrder.currency,
-        name: "CHINNI TREASURE",
-        description: "Order Payment",
-        order_id: createdOrder.order_id,
-        prefill: {
-          name: form.fullName.trim(),
-          email: form.email.trim(),
-          contact: form.phone.trim(),
-        },
-        theme: { color: "#1A1A1A" },
-        handler: async (response: RazorpayResponse) => {
-          try {
-            const verification = await verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            if (!verification.ok) {
-              showToast("Payment verification failed. Please contact support.", "error");
-              setProcessing(false);
-              return;
-            }
-            const order = await placeOrder.mutateAsync({
-              ...manualOrderPayload,
-              paymentGateway: "razorpay",
-              transactionId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-            });
-            clearCart();
-            showToast("Payment successful! Order placed.", "success");
-            router.push(`/confirmation/${order.id}`);
-          } catch (err) {
-            showToast(getErrorMessage(err), "error");
-            setProcessing(false);
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            showToast("Payment cancelled. You can try again.", "info");
-            setProcessing(false);
-          },
-        },
-      };
-
-      const rzp = new Razorpay(options);
-      rzp.on("payment.failed", (response: { error?: { description?: string } }) => {
-        showToast(`Payment failed: ${response.error?.description ?? "Please try again."}`, "error");
-        setProcessing(false);
-      });
-      rzp.open();
-    } catch (err: unknown) {
-      showToast(getErrorMessage(err), "error");
-      setProcessing(false);
+    if (outcome.ok) {
+      clearCart();
+      showToast("Payment successful! Order placed.", "success");
+      router.push(`/confirmation/${outcome.orderId}`);
+    } else if (outcome.reason === "cancelled") {
+      showToast(outcome.message, "info");
+    } else {
+      showToast(outcome.message, "error");
     }
   }
 

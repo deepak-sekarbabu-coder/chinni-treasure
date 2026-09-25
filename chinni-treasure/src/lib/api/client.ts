@@ -32,6 +32,18 @@ export class NetworkError extends Error {
   }
 }
 
+/**
+ * One error-shaping helper for surfaces that show a single message line.
+ * Lives here so the checkout page and the payment hook render the same words.
+ */
+export function getErrorMessage(err: unknown): string {
+  return err instanceof ApiError
+    ? err.message
+    : err instanceof Error
+      ? err.message
+      : "Something went wrong";
+}
+
 interface RequestOptions<TResponse> {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
