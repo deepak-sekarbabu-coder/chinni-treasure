@@ -8,10 +8,10 @@ import StockBadge from "./StockBadge";
 import {
   PRODUCT_IMAGE_QUALITY,
   BLUR_PLACEHOLDER,
+  IMAGE_UNAVAILABLE_PLACEHOLDER,
 } from "@/src/lib/images";
+import { productDisplayView } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
-
-const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";
 
 export interface ProductImageData {
   id: string;
@@ -55,12 +55,10 @@ export default function ProductCard({
   // Use primary image from images array, fall back to imageUrl
   const [imgFailed, setImgFailed] = useState(false);
   const imageSettledRef = useRef(false);
-  const primaryImage =
-    product.images?.find((img) => img.isPrimary)?.url ||
-    product.imageUrl ||
-    PLACEHOLDER_SVG;
+  // Shared display contract: primary-image pick + placeholder fallback + stock state.
+  const view = productDisplayView(product);
 
-  const isOutOfStock = product.stockQuantity <= 0;
+  const isOutOfStock = view.stock === "out";
 
   const settleImage = () => {
     if (imageSettledRef.current) return;
@@ -77,7 +75,7 @@ export default function ProductCard({
       <Link href={`/catalogue/${product.id}`} className="product-card-image-link">
         <div className="product-card-image">
           <FallbackImage
-            src={imgFailed ? PLACEHOLDER_SVG : primaryImage}
+            src={imgFailed ? IMAGE_UNAVAILABLE_PLACEHOLDER : view.image}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -120,13 +118,13 @@ export default function ProductCard({
         </div>
         <div className="product-card-footer">
           <span className="product-card-price">
-            {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) ? (
+            {view.hasDiscount && view.compareAtPrice != null ? (
               <>
-                <span className="product-card-price-original">{formatMoney(Number(product.compareAtPrice))}</span>
-                {formatMoney(Number(product.price))}
+                <span className="product-card-price-original">{formatMoney(view.compareAtPrice)}</span>
+                {formatMoney(view.price)}
               </>
             ) : (
-              <>{formatMoney(Number(product.price))}</>
+              <>{formatMoney(view.price)}</>
             )}
           </span>
           <StockBadge stockQuantity={product.stockQuantity} />

@@ -7,12 +7,13 @@ import { listByCategory } from "@/src/lib/product-read";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
+import { env } from "@/src/lib/env";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+const siteUrl = env.NEXT_PUBLIC_SITE_URL;
 
 // Content depends on the request's Host header (visibleHostnames domain
 // filter), so every request must render fresh — ISR/static rendering would
@@ -22,7 +23,8 @@ export const dynamic = "force-dynamic";
 /**
  * Cached category lookup shared by generateMetadata and the page component
  * to avoid duplicate DB queries per request (each query holds a pool slot
- * and the Nhost free-tier limit is ~5 connections total).
+ * and the Nhost free-tier limit is ~5 connections total). The `categories`
+ * tag is revalidated by invalidateCatalogCaches() on any catalogue mutation.
  */
 const getCategoryBySlug = unstable_cache(
   async (slug: string) =>

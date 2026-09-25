@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import Link from "next/link";
-import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER } from "@/src/lib/images";
+import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER, IMAGE_UNAVAILABLE_PLACEHOLDER } from "@/src/lib/images";
+import { productDisplayView } from "@/src/lib/product-display";
 import { fetchLatestCategories } from "@/src/lib/api";
 import type { LatestCategoriesResponse, LatestCategorySection } from "@/src/lib/api/schemas";
 import { formatMoney } from "@/src/lib/format";
-
-const PLACEHOLDER_SVG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";
 
 interface Props {
   initialSections?: LatestCategoriesResponse;
@@ -18,12 +16,8 @@ interface Props {
 function CategoryCard({ section, index }: { section: LatestCategorySection; index: number }) {
   const { category, product } = section;
   const [imgFailed, setImgFailed] = useState(false);
-  const primaryImage =
-    product.images?.find((img) => img.isPrimary)?.url ||
-    product.imageUrl ||
-    PLACEHOLDER_SVG;
-  const hasDiscount =
-    product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price);
+  // Shared display contract: primary-image pick + discount math + badge.
+  const view = productDisplayView(product);
 
   return (
     <article className="latest-category-block" aria-labelledby={`latest-cat-${category.slug}`}>
@@ -59,7 +53,7 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
       >
         <div className="latest-category-card-image">
           <FallbackImage
-            src={imgFailed ? PLACEHOLDER_SVG : primaryImage}
+            src={imgFailed ? IMAGE_UNAVAILABLE_PLACEHOLDER : view.image}
             alt={product.name}
             fill
             sizes="(max-width: 480px) 80vw, (max-width: 768px) 45vw, (max-width: 1200px) 22vw, 18vw"
@@ -70,31 +64,28 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
             priority={index < 2}
             onError={() => setImgFailed(true)}
           />
-          {product.badge && (
-            <span className="latest-category-badge">{product.badge}</span>
+          {view.badge && (
+            <span className="latest-category-badge">{view.badge}</span>
           )}
         </div>
         <div className="latest-category-card-body">
           <h4 className="latest-category-card-title">{product.name}</h4>
           <div className="latest-category-card-footer">
             <span className="latest-category-card-price">
-              {hasDiscount ? (
+              {view.hasDiscount && view.compareAtPrice != null ? (
                 <>
                   <span className="latest-category-card-price-original">
-                    {formatMoney(Number(product.compareAtPrice))}
+                    {formatMoney(view.compareAtPrice)}
                   </span>
-                  {formatMoney(Number(product.price))}
+                  {formatMoney(view.price)}
                 </>
               ) : (
-                <>{formatMoney(Number(product.price))}</>
+                <>{formatMoney(view.price)}</>
               )}
             </span>
-            {hasDiscount && (
+            {view.hasDiscount && (
               <span className="latest-category-card-discount">
-                {Math.round(
-                  (1 - Number(product.price) / Number(product.compareAtPrice)) * 100,
-                )}
-                % OFF
+                {view.discountPercent}% OFF
               </span>
             )}
           </div>

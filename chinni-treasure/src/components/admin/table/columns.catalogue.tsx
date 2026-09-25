@@ -6,6 +6,7 @@ import { Images, MagnifyingGlassPlus, PencilSimple, Trash } from "@phosphor-icon
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Product } from "@/src/lib/api/schemas";
 import { formatINR } from "@/src/lib/format";
+import { primaryImage, productDisplayView, stockHealth } from "@/src/lib/product-display";
 
 export interface CatalogueTableMeta {
   loadingProductId: string | null;
@@ -38,6 +39,23 @@ export function sortingToApiSort(sorting: SortingState): string {
   return pair ? (head.desc ? pair.desc : pair.asc) : "newest";
 }
 
+export function StockHealthCell({ qty }: { qty: number }) {
+  const state = stockHealth(qty);
+  const className =
+    state === "out" ? "out-of-stock" : state === "low" ? "low-stock" : "in-stock";
+  return (
+    <span className={`stock-health-badge ${className}`}>
+      <span className="stock-dot" />
+      {state === "out" ? "Out of stock" : state === "low" ? `Low (${qty})` : `${qty} in stock`}
+    </span>
+  );
+}
+
+export function BadgeCell({ badge }: { badge: string | null | undefined }) {
+  if (!badge) return <span className="text-muted text-xs">—</span>;
+  return <span className={`luxury-badge badge-${badge.toLowerCase()}`}>{badge}</span>;
+}
+
 function GalleryThumbCell({
   product,
   onPreview,
@@ -46,8 +64,9 @@ function GalleryThumbCell({
   onPreview: (p: Product) => void;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const primaryImage = product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
-  const hasValidImage = primaryImage && !imgFailed && /^https?:\/\//.test(primaryImage);
+  // Shared display contract: primary-image pick.
+  const image = primaryImage(product);
+  const hasValidImage = /^https?:\/\//.test(image) && !imgFailed;
   return (
     <div
       className="table-img-wrapper"
@@ -56,7 +75,7 @@ function GalleryThumbCell({
     >
       {hasValidImage ? (
         <FallbackImage
-          src={primaryImage}
+          src={image}
           alt={product.name}
           width={52}
           height={52}
@@ -118,19 +137,14 @@ export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Prod
       header: "Price & MRP",
       meta: { label: "Price" },
       cell: ({ row }) => {
-        const priceNum = Number(row.original.price) || 0;
-        const compareNum = Number(row.original.compareAtPrice) || 0;
-        const hasDiscount = compareNum > priceNum;
-        const savingsPercent = hasDiscount
-          ? Math.round(((compareNum - priceNum) / compareNum) * 100)
-          : 0;
+        const view = productDisplayView(row.original);
         return (
           <div className="table-price-cell">
-            <div className="price-primary">₹{formatINR(priceNum)}</div>
-            {hasDiscount && (
+            <div className="price-primary">₹{formatINR(view.price)}</div>
+            {view.hasDiscount && view.compareAtPrice != null && (
               <div className="price-secondary">
-                <span className="price-mrp">₹{formatINR(compareNum)}</span>
-                <span className="discount-badge">-{savingsPercent}%</span>
+                <span className="price-mrp">₹{formatINR(view.compareAtPrice)}</span>
+                <span className="discount-badge">-{view.discountPercent}%</span>
               </div>
             )}
           </div>
@@ -142,30 +156,13 @@ export function createCatalogueColumns(meta: CatalogueTableMeta): ColumnDef<Prod
       accessorKey: "stockQuantity",
       header: "Stock",
       meta: { label: "Stock" },
-      cell: ({ row }) => {
-        const qty = row.original.stockQuantity;
-        return (
-          <span
-            className={`stock-health-badge ${qty <= 0 ? "out-of-stock" : qty <= 3 ? "low-stock" : "in-stock"}`}
-          >
-            <span className="stock-dot" />
-            {qty <= 0 ? "Out of stock" : qty <= 3 ? `Low (${qty})` : `${qty} in stock`}
-          </span>
-        );
-      },
+      cell: ({ row }) => <StockHealthCell qty={row.original.stockQuantity} />,
     },
     {
       id: "badge",
       header: "Badge",
       enableSorting: false,
-      cell: ({ row }) =>
-        row.original.badge ? (
-          <span className={`luxury-badge badge-${row.original.badge.toLowerCase()}`}>
-            {row.original.badge}
-          </span>
-        ) : (
-          <span className="text-muted text-xs">—</span>
-        ),
+      cell: ({ row }) => <BadgeCell badge={row.original.badge} />,
     },
     {
       id: "bundling",

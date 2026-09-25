@@ -1,7 +1,16 @@
-import { SORT_OPTIONS, categoriesCache, productsCache } from "@/src/lib/catalogue-cache";
+import {
+  SORT_OPTIONS,
+  categoriesCache,
+  productsCache,
+  queryCatalogueIndex,
+  type CatalogueIndexProduct,
+  type SortKey,
+} from "@/src/lib/catalogue-cache";
 import { prisma } from "@/src/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { domainFilterWhere } from "@/src/lib/domain-filter";
+import { Prisma, ProductBadge } from "@prisma/client";
+import { domainFilterWhere, isVisibleOnDomain } from "@/src/lib/domain-filter";
+import { totalPages } from "@/src/lib/list-query";
+import { unstable_cache } from "next/cache";
 
 const INCLUDE = {
   category: { select: { name: true } },
@@ -123,6 +132,169 @@ function toCatalogueProductView(row: ProductRow): CatalogueProductView {
       displayOrder: img.displayOrder,
     })),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Product detail read
+// ---------------------------------------------------------------------------
+
+/**
+ * What the product-detail surface renders. The row keeps its raw image pieces
+ * (`imageUrl`, `images`) — the display seam (product-display.ts) resolves "the
+ * primary image" from them once, so the gallery, JSON-LD and og/twitter all
+ * read the same picker instead of three loosely-agreeing computations.
+ * `price`/`compareAtPrice` are numbers and the nullable columns are already
+ * coerced to the strings the component takes, so the page passes this object
+ * straight through.
+ */
+export type ProductDetailView = {
+  id: string;
+  name: string;
+  price: number;
+  compareAtPrice: number | null;
+  imageUrl: string;
+  description: string;
+  category: { name: string } | null;
+  stockQuantity: number;
+  badge: string | null;
+  sku: string | null;
+  allowGiftBoxBundling: boolean;
+  images: { id: string; url: string; isPrimary: boolean; displayOrder: number }[];
+};
+
+const getProductRow = unstable_cache(
+  async (id: string) => prisma.product.findUnique({ where: { id }, include: INCLUDE }),
+  ["product-by-id"],
+  {
+    revalidate: 60,
+    // Cleared by invalidateCatalogCaches() (revalidateTag) on any catalogue
+    // mutation so an admin edit is visible immediately.
+    tags: ["product-detail"],
+  },
+);
+
+function toProductDetailView(row: ProductRow): ProductDetailView {
+  const images = row.images.map((img) => ({
+    id: img.id,
+    url: img.url,
+    isPrimary: img.isPrimary,
+    displayOrder: img.displayOrder,
+  }));
+  return {
+    id: row.id,
+    name: row.name,
+    price: Number(row.price),
+    compareAtPrice: row.compareAtPrice ? Number(row.compareAtPrice) : null,
+    imageUrl: row.imageUrl ?? "",
+    description: row.description ?? "",
+    category: row.category,
+    stockQuantity: row.stockQuantity,
+    badge: row.badge,
+    sku: row.sku,
+    allowGiftBoxBundling: row.allowGiftBoxBundling,
+    images,
+  };
+}
+
+/**
+ * The one product-detail read. The row is cached by id (module-owned tag), but
+ * the active / soft-deleted / domain checks run *outside* the cache: caching
+ * the verdict would serve one host's visibility decision to every host. Null
+ * means "this surface must not show the product" — the page just notFound()s.
+ */
+export async function getProductDetail(id: string, hostname: string | null): Promise<ProductDetailView | null> {
+  const row = await getProductRow(id);
+  if (!row || !row.isActive || row.deletedAt) return null;
+  if (!isVisibleOnDomain(row.visibleHostnames, hostname)) return null;
+  return toProductDetailView(row);
+}
+
+// ---------------------------------------------------------------------------
+// Product list read
+// ---------------------------------------------------------------------------
+
+export type ProductStatusFilter = "active" | "all" | "inactive";
+
+export type ProductListQuery = {
+  page: number;
+  limit: number;
+  skip: number;
+  status: ProductStatusFilter;
+  search: string;
+  categoryId?: number;
+  badge: string;
+  sort: SortKey;
+};
+
+export type ProductListResult = {
+  products: ProductRow[] | CatalogueIndexProduct[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+/**
+ * The one public product-list read, owning the status gate, the where-builder,
+ * the cache key, and the envelope. The active catalogue queries the in-memory
+ * index (no Postgres round trip per keystroke); `all` / `inactive` — the admin
+ * panel's view, and nothing else — reads Postgres through the module-owned
+ * cache. The route parses the URL, checks the session, and hands back JSON.
+ */
+export async function listProductsForQuery(hostname: string | null, query: ProductListQuery): Promise<ProductListResult> {
+  const { page, limit, skip, status, search, categoryId, badge, sort } = query;
+  const envelope = (products: ProductRow[] | CatalogueIndexProduct[], total: number): ProductListResult => ({
+    products,
+    total,
+    page,
+    limit,
+    totalPages: totalPages(total, limit),
+  });
+
+  if (status === "active") {
+    const { products, total } = await queryCatalogueIndex(hostname, {
+      search,
+      categoryId,
+      badge,
+      sort,
+      skip,
+      limit,
+    });
+    return envelope(products, total);
+  }
+
+  const where: Prisma.ProductWhereInput =
+    status === "all"
+      ? { deletedAt: null, ...domainFilterWhere(hostname) }
+      : { isActive: false, deletedAt: null, ...domainFilterWhere(hostname) };
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { sku: { contains: search, mode: "insensitive" } },
+    ];
+  }
+  if (categoryId && Number.isFinite(categoryId)) where.categoryId = categoryId;
+  if (badge && badge !== "all") where.badge = badge as ProductBadge;
+
+  const cacheKey = `${hostname ?? "default"}:${page}:${limit}:${status}:${search}:${categoryId ?? "all"}:${badge}:${sort}`;
+  const cached = (await productsCache.get(cacheKey)) as ProductListResult | null;
+  if (cached) return cached;
+
+  // Sequential queries to avoid saturating Nhost's pooler with concurrent
+  // connections.
+  const products = await prisma.product.findMany({
+    where,
+    include: INCLUDE,
+    orderBy: [...SORT_OPTIONS[sort]],
+    skip,
+    take: limit,
+  });
+  const total = await prisma.product.count({ where });
+
+  const result = envelope(products, total);
+  await productsCache.set(cacheKey, result);
+  return result;
 }
 
 export async function listCatalogue(

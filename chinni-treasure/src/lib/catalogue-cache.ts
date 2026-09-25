@@ -41,14 +41,17 @@ const CATALOGUE_CACHES = [
  * DEL) plus the module's local in-memory fallback. Call after any product or
  * category create / update / delete.
  *
- * Also revalidates the SSR product-detail page (app/catalogue/[id]), which
- * reads through Next's data cache (unstable_cache) rather than Redis — without
- * this tag it would keep serving a stale product for up to 60s after an edit.
+ * Also revalidates the two SSR pages that read through Next's data cache
+ * (unstable_cache) rather than Redis: the product-detail page
+ * (app/catalogue/[id], tag `product-detail`) and the category page
+ * (app/category/[slug], tag `categories`). Without these tags they keep
+ * serving a stale product or category for up to 60s after an edit.
  */
 export async function invalidateCatalogCaches(): Promise<void> {
   await Promise.all(CATALOGUE_CACHES.map((cache) => cache.clear()));
-  // expire: 0 purges the tagged product-detail cache immediately.
+  // expire: 0 purges both tagged data-cache entries immediately.
   revalidateTag("product-detail", { expire: 0 });
+  revalidateTag("categories", { expire: 0 });
 }
 
 /**
@@ -135,7 +138,8 @@ export type CatalogueIndexProduct = Prisma.ProductGetPayload<{
 
 // Sort vocabulary — the ONE order contract for the catalogue. Every entry is a
 // complete orderBy: in-stock first, then the chosen field, then id desc. The
-// /api/products DB branch, the category pages (product-read), and this index's
+// /api/products DB branch (listProductsForQuery, in product-read), the category
+// pages (product-read), and this index's
 // in-memory comparator all derive from these exact arrays, so changing the
 // rule means editing this table — the three can't drift apart.
 export const SORT_OPTIONS = {

@@ -11,6 +11,7 @@ import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
 import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/GiftBoxSelector";
 import type { ProductImageData } from "@/src/components/ui/ProductCard";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
+import { productDisplayView } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
 interface ProductDetails {
@@ -50,6 +51,9 @@ export default function ProductDetailsContent({ product }: Props) {
         : product.imageUrl
             ? [{ id: "primary", url: product.imageUrl, isPrimary: true, displayOrder: 0 }]
             : [];
+
+    // Shared display contract: discount math + low-stock threshold.
+    const view = productDisplayView(product);
 
     const addBtnRef = useRef<HTMLButtonElement>(null);
     const [btnSuccess, setBtnSuccess] = useState(false);
@@ -124,20 +128,20 @@ export default function ProductDetailsContent({ product }: Props) {
                     )}
                     <h1 className="product-details-title">{product.name}</h1>
 
-                    {product.badge && (
+                    {view.badge && (
                         <span className="product-card-badge product-details-badge">
-                            {product.badge}
+                            {view.badge}
                         </span>
                     )}
 
                     <p className="product-details-price">
-                        {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) ? (
+                        {view.hasDiscount && view.compareAtPrice != null ? (
                             <>
-                                <span className="product-details-price-original">{formatMoney(Number(product.compareAtPrice))}</span>
-                                {formatMoney(Number(product.price))}
+                                <span className="product-details-price-original">{formatMoney(view.compareAtPrice)}</span>
+                                {formatMoney(view.price)}
                             </>
                         ) : (
-                            <>{formatMoney(Number(product.price))}</>
+                            <>{formatMoney(view.price)}</>
                         )}
                     </p>
 
@@ -195,7 +199,7 @@ export default function ProductDetailsContent({ product }: Props) {
                         </button>
                     </div>
 
-                    {product.stockQuantity > 1 && product.stockQuantity <= 5 && (
+                    {view.stock === "low" && (
                         <p className="product-details-low-stock">
                             Only {product.stockQuantity} left in stock — order soon
                         </p>

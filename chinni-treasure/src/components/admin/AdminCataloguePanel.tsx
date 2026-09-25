@@ -2,6 +2,8 @@
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { formatINR } from "@/src/lib/format";
+import { primaryImage, productDisplayView } from "@/src/lib/product-display";
+import { StockHealthCell, BadgeCell } from "@/src/components/admin/table/columns.catalogue";
 import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -403,17 +405,11 @@ function CatalogueCards({
   return (
     <ul className="admin-catalogue-cards">
       {products.map((product) => {
-        const primaryImage =
-          product.images?.find((img) => img.isPrimary)?.url || product.imageUrl;
-        const hasValidImage = !!primaryImage && /^https?:\/\//.test(primaryImage);
+        // Shared display contract: primary-image pick + discount math + stock state.
+        const view = productDisplayView(product);
+        const image = primaryImage(product);
+        const hasValidImage = /^https?:\/\//.test(image);
         const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
-        const priceNum = Number(product.price) || 0;
-        const compareNum = Number(product.compareAtPrice) || 0;
-        const hasDiscount = compareNum > priceNum;
-        const savingsPercent = hasDiscount
-          ? Math.round(((compareNum - priceNum) / compareNum) * 100)
-          : 0;
-        const qty = product.stockQuantity;
         const isDeleting = loadingProductId === product.id;
 
         return (
@@ -427,7 +423,7 @@ function CatalogueCards({
             >
               {hasValidImage ? (
                 <FallbackImage
-                  src={primaryImage}
+                  src={image}
                   alt=""
                   width={72}
                   height={72}
@@ -453,29 +449,20 @@ function CatalogueCards({
                   {product.category?.name && (
                     <span className="category-pill-badge">{product.category.name}</span>
                   )}
-                  {product.badge && (
-                    <span className={`luxury-badge badge-${product.badge.toLowerCase()}`}>
-                      {product.badge}
-                    </span>
-                  )}
+                  {view.badge && <BadgeCell badge={view.badge} />}
                 </div>
               </div>
               <div className="catalogue-card-meta">
                 <div className="table-price-cell">
-                  <div className="price-primary">₹{formatINR(priceNum)}</div>
-                  {hasDiscount && (
+                  <div className="price-primary">₹{formatINR(view.price)}</div>
+                  {view.hasDiscount && view.compareAtPrice != null && (
                     <div className="price-secondary">
-                      <span className="price-mrp">₹{formatINR(compareNum)}</span>
-                      <span className="discount-badge">-{savingsPercent}%</span>
+                      <span className="price-mrp">₹{formatINR(view.compareAtPrice)}</span>
+                      <span className="discount-badge">-{view.discountPercent}%</span>
                     </div>
                   )}
                 </div>
-                <span
-                  className={`stock-health-badge ${qty <= 0 ? "out-of-stock" : qty <= 3 ? "low-stock" : "in-stock"}`}
-                >
-                  <span className="stock-dot" />
-                  {qty <= 0 ? "Out of stock" : qty <= 3 ? `Low (${qty})` : `${qty} in stock`}
-                </span>
+                <StockHealthCell qty={product.stockQuantity} />
               </div>
               <div className="catalogue-card-actions">
                 <button

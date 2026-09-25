@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
 interface GiftBox {
@@ -217,7 +218,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
                         <span className="gift-box-modal-option-price">
                           {formatMoney(box.price)}
                         </span>
-                        {box.stockQuantity <= 3 && box.stockQuantity > 0 && (
+                        {stockHealth(box.stockQuantity) === "low" && (
                           <span className="gift-box-modal-option-stock">
                             Only {box.stockQuantity} left
                           </span>

@@ -1,12 +1,16 @@
+import { stockHealth } from "@/src/lib/product-display";
+
 interface Props {
   stockQuantity: number;
 }
 
 export default function StockBadge({ stockQuantity }: Props) {
-  if (stockQuantity <= 0) {
+  const state = stockHealth(stockQuantity);
+
+  if (state === "out") {
     return <span className="stock-badge empty">Out of Stock</span>;
   }
-  if (stockQuantity > 1 && stockQuantity <= 3) {
+  if (state === "low") {
     return (
       <span className="stock-badge low">Only {stockQuantity} left</span>
     );

@@ -1,42 +1,31 @@
-import { prisma } from "@/src/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { unstable_cache } from "next/cache";
 import { headers } from "next/headers";
 import ProductDetailsContent from "@/src/components/pages/ProductDetailsContent";
 import JsonLd from "@/src/components/ui/JsonLd";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
-import { isVisibleOnDomain } from "@/src/lib/domain-filter";
+import { getProductDetail } from "@/src/lib/product-read";
+import { primaryImage } from "@/src/lib/product-display";
+import { env } from "@/src/lib/env";
 
 interface Props {
     params: Promise<{ id: string }>;
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+const siteUrl = env.NEXT_PUBLIC_SITE_URL;
 
-const getProductById = unstable_cache(
-    async (id: string) =>
-        prisma.product.findUnique({
-            where: { id },
-            include: {
-                category: { select: { name: true } },
-                images: { orderBy: { displayOrder: "asc" } },
-            },
-        }),
-    ["product-by-id"],
-    {
-        revalidate: 60,
-        // Cleared by invalidateCatalogCaches() (revalidateTag) on any
-        // catalogue mutation so an admin edit is visible immediately.
-        tags: ["product-detail"],
-    },
-);
-
+// The read, its cache (module-owned `product-detail` tag, cleared by
+// invalidateCatalogCaches), and the availability/visibility gates all live in
+// product-read — this page only shapes the response. Passing the host keeps the
+// cache key request-neutral: one host's visibility decision is never served to
+// another.
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const { id } = await params;
-        const product = await getProductById(id);
+        const product = await getProductDetail(id, (await headers()).get("host"));
         if (!product) return { title: "Product Not Found — Chinni Treasure" };
+        // The one primary-image pick, shared with the gallery and JSON-LD.
+        const image = primaryImage(product);
         return {
             title: `${product.name} — Chinni Treasure`,
             description: product.description || `View ${product.name} at Chinni Treasure.`,
@@ -47,15 +36,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 title: `${product.name} — Chinni Treasure`,
                 description: product.description || `View ${product.name} at Chinni Treasure.`,
                 url: `/catalogue/${product.id}`,
-                images: product.imageUrl
-                    ? [{ url: product.imageUrl, alt: product.name }]
-                    : [],
+                images: [{ url: image, alt: product.name }],
             },
             twitter: {
                 card: "summary_large_image",
                 title: `${product.name} — Chinni Treasure`,
                 description: product.description || `View ${product.name} at Chinni Treasure.`,
-                images: product.imageUrl ? [product.imageUrl] : [],
+                images: [image],
             },
         };
     } catch {
@@ -66,40 +53,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailsPage({ params }: Props) {
     const { id } = await params;
 
-    const product = await getProductById(id);
+    // null = missing, inactive, soft-deleted, or not visible on this host.
+    const product = await getProductDetail(id, (await headers()).get("host"));
 
-    if (!product || !product.isActive || product.deletedAt) {
-        notFound();
-    }
-
-    if (!isVisibleOnDomain(product.visibleHostnames, (await headers()).get("host"))) {
-        notFound();
-    }
-
-    const price = Number(product.price);
-    const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-
-    const productData = {
-        id: product.id,
-        name: product.name,
-        price,
-        compareAtPrice,
-        imageUrl: product.imageUrl ?? "",
-        description: product.description ?? "",
-        category: product.category,
-        allowGiftBoxBundling: product.allowGiftBoxBundling,
-        stockQuantity: product.stockQuantity,
-        badge: product.badge,
-        sku: product.sku,
-        images: product.images.map((img) => ({
-            id: img.id,
-            url: img.url,
-            isPrimary: img.isPrimary,
-            displayOrder: img.displayOrder,
-        })),
-    };
-
-    const primaryImage = product.images.find((img) => img.isPrimary)?.url || product.imageUrl;
+    if (!product) notFound();
 
     const productSchema = {
         "@context": "https://schema.org",
@@ -107,12 +64,12 @@ export default async function ProductDetailsPage({ params }: Props) {
         name: product.name,
         description: product.description || undefined,
         sku: product.sku || undefined,
-        image: primaryImage || undefined,
+        image: primaryImage(product),
         offers: {
             "@type": "Offer",
             url: `${siteUrl}/catalogue/${product.id}`,
             priceCurrency: "INR",
-            price,
+            price: product.price,
             availability: product.stockQuantity > 0
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",
@@ -171,7 +128,7 @@ export default async function ProductDetailsPage({ params }: Props) {
                     { label: product.name },
                 ]}
             />
-            <ProductDetailsContent product={productData} />
+            <ProductDetailsContent product={product} />
         </>
     );
 }

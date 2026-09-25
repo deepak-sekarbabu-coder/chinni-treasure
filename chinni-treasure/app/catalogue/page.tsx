@@ -4,12 +4,13 @@ import JsonLd from "@/src/components/ui/JsonLd";
 import { headers } from "next/headers";
 import { listCatalogue, loadActiveCategories } from "@/src/lib/product-read";
 import type { Metadata } from "next";
+import { env } from "@/src/lib/env";
 
 // Content depends on the request's Host header (visibleHostnames domain
 // filter), so every request must render fresh — see category/[slug]/page.tsx.
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+const siteUrl = env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   title: "Collection — Chinni Treasure",

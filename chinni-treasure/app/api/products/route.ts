@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { productsCache, queryCatalogueIndex, invalidateCatalogCaches, SORT_OPTIONS, type SortKey } from "@/src/lib/catalogue-cache";
+import { invalidateCatalogCaches, SORT_OPTIONS, type SortKey } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
+import { checkAuth } from "@/src/lib/auth";
 import { z } from "zod";
-import { Prisma, ProductBadge } from "@prisma/client";
-import { getHostFromRequest, domainFilterWhere, normalizeVisibleHostnames } from "@/src/lib/domain-filter";
-import { parseListQuery, totalPages } from "@/src/lib/list-query";
+import { ProductBadge } from "@prisma/client";
+import { getHostFromRequest, normalizeVisibleHostnames } from "@/src/lib/domain-filter";
+import { parseListQuery } from "@/src/lib/list-query";
 import { assertGiftBoxNotOnBox } from "@/src/lib/catalogue-write";
-
-const { get: getCached, set: setCache } = productsCache;
+import { listProductsForQuery, type ProductStatusFilter } from "@/src/lib/product-read";
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -36,7 +36,8 @@ const CreateProductSchema = z.object({
     .optional(),
 });
 
-// GET /api/products — List products (optionally paginated). Public: no admin guard.
+// GET /api/products — List products (optionally paginated). The active
+// catalogue is public; `isActive=all|inactive` requires an admin session.
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -48,96 +49,40 @@ export async function GET(request: Request) {
     });
     if (parsedQuery instanceof NextResponse) return parsedQuery;
     const { page, limit, skip } = parsedQuery;
-    const sortParam = (parsedQuery.sort ?? "newest") as SortKey;
-
     const isActiveParam = searchParams.get("isActive");
-    const statusFilter = isActiveParam === "all" || isActiveParam === "inactive" ? isActiveParam : "active";
-    const searchQuery = searchParams.get("search") || "";
+    const status: ProductStatusFilter =
+      isActiveParam === "all" || isActiveParam === "inactive" ? isActiveParam : "active";
+
+    // Only the active catalogue is public. `all` / `inactive` is the admin
+    // panel's view of the catalogue, so it is gated here — at the one seam
+    // both audiences read through — rather than inside any branch the module
+    // owns. Without this an anonymous caller could enumerate inactive products
+    // by appending a query param.
+    if (status !== "active" && !(await checkAuth())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const rawCategoryId = searchParams.get("categoryId");
-    const categoryId = rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined;
-    const badgeFilter = searchParams.get("badge") || "";
-
-    const hostname = getHostFromRequest(request);
-    const domainFilter = domainFilterWhere(hostname);
-
-    // Public catalogue requests (active products) filter an in-memory index of
-    // the full active catalogue instead of querying Postgres per request, so
-    // search-as-you-type costs no database round trips after one cache load.
-    if (statusFilter === "active") {
-      const { products, total } = await queryCatalogueIndex(hostname, {
-        search: searchQuery,
-        categoryId,
-        badge: badgeFilter,
-        sort: sortParam,
-        skip,
-        limit,
-      });
-      return NextResponse.json(
-        {
-          products,
-          total,
-          page,
-          limit,
-          totalPages: totalPages(total, limit),
-        },
-        { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } },
-      );
-    }
-
-    const where: Prisma.ProductWhereInput = statusFilter === "all"
-      ? { deletedAt: null, ...domainFilter }
-      : { isActive: false, deletedAt: null, ...domainFilter };
-
-    if (searchQuery) {
-      where.OR = [
-        { name: { contains: searchQuery, mode: "insensitive" } },
-        { sku: { contains: searchQuery, mode: "insensitive" } },
-      ];
-    }
-
-    if (categoryId && Number.isFinite(categoryId)) {
-      where.categoryId = categoryId;
-    }
-
-    if (badgeFilter && badgeFilter !== "all") {
-      where.badge = badgeFilter as ProductBadge;
-    }
-
-    const cacheKey = `${hostname ?? "default"}:${page}:${limit}:${statusFilter}:${searchQuery}:${categoryId ?? "all"}:${badgeFilter}:${sortParam}`;
-    const cached = await getCached(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
-      });
-    }
-
-    // Sequential queries to avoid saturating Nhost's pooler with
-    // concurrent connections.
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-      orderBy: [...SORT_OPTIONS[sortParam]],
-      skip,
-      take: limit,
-    });
-    const total = await prisma.product.count({ where });
-
-    const payload = {
-      products,
-      total,
+    const payload = await listProductsForQuery(getHostFromRequest(request), {
       page,
       limit,
-      totalPages: totalPages(total, limit),
-    };
-
-    await setCache(cacheKey, payload);
-
-    return NextResponse.json(payload, {
-      headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
+      skip,
+      status,
+      search: searchParams.get("search") || "",
+      categoryId: rawCategoryId ? Number.parseInt(rawCategoryId, 10) : undefined,
+      badge: searchParams.get("badge") || "",
+      sort: (parsedQuery.sort ?? "newest") as SortKey,
     });
+
+    return NextResponse.json(
+      payload,
+      // The admin responses are keyed by URL alone, which says nothing about
+      // the session that was allowed to see them — a shared edge cache would
+      // hand them to anonymous callers.
+      status === "active"
+        ? { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
+        : { headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
