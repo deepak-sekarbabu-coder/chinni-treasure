@@ -92,7 +92,7 @@ Redis is optional. `src/lib/redis-cache.ts` uses Redis when `REDIS_URL` is confi
 
 Cache ownership is intentionally split by domain:
 
-- `src/lib/catalogue-cache.ts` owns products, the active-product index (`catindex`, used to serve public catalogue searches from memory via its `queryCatalogueIndex` surface), categories, latest-per-category, category-page, and gift-box caches. Any product or category mutation clears all six namespaces through `invalidateCatalogCaches()`, which also `revalidateTag`s the product-detail SSR page (`app/catalogue/[id]` reads through Next's data cache, not Redis).
+- `src/lib/catalogue-cache.ts` owns products, the active-product index (`catindex`, used to serve public catalogue searches from memory via its `queryCatalogueIndex` surface), categories, latest-per-category, category-page, and gift-box caches. Any product or category mutation clears all six namespaces through `invalidateCatalogCaches()`, which also `revalidateTag`s the two SSR pages that read through Next's data cache rather than Redis: `app/catalogue/[id]` (`product-detail`) and `app/category/[slug]` (`categories`).
 - `src/lib/order-cache.ts` owns order-detail and tracking caches. It also clears the order-derived stats cache after order mutations through `invalidateOrderCache(orderId?)`.
 - `src/lib/stats-cache.ts` owns the dashboard statistics cache; invalidation is owned by `order-cache.ts` because stats derive from orders.
 - `src/lib/redis.ts` owns the shared ioredis client and is `null` when Redis is not configured.
@@ -107,7 +107,8 @@ Cached routes/data include public catalogue queries, order tracking/detail looku
 - Order placement performs server-side price/stock validation and atomic stock mutation inside the order workflow. Rejection restores stock according to the existing status rules.
 - Admin API requests must use the existing JWT helpers and session-cookie conventions.
 - Payment routes use the existing CSRF/origin checks. Payment signature verification is handled server-side.
-- Public API schemas and response shapes are documented through `src/lib/openapi-spec.ts` and `/api/docs`; update the contract when changing an API.
+- Public product reads (list and detail) go through `src/lib/product-read.ts`. `GET /api/products` serves the active catalogue publicly; `isActive=all|inactive` is the admin panel's view, so it is session-gated at the route and returned `private, no-store` — do not move that gate into an individual branch. The product-detail read applies active/soft-deleted/domain checks outside its cache; keep them there so one host's visibility verdict is never served to another.
+- Public API schemas and response shapes are documented through `src/lib/openapi-spec.ts` and `/api/docs`; where a Zod schema exists the spec is **generated from it** via `openApi()` (enum vocabularies are read from `constants.ts` / `SessionSchema` / Prisma enums), and `src/__tests__/lib/openapi-contract.test.ts` pins documented shapes to the schema tree. Hand-write a spec shape only when it carries prose or has no schema — then update the contract when changing an API.
 - `proxy.ts` logs page traffic to Axiom when configured and protects `/admin/*`. API routes, static assets, and metadata are excluded from its page-traffic matcher.
 
 ## 5. Development Guardrails

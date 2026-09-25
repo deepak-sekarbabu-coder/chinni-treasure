@@ -420,7 +420,6 @@ chinni-treasure/
 │   │   ├── checkout-fields.ts        # One shared per-field checkout validation contract (client + server)
 │   │   ├── constants.ts              # Indian states, status flow, labels, icons
 │   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
-│   │   ├── csrf-helpers.ts           # CSRF host validation helpers
 │   │   ├── domain-filter.ts          # visibleHostnames multi-domain product filtering
 │   │   ├── env.ts                    # Environment variable validation (requireEnv)
 │   │   ├── excel-export.ts           # ExcelJS workbook builder shared by export route + import script
@@ -428,7 +427,7 @@ chinni-treasure/
 │   │   ├── images.ts                 # Product image URL/quality helpers
 │   │   ├── image-loader.ts           # Next.js image loader (custom domains, quality)
 │   │   ├── image-fallback.ts         # NEXT_PUBLIC_IMAGE_UNOPTIMIZED flag helper
-│   │   ├── openapi-spec.ts           # OpenAPI 3.0 specification document
+│   │   ├── openapi-spec.ts           # OpenAPI 3.0 document, derived from the Zod schemas
 │   │   ├── order-cache.ts            # Order-detail/tracking cache owner (+ stats invalidation)
 │   │   ├── order-intake.ts           # Order intake module: placeOrder, transitions, OrderError taxonomy
 │   │   ├── pricing.ts                # computePricing: subtotal/shipping/total (checkout + server)
@@ -619,7 +618,7 @@ rejected (stock restored)
 | POST | `/api/auth/login` | Admin login (rate-limited) | No |
 | POST | `/api/auth/logout` | Admin logout | No |
 | GET | `/api/auth/me` | Get current admin session | No |
-| GET | `/api/products` | List products (with pagination, cached for catalogue) | No |
+| GET | `/api/products` | List products (with pagination, cached for catalogue). `isActive=all\|inactive` requires an admin session | No (admin session for non-active filters) |
 | POST | `/api/products` | Create product | Yes |
 | PUT | `/api/products/[id]` | Update product | Yes |
 | DELETE | `/api/products/[id]` | Soft-delete product (sets inactive) | Yes |
