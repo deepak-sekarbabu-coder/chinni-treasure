@@ -1,19 +1,13 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT } from "jose";
 import { z } from "zod";
 import { env } from "@/src/lib/env";
+import { verifySession, COOKIE_NAME } from "@/src/lib/session";
 
 // Node-native TextEncoder — avoids jsdom polyfill breaking jose's Uint8Array checks
 import { TextEncoder as NodeTextEncoder } from "util";
 const encoder = new NodeTextEncoder();
-const COOKIE_NAME = "session";
-
-let _secret: Uint8Array | null = null;
-function getSecret(): Uint8Array {
-  if (!_secret) _secret = encoder.encode(env.JWT_SECRET);
-  return _secret;
-}
 
 const AdminSessionSchema = z.object({
   id: z.string(),
@@ -30,17 +24,10 @@ export async function signToken(payload: Record<string, unknown>): Promise<strin
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuedAt()
     .setExpirationTime("24h")
-    .sign(getSecret());
+    .sign(encoder.encode(env.JWT_SECRET));
 }
 
-export async function verifyToken(token: string): Promise<Record<string, unknown> | null> {
-  try {
-    const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
-    return payload as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
+export const verifyToken = verifySession;
 
 export async function getSession(): Promise<Record<string, unknown> | null> {
   const cookieStore = await cookies();

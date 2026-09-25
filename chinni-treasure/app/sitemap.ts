@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/src/lib/prisma";
+import { env } from "@/src/lib/env";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+const BASE_URL = env.NEXT_PUBLIC_SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [

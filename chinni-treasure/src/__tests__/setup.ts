@@ -21,14 +21,12 @@ vi.mock('@/lib/axiom/server', () => ({
   },
 }));
 
-vi.mock('@/src/lib/env', () => ({
-  env: {
-    DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-    JWT_SECRET: 'test-secret',
-    NEXT_PUBLIC_SITE_URL: 'http://localhost:3000',
-    ALLOWED_ORIGIN: 'http://localhost:3000',
-  },
-}));
+// Seed env vars instead of mocking @/src/lib/env: the real module then runs
+// in every test, so env resolution itself stays under test.
+process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test';
+process.env.JWT_SECRET ??= 'test-secret';
+process.env.NEXT_PUBLIC_SITE_URL ??= 'http://localhost:3000';
+process.env.ALLOWED_ORIGIN ??= 'http://localhost:3000';
 
 // Force the in-memory fallback for Redis-backed caches and rate limiting.
 // Without this, tests would hit a live REDIS_URL when one is configured
@@ -61,6 +59,8 @@ vi.mock('next/headers', () => ({
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
+  // Pass-through so module-owned cached reads stay unit-testable.
+  unstable_cache: (fn: unknown) => fn,
 }));
 
 

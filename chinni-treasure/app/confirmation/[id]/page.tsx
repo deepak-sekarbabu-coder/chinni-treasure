@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ConfirmationDetails from "@/src/components/order/ConfirmationDetails";
 import { getOrderDetail } from "@/src/lib/order-cache";
+import { toOrderView, type OrderView } from "@/src/lib/order-view";
 import type { Metadata } from "next";
 
 // The order-cache (30s, keyed by order id, invalidated by invalidateOrderCache)
@@ -32,66 +33,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ConfirmationPage({ params }: Props) {
   const { id } = await params;
 
-  let order: {
-    orderNumber: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    addressLine1: string;
-    addressLine2: string | null;
-    city: string;
-    stateCode: string;
-    postalCode: string;
-    countryCode: string;
-    status: string;
-    trackingId: string | null;
-    subtotal: number;
-    shippingCost: number;
-    totalAmount: number;
-    transactionId: string | null;
-    customerNotes: string | null;
-    createdAt: string;
-    items: {
-      id: string;
-      productName: string;
-      unitPrice: number;
-      quantity: number;
-      parentOrderItemId: string | null;
-    }[];
-  } | null = null;
+  let order: OrderView | null = null;
 
   try {
     const data = await getOrderDetail(id);
-
-    if (data) {
-      order = {
-        orderNumber: data.orderNumber,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2,
-        city: data.city,
-        stateCode: data.stateCode,
-        postalCode: data.postalCode,
-        countryCode: data.countryCode,
-        status: data.status,
-        trackingId: data.trackingId,
-        subtotal: Number(data.subtotal),
-        shippingCost: Number(data.shippingCost),
-        totalAmount: Number(data.totalAmount),
-        transactionId: data.transactionId,
-        customerNotes: data.customerNotes,
-        createdAt: data.createdAt.toISOString(),
-        items: data.items.map((i) => ({
-          id: i.id,
-          productName: i.productName,
-          unitPrice: Number(i.unitPrice),
-          quantity: i.quantity,
-          parentOrderItemId: i.parentOrderItemId,
-        })),
-      };
-    }
+    if (data) order = toOrderView(data);
   } catch (err) {
     console.error("Failed to fetch order:", err);
   }

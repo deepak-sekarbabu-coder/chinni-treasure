@@ -1,9 +1,15 @@
 import { prisma } from "@/src/lib/prisma";
-import type { Order, OrderItem } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { toOrderView, type OrderView } from "@/src/lib/order-view";
+
+/** An order row carrying the items and status history the view projects. */
+export type OrderWithTimeline = Prisma.OrderGetPayload<{
+  include: { items: true; statusHistory: true };
+}>;
 
 export type TrackQueryResult =
   | { error: string; status: number }
-  | { orders: (Order & { items: OrderItem[] })[] }
+  | { orders: OrderWithTimeline[] }
   | null;
 
 /** Cache keys for order tracking: by order id, or by digits-only phone. */
@@ -20,7 +26,7 @@ export async function queryOrdersByOrderId(orderId: string): Promise<TrackQueryR
   }
   const orders = await prisma.order.findMany({
     where: { orderNumber: { contains: orderId, mode: "insensitive" } },
-    include: { items: true },
+    include: { items: true, statusHistory: true },
     orderBy: { createdAt: "desc" },
   });
   return { orders };
@@ -34,27 +40,18 @@ export async function queryOrdersByPhone(phone: string): Promise<TrackQueryResul
   }
   const orders = await prisma.order.findMany({
     where: { customerPhone: cleanPhone },
-    include: { items: true },
+    include: { items: true, statusHistory: true },
     orderBy: { createdAt: "desc" },
   });
   return { orders };
 }
 
-/** Project order rows into the public tracking shape. */
-export function formatOrderResults(orders: (Order & { items: OrderItem[] })[]) {
-  return orders.map((o) => ({
-    id: o.id,
-    orderNumber: o.orderNumber,
-    status: o.status,
-    trackingId: o.trackingId || null,
-    totalAmount: Number(o.totalAmount),
-    createdAt: o.createdAt,
-    itemCount: (o.items || []).reduce((sum, i) => sum + i.quantity, 0),
-    items: (o.items || []).map((i) => ({
-      id: i.id,
-      productName: i.productName,
-      unitPrice: Number(i.unitPrice),
-      quantity: i.quantity,
-    })),
-  }));
+/**
+ * Project the tracking results into the shared Order view — the same
+ * projection the confirmation page and invoice use, so a surface fed by
+ * tracking renders the same money, the same line nesting and the same timeline
+ * as one fed by the order detail.
+ */
+export function formatOrderResults(orders: readonly OrderWithTimeline[]): OrderView[] {
+  return orders.map(toOrderView);
 }

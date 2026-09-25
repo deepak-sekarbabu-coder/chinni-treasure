@@ -12,8 +12,11 @@ function requireEnv(name: string, fallback?: string): string {
 export const env = {
   get DATABASE_URL() { return requireEnv("DATABASE_URL"); },
   get JWT_SECRET() { return requireEnv("JWT_SECRET", process.env.NODE_ENV !== "production" ? "dev-secret" : undefined); },
-  get NEXT_PUBLIC_SITE_URL() { return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"; },
-  get ALLOWED_ORIGIN() { return process.env.ALLOWED_ORIGIN || "*"; },
+  get NEXT_PUBLIC_SITE_URL() { return process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in"; },
+  // In production an unset ALLOWED_ORIGIN must NOT fall back to "*": the CORS
+  // headers in next.config.ts would then allow any origin to read API
+  // responses. Default to the site URL instead.
+  get ALLOWED_ORIGIN() { return process.env.ALLOWED_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"; },
 
   // Razorpay (server-only secret; public key exposed via NEXT_PUBLIC_ prefix)
   get RAZORPAY_KEY_ID() { return requireEnv("RAZORPAY_KEY_ID"); },

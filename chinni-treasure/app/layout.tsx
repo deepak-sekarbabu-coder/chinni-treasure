@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import JsonLd from "@/src/components/ui/JsonLd";
 import { WebVitals } from "@/lib/axiom/client";
+import { env } from "@/src/lib/env";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -45,7 +46,7 @@ const pinyon = Pinyon_Script({
   fallback: ["Brush Script MT", "cursive"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.chinnitreasure.in";
+const siteUrl = env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

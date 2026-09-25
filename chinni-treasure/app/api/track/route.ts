@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { Order, OrderItem } from "@prisma/client";
 import { trackingCache } from "@/src/lib/order-cache";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import {
@@ -40,12 +39,12 @@ export async function GET(request: Request) {
     }
 
     const result = orderId ? await queryOrdersByOrderId(orderId) : await queryOrdersByPhone(phone!);
-    if (result && "error" in result) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+    if (!result || "error" in result) {
+      const failure = result && "error" in result ? result : { error: "Order lookup failed", status: 404 };
+      return NextResponse.json({ error: failure.error }, { status: failure.status });
     }
 
-    const orders = (result as { orders: (Order & { items: OrderItem[] })[] }).orders;
-    const formatted = formatOrderResults(orders);
+    const formatted = formatOrderResults(result.orders);
 
     if (cacheKey) {
       await setCache(cacheKey, formatted);

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
-  ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_VOCABULARY,
   nextOrderStatus,
@@ -14,6 +13,7 @@ import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
 import { formatMoney, formatShipping } from "@/src/lib/format";
 import { orderLineViews } from "@/src/lib/pricing";
+import { orderTimeline } from "@/src/lib/order-view";
 import PrintShippingLabelModal from "@/src/components/admin/PrintShippingLabelModal";
 
 interface Props {
@@ -24,6 +24,16 @@ interface Props {
   onReject?: (id: string) => void;
   isTransitioning?: boolean;
   onUpdateTracking?: (orderId: string, trackingId: string) => Promise<void>;
+}
+
+/** A timeline timestamp, rendered beside the step label when the surface has one. */
+function TimelineDate({ at }: { at: string | null }) {
+  if (!at) return null;
+  return (
+    <div className="timeline-date">
+      {new Date(at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+    </div>
+  );
 }
 
 export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning, onUpdateTracking }: Props) {
@@ -62,10 +72,10 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
   const vocabulary = ORDER_STATUS_VOCABULARY;
   const flow = vocabulary.flow as readonly FlowStatus[];
 
-  const isRejected = order.status === "rejected";
-  const completedStatuses: readonly string[] = isRejected
-    ? ["rejected"]
-    : flow.slice(0, flow.indexOf(order.status as FlowStatus) + 1);
+  // The timeline is projected by the Order view module: the persisted status
+  // history when this surface carries it (tracking, order detail), the forward
+  // flow otherwise (the admin list, which doesn't load history).
+  const timeline = orderTimeline(order.status, order.statusHistory);
   const nextStatus = nextOrderStatus(order.status);
 
   return (
@@ -101,26 +111,20 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
               </div>
             )}
             <div className="modal-timeline">
-              {isRejected ? (
-                <div className="timeline-step rejected">
-                  <div className="timeline-dot rejected"></div>
-                  <div className="timeline-label">Rejected</div>
-                </div>
-              ) : (
-                ORDER_STATUS_FLOW.map((s) => {
-                  const isCompleted = completedStatuses.includes(s);
-                  const isCurrent = s === order.status;
-                  return (
-                    <div
-                      key={s}
-                      className={`timeline-step ${isCurrent ? "active" : isCompleted ? "completed" : ""}`}
-                    >
-                      <div className="timeline-dot"></div>
-                      <div className="timeline-label">{ORDER_STATUS_LABELS[s]}</div>
-                    </div>
-                  );
-                })
-              )}
+              {timeline.map((entry, index) => {
+                const isRejectedStep = entry.status === "rejected";
+                const isCompleted = !entry.isCurrent && index < timeline.length - 1;
+                const className = isRejectedStep
+                  ? "timeline-step rejected"
+                  : `timeline-step ${entry.isCurrent ? "active" : isCompleted ? "completed" : ""}`;
+                return (
+                  <div key={`${entry.status}-${entry.at ?? index}`} className={className}>
+                    <div className={`timeline-dot ${isRejectedStep ? "rejected" : ""}`}></div>
+                    <div className="timeline-label">{entry.label}</div>
+                    <TimelineDate at={entry.at} />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -251,15 +255,15 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             <div className="modal-totals">
               <div className="modal-total-row">
                 <span>Subtotal</span>
-                <span>{formatMoney(Number(order.subtotal))}</span>
+                <span>{formatMoney(order.subtotal ?? 0)}</span>
               </div>
               <div className="modal-total-row">
                 <span>Shipping</span>
-                <span>{formatShipping(Number(order.shippingCost))}</span>
+                <span>{formatShipping(order.shippingCost ?? 0)}</span>
               </div>
               <div className="modal-total-row grand">
                 <span>Total</span>
-                <span>{formatMoney(Number(order.totalAmount))}</span>
+                <span>{formatMoney(order.totalAmount ?? 0)}</span>
               </div>
             </div>
           </div>

@@ -95,6 +95,24 @@ describe("OrderDetailModal", () => {
     expect(screen.queryByText("Pending")).not.toBeInTheDocument();
   });
 
+  it("renders the persisted status history when the surface carries it", () => {
+    const order = {
+      ...baseOrder,
+      status: "packaging",
+      statusHistory: [
+        { status: "pending", at: "2026-01-01T00:00:00.000Z" },
+        { status: "approved", at: "2026-01-02T00:00:00.000Z" },
+        { status: "packaging", at: "2026-01-03T00:00:00.000Z" },
+      ],
+    };
+    render(<OrderDetailModal order={order} onClose={vi.fn()} />);
+    const steps = document.querySelectorAll(".timeline-step");
+    expect(steps).toHaveLength(3);
+    expect(steps[0]).toHaveClass("completed");
+    expect(steps[2]).toHaveClass("active");
+    expect(document.querySelectorAll(".timeline-date")).toHaveLength(3);
+  });
+
   it("shows tracking info when status is shipped with trackingId", () => {
     const order = {
       ...baseOrder,

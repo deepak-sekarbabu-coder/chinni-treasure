@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import Razorpay from "razorpay";
+import { env } from "@/src/lib/env";
 
 /**
  * Server-side Razorpay Payment module (the gateway dialect of the Order
@@ -39,12 +40,23 @@ export class RazorpayGatewayError extends Error {
   }
 }
 
-function createClient(): Razorpay {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+function gatewayCredentials(): { keyId: string; keySecret: string } {
+  let keyId: string | undefined;
+  let keySecret: string | undefined;
+  try {
+    keyId = env.RAZORPAY_KEY_ID;
+    keySecret = env.RAZORPAY_KEY_SECRET;
+  } catch {
+    // env throws when the variables are absent entirely.
+  }
   if (!keyId || !keySecret) {
     throw new RazorpayGatewayError("Payment gateway is not configured", 500);
   }
+  return { keyId, keySecret };
+}
+
+function createClient(): Razorpay {
+  const { keyId, keySecret } = gatewayCredentials();
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
 
@@ -85,10 +97,7 @@ export async function createGatewayOrder(
  * outage. A missing server secret still throws (config error).
  */
 export function verifyCheckoutSignature(orderId: string, paymentId: string, signature: string): boolean {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (!keySecret) {
-    throw new RazorpayGatewayError("Payment gateway is not configured", 500);
-  }
+  const { keySecret } = gatewayCredentials();
   const expectedSignature = createHmac("sha256", keySecret)
     .update(`${orderId}|${paymentId}`)
     .digest("hex");

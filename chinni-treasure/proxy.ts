@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 import { logger } from "./lib/axiom/server";
 import { transformMiddlewareRequest } from "@axiomhq/nextjs";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-secret",
-);
+import { verifySession, COOKIE_NAME } from "@/src/lib/session";
 
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
@@ -22,16 +18,9 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
   }
 
   if (pathname.startsWith("/admin")) {
-    const token = request.cookies.get("session")?.value;
+    const token = request.cookies.get(COOKIE_NAME)?.value;
 
-    if (!token) {
-      event.waitUntil(logger.flush().catch(() => {}));
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
-
-    try {
-      await jwtVerify(token, JWT_SECRET);
-    } catch {
+    if (!token || !(await verifySession(token))) {
       event.waitUntil(logger.flush().catch(() => {}));
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
