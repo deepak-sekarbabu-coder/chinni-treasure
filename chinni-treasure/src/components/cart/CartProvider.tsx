@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem } from "@/src/types";
+import { cartItemsToWire, CART_COOKIE, CART_MAX_AGE } from "@/src/lib/cart-wire";
 
 const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
 const SURPRISE_GIFT_ENABLED =
@@ -108,16 +109,6 @@ function saveCart(items: CartItemDisplay[]) {
   }
 }
 
-function toCartCookie(items: CartItemDisplay[]): CartItem[] {
-  return items
-    .filter((i) => !i.isGift)
-    .map((i) => ({
-      productId: i.productId,
-      quantity: i.quantity,
-      giftBoxes: i.giftBoxes?.map((gb) => ({ productId: gb.productId, quantity: gb.quantity })),
-    }));
-}
-
 function mergeGiftBoxes(
   current: CartGiftBox[] | undefined,
   incoming: CartGiftBox[] | undefined,
@@ -133,8 +124,6 @@ function mergeGiftBoxes(
   return Array.from(merged.values());
 }
 
-const CART_COOKIE = "cart";
-const CART_MAX_AGE = 2592000; // 30 days
 function setCartCookieClient(items: CartItem[]) {
   if (typeof window === "undefined") return;
   try {
@@ -182,7 +171,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
   useEffect(() => {
     if (!hasLoadedCart.current) return;
     saveCart(items);
-    setCartCookieClient(toCartCookie(items));
+    setCartCookieClient(cartItemsToWire(items));
   }, [items]);
 
   const addItem = useCallback(

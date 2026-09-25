@@ -1,23 +1,8 @@
 import { cookies } from "next/headers";
-import { z } from "zod";
 import { prisma } from "@/src/lib/prisma";
 import type { CartItem } from "@/src/types";
 import type { CartGiftBox, CartItemDisplay } from "@/src/components/cart/CartProvider";
-
-const giftBoxSchema = z.object({
-  productId: z.string().uuid(),
-  quantity: z.number().int().positive(),
-});
-
-const cartItemSchema = z.object({
-  productId: z.string().uuid(),
-  quantity: z.number().int().positive(),
-  giftBoxes: z.array(giftBoxSchema).optional(),
-});
-
-const cartSchema = z.array(cartItemSchema);
-
-const CART_COOKIE = "cart";
+import { cartSchema, CART_COOKIE } from "@/src/lib/cart-wire";
 
 export async function getCartFromCookies(): Promise<CartItem[]> {
   const cookieStore = await cookies();
