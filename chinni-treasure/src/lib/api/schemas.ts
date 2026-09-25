@@ -10,7 +10,11 @@ const OrderItemSchema = z.object({
   unitPrice: z.coerce.number(),
   quantity: z.number(),
   productId: z.string().nullable().optional(),
-  parentOrderItemId: z.string().nullable().optional(),
+  parentOrderItemId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Set on gift-box lines; points at the parent line"),
   product: z
     .object({
       name: z.string().nullable().optional(),
@@ -20,6 +24,12 @@ const OrderItemSchema = z.object({
     })
     .nullable()
     .optional(),
+});
+
+/** One persisted status event. Notes are admin-only and never sent to a customer. */
+const OrderStatusEventSchema = z.object({
+  status: OrderStatusSchema,
+  at: z.string(),
 });
 
 export const OrderSchema = z.object({
@@ -44,6 +54,10 @@ export const OrderSchema = z.object({
   stateCode: z.string(),
   postalCode: z.string(),
   countryCode: z.string().optional(),
+  statusHistory: z
+    .array(OrderStatusEventSchema)
+    .describe("Persisted status events, oldest first. Admin notes are never included.")
+    .optional(),
 });
 
 export const PageMetaSchema = z.object({
@@ -57,15 +71,16 @@ export const OrdersResponseSchema = PageMetaSchema.extend({
   orders: z.array(OrderSchema),
 });
 
-const TrackOrderResultSchema = z.object({
-  id: z.string(),
-  orderNumber: z.string(),
-  status: OrderStatusSchema,
-  trackingId: z.string().nullable().optional(),
-  totalAmount: z.coerce.number(),
-  createdAt: z.string(),
+/**
+ * One tracked order. Carries every field the shared order-detail modal renders
+ * (money, customer, address, payment) — derived from `OrderSchema` minus the
+ * `version` field, plus the `itemCount` the route adds. The tracking surface
+ * renders the same modal as confirmation and admin, so dropping a field here
+ * silently blanks it (the ₹NaN class of bug, round 2, here for the customer
+ * block). The hand-typed docs entry for `/api/track` is generated from this.
+ */
+export const TrackOrderResultSchema = OrderSchema.omit({ version: true }).extend({
   itemCount: z.number().optional(),
-  items: z.array(OrderItemSchema).optional(),
 });
 
 export const TrackOrdersResponseSchema = z.array(TrackOrderResultSchema);
@@ -81,14 +96,21 @@ const ProductImageSchema = z.object({
 const ProductCoreSchema = z.object({
   id: z.string(),
   name: z.string(),
-  price: z.coerce.number(),
-  compareAtPrice: z.coerce.number().nullable().optional(),
+  price: z.coerce.number().describe("Current selling price (discounted)"),
+  compareAtPrice: z.coerce
+    .number()
+    .nullable()
+    .optional()
+    .describe("Original/comparison price (MRP) for showing discounts"),
   imageUrl: z.string().nullable(),
   description: z.string().nullable(),
   stockQuantity: z.number(),
   badge: z.string().nullable(),
   sku: z.string().nullable(),
-  allowGiftBoxBundling: z.boolean().optional(),
+  allowGiftBoxBundling: z
+    .boolean()
+    .optional()
+    .describe("When true, customers can attach gift boxes to this product at checkout"),
 });
 
 export const ProductSchema = ProductCoreSchema.extend({
@@ -139,14 +161,14 @@ export const StatsResponseSchema = z.object({
   productSalesData: z.array(ProductSalesSchema),
 });
 
-const SessionSchema = z.object({
+export const SessionSchema = z.object({
   authenticated: z.literal(true),
   id: z.string(),
   username: z.string(),
   role: z.enum(["admin", "super_admin"]),
 });
 
-const UnauthenticatedResponseSchema = z.object({
+export const UnauthenticatedResponseSchema = z.object({
   authenticated: z.literal(false),
 });
 
@@ -193,9 +215,13 @@ export const CreateOrderInputSchema = z.object({
 
 export const UpdateOrderStatusInputSchema = z.object({
   status: OrderStatusSchema,
-  trackingId: z.string().optional(),
+  trackingId: z.string().optional().describe("Required when status is 'shipped'"),
   notes: z.string().optional(),
-  expectedVersion: z.number().int().optional(),
+  expectedVersion: z
+    .number()
+    .int()
+    .optional()
+    .describe("For optimistic concurrency control"),
 });
 
 export const UpdateTrackingInputSchema = z.object({

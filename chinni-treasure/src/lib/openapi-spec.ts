@@ -1,3 +1,55 @@
+import { z } from "zod";
+import { ProductBadge } from "@prisma/client";
+import {
+  CategoriesResponseSchema,
+  CategoryProductsResponseSchema,
+  LatestCategoriesResponseSchema,
+  ProductSchema,
+  ProductsResponseSchema,
+  SessionSchema,
+  TrackOrdersResponseSchema,
+  UnauthenticatedResponseSchema,
+  UpdateOrderStatusInputSchema,
+} from "@/src/lib/api/schemas";
+import { ORDER_STATUS_ALL } from "@/src/lib/constants";
+
+/**
+ * The docs interface is generated from the Zod contract rather than typed
+ * beside it: this is the only Zod -> OpenAPI step, so a schema change reaches
+ * /api/docs with no second edit and no drift.
+ */
+function openApi(schema: z.ZodType): Record<string, unknown> {
+  return dropClosed(z.toJSONSchema(schema, { target: "openapi-3.0" })) as Record<
+    string,
+    unknown
+  >;
+}
+
+/**
+ * Zod closes every object (`additionalProperties: false`) even though it
+ * strips unknown keys instead of rejecting them — the spec must not promise
+ * stricter validation than the API actually performs.
+ */
+function dropClosed(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(dropClosed);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== "additionalProperties")
+      .map(([key, val]) => [key, dropClosed(val)]),
+  );
+}
+
+// Enum vocabularies are read from their source, never re-typed beside it.
+const ROLE_ENUM = [...SessionSchema.shape.role.options];
+const ORDER_STATUS_ENUM = [...ORDER_STATUS_ALL];
+const BADGE_ENUM = Object.values(ProductBadge);
+
+// ponytail: only shapes with a schema are derived — request bodies that carry
+// prose (create/update product, checkout) and the Order/OrderDetail components
+// stay hand-typed. Derive those too once the prose moves into .describe() on
+// the schema; counts stay `number` until PageMeta/product counts use .int().
+
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
@@ -55,7 +107,7 @@ export const openApiSpec = {
                   properties: {
                     id: { type: "string", format: "uuid" },
                     username: { type: "string" },
-                    role: { type: "string", enum: ["admin", "super_admin"] },
+                    role: { type: "string", enum: ROLE_ENUM },
                   },
                 },
               },
@@ -104,15 +156,7 @@ export const openApiSpec = {
             description: "User is authenticated",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    authenticated: { type: "boolean" },
-                    id: { type: "string", format: "uuid" },
-                    username: { type: "string" },
-                    role: { type: "string" },
-                  },
-                },
+                schema: openApi(SessionSchema),
               },
             },
           },
@@ -120,12 +164,7 @@ export const openApiSpec = {
             description: "No valid session",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    authenticated: { type: "boolean" },
-                  },
-                },
+                schema: openApi(UnauthenticatedResponseSchema),
               },
             },
           },
@@ -151,21 +190,7 @@ export const openApiSpec = {
             description: "Array of categories",
             content: {
               "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      id: { type: "integer" },
-                      name: { type: "string" },
-                      slug: { type: "string" },
-                      displayOrder: { type: "integer" },
-                      isActive: { type: "boolean" },
-                      description: { type: "string", nullable: true },
-                      productCount: { type: "integer" },
-                    },
-                  },
-                },
+                schema: openApi(CategoriesResponseSchema),
               },
             },
           },
@@ -218,23 +243,7 @@ export const openApiSpec = {
             description: "Array of { category, product } envelopes",
             content: {
               "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      category: {
-                        type: "object",
-                        properties: {
-                          id: { type: "integer" },
-                          name: { type: "string" },
-                          slug: { type: "string" },
-                        },
-                      },
-                      product: { type: "object" },
-                    },
-                  },
-                },
+                schema: openApi(LatestCategoriesResponseSchema),
               },
             },
           },
@@ -318,17 +327,7 @@ export const openApiSpec = {
             description: "Paginated products for the category",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    category: { type: "object" },
-                    products: { type: "array", items: { type: "object" } },
-                    total: { type: "integer" },
-                    page: { type: "integer" },
-                    limit: { type: "integer" },
-                    totalPages: { type: "integer" },
-                  },
-                },
+                schema: openApi(CategoryProductsResponseSchema),
               },
             },
           },
@@ -385,18 +384,16 @@ export const openApiSpec = {
             in: "query",
             required: false,
             schema: { type: "string", enum: ["all", "active", "inactive"], default: "active" },
-            description: "Filter by active status. Defaults to active-only for public listings.",
+            description:
+              "Filter by active status. Defaults to active-only. `all` and `inactive` are the admin panel's view and require an admin session; responses for them are never cached.",
           },
         ],
         responses: {
           "200": {
-            description: "Array of active products with category info",
+            description: "Paged envelope of active products with category info",
             content: {
               "application/json": {
-                schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Product" },
-                },
+                schema: openApi(ProductsResponseSchema),
               },
             },
             headers: {
@@ -406,6 +403,7 @@ export const openApiSpec = {
               },
             },
           },
+          "401": { description: "Unauthorized — isActive=all|inactive without an admin session" },
         },
       },
       post: {
@@ -431,7 +429,7 @@ export const openApiSpec = {
                   imageUrl: { type: "string", nullable: true },
                   badge: {
                     type: "string",
-                    enum: ["bestseller", "new", "premium", "limited", "luxury"],
+                    enum: BADGE_ENUM,
                     nullable: true,
                   },
                   allowGiftBoxBundling: {
@@ -480,7 +478,7 @@ export const openApiSpec = {
                   imageUrl: { type: "string", nullable: true },
                   badge: {
                     type: "string",
-                    enum: ["bestseller", "new", "premium", "limited", "luxury"],
+                    enum: BADGE_ENUM,
                     nullable: true,
                   },
                   isActive: { type: "boolean" },
@@ -549,14 +547,7 @@ export const openApiSpec = {
             in: "query",
             schema: {
               type: "string",
-              enum: [
-                "pending",
-                "approved",
-                "packaging",
-                "shipped",
-                "delivered",
-                "rejected",
-              ],
+              enum: ORDER_STATUS_ENUM,
             },
             description: "Filter by order status",
           },
@@ -731,31 +722,7 @@ export const openApiSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                required: ["status"],
-                properties: {
-                  status: {
-                    type: "string",
-                    enum: [
-                      "approved",
-                      "packaging",
-                      "shipped",
-                      "delivered",
-                      "rejected",
-                    ],
-                  },
-                  trackingId: {
-                    type: "string",
-                    description: "Required when status is 'shipped'",
-                  },
-                  notes: { type: "string" },
-                  expectedVersion: {
-                    type: "integer",
-                    description: "For optimistic concurrency control",
-                  },
-                },
-              },
+              schema: openApi(UpdateOrderStatusInputSchema),
             },
           },
         },
@@ -855,44 +822,7 @@ export const openApiSpec = {
             description: "Matching orders with item details",
             content: {
               "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      id: { type: "string", format: "uuid" },
-                      orderNumber: { type: "string" },
-                      customerName: { type: "string" },
-                      customerEmail: { type: "string" },
-                      customerPhone: { type: "string" },
-                      status: { type: "string" },
-                      trackingId: { type: "string", nullable: true },
-                      totalAmount: { type: "number" },
-                      subtotal: { type: "number" },
-                      shippingCost: { type: "number" },
-                      createdAt: { type: "string", format: "date-time" },
-                      transactionId: { type: "string", nullable: true },
-                      customerNotes: { type: "string", nullable: true },
-                      addressLine1: { type: "string" },
-                      city: { type: "string" },
-                      stateCode: { type: "string" },
-                      postalCode: { type: "string" },
-                      itemCount: { type: "integer" },
-                      items: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            id: { type: "string", format: "uuid" },
-                            productName: { type: "string" },
-                            unitPrice: { type: "number" },
-                            quantity: { type: "integer" },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
+                schema: openApi(TrackOrdersResponseSchema),
               },
             },
           },
@@ -913,39 +843,7 @@ export const openApiSpec = {
       },
     },
     schemas: {
-      Product: {
-        type: "object",
-        properties: {
-          id: { type: "string", format: "uuid" },
-          sku: { type: "string", nullable: true },
-          name: { type: "string" },
-          categoryId: { type: "integer", nullable: true },
-          category: {
-            type: "object",
-            nullable: true,
-            properties: {
-              name: { type: "string" },
-            },
-          },
-          description: { type: "string", nullable: true },
-          price: { type: "number", description: "Current selling price (discounted)" },
-          compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
-          stockQuantity: { type: "integer" },
-          imageUrl: { type: "string", nullable: true },
-          badge: {
-            type: "string",
-            enum: ["bestseller", "new", "premium", "limited", "luxury"],
-            nullable: true,
-          },
-          isActive: { type: "boolean" },
-          allowGiftBoxBundling: {
-            type: "boolean",
-            description: "When true, customers can attach gift boxes to this product at checkout",
-          },
-          createdAt: { type: "string", format: "date-time" },
-          updatedAt: { type: "string", format: "date-time" },
-        },
-      },
+      Product: openApi(ProductSchema),
       Order: {
         type: "object",
         properties: {
