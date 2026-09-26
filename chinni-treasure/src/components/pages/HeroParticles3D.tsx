@@ -1,263 +1,43 @@
-"use client";
+/**
+ * Hero particle layer — decorative, CSS only.
+ *
+ * Same visual role as the three.js canvas it replaced (gold hearts drifting up
+ * behind the hero copy, plus one slow ring) with zero client JS and zero WebGL.
+ * Layout is index-derived rather than random so the markup is deterministic;
+ * motion, the ring, and reduced-motion handling all live in CSS
+ * (`.hero-particles` in app/styles/hero.css, `heroDrift` in
+ * app/styles/keyframes.css).
+ */
 
-import { useRef, useMemo, useEffect, useState, useCallback } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import type { CSSProperties } from "react";
 
-/* ── Particle count — keep low for mobile perf ── */
-const PARTICLE_COUNT = 120;
+const PARTICLE_COUNT = 18;
 
-/* ── Gold palette matching the brand ── */
-const GOLD_COLORS = [
-  new THREE.Color("#d4af37"), // gold
-  new THREE.Color("#c5a028"), // darker gold
-  new THREE.Color("#e8c84a"), // light gold
-  new THREE.Color("#b8941f"), // deep gold
-  new THREE.Color("#f0d878"), // pale gold
-];
+/* Gold palette matching the brand. */
+const GOLDS = ["#d4af37", "#c5a028", "#e8c84a", "#b8941f", "#f0d878"];
 
-interface ParticleData {
-  position: THREE.Vector3;
-  velocity: THREE.Vector3;
-  scale: number;
-  color: THREE.Color;
-  opacity: number;
-  phase: number;
-  speed: number;
-}
+/** A custom property (`--y`) is not in CSSProperties, hence the cast. */
+type ParticleStyle = CSSProperties & { "--y": string };
 
-function Particles({ reducedMotion }: { reducedMotion: boolean }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null!);
-  const mouseRef = useRef({ x: 0, y: 0 });
-  const { viewport } = useThree();
-
-  /* Particle layout is deliberately random per mount: cosmetic, client-only
-     background (component renders null until the hero scrolls into view), so
-     render-side randomness has no hydration surface. */
-  // ponytail: random-once-per-mount layout; precompute a module-scope seed if render determinism ever matters.
-  /* eslint-disable react-hooks/purity */
-  const particles = useMemo<ParticleData[]>(() => {
-    const arr: ParticleData[] = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const spread = viewport.width * 0.7;
-      arr.push({
-        position: new THREE.Vector3(
-          (Math.random() - 0.5) * spread * 2,
-          (Math.random() - 0.5) * viewport.height * 1.5,
-          (Math.random() - 0.5) * 3 - 1,
-        ),
-        velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.002,
-          0.003 + Math.random() * 0.006,
-          0,
-        ),
-        scale: 0.01 + Math.random() * 0.025,
-        color: GOLD_COLORS[Math.floor(Math.random() * GOLD_COLORS.length)],
-        opacity: 0.15 + Math.random() * 0.45,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.7,
-      });
-    }
-    return arr;
-  }, [viewport.width, viewport.height]);
-  /* eslint-enable react-hooks/purity */
-
-  /* ── Track mouse for parallax ── */
-  const handlePointerMove = useCallback((e: PointerEvent) => {
-    mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    return () => window.removeEventListener("pointermove", handlePointerMove);
-  }, [handlePointerMove]);
-
-  /* Per-frame imperative particle mutation is the standard R3F animation pattern. */
-  // ponytail: mutation-based particle updates; switch to a Float32 instancing buffer if particle count grows past ~1k.
-  /* eslint-disable react-hooks/immutability */
-  useFrame(({ clock }) => {
-    if (!meshRef.current) return;
-    const t = clock.getElapsedTime();
-    const dummy = new THREE.Object3D();
-    const colorAttr = meshRef.current.instanceColor;
-    const halfH = viewport.height * 0.85;
-    const halfW = viewport.width * 0.85;
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const p = particles[i];
-      const speedMult = reducedMotion ? 0.15 : 1;
-
-      /* Float upward */
-      p.position.y += p.velocity.y * speedMult * p.speed;
-      p.position.x += Math.sin(t * 0.3 * p.speed + p.phase) * 0.001 * speedMult;
-
-      /* Subtle mouse parallax */
-      p.position.x += (mouseRef.current.x * 0.02 - p.position.x * 0.0001) * speedMult;
-      p.position.y += (mouseRef.current.y * 0.01 - p.position.y * 0.0001) * speedMult;
-
-      /* Wrap around when out of view */
-      if (p.position.y > halfH + 1) {
-        p.position.y = -halfH - 1;
-        p.position.x = (Math.random() - 0.5) * halfW * 2;
-      }
-      if (p.position.x > halfW + 2) p.position.x = -halfW - 2;
-      if (p.position.x < -halfW - 2) p.position.x = halfW + 2;
-
-      /* Gentle pulse */
-      const pulse = 0.7 + Math.sin(t * 0.8 + p.phase) * 0.3;
-
-      dummy.position.copy(p.position);
-      dummy.scale.setScalar(p.scale * pulse);
-      dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
-
-      if (colorAttr) {
-        colorAttr.setXYZ(i, p.color.r, p.color.g, p.color.b);
-      }
-    }
-
-    meshRef.current.instanceMatrix.needsUpdate = true;
-    if (colorAttr) colorAttr.needsUpdate = true;
-  });
-  /* eslint-enable react-hooks/immutability */
-
-  /* ── Heart-shaped geometry ── */
-  const geometry = useMemo(() => {
-    const shape = new THREE.Shape();
-    const x = 0;
-    const y = 0;
-    shape.moveTo(x, y + 0.5);
-    shape.bezierCurveTo(x, y + 0.5, x - 0.1, y, x - 0.5, y);
-    shape.bezierCurveTo(x - 1.0, y, x - 1.0, y + 0.7, x - 1.0, y + 0.7);
-    shape.bezierCurveTo(x - 1.0, y + 1.1, x - 0.6, y + 1.54, x, y + 1.9);
-    shape.bezierCurveTo(x + 0.6, y + 1.54, x + 1.0, y + 1.1, x + 1.0, y + 0.7);
-    shape.bezierCurveTo(x + 1.0, y + 0.7, x + 1.0, y, x + 0.5, y);
-    shape.bezierCurveTo(x + 0.25, y, x, y + 0.5, x, y + 0.5);
-    const geom = new THREE.ShapeGeometry(shape);
-    geom.center();
-    geom.scale(0.8, -0.8, 1);
-    return geom;
-  }, []);
-  const material = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide,
-      }),
-    [],
-  );
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry, material, PARTICLE_COUNT]}
-      frustumCulled={false}
-    >
-      {/* Instance colors are set in the animation loop */}
-    </instancedMesh>
-  );
-}
-
-/* ── Floating ring accent ── */
-function GoldRing({ reducedMotion }: { reducedMotion: boolean }) {
-  const ringRef = useRef<THREE.Mesh>(null!);
-
-  useFrame(({ clock }) => {
-    if (!ringRef.current) return;
-    const t = clock.getElapsedTime();
-    const speed = reducedMotion ? 0.1 : 1;
-    ringRef.current.rotation.x = Math.sin(t * 0.15 * speed) * 0.3 + 0.5;
-    ringRef.current.rotation.y = t * 0.08 * speed;
-    ringRef.current.rotation.z = Math.cos(t * 0.1 * speed) * 0.15;
-  });
-
-  return (
-    <mesh ref={ringRef} position={[2.5, 0.5, -2]}>
-      <torusGeometry args={[0.8, 0.015, 16, 64]} />
-      <meshBasicMaterial
-        color="#d4af37"
-        transparent
-        opacity={0.12}
-        depthWrite={false}
-      />
-    </mesh>
-  );
-}
-
-/* ── Main exported component ── */
 export default function HeroParticles3D() {
-  const [reducedMotion] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    /* Suppress the THREE.Clock deprecation warning from @react-three/fiber
-       internals (R3F issue #3741 — waiting for upstream fix). */
-    const origWarn = console.warn;
-    console.warn = (...args: unknown[]) => {
-      if (typeof args[0] === "string" && args[0].includes("THREE.Clock")) return;
-      origWarn(...args);
-    };
-
-    /* Lazy-mount: wait until hero is in viewport */
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    const hero = document.querySelector(".hero");
-    if (!hero) {
-      // No hero on this page: mount immediately (deferred a tick to keep the
-      // state update asynchronous)
-      setTimeout(() => setVisible(true), 0);
-      return () => {
-        console.warn = origWarn;
-      };
-    }
-    observer.observe(hero);
-
-    return () => {
-      console.warn = origWarn;
-      observer.disconnect();
-    };
-  }, []);
-
-  if (!visible) return null;
-
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: "none",
-      }}
-      aria-hidden="true"
-    >
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        dpr={[1, 1.5]}
-        gl={{
-          antialias: false,
-          alpha: true,
-          powerPreference: "low-power",
-        }}
-        style={{ background: "transparent" }}
-      >
-        <Particles reducedMotion={reducedMotion} />
-        <GoldRing reducedMotion={reducedMotion} />
-      </Canvas>
+    <div className="hero-particles" aria-hidden="true">
+      {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
+        <span
+          key={i}
+          className="hero-particle"
+          style={{
+            "--y": `${(i * 53) % 92}%`,
+            left: `${(i * 61) % 100}%`,
+            backgroundColor: GOLDS[i % GOLDS.length],
+            // Negative delay starts each particle mid-flight, so the field
+            // looks populated on first paint instead of pulsing in together.
+            animationDelay: `${-(i * 1.9)}s`,
+            animationDuration: `${16 + (i % 6) * 4}s`,
+          } as ParticleStyle}
+        />
+      ))}
+      <span className="hero-ring" />
     </div>
   );
 }

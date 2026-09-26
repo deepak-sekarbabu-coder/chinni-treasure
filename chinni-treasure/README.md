@@ -19,7 +19,7 @@
 - **Export:** ExcelJS v4.4.0 for admin data export; jsPDF v4.2.1 for invoice generation; jsBarcode v3.12.3 for barcode generation
 - **Admin tables:** `@tanstack/react-table` v8.21.3 for the Orders / Catalogue / Categories data grids (server-side sorting)
 - **Icons:** `@phosphor-icons/react` v2.1.10 for the admin UI and feature icons
-- **3D Graphics:** `@react-three/fiber` v9 + `three` v0.185 for the animated gold-particle hero (with `prefers-reduced-motion` support)
+- **Hero motion:** the gold-particle hero layer is pure CSS (`heroDrift` keyframes), with `prefers-reduced-motion` support
 - **Fonts:** Cormorant Garamond (serif) + Albert Sans (sans-serif) + Pinyon Script (script) via `next/font`
 - **Testing:** Vitest v4.1.7 with @testing-library/react v16.3.2, @testing-library/jest-dom v6.9.1, @testing-library/user-event v14.6.4, and jsdom
 
@@ -365,7 +365,7 @@ chinni-treasure/
 │   │   │   └── TrackOrderCard.tsx       # Track order result card
 │   │   ├── pages/
 │   │   │   ├── home-content.tsx         # Client homepage hero + features
-│   │   │   ├── HeroParticles3D.tsx      # Animated gold-particle hero (React Three Fiber)
+│   │   │   ├── HeroParticles3D.tsx      # Gold-particle hero layer (CSS-animated, no client JS)
 │   │   │   ├── category-content.tsx     # Category page content (pagination, sort)
 │   │   │   ├── LatestInEveryCategory.tsx # Homepage latest-per-category carousel/grid
 │   │   │   ├── catalogue-content.tsx    # Client catalogue grid with cart interactions
@@ -707,7 +707,6 @@ npm run test:coverage # With coverage report
 | `react-markdown` | Markdown rendering for product/legal content |
 | `@tanstack/react-table` | Headless data tables for admin Orders / Catalogue / Categories grids |
 | `@phosphor-icons/react` | Icon set used across the admin UI and site features |
-| `@react-three/fiber` + `three` | 3D rendering for the animated gold-particle homepage hero |
 
 ---
 

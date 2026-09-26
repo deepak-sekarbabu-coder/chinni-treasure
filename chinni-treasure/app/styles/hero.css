@@ -21,6 +21,48 @@
     pointer-events: none;
 }
 
+/* ── Decorative particle layer (CSS-only, aria-hidden) ── */
+.hero-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Heart shape as a mask, so each particle's own gold (inline background-color)
+   fills it. Resting state (--y, opacity) must stand on its own: the global
+   reduced-motion rule collapses the animation to 0.01ms, which would otherwise
+   freeze every particle on the keyframes' transparent 0% frame. Drift travels
+   -100vh, so each particle's loop reset always happens clipped above the hero. */
+.hero-particle {
+    --heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 14.9C2.7 10.6.6 7.6.6 5.1.6 2.8 2.3 1 4.6 1c1.5 0 2.7.7 3.4 1.9C8.7 1.7 9.9 1 11.4 1c2.3 0 4 1.8 4 4.1 0 2.5-2.1 5.5-7.4 9.8z'/%3E%3C/svg%3E");
+    position: absolute;
+    top: var(--y);
+    width: 11px;
+    height: 11px;
+    background: var(--gold);
+    opacity: 0.55;
+    -webkit-mask: var(--heart) center / contain no-repeat;
+    mask: var(--heart) center / contain no-repeat;
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.5));
+    animation-name: heroDrift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+/* Slow ring accent, echoing the hero's gold motif. */
+.hero-ring {
+    position: absolute;
+    top: 18%;
+    right: 12%;
+    width: 180px;
+    height: 180px;
+    border: 1px solid rgba(212, 175, 55, 0.12);
+    border-radius: 50%;
+    animation: heroRingSpin 24s linear infinite;
+}
+
 .hero-content {
     position: relative;
     max-width: 700px;
