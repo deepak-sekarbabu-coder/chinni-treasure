@@ -5,7 +5,7 @@ This repository (`chinni-treasure`) is maintained to be AI-ready. Read `AGENTS.m
 ## Project
 
 - A high-end, artisan-crafted luxury goods e-commerce platform built with Next.js 16, Prisma, and PostgreSQL.
-- Languages: TypeScript, CSS, Python, JavaScript, SQL
+- Languages: TypeScript, CSS, JavaScript, SQL
 - Frameworks: ESLint, Next.js, Prisma, React, TypeScript, Vitest, Zod
 - Package manager: npm
 

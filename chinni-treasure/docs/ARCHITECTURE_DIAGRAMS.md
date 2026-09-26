@@ -572,6 +572,10 @@ graph TB
         AdminCategoriesCtrl["useAdminCategoriesController"]
         AdminOrdersCtrl["useAdminOrdersController"]
         AdminHeaderActions["useAdminHeaderActions"]
+        AddToCart["useAddToCart"]
+        AdminCrud["useAdminCrud"]
+        CheckoutForm["useCheckoutForm"]
+        CheckoutPayment["useCheckoutPayment"]
         TrackSearch["useTrackSearch"]
         ResponsivePage["useResponsivePageSize"]
         ShippingNudgeHook["useShippingNudge"]
@@ -585,10 +589,10 @@ graph TB
         OrderCache["order-cache.ts<br/>order · track (+ stats invalidation)"]
         StatsCache["stats-cache.ts"]
         RateLimit["rate-limiter.ts"]
-        CSRFLib["csrf.ts + csrf-helpers.ts"]
+        CSRFLib["csrf.ts"]
         Sanitize["sanitize.ts"]
-        RazorpayLib["razorpay.ts"]
-        CartCookie["cart-cookie.ts"]
+        RazorpayLib["razorpay.ts + razorpay-server.ts"]
+        CartCookie["cart-cookie.ts + cart-wire.ts"]
     end
 
     Providers --> Pages

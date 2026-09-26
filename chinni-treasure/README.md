@@ -11,7 +11,7 @@
 - **State Management:** React Context + `localStorage` cart persistence for guests, plus server-side cookie cart hydration
 - **Server State:** React Query (`@tanstack/react-query` v5.101.4 + devtools) for client-side caching and data fetch orchestration
 - **Validation:** Zod v4.4.3 for checkout, cart, and API request/response validation
-- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue (products/categories/latest/page/gift-boxes), order, and stats caches are owned by dedicated modules under `src/lib/`
+- **Caching:** Optional shared Redis cache (`ioredis`) with an in-memory fallback; catalogue (products/catindex/categories/latest/category-page/gift-boxes), order, and stats caches are owned by dedicated modules under `src/lib/`
 - **Observability:** Axiom structured logging (`@axiomhq/*`) for page traffic, route events, Web Vitals, and errors when configured
 - **Payments:** Razorpay Standard Checkout (server-side order creation + HMAC-SHA256 signature verification) with a manual UPI/bank-transfer fallback
 - **Analytics & Insights:** Vercel Analytics (`@vercel/analytics` v2.0.1) + Speed Insights (`@vercel/speed-insights` v2.0.0)
@@ -151,7 +151,7 @@ npm run db:seed
 The seed script creates:
 
 - **6 categories** (Clutches, Bangles, Jewellery, Bangle Organizer, Bracelets, Gift Boxes)
-- **46 products** with pricing, stock, multiple images, and rich markdown descriptions
+- **48 products** with pricing, stock, multiple images, and rich markdown descriptions
 - **1 admin user** with `super_admin` role — username: `admin`, password: `admin123`
 - **3 sample orders** with full status history (for demo/testing)
 
@@ -310,8 +310,8 @@ chinni-treasure/
 │   └── page.tsx                      # Homepage (server component)
 ├── prisma/
 │   ├── schema.prisma                 # Database schema (**7 models + 3 enums**)
-│   ├── seed.ts                       # Database seeder (**46 products + 6 categories + admin + 3 sample orders**)
-│   ├── seed-data.ts                  # Seed data constants (products, categories, orders)
+│   ├── seed.ts                       # Database seeder (**48 products + 6 categories + admin + 3 sample orders**)
+│   ├── seed-data.ts                  # Seed data constants (48 products, 6 categories, 3 orders)
 │   └── migrations/                   # Database migration history (4 migrations)
 ├── scripts/
 │   ├── analyze-lighthouse.mjs        # Analyze Lighthouse reports against budgets
@@ -327,14 +327,12 @@ chinni-treasure/
 ├── src/
 │   ├── components/
 │   │   ├── cart/
-│   │   │   ├── CartProvider.tsx       # Cart context + localStorage + cookie sync
-│   │   │   └── __tests__/CartProvider.test.tsx
+│   │   │   └── CartProvider.tsx       # Cart context + localStorage + cookie sync
 │   │   ├── layout/
 │   │   │   ├── Footer.tsx            # Site footer with 4-column grid
 │   │   │   ├── FooterClientWrapper.tsx # Client wrapper for footer interactivity
 │   │   │   ├── Navbar.tsx            # Fixed navbar with cart dropdown and mobile menu
-│   │   │   ├── NavCartDropdown.tsx   # Cart dropdown in navbar
-│   │   │   └── __tests__/            # Footer.test.tsx, Navbar.test.tsx
+│   │   │   └── NavCartDropdown.tsx   # Cart dropdown in navbar
 │   │   ├── admin/
 │   │   │   ├── AdminCataloguePanel.tsx   # Product CRUD table
 │   │   │   ├── AdminCategoriesPanel.tsx  # Category CRUD table
@@ -348,6 +346,7 @@ chinni-treasure/
 │   │   │   ├── CategoryFormModal.tsx     # Category create/edit form modal
 │   │   │   ├── PrintShippingLabelModal.tsx # Shipping label PDF/print modal
 │   │   │   ├── ProductFormModal.tsx      # Product create/edit form modal
+│   │   │   ├── ShippingLabel.tsx         # Packing label document (editable rows at pack time)
 │   │   │   ├── useAdminCataloguePanel.ts # Catalogue panel view-model (query, filters, pagination)
 │   │   │   ├── useAdminCategoriesPanel.ts # Categories panel view-model
 │   │   │   ├── useAdminOrdersPanel.ts    # Orders panel view-model (filters, sort, fulfilment)
@@ -357,11 +356,11 @@ chinni-treasure/
 │   │   │       ├── columns.categories.tsx# Categories table column definitions
 │   │   │       └── columns.orders.tsx    # Orders table column definitions
 │   │   ├── order/
+│   │   │   ├── CheckoutActions.tsx      # Step navigation / place-order button row
 │   │   │   ├── CheckoutProgress.tsx     # Multi-step progress indicator
 │   │   │   ├── ConfirmationDetails.tsx  # Order confirmation with invoice PDF + barcode
 │   │   │   ├── OrderDetailModal.tsx     # Order detail modal (admin + customer)
-│   │   │   ├── OrderSummaryCard.tsx     # Order summary display card
-│   │   │   └── __tests__/               # CheckoutProgress.test.tsx, OrderDetailModal.test.tsx
+│   │   │   └── OrderSummaryCard.tsx     # Order summary display card
 │   │   ├── track/
 │   │   │   └── TrackOrderCard.tsx       # Track order result card
 │   │   ├── pages/
@@ -372,8 +371,7 @@ chinni-treasure/
 │   │   │   ├── catalogue-content.tsx    # Client catalogue grid with cart interactions
 │   │   │   ├── ProductDetailsContent.tsx # Product detail gallery, add-to-cart, info + gift box selector
 │   │   │   ├── GiftBoxSelector.tsx      # Gift box bundling selector (product page + checkout)
-│   │   │   ├── GiftBoxModal.tsx         # Gift box selection modal
-│   │   │   └── __tests__/               # catalogue-pagination, GiftBoxModal tests
+│   │   │   └── GiftBoxModal.tsx        # Gift box selection modal
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx        # React Query provider (with devtools in dev)
 │   │   └── ui/
@@ -392,8 +390,7 @@ chinni-treasure/
 │   │       ├── SkeletonLoader.tsx       # Skeleton shimmer loader
 │   │       ├── StatusBadge.tsx          # Order status badge (color-coded)
 │   │       ├── StockBadge.tsx           # Stock level badge (in-stock/low/empty)
-│   │       ├── ToastProvider.tsx        # Toast notification system
-│   │       └── __tests__/               # 9 component unit tests
+│   │       └── ToastProvider.tsx        # Toast notification system
 │   ├── lib/
 │   │   ├── api/
 │   │   │   ├── client.ts               # Typed API fetch client with Zod validation
@@ -403,20 +400,24 @@ chinni-treasure/
 │   │   │   ├── useAddToCart.ts                  # Shared add-to-cart flow (gift box modal, nudge trigger)
 │   │   │   ├── useAdminCatalogueController.ts   # Product CRUD state management
 │   │   │   ├── useAdminCategoriesController.ts  # Category CRUD state management
+│   │   │   ├── useAdminCrud.ts                  # Shared validate/save/toast/delete choreography for admin entities
 │   │   │   ├── useAdminData.ts                  # React Query data hooks
 │   │   │   ├── useAdminHeaderActions.ts         # Export/logout actions
 │   │   │   ├── useAdminMutations.ts             # Product/category/order mutation hooks
 │   │   │   ├── useAdminOrdersController.ts      # Order status advancement
 │   │   │   ├── useAdminSession.ts               # Auth session management
+│   │   │   ├── useCheckoutForm.ts               # Checkout step validation + submit guard state
+│   │   │   ├── useCheckoutPayment.ts            # Razorpay create → open → verify → place capture seam
 │   │   │   ├── useResponsivePageSize.ts         # Responsive grid/page-size calculator
 │   │   │   ├── useShippingNudge.ts              # Free-shipping threshold logic
-│   │   │   ├── useTrackSearch.ts                # Order tracking search
-│   │   │   └── __tests__/                       # 6 hook unit tests
+│   │   │   └── useTrackSearch.ts                # Order tracking search
 │   │   ├── admin-route.ts            # withAdmin adapter: CSRF + auth + body parse + error taxonomy + revalidation
 │   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
 │   │   ├── cache.ts                  # Shared in-memory cache with TTL
-│   │   ├── cart-cookie.ts            # Server-side cart cookie management with Zod
-│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/categories/latest/category-page/gift-boxes)
+│   │   ├── cart-cookie.ts            # Server-side cart cookie read (parses the shared wire schema)
+│   │   ├── cart-wire.ts              # Cart wire projection: cookie name/lifetime, schema, serializer
+│   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/catindex/categories/latest/category-page/gift-boxes)
+│   │   ├── catalogue-write.ts        # Shared admin write policy (unique slug, gift-box guard)
 │   │   ├── checkout-fields.ts        # One shared per-field checkout validation contract (client + server)
 │   │   ├── constants.ts              # Indian states, status flow, labels, icons
 │   │   ├── csrf.ts                   # CSRF protection via Origin/Referer validation
@@ -424,14 +425,19 @@ chinni-treasure/
 │   │   ├── env.ts                    # Environment variable validation (requireEnv)
 │   │   ├── excel-export.ts           # ExcelJS workbook builder shared by export route + import script
 │   │   ├── format.ts                 # Shared money formatting (formatRupees / formatINR)
-│   │   ├── images.ts                 # Product image URL/quality helpers
 │   │   ├── image-loader.ts           # Next.js image loader (custom domains, quality)
-│   │   ├── image-fallback.ts         # NEXT_PUBLIC_IMAGE_UNOPTIMIZED flag helper
+│   │   ├── images.ts                 # Product image URL/quality helpers
+│   │   ├── list-query.ts             # Shared pagination/search/sort parsing for list routes
 │   │   ├── openapi-spec.ts           # OpenAPI 3.0 document, derived from the Zod schemas
 │   │   ├── order-cache.ts            # Order-detail/tracking cache owner (+ stats invalidation)
 │   │   ├── order-intake.ts           # Order intake module: placeOrder, transitions, OrderError taxonomy
+│   │   ├── order-read.ts             # Order row + items + status history loader for the view projection
+│   │   ├── order-view.ts             # Order read projection (toOrderView, orderTimeline)
+│   │   ├── pdf-documents.ts          # Invoice + shipping-label document builders
 │   │   ├── pricing.ts                # computePricing: subtotal/shipping/total (checkout + server)
 │   │   ├── prisma.ts                 # Prisma client singleton (global caching)
+│   │   ├── product-display.ts        # Display transforms: primaryImage, stockHealth, productDisplayView
+│   │   ├── product-read.ts           # SQL read surface for the catalogue (SSR, category, gift boxes)
 │   │   ├── query-keys.ts             # React Query key factory
 │   │   ├── rate-limiter.ts           # In-memory rate limiter (login attempts, eviction)
 │   │   ├── razorpay-server.ts        # Server Razorpay Payment module (create order, HMAC verify, accept placement)
@@ -439,22 +445,27 @@ chinni-treasure/
 │   │   ├── redis-cache.ts            # Redis-backed cache with in-memory fallback
 │   │   ├── redis.ts                  # Shared ioredis client (null when REDIS_URL unset)
 │   │   ├── sanitize.ts               # XSS sanitization (strips HTML angle brackets)
+│   │   ├── session.ts                # Session verify seam (secret, cookie name, JWT check) shared by proxy + routes
+│   │   ├── stats.ts                  # Dashboard statistics computation
 │   │   ├── stats-cache.ts            # Dashboard statistics cache
 │   │   ├── useFocusTrap.ts           # Focus trap hook for accessible modals
 │   │   ├── utils.ts                  # API error extraction, UUID order number generation
-│   │   ├── validate.ts               # Shared validateOr400 helper for API routes
-│   │   └── __tests__/                # Deep-module tests (admin-route, checkout-fields, order-intake, order-fulfilment, excel-export)
+│   │   └── validate.ts               # Shared validateOr400 helper for API routes
 │   ├── types/
 │   │   ├── cart.ts                   # CartItem interface
+│   │   ├── product-form.ts           # Product form state/shape shared by the admin modal + controller
 │   │   ├── razorpay.d.ts             # Razorpay response/constructor types
 │   │   └── index.ts                  # Re-exports
 │   └── __tests__/
-│       ├── api/                      # API route handler tests (16 files)
-│       ├── lib/                      # Lib module tests (20 files)
+│       ├── api/                      # API route handler tests (15 files)
+│       ├── components/               # Admin panel + table, cart, layout, order, pages, ui tests (23 files)
+│       ├── lib/                      # Lib module tests (36 files)
+│       │   └── hooks/                # Hook tests (9 files)
 │       ├── mocks/                    # Shared mock implementations (prisma.ts, redis.ts)
 │       ├── setup.ts                  # Vitest global setup
 │       └── utils/                    # Test helper utilities (api-test.ts)
 ├── proxy.ts                          # Next.js middleware (JWT admin route protection + Axiom page logging)
+├── instrumentation.ts                # Next.js instrumentation entry (Axiom error instrumentation)
 ├── prisma.config.ts                  # Prisma CLI configuration (defineConfig, reads DIRECT_URL or DATABASE_URL)
 ├── next.config.ts                    # Next.js configuration (image domains, etc.)
 ├── Dockerfile                        # Container build definition
@@ -662,19 +673,17 @@ npm run test:run      # Single run
 npm run test:coverage # With coverage report
 ```
 
-**Test locations:**
+**Test locations** (every test lives under `src/__tests__/`):
 
-- `src/components/**/__tests__/` — Component tests (Cart, Layout, Order, Pages, UI — 16 test files)
-- `src/__tests__/components/` — Admin panel + table tests (5 files)
-- `src/lib/hooks/__tests__/` — Hook tests (6 files)
-- `src/__tests__/api/` — API route handler tests (16 files)
-- `src/__tests__/lib/` — Lib module tests (20 files)
-- `src/lib/__tests__/` — Deep-module tests (admin-route, checkout-fields, order-intake, order-fulfilment, excel-export — 5 files)
+- `src/__tests__/api/` — API route handler tests (15 files)
+- `src/__tests__/components/` — Component tests: admin panels + table kit, cart, layout, order, pages, ui (23 files)
+- `src/__tests__/lib/` — Lib module tests, incl. the deep-module interface tests (admin-route, checkout-fields, order-intake, order-fulfilment, excel-export, order-view, cart-wire, pricing — 36 files)
+- `src/__tests__/lib/hooks/` — Hook tests (9 files)
 - `src/__tests__/setup.ts` — Vitest global setup
 - `src/__tests__/mocks/` — Shared mock implementations (Prisma, Redis)
 - `src/__tests__/utils/` — Test helper utilities (API test harness)
 
-**Total: 73 test files / 591 tests** (Vitest single run, Sep 2026).
+**Total: 83 test files / 680 tests** (Vitest single run, Sep 2026).
 
 ---
 

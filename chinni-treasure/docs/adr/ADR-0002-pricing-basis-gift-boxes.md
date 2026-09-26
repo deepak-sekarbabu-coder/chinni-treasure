@@ -29,7 +29,7 @@ The paid==stored invariant is now **enforced server-side** at the Order intake s
 2. Inside the placement transaction, `placeOrder` calls `assertPaidAmountMatchesTotal(resolvedPaidPaise, totalAmount)` (integer paise on both sides) **before** the order is created. A mismatch aborts the order entirely — nothing is stored, no stock is deducted.
 3. Manual bank-transfer placements (`paymentGateway: "manual"`) skip the gateway check: there is no gateway record to compare against. Their reference is stored as `transactionId` and reconciliation remains an admin concern.
 
-This also closes the integer-paise follow-up named under Consequences: the comparison is integer-paise on both sides (`Math.round(rupees × 100)`), while the Pricing module continues to carry rupee floats. Regression coverage lives in `src/lib/__tests__/order-intake.test.ts` (module interface) and `src/__tests__/api/orders.test.ts` (adapter: mismatch, wrong Razorpay order, failed payment, manual bypass).
+This also closes the integer-paise follow-up named under Consequences: the comparison is integer-paise on both sides (`Math.round(rupees × 100)`), while the Pricing module continues to carry rupee floats. Regression coverage lives in `src/__tests__/lib/order-intake.test.ts` (module interface) and `src/__tests__/api/orders.test.ts` (adapter: mismatch, wrong Razorpay order, failed payment, manual bypass).
 
 ### Scope and exclusions
 

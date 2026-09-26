@@ -29,9 +29,11 @@ must invalidate together."
 Cache namespaces are **owned by domain modules**, never created inline in routes
 and never invalidated by a central hardcoded list.
 
-1. **`src/lib/catalogue-cache.ts`** owns the five catalogue caches —
-   `products`, `categories`, `catlatest`, `catpage`, `recent` — and exports
-   `invalidateCatalogCaches()`, which clears exactly what the module owns.
+1. **`src/lib/catalogue-cache.ts`** owns every catalogue cache —
+   `products`, `catindex`, `categories`, `catlatest`, `catpage`, `giftboxes`
+   (six; amended Sep 2026, the index and gift-box caches arrived after this
+   ADR) — and exports `invalidateCatalogCaches()`, which clears exactly what
+   the module owns.
 2. **`src/lib/order-cache.ts`** owns the order-detail (`order`) and tracking
    (`track`) caches and exports `invalidateOrderCache(orderId?)`, which removes
    the single order key, clears all tracking keys, **and** clears the stats
@@ -65,8 +67,8 @@ and never invalidated by a central hardcoded list.
 
 **Negative / trade-offs**
 
-- **Coarse blast radius:** any catalogue mutation clears all five catalogue
-  namespaces (unchanged from before, but now explicit). Writes are rare enough
+- **Coarse blast radius:** any catalogue mutation clears every catalogue
+  namespace (unchanged from before, but now explicit). Writes are rare enough
   that this churn is acceptable; if it becomes a problem, the module is the
   single place to introduce finer-grained invalidation.
 - **Per-instance fallback is still per-instance:** the in-memory fallback does
