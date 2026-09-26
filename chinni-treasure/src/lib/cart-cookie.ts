@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/src/lib/prisma";
 import type { CartItem } from "@/src/types";
 import type { CartGiftBox, CartItemDisplay } from "@/src/components/cart/CartProvider";
-import { cartSchema, CART_COOKIE } from "@/src/lib/cart-wire";
+import { cartSchema, CART_COOKIE } from "@/src/lib/cart-projections";
 
 export async function getCartFromCookies(): Promise<CartItem[]> {
   const cookieStore = await cookies();

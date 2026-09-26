@@ -9,8 +9,7 @@ export type OrderWithTimeline = Prisma.OrderGetPayload<{
 
 export type TrackQueryResult =
   | { error: string; status: number }
-  | { orders: OrderWithTimeline[] }
-  | null;
+  | { orders: OrderWithTimeline[] };
 
 /** Cache keys for order tracking: by order id, or by digits-only phone. */
 export function buildTrackCacheKey(orderId: string | null, phone: string | null): string | null {

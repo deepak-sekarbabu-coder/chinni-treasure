@@ -347,6 +347,8 @@ export type TrackOrdersResponse = z.infer<typeof TrackOrdersResponseSchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductsResponse = z.infer<typeof ProductsResponseSchema>;
 export type CatalogueProduct = z.infer<typeof CatalogueProductSchema>;
+/** One gallery image as every product surface receives it. */
+export type ProductImage = z.infer<typeof ProductImageSchema>;
 export type Stats = z.infer<typeof StatsSchema>;
 export type ChartPoint = z.infer<typeof ChartPointSchema>;
 export type ProductSales = z.infer<typeof ProductSalesSchema>;

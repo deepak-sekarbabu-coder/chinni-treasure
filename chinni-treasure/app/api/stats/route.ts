@@ -1,24 +1,14 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
-import { statsCache } from "@/src/lib/stats-cache";
-import { computeDashboardStats } from "@/src/lib/stats";
+import { getDashboardStats } from "@/src/lib/stats-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 
-const { get: getCached, set: setCache } = statsCache;
 const RESPONSE_HEADERS = { headers: { "Cache-Control": "private, max-age=30" } };
 
 // GET /api/stats — Dashboard statistics (admin only)
 export const GET = withAdmin(async () => {
   try {
-    const cached = await getCached("stats");
-    if (cached) {
-      return NextResponse.json(cached, RESPONSE_HEADERS);
-    }
-
-    const payload = await computeDashboardStats();
-    await setCache("stats", payload);
-
-    return NextResponse.json(payload, RESPONSE_HEADERS);
+    return NextResponse.json(await getDashboardStats(), RESPONSE_HEADERS);
   } catch (error) {
     logger.error("Failed to fetch stats", {
       error: error instanceof Error ? error.message : String(error),

@@ -11,32 +11,13 @@ import {
 } from "@/src/lib/images";
 import { productDisplayView } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
-
-export interface ProductImageData {
-  id: string;
-  url: string;
-  isPrimary: boolean;
-  displayOrder: number;
-}
-
-export interface ProductData {
-  id: string;
-  name: string;
-  price: number;
-  compareAtPrice?: number | null;
-  imageUrl: string | null;
-  description: string | null;
-  category: { name: string } | null;
-  stockQuantity: number;
-  badge: string | null;
-  sku: string | null;
-  allowGiftBoxBundling?: boolean;
-  images?: ProductImageData[];
-}
+import type { CatalogueProduct } from "@/src/lib/api/schemas";
 
 interface Props {
-  product: ProductData;
-  onAdd: (product: ProductData) => void;
+  // The card renders the catalogue contract itself, not a hand-rolled twin —
+  // a schema field can no longer stop reaching the card without a type error.
+  product: CatalogueProduct;
+  onAdd: (product: CatalogueProduct) => void;
   transitionDelay?: number;
   priority?: boolean;
   loadImageImmediately?: boolean;

@@ -15,6 +15,7 @@ const baseProduct = {
   category: { name: "Sarees" },
   stockQuantity: 5,
   badge: "Bestseller",
+  sku: null,
 };
 
 describe("ProductCard", () => {

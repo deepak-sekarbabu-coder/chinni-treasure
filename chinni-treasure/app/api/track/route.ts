@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
-import { trackingCache } from "@/src/lib/order-cache";
+import { getTrackedOrders } from "@/src/lib/order-cache";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
-import {
-  buildTrackCacheKey,
-  queryOrdersByOrderId,
-  queryOrdersByPhone,
-  formatOrderResults,
-} from "@/src/lib/order-read";
 
-const { get: getCached, set: setCache } = trackingCache;
 const CACHE_HEADERS = { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } };
 
 // GET /api/track?orderId=xxx or /api/track?phone=xxx
@@ -24,34 +17,12 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const orderId = searchParams.get("orderId");
-    const phone = searchParams.get("phone");
-
-    const cacheKey = buildTrackCacheKey(orderId, phone);
-    if (cacheKey) {
-      const cached = await getCached(cacheKey);
-      if (cached) {
-        return NextResponse.json(cached, CACHE_HEADERS);
-      }
+    const result = await getTrackedOrders(searchParams.get("orderId"), searchParams.get("phone"));
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    if (!orderId && !phone) {
-      return NextResponse.json({ error: "Provide orderId or phone parameter" }, { status: 400 });
-    }
-
-    const result = orderId ? await queryOrdersByOrderId(orderId) : await queryOrdersByPhone(phone!);
-    if (!result || "error" in result) {
-      const failure = result && "error" in result ? result : { error: "Order lookup failed", status: 404 };
-      return NextResponse.json({ error: failure.error }, { status: failure.status });
-    }
-
-    const formatted = formatOrderResults(result.orders);
-
-    if (cacheKey) {
-      await setCache(cacheKey, formatted);
-    }
-
-    return NextResponse.json(formatted, CACHE_HEADERS);
+    return NextResponse.json(result.orders, CACHE_HEADERS);
   } catch (error) {
     logger.error("Failed to search orders", {
       error: error instanceof Error ? error.message : String(error),

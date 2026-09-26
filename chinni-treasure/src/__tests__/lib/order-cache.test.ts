@@ -7,7 +7,7 @@ vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 
 import { redis } from "@/src/lib/redis";
 import { prisma } from "@/src/lib/prisma";
-import { invalidateOrderCache, getOrderDetail } from "@/src/lib/order-cache";
+import { invalidateOrderCache, getOrderDetail, getTrackedOrders } from "@/src/lib/order-cache";
 
 const mockRedis = redis as unknown as ReturnType<typeof createMockRedis>;
 
@@ -57,6 +57,31 @@ describe("invalidateOrderCache", () => {
   it("resolves without throwing when del fails", async () => {
     mockRedis.setFail("del", true);
     await expect(invalidateOrderCache("order-1")).resolves.toBeUndefined();
+  });
+});
+
+describe("getTrackedOrders", () => {
+  beforeEach(() => {
+    mockRedis.reset();
+    vi.clearAllMocks();
+  });
+
+  it("rejects a lookup with neither order id nor phone", async () => {
+    await expect(getTrackedOrders(null, null)).resolves.toEqual({
+      error: "Provide orderId or phone parameter",
+      status: 400,
+    });
+  });
+
+  it("fills the tracking cache on a miss, then serves the next lookup from it", async () => {
+    vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder] as never);
+
+    const first = await getTrackedOrders("ORD-TEST", null);
+    expect("orders" in first && first.orders[0].orderNumber).toBe("ORD-TEST");
+
+    const second = await getTrackedOrders("ORD-TEST", null);
+    expect("orders" in second).toBe(true);
+    expect(prisma.order.findMany).toHaveBeenCalledTimes(1);
   });
 });
 

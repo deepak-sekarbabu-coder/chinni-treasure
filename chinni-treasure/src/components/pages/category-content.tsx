@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import GiftBoxModal from "@/src/components/pages/GiftBoxModal";
-import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
+import ProductCard from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
@@ -80,7 +80,7 @@ export default function CategoryContent({
   const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
   const loading = categoryQuery.isFetching;
 
-  const { handleAdd, giftBox } = useAddToCart<ProductData>({
+  const { handleAdd, giftBox } = useAddToCart({
     triggerShippingNudge,
   });
 

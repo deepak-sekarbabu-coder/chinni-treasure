@@ -592,7 +592,7 @@ graph TB
         CSRFLib["csrf.ts"]
         Sanitize["sanitize.ts"]
         RazorpayLib["razorpay.ts + razorpay-server.ts"]
-        CartCookie["cart-cookie.ts + cart-wire.ts"]
+        CartCookie["cart-cookie.ts + cart-projections.ts"]
     end
 
     Providers --> Pages

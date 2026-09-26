@@ -3,11 +3,12 @@ import { logger } from "@/lib/axiom/server";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { listByCategory, CATEGORY_SORT_MAP } from "@/src/lib/product-read";
 import { parseListQuery } from "@/src/lib/list-query";
-import { catPageCache } from "@/src/lib/catalogue-cache";
-
-const { get: getCached, set: setCache } = catPageCache;
 
 type SortKey = "newest" | "price-asc" | "price-desc";
+
+const RESPONSE_HEADERS = {
+  headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+};
 
 // GET /api/category/[slug]/products
 // Public listing of active, non-deleted products in a category with pagination + sort.
@@ -31,16 +32,6 @@ export async function GET(
 
     const hostname = getHostFromRequest(request);
 
-    const cacheKey = `${hostname ?? "default"}:${slug}:${page}:${limit}:${sort}`;
-    const cached = await getCached(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-        },
-      });
-    }
-
     const result = await listByCategory(slug, hostname, { page, limit, sort });
 
     if (!result.category) {
@@ -50,22 +41,7 @@ export async function GET(
       );
     }
 
-    const payload = {
-      category: result.category,
-      products: result.products,
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-    };
-
-    await setCache(cacheKey, payload);
-
-    return NextResponse.json(payload, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-      },
-    });
+    return NextResponse.json(result, RESPONSE_HEADERS);
   } catch (error) {
     logger.error("Failed to fetch category products", {
       error: error instanceof Error ? error.message : String(error),

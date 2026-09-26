@@ -415,7 +415,7 @@ chinni-treasure/
 │   │   ├── auth.ts                   # JWT auth helpers (sign, verify, session cookies)
 │   │   ├── cache.ts                  # Shared in-memory cache with TTL
 │   │   ├── cart-cookie.ts            # Server-side cart cookie read (parses the shared wire schema)
-│   │   ├── cart-wire.ts              # Cart wire projection: cookie name/lifetime, schema, serializer
+│   │   ├── cart-projections.ts      # Cart projections: cookie wire, priced lines, order payload (one billable rule)
 │   │   ├── catalogue-cache.ts        # Catalogue cache owner (products/catindex/categories/latest/category-page/gift-boxes)
 │   │   ├── catalogue-write.ts        # Shared admin write policy (unique slug, gift-box guard)
 │   │   ├── checkout-fields.ts        # One shared per-field checkout validation contract (client + server)
@@ -677,7 +677,7 @@ npm run test:coverage # With coverage report
 
 - `src/__tests__/api/` — API route handler tests (15 files)
 - `src/__tests__/components/` — Component tests: admin panels + table kit, cart, layout, order, pages, ui (23 files)
-- `src/__tests__/lib/` — Lib module tests, incl. the deep-module interface tests (admin-route, checkout-fields, order-intake, order-fulfilment, excel-export, order-view, cart-wire, pricing — 36 files)
+- `src/__tests__/lib/` — Lib module tests, incl. the deep-module interface tests (admin-route, checkout-fields, order-intake, order-fulfilment, excel-export, order-view, cart-projections, pricing — 36 files)
 - `src/__tests__/lib/hooks/` — Hook tests (9 files)
 - `src/__tests__/setup.ts` — Vitest global setup
 - `src/__tests__/mocks/` — Shared mock implementations (Prisma, Redis)

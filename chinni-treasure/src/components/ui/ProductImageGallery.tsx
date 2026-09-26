@@ -2,14 +2,14 @@
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { ProductImageData } from "./ProductCard";
+import type { ProductImage } from "@/src/lib/api/schemas";
 import {
   PRODUCT_IMAGE_QUALITY,
   BLUR_PLACEHOLDER,
 } from "@/src/lib/images";
 
 interface Props {
-    images: ProductImageData[];
+    images: ProductImage[];
     productName: string;
 }
 

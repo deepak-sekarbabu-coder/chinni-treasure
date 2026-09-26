@@ -10,6 +10,7 @@ import CheckoutProgress from "@/src/components/order/CheckoutProgress";
 import OrderSummaryCard from "@/src/components/order/OrderSummaryCard";
 import { INDIAN_STATES, INDIAN_CITIES } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
+import { cartPricedLines } from "@/src/lib/cart-projections";
 import { useCheckoutForm, type OrderForm } from "@/src/lib/hooks/useCheckoutForm";
 import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
 import { useCheckoutPayment } from "@/src/lib/hooks/useCheckoutPayment";
@@ -273,12 +274,8 @@ export default function OrderPage() {
 
 
   const total = getTotal();
-  const pricedLines = items
-    .filter((i) => !i.isGift)
-    .flatMap((i) => [
-      { price: i.price, quantity: i.quantity, sku: i.sku },
-      ...(i.giftBoxes?.map((gb) => ({ price: gb.price, quantity: gb.quantity })) ?? []),
-    ]);
+  // Parents plus their gift-box lines, projected through the shared cart seam.
+  const pricedLines = cartPricedLines(items);
   const pricing = form.state ? computePricing(pricedLines, form.state) : null;
   const shippingCost = pricing ? pricing.shippingCost : -1;
   const grandTotal = pricing ? pricing.totalAmount : total;

@@ -10,7 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem } from "@/src/types";
-import { cartItemsToWire, CART_COOKIE, CART_MAX_AGE } from "@/src/lib/cart-wire";
+import {
+  cartItemsToWire,
+  cartPricedLines,
+  CART_COOKIE,
+  CART_MAX_AGE,
+  type BillableCartLine,
+} from "@/src/lib/cart-projections";
 
 const SURPRISE_GIFT_PRODUCT_ID = "__surprise_gift__";
 const SURPRISE_GIFT_ENABLED =
@@ -76,14 +82,12 @@ interface AddItemResult {
   newTotal: number;
 }
 
-/** Revenue-bearing total: parent lines plus their gift-box lines; the surprise gift is free. */
-function computeItemsTotal(items: CartItemDisplay[]): number {
-  return items.reduce((sum, i) => {
-    if (i.isGift) return sum;
-    const itemTotal = i.price * i.quantity;
-    const giftBoxTotal = i.giftBoxes?.reduce((gbSum, gb) => gbSum + gb.price * gb.quantity, 0) ?? 0;
-    return sum + itemTotal + giftBoxTotal;
-  }, 0);
+/**
+ * Revenue-bearing total. Which lines are billable is not decided here — the
+ * cart-projections module owns that rule; this only sums what it projects.
+ */
+function cartSubtotal(items: ReadonlyArray<BillableCartLine>): number {
+  return cartPricedLines(items).reduce((sum, line) => sum + line.price * line.quantity, 0);
 }
 
 interface CartContextType {
@@ -178,14 +182,14 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
     (product: AddItemProduct): AddItemResult => {
       const prev = itemsRef.current;
       if (product.stock <= 0) {
-        return { result: "out_of_stock", newTotal: computeItemsTotal(prev) };
+        return { result: "out_of_stock", newTotal: cartSubtotal(prev) };
       }
       const existing = prev.find((i) => i.productId === product.id);
       let next: CartItemDisplay[];
       if (existing) {
         if (existing.quantity >= product.stock) {
           const result = product.stock === 1 ? "max_one" : "max_reached";
-          return { result, newTotal: computeItemsTotal(prev) };
+          return { result, newTotal: cartSubtotal(prev) };
         }
         next = prev.map((i) => {
           if (i.productId !== product.id) return i;
@@ -213,7 +217,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
       commitItems(next);
       // The authoritative post-add total: computed from the state this add
       // just produced and published, not from a stale snapshot.
-      return { result: "added", newTotal: computeItemsTotal(next) };
+      return { result: "added", newTotal: cartSubtotal(next) };
     },
     [commitItems],
   );
@@ -274,7 +278,7 @@ export function CartProvider({ children, initialItems = [] }: { children: ReactN
     commitItems([]);
   }, [commitItems]);
 
-  const getTotal = useCallback(() => computeItemsTotal(items), [items]);
+  const getTotal = useCallback(() => cartSubtotal(items), [items]);
 
   const getCount = useCallback(() => {
     return items.reduce((sum, i) => (i.isGift ? sum : sum + i.quantity), 0);

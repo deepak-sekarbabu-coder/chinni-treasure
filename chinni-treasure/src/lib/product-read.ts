@@ -1,6 +1,8 @@
 import {
   SORT_OPTIONS,
+  catPageCache,
   categoriesCache,
+  giftBoxCache,
   productsCache,
   queryCatalogueIndex,
   type CatalogueIndexProduct,
@@ -332,23 +334,35 @@ export async function listCatalogue(
   return result;
 }
 
-export async function listByCategory(
-  slug: string,
-  hostname: string | null,
-  opts: { page?: number; limit?: number; sort?: string } = {},
-): Promise<{
+/** One category page: what the API adapter serializes and the SSR page renders. */
+export type CategoryPage = {
   category: { id: number; name: string; slug: string; description: string | null; isActive: boolean } | null;
   products: ProductView[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
-}> {
+};
+
+/**
+ * Read one category page through the catalogue's page cache. Read-through lives
+ * here (like `listCatalogue`) so the key format sits with the concept it names
+ * and `/api/category/[slug]/products` is only parse → call → envelope.
+ */
+export async function listByCategory(
+  slug: string,
+  hostname: string | null,
+  opts: { page?: number; limit?: number; sort?: string } = {},
+): Promise<CategoryPage> {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(60, Math.max(1, opts.limit ?? 12));
   const skip = (page - 1) * limit;
 
   const sortKey = opts.sort ?? "newest";
+  const cacheKey = `${hostname ?? "default"}:${slug}:${page}:${limit}:${sortKey}`;
+  const cached = (await catPageCache.get(cacheKey)) as CategoryPage | null;
+  if (cached) return cached;
+
   const orderBy = [...(CATEGORY_SORT_MAP[sortKey as keyof typeof CATEGORY_SORT_MAP] ?? SORT_OPTIONS.newest)];
 
   const category = await prisma.category.findUnique({
@@ -357,6 +371,7 @@ export async function listByCategory(
   });
 
   if (!category || !category.isActive) {
+    // Deliberately not cached: a 404 must not outlive its cause.
     return { category: null, products: [], total: 0, page, limit, totalPages: 1 };
   }
 
@@ -372,7 +387,7 @@ export async function listByCategory(
     prisma.product.count({ where }),
   ]);
 
-  return {
+  const result: CategoryPage = {
     category,
     products: rows.map(toProductView),
     total,
@@ -380,11 +395,20 @@ export async function listByCategory(
     limit,
     totalPages: Math.max(1, Math.ceil(total / limit)),
   };
+  await catPageCache.set(cacheKey, result);
+  return result;
 }
 
+/**
+ * Read the active gift-box products through their cache. The route owns nothing
+ * but its response envelope.
+ */
 export async function listGiftBoxes(): Promise<
   { id: string; name: string; price: number; imageUrl: string | null; stockQuantity: number }[]
 > {
+  const cached = (await giftBoxCache.get("all")) as Awaited<ReturnType<typeof listGiftBoxes>> | null;
+  if (cached) return cached;
+
   const rows = await prisma.product.findMany({
     where: {
       isActive: true,
@@ -403,11 +427,13 @@ export async function listGiftBoxes(): Promise<
     orderBy: { name: "asc" },
   });
 
-  return rows.map((p) => ({
+  const payload = rows.map((p) => ({
     id: p.id,
     name: p.name,
     price: Number(p.price),
     imageUrl: p.images[0]?.url || p.imageUrl,
     stockQuantity: p.stockQuantity,
   }));
+  await giftBoxCache.set("all", payload);
+  return payload;
 }

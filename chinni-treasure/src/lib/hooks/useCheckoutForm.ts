@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fieldIssue, type CheckoutFieldKey } from "@/src/lib/checkout-fields";
+import { cartOrderItems, type BillableCartLine } from "@/src/lib/cart-projections";
 
 export interface OrderForm {
   fullName: string;
@@ -58,12 +59,7 @@ const initialForm: OrderForm = {
   zipCode: "", transactionId: "", notes: "", acceptedTerms: false, paymentMethod: "razorpay",
 };
 
-export function useCheckoutForm(items: Array<{
-  productId: string;
-  quantity: number;
-  isGift?: boolean;
-  giftBoxes?: Array<{ productId: string; quantity: number }>;
-}>) {
+export function useCheckoutForm(items: ReadonlyArray<BillableCartLine>) {
   const [form, setForm] = useState<OrderForm>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCustomCity, setIsCustomCity] = useState(false);
@@ -77,11 +73,7 @@ export function useCheckoutForm(items: Array<{
   }
 
   const orderPayload = {
-    items: items.filter((i) => !i.isGift).map((i) => ({
-      id: i.productId,
-      quantity: i.quantity,
-      giftBoxes: i.giftBoxes?.map((gb) => ({ id: gb.productId, quantity: gb.quantity })),
-    })),
+    items: cartOrderItems(items),
     customerName: form.fullName.trim(), customerEmail: form.email.trim(), customerPhone: form.phone.trim(),
     addressLine1: form.address.trim(), addressLine2: form.addressLine2.trim() || undefined,
     city: form.city.trim(), stateCode: form.state, postalCode: form.zipCode.trim(),

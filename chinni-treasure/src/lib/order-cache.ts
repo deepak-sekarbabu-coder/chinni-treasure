@@ -2,6 +2,13 @@ import { createRedisCache } from "@/src/lib/redis-cache";
 import { statsCache } from "@/src/lib/stats-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
+import type { OrderView } from "@/src/lib/order-view";
+import {
+  buildTrackCacheKey,
+  formatOrderResults,
+  queryOrdersByOrderId,
+  queryOrdersByPhone,
+} from "@/src/lib/order-read";
 
 /**
  * The Order cache module.
@@ -34,6 +41,32 @@ export async function getOrderDetail(id: string): Promise<DetailedOrder | null> 
   if (!order) return null;
   await orderDetailCache.set(id, order);
   return order;
+}
+
+/** Tracking lookup: the projected orders, or the 400/404 the route maps. */
+export type TrackResult = { error: string; status: number } | { orders: OrderView[] };
+
+/**
+ * Read orders through the tracking cache — the module's tracking surface.
+ * `/api/track` only rate-limits, parses and envelopes; the cache key, the
+ * hit/miss branch and the lookup's own 400 live here with the cache they name.
+ */
+export async function getTrackedOrders(
+  orderId: string | null,
+  phone: string | null,
+): Promise<TrackResult> {
+  const cacheKey = buildTrackCacheKey(orderId, phone);
+  if (!cacheKey) return { error: "Provide orderId or phone parameter", status: 400 };
+
+  const cached = (await trackingCache.get(cacheKey)) as OrderView[] | null;
+  if (cached) return { orders: cached };
+
+  const result = orderId ? await queryOrdersByOrderId(orderId) : await queryOrdersByPhone(phone!);
+  if ("error" in result) return result;
+
+  const orders = formatOrderResults(result.orders);
+  await trackingCache.set(cacheKey, orders);
+  return { orders };
 }
 
 /**

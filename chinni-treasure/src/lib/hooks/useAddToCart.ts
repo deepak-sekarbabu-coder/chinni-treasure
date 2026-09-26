@@ -4,18 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import type { GiftBoxModalProduct, SelectedGiftBox } from "@/src/components/pages/GiftBoxModal";
-
-/** Minimal product shape shared by CatalogueProduct and ProductData. */
-export interface AddableProduct {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  stockQuantity: number;
-  sku: string | null;
-  category: { name: string } | null;
-  allowGiftBoxBundling?: boolean;
-}
+import type { CatalogueProduct } from "@/src/lib/api/schemas";
 
 /** A gift-box line the customer picked in the modal. */
 type GiftBoxItem = SelectedGiftBox;
@@ -36,7 +25,7 @@ type GiftBoxItem = SelectedGiftBox;
  * stale-cart-read bug class (the ₹0 shipping-nudge popup) is structurally
  * impossible here.
  */
-export function useAddToCart<T extends AddableProduct>(options: {
+export function useAddToCart(options: {
   triggerShippingNudge: (newTotal: number) => void;
 }) {
   const { triggerShippingNudge } = options;
@@ -45,7 +34,7 @@ export function useAddToCart<T extends AddableProduct>(options: {
   const [giftBoxProduct, setGiftBoxProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const handleAddDirectly = useCallback(
-    (p: T, giftBoxes?: GiftBoxItem[]) => {
+    (p: CatalogueProduct, giftBoxes?: GiftBoxItem[]) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;
@@ -81,7 +70,7 @@ export function useAddToCart<T extends AddableProduct>(options: {
   );
 
   const handleAdd = useCallback(
-    (p: T) => {
+    (p: CatalogueProduct) => {
       if (p.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
         setGiftBoxProduct({
           id: p.id,
@@ -103,16 +92,17 @@ export function useAddToCart<T extends AddableProduct>(options: {
       giftBoxes: GiftBoxItem[],
     ) => {
       if (modalProduct) {
+        const { image, ...product } = modalProduct;
         handleAddDirectly(
           {
-            ...modalProduct,
-            imageUrl: modalProduct.image,
+            ...product,
+            imageUrl: image,
             stockQuantity: 1,
             description: null,
             badge: null,
             sku: null,
             category: null,
-          } as unknown as T,
+          },
           giftBoxes.length > 0 ? giftBoxes : undefined,
         );
       }

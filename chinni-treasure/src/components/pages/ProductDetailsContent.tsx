@@ -9,28 +9,13 @@ import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import StockBadge from "@/src/components/ui/StockBadge";
 import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
 import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/GiftBoxSelector";
-import type { ProductImageData } from "@/src/components/ui/ProductCard";
+import type { ProductDetailView } from "@/src/lib/product-read";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { productDisplayView } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
-interface ProductDetails {
-    id: string;
-    name: string;
-    price: number;
-    compareAtPrice?: number | null;
-    imageUrl: string;
-    description: string;
-    category: { name: string } | null;
-    stockQuantity: number;
-    badge: string | null;
-    sku: string | null;
-    allowGiftBoxBundling?: boolean;
-    images: ProductImageData[];
-}
-
 interface Props {
-    product: ProductDetails;
+    product: ProductDetailView;
 }
 
 export default function ProductDetailsContent({ product }: Props) {

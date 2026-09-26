@@ -145,7 +145,7 @@ export default function CatalogueContent({
     }
   }, [pageTransitionLoading, targetPageReady, products.length]);
 
-  const { handleAdd, giftBox } = useAddToCart<CatalogueProduct>({
+  const { handleAdd, giftBox } = useAddToCart({
     triggerShippingNudge,
   });
 

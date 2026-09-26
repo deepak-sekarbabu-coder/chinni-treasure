@@ -7,7 +7,7 @@ vi.mock("@/src/lib/redis", () => ({ redis: createMockRedis() }));
 
 import { prisma } from "@/src/lib/prisma";
 import { redis } from "@/src/lib/redis";
-import { listCatalogue, loadActiveCategories, getProductDetail, listProductsForQuery } from "@/src/lib/product-read";
+import { listCatalogue, listByCategory, loadActiveCategories, getProductDetail, listProductsForQuery } from "@/src/lib/product-read";
 import { primaryImage } from "@/src/lib/product-display";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 
@@ -39,6 +39,27 @@ function productRow(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   mockRedis.reset();
   vi.clearAllMocks();
+});
+
+describe("listByCategory", () => {
+  it("caches per host+slug+page+limit+sort, and never caches a missing category", async () => {
+    const category = { id: 1, name: "Rings", slug: "rings", description: null, isActive: true };
+    vi.mocked(prisma.category.findUnique).mockResolvedValue(category as never);
+    vi.mocked(prisma.product.findMany).mockResolvedValue([productRow()] as never);
+    vi.mocked(prisma.product.count).mockResolvedValue(1);
+
+    const first = await listByCategory("rings", "example.com");
+    const second = await listByCategory("rings", "example.com");
+    expect(first.products[0].id).toBe("p1");
+    expect(second.total).toBe(1);
+    expect(prisma.product.findMany).toHaveBeenCalledTimes(1);
+
+    // The 404 the adapter maps must not outlive its cause.
+    vi.mocked(prisma.category.findUnique).mockResolvedValue(null);
+    await listByCategory("nope", "example.com");
+    await listByCategory("nope", "example.com");
+    expect(prisma.category.findUnique).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe("listCatalogue", () => {
