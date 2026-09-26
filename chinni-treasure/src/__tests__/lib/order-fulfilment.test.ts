@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockPrisma, mockTx } from "@/src/__tests__/mocks/prisma";
 import type { UpdateOrderStatusInput } from "@/src/lib/order-intake";
-import { ORDER_STATUS_ACTIONS, ORDER_STATUS_FLOW, ORDER_STATUS_VOCABULARY } from "@/src/lib/constants";
+import { ORDER_STATUS_ACTIONS, ORDER_STATUS_FLOW } from "@/src/lib/constants";
 
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 
@@ -79,8 +79,8 @@ describe("validateTransition", () => {
         expect(validateTransition(status as (typeof ORDER_STATUS_FLOW)[number], next as (typeof ORDER_STATUS_FLOW)[number] | "rejected")).toBeNull();
       }
     }
-    for (const status of ORDER_STATUS_VOCABULARY.flow) {
-      const allStatuses = ORDER_STATUS_VOCABULARY.flow as readonly FlowStatus[];
+    for (const status of ORDER_STATUS_FLOW) {
+      const allStatuses = ORDER_STATUS_FLOW as readonly FlowStatus[];
       for (const next of allStatuses) {
         if (!ORDER_STATUS_ACTIONS[status].includes(next as (typeof ORDER_STATUS_ACTIONS)[keyof typeof ORDER_STATUS_ACTIONS])) {
           expect(validateTransition(status, next)).not.toBeNull();

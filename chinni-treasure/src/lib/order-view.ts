@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { ORDER_STATUS_FLOW, ORDER_STATUS_VOCABULARY } from "@/src/lib/constants";
+import { ORDER_STATUS_FLOW, ORDER_STATUS_LABELS, type OrderStatusKey } from "@/src/lib/constants";
 
 /**
  * The Order view module.
@@ -60,7 +60,7 @@ export interface OrderView {
 }
 
 function statusLabel(status: string): string {
-  return ORDER_STATUS_VOCABULARY.labels[status as keyof typeof ORDER_STATUS_VOCABULARY.labels] ?? status;
+  return ORDER_STATUS_LABELS[status as OrderStatusKey] ?? status;
 }
 
 /** Project an order row (items + statusHistory included) into the shared view. */

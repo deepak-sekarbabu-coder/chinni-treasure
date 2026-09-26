@@ -3,7 +3,6 @@ import {
   ORDER_STATUS_ACTIONS,
   ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
-  ORDER_STATUS_VOCABULARY,
   ORDER_STATUS_ICONS,
   INDIAN_STATES,
   nextOrderStatus,
@@ -47,7 +46,7 @@ describe("ORDER_STATUS_FLOW", () => {
 
 describe("ORDER_STATUS_LABELS", () => {
   it("has a label for every vocabulary status", () => {
-    for (const status of ORDER_STATUS_VOCABULARY.flow) {
+    for (const status of ORDER_STATUS_FLOW) {
       expect(ORDER_STATUS_LABELS[status]).toBeDefined();
       expect(typeof ORDER_STATUS_LABELS[status]).toBe("string");
     }
@@ -57,7 +56,7 @@ describe("ORDER_STATUS_LABELS", () => {
 
 describe("ORDER_STATUS_ICONS", () => {
   it("has an icon for every vocabulary status", () => {
-    for (const status of ORDER_STATUS_VOCABULARY.flow) {
+    for (const status of ORDER_STATUS_FLOW) {
       expect(ORDER_STATUS_ICONS[status]).toBeDefined();
     }
     expect(ORDER_STATUS_ICONS["rejected"]).toBeDefined();

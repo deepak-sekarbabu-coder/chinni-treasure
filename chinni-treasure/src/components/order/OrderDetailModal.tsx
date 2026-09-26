@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import {
+  ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
-  ORDER_STATUS_VOCABULARY,
   nextOrderStatus,
 } from "@/src/lib/constants";
 import type { FlowStatus } from "@/src/lib/constants";
@@ -69,8 +69,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
     };
   }, [onClose, showPrintModal]);
 
-  const vocabulary = ORDER_STATUS_VOCABULARY;
-  const flow = vocabulary.flow as readonly FlowStatus[];
+  const flow = ORDER_STATUS_FLOW as readonly FlowStatus[];
 
   // The timeline is projected by the Order view module: the persisted status
   // history when this surface carries it (tracking, order detail), the forward
@@ -128,7 +127,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             </div>
           </div>
 
-          {(flow.includes(order.status as (typeof vocabulary.flow)[number]) && (order.status === "shipped" || order.status === "delivered")) && (
+          {(flow.includes(order.status as FlowStatus) && (order.status === "shipped" || order.status === "delivered")) && (
             <div className="modal-section">
               <h3>
                 <span className="section-icon">🚚</span> Tracking Information

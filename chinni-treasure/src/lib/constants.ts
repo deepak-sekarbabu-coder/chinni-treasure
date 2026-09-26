@@ -1,12 +1,12 @@
 /**
  * Order-status vocabulary.
  *
- * One OrderStatus-keyed table owns both the vocabulary and the policy:
- * `ORDER_STATUS_ACTIONS` is the allowed-next map the server's
- * `validateTransition`, the client's `nextOrderStatus`, and the admin UI all
- * read from; labels, icons, and filters live beside it. The Zod schemas
- * (order-intake, api/schemas) are derived from `ORDER_STATUS_ALL` so nothing
- * can drift from this file. Add or rename a status in exactly one place.
+ * This module owns the vocabulary and the policy. `ORDER_STATUS_ACTIONS` is
+ * the allowed-next map the server's `validateTransition`, the client's
+ * `nextOrderStatus`, and the admin UI all read from; the labels, icons, and
+ * filter row live beside it as their own maps. The Zod schemas (order-intake,
+ * api/schemas) are derived from `ORDER_STATUS_ALL` so nothing can drift from
+ * this file. Add or rename a status in exactly one place.
  */
 
 import type { OrderStatus } from "@prisma/client";
@@ -57,48 +57,39 @@ export function nextOrderStatus(status: string): FlowStatus | null {
   return (nexts.find((s) => s !== "rejected") as FlowStatus | undefined) ?? null;
 }
 
-/**
- * One vocabulary for the fulfilment half of the Order lifecycle.
- * The DB enum and order-intake Zod enum derive from this; the server's
- * `validateTransition` and the admin UI share `actions` as the policy.
- */
-export const ORDER_STATUS_VOCABULARY = {
-  flow: ORDER_STATUS_FLOW,
-  labels: {
-    pending: "Pending",
-    approved: "Approved",
-    packaging: "Packaging",
-    shipped: "Shipped",
-    delivered: "Delivered",
-    rejected: "Rejected",
-  },
-  icons: {
-    pending: "⏳",
-    approved: "✓",
-    packaging: "📦",
-    shipped: "🚚",
-    delivered: "✅",
-    rejected: "✕",
-  },
-  filters: [
-    { key: "all", label: "All Orders" },
-    { key: "pending", label: "Pending" },
-    { key: "approved", label: "Approved" },
-    { key: "packaging", label: "Packaging" },
-    { key: "shipped", label: "Shipped" },
-    { key: "delivered", label: "Delivered" },
-    { key: "rejected", label: "Rejected" },
-  ],
-  actions: ORDER_STATUS_ACTIONS,
-} as const;
+/** Human-readable name per status. */
+export const ORDER_STATUS_LABELS = {
+  pending: "Pending",
+  approved: "Approved",
+  packaging: "Packaging",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  rejected: "Rejected",
+} as const satisfies Record<OrderStatus, string>;
 
-/**
- * Re-export the friendly names for components that still import them directly.
- * The canonical shape is ORDER_STATUS_VOCABULARY.labels/icons/filters/actions.
- */
-export const ORDER_STATUS_LABELS = ORDER_STATUS_VOCABULARY.labels;
-export const ORDER_STATUS_ICONS = ORDER_STATUS_VOCABULARY.icons;
-export const ORDER_STATUS_FILTERS = ORDER_STATUS_VOCABULARY.filters;
+/** Emoji glyph per status, used by the status badge. */
+export const ORDER_STATUS_ICONS = {
+  pending: "⏳",
+  approved: "✓",
+  packaging: "📦",
+  shipped: "🚚",
+  delivered: "✅",
+  rejected: "✕",
+} as const satisfies Record<OrderStatus, string>;
+
+/** The admin orders filter row, `all` first. */
+export const ORDER_STATUS_FILTERS = [
+  { key: "all", label: "All Orders" },
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "packaging", label: "Packaging" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+  { key: "rejected", label: "Rejected" },
+] as const;
+
+/** The key every status-keyed map here is indexed by. */
+export type OrderStatusKey = keyof typeof ORDER_STATUS_LABELS;
 
 export const INDIAN_STATES = [
   { code: "AN", name: "Andaman and Nicobar Islands" },
