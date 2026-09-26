@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
-import GiftBoxModal, { type GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
+import GiftBoxModal from "@/src/components/pages/GiftBoxModal";
 import ProductCard from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
@@ -48,8 +48,6 @@ export default function CatalogueContent({
   const [pageTransitionLoading, setPageTransitionLoading] = useState(false);
   const [pageTransitionTimedOut, setPageTransitionTimedOut] = useState(false);
   const settledImageIdsRef = useRef<Set<string>>(new Set());
-  const [giftBoxModalOpen, setGiftBoxModalOpen] = useState(false);
-  const [giftBoxModalProduct, setGiftBoxModalProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const pageSize = useResponsivePageSize();
 
@@ -147,43 +145,9 @@ export default function CatalogueContent({
     }
   }, [pageTransitionLoading, targetPageReady, products.length]);
 
-  const { handleAddDirectly, handleAdd, handleModalConfirm } = useAddToCart<CatalogueProduct>({
+  const { handleAdd, giftBox } = useAddToCart<CatalogueProduct>({
     triggerShippingNudge,
-    onOpenGiftBoxModal: (p) => {
-      setGiftBoxModalProduct({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        image: p.imageUrl ?? "",
-        category: p.category,
-      });
-      setGiftBoxModalOpen(true);
-    },
   });
-
-  const handleModalConfirmWithClose = useCallback(
-    (giftBoxes: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
-      handleModalConfirm(giftBoxModalProduct, giftBoxes);
-      setGiftBoxModalOpen(false);
-      setGiftBoxModalProduct(null);
-    },
-    [giftBoxModalProduct, handleModalConfirm],
-  );
-
-  const handleModalSkip = useCallback(() => {
-    if (giftBoxModalProduct) {
-      handleAddDirectly(
-        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null, category: null } as CatalogueProduct,
-      );
-    }
-    setGiftBoxModalOpen(false);
-    setGiftBoxModalProduct(null);
-  }, [giftBoxModalProduct, handleAddDirectly]);
-
-  const handleModalClose = useCallback(() => {
-    setGiftBoxModalOpen(false);
-    setGiftBoxModalProduct(null);
-  }, []);
 
   const handlePageChange = useCallback((page: number) => {
     if (page === currentPage) return;
@@ -375,15 +339,7 @@ export default function CatalogueContent({
           </>
         )}
       </section>
-      {giftBoxModalProduct && (
-        <GiftBoxModal
-          open={giftBoxModalOpen}
-          product={giftBoxModalProduct}
-          onConfirm={handleModalConfirmWithClose}
-          onSkip={handleModalSkip}
-          onClose={handleModalClose}
-        />
-      )}
+      {giftBox && <GiftBoxModal {...giftBox} />}
     </div>
   );
 }

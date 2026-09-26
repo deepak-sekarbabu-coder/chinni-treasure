@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import type { GiftBoxModalProduct, SelectedGiftBox } from "@/src/components/pages/GiftBoxModal";
 
 /** Minimal product shape shared by CatalogueProduct and ProductData. */
 export interface AddableProduct {
@@ -16,17 +17,19 @@ export interface AddableProduct {
   allowGiftBoxBundling?: boolean;
 }
 
-interface GiftBoxItem {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
+/** A gift-box line the customer picked in the modal. */
+type GiftBoxItem = SelectedGiftBox;
 
 /**
- * Shared add-to-cart logic for catalogue and category pages.
- * Returns handleAddDirectly, handleAdd, and handleModalConfirm.
+ * The add-to-cart seam, gift-box flow included.
+ *
+ * Owns the whole "add this product" lifecycle: eligible products open the
+ * gift-box modal instead of adding straight away, and the modal's
+ * confirm / skip / close resolve back into the same add. Callers get two
+ * things — `handleAdd` for the card's Add button, and `giftBox`, the modal
+ * props bundle a page spreads into `<GiftBoxModal {...giftBox} />` (or renders
+ * as `null`). No page keeps modal state, and the two page modules cannot
+ * drift apart.
  *
  * The Cart module owns the post-add total: addItem returns it computed from
  * the fresh state, so callers never re-derive "total after this add" and the
@@ -34,12 +37,12 @@ interface GiftBoxItem {
  * impossible here.
  */
 export function useAddToCart<T extends AddableProduct>(options: {
-  onOpenGiftBoxModal: (product: T) => void;
   triggerShippingNudge: (newTotal: number) => void;
 }) {
-  const { onOpenGiftBoxModal, triggerShippingNudge } = options;
+  const { triggerShippingNudge } = options;
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const [giftBoxProduct, setGiftBoxProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const handleAddDirectly = useCallback(
     (p: T, giftBoxes?: GiftBoxItem[]) => {
@@ -80,12 +83,18 @@ export function useAddToCart<T extends AddableProduct>(options: {
   const handleAdd = useCallback(
     (p: T) => {
       if (p.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
-        onOpenGiftBoxModal(p);
+        setGiftBoxProduct({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          image: p.imageUrl ?? "",
+          category: p.category,
+        });
         return;
       }
       handleAddDirectly(p);
     },
-    [handleAddDirectly, onOpenGiftBoxModal],
+    [handleAddDirectly],
   );
 
   const handleModalConfirm = useCallback(
@@ -111,5 +120,27 @@ export function useAddToCart<T extends AddableProduct>(options: {
     [handleAddDirectly],
   );
 
-  return { handleAddDirectly, handleAdd, handleModalConfirm };
+  // Ready-made modal props, or null. Memoised so the callbacks stay stable
+  // across renders (GiftBoxModal rebinds its Escape listener on `onClose`).
+  const giftBox = useMemo(() => {
+    if (!giftBoxProduct) return null;
+    const close = () => setGiftBoxProduct(null);
+    return {
+      open: true,
+      product: giftBoxProduct,
+      onConfirm: (giftBoxes: GiftBoxItem[]) => {
+        handleModalConfirm(giftBoxProduct, giftBoxes);
+        close();
+      },
+      // Skip is confirm-with-no-boxes; `handleModalConfirm` passes the empty
+      // list as `undefined`, which is exactly what the old skip path sent.
+      onSkip: () => {
+        handleModalConfirm(giftBoxProduct, []);
+        close();
+      },
+      onClose: close,
+    };
+  }, [giftBoxProduct, handleModalConfirm]);
+
+  return { handleAdd, giftBox };
 }

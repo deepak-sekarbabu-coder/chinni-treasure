@@ -13,7 +13,7 @@ interface GiftBox {
   stockQuantity: number;
 }
 
-interface SelectedGiftBox {
+export interface SelectedGiftBox {
   productId: string;
   name: string;
   price: number;

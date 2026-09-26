@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
-import GiftBoxModal, { type GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
+import GiftBoxModal from "@/src/components/pages/GiftBoxModal";
 import ProductCard, { type ProductData } from "@/src/components/ui/ProductCard";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
@@ -50,8 +50,6 @@ export default function CategoryContent({
   } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortKey>("newest");
-  const [giftBoxModalOpen, setGiftBoxModalOpen] = useState(false);
-  const [giftBoxModalProduct, setGiftBoxModalProduct] = useState<GiftBoxModalProduct | null>(null);
 
   const pageSize = useResponsivePageSize();
 
@@ -82,43 +80,9 @@ export default function CategoryContent({
   const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
   const loading = categoryQuery.isFetching;
 
-  const { handleAddDirectly, handleAdd, handleModalConfirm } = useAddToCart<ProductData>({
+  const { handleAdd, giftBox } = useAddToCart<ProductData>({
     triggerShippingNudge,
-    onOpenGiftBoxModal: (p) => {
-      setGiftBoxModalProduct({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        image: p.imageUrl ?? "",
-        category: p.category,
-      });
-      setGiftBoxModalOpen(true);
-    },
   });
-
-  const handleModalConfirmWithClose = useCallback(
-    (giftBoxes: Array<{ productId: string; name: string; price: number; image: string; quantity: number }>) => {
-      handleModalConfirm(giftBoxModalProduct, giftBoxes);
-      setGiftBoxModalOpen(false);
-      setGiftBoxModalProduct(null);
-    },
-    [giftBoxModalProduct, handleModalConfirm],
-  );
-
-  const handleModalSkip = useCallback(() => {
-    if (giftBoxModalProduct) {
-      handleAddDirectly(
-        { ...giftBoxModalProduct, imageUrl: giftBoxModalProduct.image, stockQuantity: 1, description: null, badge: null, sku: null, category: null } as ProductData,
-      );
-    }
-    setGiftBoxModalOpen(false);
-    setGiftBoxModalProduct(null);
-  }, [giftBoxModalProduct, handleAddDirectly]);
-
-  const handleModalClose = useCallback(() => {
-    setGiftBoxModalOpen(false);
-    setGiftBoxModalProduct(null);
-  }, []);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -255,15 +219,7 @@ export default function CategoryContent({
           </>
         )}
       </section>
-      {giftBoxModalProduct && (
-        <GiftBoxModal
-          open={giftBoxModalOpen}
-          product={giftBoxModalProduct}
-          onConfirm={handleModalConfirmWithClose}
-          onSkip={handleModalSkip}
-          onClose={handleModalClose}
-        />
-      )}
+      {giftBox && <GiftBoxModal {...giftBox} />}
     </div>
   );
 }
