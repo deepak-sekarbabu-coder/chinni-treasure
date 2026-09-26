@@ -37,6 +37,10 @@ function runValidation(form: OrderForm, step?: number): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const rule of FORM_FIELD_RULES) {
     if (step !== undefined && rule.step !== step) continue;
+    // The bank-ref input only renders for manual payments; the gateway
+    // supplies the reference on the Razorpay path. Validating it there
+    // demands a field the user can never see or fill.
+    if (rule.field === "transactionId" && form.paymentMethod !== "manual") continue;
     const value = form[rule.field];
     if (rule.contractField === null) {
       if (typeof value === "string" ? !value.trim() : !value) errors[rule.field] = rule.message;

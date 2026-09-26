@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { listGiftBoxes } from "@/src/lib/product-read";
 import { giftBoxCache } from "@/src/lib/catalogue-cache";
 
@@ -23,7 +24,9 @@ export async function GET() {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {
-    console.error("Failed to fetch gift boxes:", error);
+    logger.error("Failed to fetch gift boxes", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to fetch gift boxes" }, { status: 500 });
   }
 }

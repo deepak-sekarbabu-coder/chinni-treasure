@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { apiFetch, ApiError, NetworkError, ValidationError } from "@/src/lib/api/client";
+import { apiFetch, ApiError, NetworkError, ValidationError, getErrorMessage } from "@/src/lib/api/client";
 import { z } from "zod";
 
 const ORIGINAL_FETCH = globalThis.fetch;
@@ -89,5 +89,18 @@ describe("apiFetch", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init.headers);
     expect(headers.get("Content-Type")).toBe("application/json");
+  });
+});
+
+describe("getErrorMessage", () => {
+  it("reads Error and ApiError messages", () => {
+    expect(getErrorMessage(new Error("boom"))).toBe("boom");
+    expect(getErrorMessage(new ApiError("nope", 400))).toBe("nope");
+  });
+
+  it("reads plain { message } objects and falls back otherwise", () => {
+    expect(getErrorMessage({ message: "rate limited" }, "fb")).toBe("rate limited");
+    expect(getErrorMessage("oops", "fb")).toBe("fb");
+    expect(getErrorMessage(null)).toBe("Something went wrong");
   });
 });

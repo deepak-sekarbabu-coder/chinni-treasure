@@ -23,6 +23,34 @@ const COURIER_OPTIONS = [
   "Other",
 ];
 
+const EMPTY_PRODUCT_ROW: ProductRow = {
+  orderId: "",
+  styleCode: "",
+  actualPrice: 0,
+  sellPrice: 0,
+  qty: 1,
+};
+
+/**
+ * Order items → label rows. The label is a packing artifact with its own
+ * projection (flat rows, compare-at as "actual", editable at pack time) —
+ * see docs/adr/ADR-0003-document-line-projections.md for why it deliberately
+ * does not use `orderLineViews`.
+ */
+function productsFromOrder(order: Props["order"]): ProductRow[] {
+  return order.items && order.items.length > 0
+    ? order.items.map((item) => ({
+        orderId: item.product?.sku || item.productId || "-",
+        styleCode: item.productName,
+        actualPrice: item.product?.compareAtPrice
+          ? Number(item.product.compareAtPrice)
+          : Number(item.unitPrice),
+        sellPrice: Number(item.unitPrice),
+        qty: item.quantity,
+      }))
+    : [EMPTY_PRODUCT_ROW];
+}
+
 export default function PrintShippingLabelModal({ order, isOpen, onClose }: Props) {
   // Helper: Today's date in YYYY-MM-DD
   const getTodayDateString = () => {
@@ -42,17 +70,7 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     return `${dd}/${mm}/${yyyy}`;
   };
 
-  const initialProducts = (order.items && order.items.length > 0)
-    ? order.items.map((item) => ({
-      orderId: item.product?.sku || item.productId || "-",
-      styleCode: item.productName,
-      actualPrice: item.product?.compareAtPrice
-        ? Number(item.product.compareAtPrice)
-        : Number(item.unitPrice),
-      sellPrice: Number(item.unitPrice),
-      qty: item.quantity,
-    }))
-    : [{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }];
+  const [products, setProducts] = useState<ProductRow[]>(productsFromOrder(order));
 
   // Form State
   const [packDate, setPackDate] = useState(getTodayDateString());
@@ -70,7 +88,6 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
   );
   const [recipientCity, setRecipientCity] = useState(order.city || "");
   const [recipientPincode, setRecipientPincode] = useState(order.postalCode || "");
-  const [products, setProducts] = useState<ProductRow[]>(initialProducts);
 
   // Reset to current order data
   const resetToOrderData = () => {
@@ -89,21 +106,7 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     );
     setRecipientCity(order.city || "");
     setRecipientPincode(order.postalCode || "");
-
-    if (order.items && order.items.length > 0) {
-      const mapped = order.items.map((item) => ({
-        orderId: item.product?.sku || item.productId || "-",
-        styleCode: item.productName,
-        actualPrice: item.product?.compareAtPrice
-          ? Number(item.product.compareAtPrice)
-          : Number(item.unitPrice),
-        sellPrice: Number(item.unitPrice),
-        qty: item.quantity,
-      }));
-      setProducts(mapped);
-    } else {
-      setProducts([{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
-    }
+    setProducts(productsFromOrder(order));
   };
 
   // Clear all fields
@@ -121,7 +124,7 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setRecipientAddress("");
     setRecipientCity("");
     setRecipientPincode("");
-    setProducts([{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
+    setProducts([EMPTY_PRODUCT_ROW]);
   };
 
   // Collect all shipping label CSS rules from the page stylesheets
@@ -228,12 +231,12 @@ ${labelHTML}
   };
 
   const addProductRow = () => {
-    setProducts([...products, { orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
+    setProducts([...products, { ...EMPTY_PRODUCT_ROW }]);
   };
 
   const removeProductRow = (index: number) => {
     const updated = products.filter((_, i) => i !== index);
-    setProducts(updated.length > 0 ? updated : [{ orderId: "", styleCode: "", actualPrice: 0, sellPrice: 0, qty: 1 }]);
+    setProducts(updated.length > 0 ? updated : [{ ...EMPTY_PRODUCT_ROW }]);
   };
 
   const labelContent = (

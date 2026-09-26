@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { listByCategory, CATEGORY_SORT_MAP } from "@/src/lib/product-read";
 import { parseListQuery } from "@/src/lib/list-query";
@@ -66,7 +67,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Failed to fetch category products:", error);
+    logger.error("Failed to fetch category products", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Failed to fetch category products" },
       { status: 500 },

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { validateOr400 } from "@/src/lib/validate";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
@@ -52,7 +53,9 @@ export async function POST(request: Request) {
     if (error instanceof RazorpayGatewayError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("[create-order] Unexpected error:", error);
+    logger.error("Create-order unexpected error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to create payment order" }, { status: 500 });
   }
 }

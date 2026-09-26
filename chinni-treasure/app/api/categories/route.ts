@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
@@ -62,7 +63,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch categories:", error);
+    logger.error("Failed to fetch categories", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Failed to fetch categories" },
       { status: 500 },

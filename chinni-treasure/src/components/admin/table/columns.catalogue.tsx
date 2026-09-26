@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Images, MagnifyingGlassPlus, PencilSimple, Trash } from "@phosphor-icons/react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
@@ -63,28 +62,22 @@ function GalleryThumbCell({
   product: Product;
   onPreview: (p: Product) => void;
 }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  // Shared display contract: primary-image pick.
+  // Shared display contract: primary-image pick. Null and load failure both
+  // resolve to the shared placeholder inside FallbackImage.
   const image = primaryImage(product);
-  const hasValidImage = /^https?:\/\//.test(image) && !imgFailed;
   return (
     <div
       className="table-img-wrapper"
       onClick={() => onPreview(product)}
       title="Click to view full image gallery"
     >
-      {hasValidImage ? (
-        <FallbackImage
-          src={image}
-          alt={product.name}
-          width={52}
-          height={52}
-          className="product-table-img"
-          onError={() => setImgFailed(true)}
-        />
-      ) : (
-        <div className="product-img-placeholder" style={{ width: 52, height: 52 }} />
-      )}
+      <FallbackImage
+        src={image}
+        alt={product.name}
+        width={52}
+        height={52}
+        className="product-table-img"
+      />
       <div className="table-img-zoom-hint">
         <MagnifyingGlassPlus size={13} weight="bold" aria-hidden="true" />
       </div>

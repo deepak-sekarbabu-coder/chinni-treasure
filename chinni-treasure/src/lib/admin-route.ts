@@ -38,6 +38,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { checkAuth, type AdminSession } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { logger } from "@/lib/axiom/server";
 
 /** What the handler receives. `body`/`params` are present when the caller opts in. */
 interface AdminHandlerContext<P> {
@@ -115,7 +116,9 @@ export function mapAdminRouteError(
       return NextResponse.json({ error: resolveP2002Message(messages, error) }, { status: 409 });
     }
   }
-  console.error("[admin-route] Unhandled route error:", error);
+  logger.error("Admin route unhandled error", {
+    error: error instanceof Error ? error.message : String(error),
+  });
   return NextResponse.json({ error: fallbackMessage }, { status: 500 });
 }
 

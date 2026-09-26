@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import Link from "next/link";
-import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER, IMAGE_UNAVAILABLE_PLACEHOLDER } from "@/src/lib/images";
+import { PRODUCT_IMAGE_QUALITY, BLUR_PLACEHOLDER } from "@/src/lib/images";
 import { productDisplayView } from "@/src/lib/product-display";
 import { fetchLatestCategories } from "@/src/lib/api";
 import type { LatestCategoriesResponse, LatestCategorySection } from "@/src/lib/api/schemas";
@@ -15,7 +15,6 @@ interface Props {
 
 function CategoryCard({ section, index }: { section: LatestCategorySection; index: number }) {
   const { category, product } = section;
-  const [imgFailed, setImgFailed] = useState(false);
   // Shared display contract: primary-image pick + discount math + badge.
   const view = productDisplayView(product);
 
@@ -53,7 +52,7 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
       >
         <div className="latest-category-card-image">
           <FallbackImage
-            src={imgFailed ? IMAGE_UNAVAILABLE_PLACEHOLDER : view.image}
+            src={view.image}
             alt={product.name}
             fill
             sizes="(max-width: 480px) 80vw, (max-width: 768px) 45vw, (max-width: 1200px) 22vw, 18vw"
@@ -62,7 +61,6 @@ function CategoryCard({ section, index }: { section: LatestCategorySection; inde
             blurDataURL={BLUR_PLACEHOLDER}
             loading={index < 4 ? "eager" : "lazy"}
             priority={index < 2}
-            onError={() => setImgFailed(true)}
           />
           {view.badge && (
             <span className="latest-category-badge">{view.badge}</span>

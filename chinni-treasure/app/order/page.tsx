@@ -347,28 +347,36 @@ export default function OrderPage() {
     setCurrentStep((s) => Math.max(s - 1, 1));
   }
 
-  function validateAll() {
-    return validate();
+  /** One guard entry for both submit paths: cart, fields, then total. */
+  function prepareSubmit(): boolean {
+    if (items.length === 0) {
+      showToast("Your cart is empty", "error");
+      return false;
+    }
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      requestAnimationFrame(() => focusFirstError(errs));
+      return false;
+    }
+    if (grandTotal <= 0) {
+      showToast("Cart total must be greater than zero", "error");
+      return false;
+    }
+    return true;
+  }
+
+  /** One success epilogue for both submit paths. */
+  function completeOrder(orderId: string, message: string) {
+    clearCart();
+    showToast(message, "success");
+    router.push(`/confirmation/${orderId}`);
   }
 
   /** Manual placements carry no gateway reference for paid==stored; razorpay does (set in the hook). */
 
   async function handleRazorpayPayment() {
-    if (items.length === 0) {
-      showToast("Your cart is empty", "error");
-      return;
-    }
-    const errs = validateAll();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      requestAnimationFrame(() => focusFirstError(errs));
-      return;
-    }
-
-    if (grandTotal <= 0) {
-      showToast("Cart total must be greater than zero", "error");
-      return;
-    }
+    if (!prepareSubmit()) return;
 
     // The capture sequence — create gateway order, open checkout, verify the
     // signature, place the order — lives behind the checkout payment seam.
@@ -383,9 +391,7 @@ export default function OrderPage() {
     });
 
     if (outcome.ok) {
-      clearCart();
-      showToast("Payment successful! Order placed.", "success");
-      router.push(`/confirmation/${outcome.orderId}`);
+      completeOrder(outcome.orderId, "Payment successful! Order placed.");
     } else if (outcome.reason === "cancelled") {
       showToast(outcome.message, "info");
     } else {
@@ -396,31 +402,19 @@ export default function OrderPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (items.length === 0) {
-      showToast("Your cart is empty", "error");
-      return;
-    }
-
     if (form.paymentMethod === "razorpay") {
       await handleRazorpayPayment();
       return;
     }
 
-    const errs = validateAll();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      requestAnimationFrame(() => focusFirstError(errs));
-      return;
-    }
+    if (!prepareSubmit()) return;
 
     try {
       const order = await placeOrder.mutateAsync({
         ...manualOrderPayload,
         transactionId: form.transactionId.trim(),
       });
-      clearCart();
-      showToast("Order placed successfully!", "success");
-      router.push(`/confirmation/${order.id}`);
+      completeOrder(order.id, "Order placed successfully!");
     } catch (err: unknown) {
       showToast(getErrorMessage(err), "error");
     }

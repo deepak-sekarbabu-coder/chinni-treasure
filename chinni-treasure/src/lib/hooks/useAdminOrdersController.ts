@@ -7,7 +7,7 @@ import { nextOrderStatus } from "@/src/lib/constants";
 import type { FlowStatus } from "@/src/lib/constants";
 
 
-import { extractApiErrorMessage } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/api/client";
 import type { Order } from "@/src/lib/api/schemas";
 
 interface TrackingModalState {
@@ -50,7 +50,7 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
           input: { status: nextStatus, expectedVersion: order.version },
         });
       } catch (err) {
-        showToast(extractApiErrorMessage(err, "Failed to update status"), "error");
+        showToast(getErrorMessage(err, "Failed to update status"), "error");
       } finally {
         setAdvancingOrderId(null);
       }
@@ -70,7 +70,7 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
         });
         onClearSelection();
       } catch (err) {
-        showToast(extractApiErrorMessage(err, "Failed to reject order"), "error");
+        showToast(getErrorMessage(err, "Failed to reject order"), "error");
       } finally {
         setAdvancingOrderId(null);
       }
@@ -92,7 +92,7 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
         setTrackingModal(CLOSED_TRACKING);
         showToast("Order marked as shipped successfully", "success");
       } catch (err) {
-        showToast(extractApiErrorMessage(err, "Failed to ship order"), "error");
+        showToast(getErrorMessage(err, "Failed to ship order"), "error");
       } finally {
         setAdvancingOrderId(null);
       }
@@ -116,7 +116,7 @@ export function useAdminOrdersController(orders: Order[], onClearSelection: () =
         });
         showToast("Tracking ID updated successfully", "success");
       } catch (err) {
-        showToast(extractApiErrorMessage(err, "Failed to update tracking ID"), "error");
+        showToast(getErrorMessage(err, "Failed to update tracking ID"), "error");
         throw err;
       }
     },

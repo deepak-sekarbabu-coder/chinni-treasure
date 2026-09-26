@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { loadLatestCategories } from "@/src/lib/catalogue-cache";
 
 // GET /api/categories/latest
@@ -14,7 +15,9 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch latest category products:", error);
+    logger.error("Failed to fetch latest category products", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Failed to fetch latest category products" },
       { status: 500 },

@@ -34,14 +34,16 @@ export class NetworkError extends Error {
 
 /**
  * One error-shaping helper for surfaces that show a single message line.
- * Lives here so the checkout page and the payment hook render the same words.
+ * Lives here so the checkout page, the payment hook, and the admin
+ * controllers render the same words. The fallback covers non-Error
+ * rejections; plain `{ message }` objects are read like Errors.
  */
-export function getErrorMessage(err: unknown): string {
-  return err instanceof ApiError
-    ? err.message
-    : err instanceof Error
-      ? err.message
-      : "Something went wrong";
+export function getErrorMessage(err: unknown, fallback = "Something went wrong"): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string") {
+    return (err as { message: string }).message;
+  }
+  return fallback;
 }
 
 interface RequestOptions<TResponse> {

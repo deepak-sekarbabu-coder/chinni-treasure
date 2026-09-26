@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { trackingCache } from "@/src/lib/order-cache";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import {
@@ -52,7 +53,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(formatted, CACHE_HEADERS);
   } catch (error) {
-    console.error("Failed to search orders:", error);
+    logger.error("Failed to search orders", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to search orders" }, { status: 500 });
   }
 }

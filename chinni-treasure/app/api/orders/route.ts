@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { withAdmin } from "@/src/lib/admin-route";
@@ -102,7 +103,9 @@ export async function POST(request: Request) {
         );
       }
     }
-    console.error("Failed to create order:", error);
+    logger.error("Failed to create order", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 }

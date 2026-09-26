@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import {
   useCreateCategory,
@@ -8,6 +8,7 @@ import {
   useToggleCategoryActive,
   useUpdateCategory,
 } from "@/src/lib/hooks/useAdminMutations";
+import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
 import { extractApiErrorMessage, slugify } from "@/src/lib/utils";
 import type { Category } from "@/src/lib/api/schemas";
 
@@ -29,8 +30,6 @@ const EMPTY_CATEGORY_FORM: CategoryFormState = {
   isActive: true,
 };
 
-const FORM_CLOSE_ANIMATION_MS = 300;
-
 interface DeleteConfirmState {
   open: boolean;
   categoryId: number;
@@ -45,6 +44,10 @@ const CLOSED_DELETE: DeleteConfirmState = {
   productCount: 0,
 };
 
+/**
+ * Categories policy over the shared admin-CRUD seam, plus the entity-specific
+ * enable/disable toggle (catalogue has no equivalent).
+ */
 export function useAdminCategoriesController() {
   const { showToast } = useToast();
   const createCategory = useCreateCategory();
@@ -52,101 +55,54 @@ export function useAdminCategoriesController() {
   const deleteCategory = useDeleteCategory();
   const toggleActive = useToggleCategoryActive();
 
-  const [showForm, setShowForm] = useState(false);
-  const [formClosing, setFormClosing] = useState(false);
-  const [form, setForm] = useState<CategoryFormState>(EMPTY_CATEGORY_FORM);
-  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>(CLOSED_DELETE);
-
-  const closeForm = useCallback(() => {
-    setFormClosing(true);
-    setTimeout(() => {
-      setShowForm(false);
-      setFormClosing(false);
-      setForm(EMPTY_CATEGORY_FORM);
-    }, FORM_CLOSE_ANIMATION_MS);
-  }, []);
-
-  const toggleForm = useCallback(() => {
-    if (showForm) {
-      closeForm();
-    } else {
-      setForm(EMPTY_CATEGORY_FORM);
-      setShowForm(true);
-    }
-  }, [showForm, closeForm]);
-
-  const editCategory = useCallback((category: Category) => {
-    setFormClosing(false);
-    setForm({
+  const crud = useAdminCrud<
+    Category,
+    CategoryFormState,
+    DeleteConfirmState,
+    number,
+    Parameters<typeof createCategory.mutateAsync>[0]
+  >({
+    emptyForm: EMPTY_CATEGORY_FORM,
+    emptyDeleteState: CLOSED_DELETE,
+    toFormState: (category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
       description: category.description ?? "",
       displayOrder: String(category.displayOrder),
       isActive: category.isActive ?? false,
-    });
-    setShowForm(true);
-  }, []);
-
-  const requestDelete = useCallback(
-    (category: Category & { productCount: number }) => {
-      setDeleteConfirm({
-        open: true,
-        categoryId: category.id,
-        categoryName: category.name,
-        productCount: category.productCount,
-      });
-    },
-    [],
-  );
-
-  const closeDeleteConfirm = useCallback(() => {
-    setDeleteConfirm(CLOSED_DELETE);
-  }, []);
-
-  const handleSave = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const isEdit = form.id !== null;
-      if (!form.name.trim()) {
-        showToast("Category name is required", "error");
-        return;
-      }
-      const payload = {
-        name: form.name.trim(),
-        slug: form.slug.trim() ? slugify(form.slug) : undefined,
-        description: form.description.trim() || undefined,
-        displayOrder: parseInt(form.displayOrder) || 0,
-        isActive: form.isActive,
-      };
-      try {
-        if (isEdit) {
-          await updateCategory.mutateAsync({ id: form.id!, input: payload });
-          showToast(`Category "${form.name}" updated successfully`, "success");
-        } else {
-          await createCategory.mutateAsync(payload);
-          showToast(`Category "${form.name}" created successfully`, "success");
-        }
-        closeForm();
-      } catch (err) {
-        console.error("Failed to save category:", err);
-        showToast(extractApiErrorMessage(err, "Failed to save category"), "error");
+    }),
+    toDeleteState: (category) => ({
+      open: true,
+      categoryId: category.id,
+      categoryName: category.name,
+      productCount: category.productCount ?? 0,
+    }),
+    deleteId: (state) => state.categoryId || null,
+    validate: (form) => (!form.name.trim() ? "Category name is required" : null),
+    buildPayload: (form) => ({
+      name: form.name.trim(),
+      slug: form.slug.trim() ? slugify(form.slug) : undefined,
+      description: form.description.trim() || undefined,
+      displayOrder: parseInt(form.displayOrder) || 0,
+      isActive: form.isActive,
+    }),
+    save: async (form, payload, isEdit) => {
+      if (isEdit) {
+        await updateCategory.mutateAsync({ id: form.id!, input: payload });
+      } else {
+        await createCategory.mutateAsync(payload);
       }
     },
-    [form, createCategory, updateCategory, showToast, closeForm],
-  );
-
-  const handleDeleteConfirmed = useCallback(async () => {
-    if (!deleteConfirm.categoryId) return;
-    try {
-      await deleteCategory.mutateAsync(deleteConfirm.categoryId);
-      showToast("Category deleted successfully", "success");
-      setDeleteConfirm(CLOSED_DELETE);
-    } catch (err) {
-      console.error("Failed to delete category:", err);
-      showToast(extractApiErrorMessage(err, "Failed to delete category"), "error");
-    }
-  }, [deleteConfirm.categoryId, deleteCategory, showToast]);
+    remove: (id) => deleteCategory.mutateAsync(id),
+    saving: createCategory.isPending || updateCategory.isPending,
+    deleting: deleteCategory.isPending,
+    createdToast: (form) => `Category \"${form.name}\" created successfully`,
+    updatedToast: (form) => `Category \"${form.name}\" updated successfully`,
+    deletedToast: "Category deleted successfully",
+    saveErrorFallback: "Failed to save category",
+    deleteErrorFallback: "Failed to delete category",
+  });
 
   const handleToggleActive = useCallback(
     async (category: Category) => {
@@ -156,7 +112,7 @@ export function useAdminCategoriesController() {
           isActive: !category.isActive,
         });
         showToast(
-          `Category "${category.name}" ${category.isActive ? "disabled" : "enabled"}`,
+          `Category \"${category.name}\" ${category.isActive ? "disabled" : "enabled"}`,
           "success",
         );
       } catch (err) {
@@ -167,26 +123,13 @@ export function useAdminCategoriesController() {
     [toggleActive, showToast],
   );
 
-  const onFormChange = useCallback((next: CategoryFormState) => {
-    setForm(next);
-  }, []);
+  const togglePendingId = toggleActive.isPending
+    ? ((toggleActive.variables as { id: number } | undefined)?.id ?? null)
+    : null;
 
   return {
-    showForm,
-    formClosing,
-    form,
-    deleteConfirm,
-    productLoading: createCategory.isPending || updateCategory.isPending,
-    loadingCategoryId: deleteCategory.isPending ? deleteConfirm.categoryId : null,
-    isDeleting: deleteCategory.isPending,
-    togglePendingId: toggleActive.isPending ? ((toggleActive.variables as { id: number } | undefined)?.id ?? null) : null,
-    toggleForm,
-    editCategory,
-    requestDelete,
-    closeDeleteConfirm,
-    handleSave,
-    handleDeleteConfirmed,
+    ...crud,
     handleToggleActive,
-    onFormChange,
+    togglePendingId,
   };
 }

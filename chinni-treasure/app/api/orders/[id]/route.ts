@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { getOrderDetail } from "@/src/lib/order-cache";
 
 // GET /api/orders/[id] — Get a single order by ID
@@ -21,7 +22,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Failed to fetch order:", error);
+    logger.error("Failed to fetch order", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
   }
 }

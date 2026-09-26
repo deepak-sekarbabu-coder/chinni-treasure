@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { statsCache } from "@/src/lib/stats-cache";
 import { computeDashboardStats } from "@/src/lib/stats";
 import { withAdmin } from "@/src/lib/admin-route";
@@ -19,7 +20,9 @@ export const GET = withAdmin(async () => {
 
     return NextResponse.json(payload, RESPONSE_HEADERS);
   } catch (error) {
-    console.error("Failed to fetch stats:", error);
+    logger.error("Failed to fetch stats", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
 });

@@ -56,24 +56,24 @@ describe("useAdminCatalogueController", () => {
     const { result } = renderHook(() => useAdminCatalogueController());
 
     act(() => {
-      result.current.toggleProductForm();
+      result.current.toggleForm();
     });
 
-    expect(result.current.showProductForm).toBe(true);
-    expect(result.current.productForm.name).toBe("");
+    expect(result.current.showForm).toBe(true);
+    expect(result.current.form.name).toBe("");
   });
 
   it("prefills the form when editing a product", () => {
     const { result } = renderHook(() => useAdminCatalogueController());
 
     act(() => {
-      result.current.editProduct(sampleProduct);
+      result.current.edit(sampleProduct);
     });
 
-    expect(result.current.showProductForm).toBe(true);
-    expect(result.current.productForm.id).toBe("prod-1");
-    expect(result.current.productForm.name).toBe("Sample");
-    expect(result.current.productForm.price).toBe("10");
+    expect(result.current.showForm).toBe(true);
+    expect(result.current.form.id).toBe("prod-1");
+    expect(result.current.form.name).toBe("Sample");
+    expect(result.current.form.price).toBe("10");
   });
 
   it("invokes onAfterSave and closes the form after a successful create", async () => {
@@ -84,11 +84,11 @@ describe("useAdminCatalogueController", () => {
     );
 
     act(() => {
-      result.current.toggleProductForm();
+      result.current.toggleForm();
     });
     act(() => {
       result.current.onFormChange({
-        ...result.current.productForm,
+        ...result.current.form,
         name: "New",
         price: "5",
       });
@@ -96,14 +96,31 @@ describe("useAdminCatalogueController", () => {
 
     await act(async () => {
       const event = { preventDefault: vi.fn() } as unknown as React.FormEvent;
-      await result.current.handleProductSave(event);
+      await result.current.save(event);
       await vi.advanceTimersByTimeAsync(300);
     });
 
     expect(onAfterSave).toHaveBeenCalledTimes(1);
-    expect(result.current.showProductForm).toBe(false);
+    expect(onAfterSave).toHaveBeenCalledWith(true);
+    expect(result.current.showForm).toBe(false);
 
     vi.useRealTimers();
+  });
+
+  it("blocks an invalid save with a validation toast and keeps the form open", async () => {
+    const { result } = renderHook(() => useAdminCatalogueController());
+
+    act(() => {
+      result.current.toggleForm();
+    });
+
+    await act(async () => {
+      const event = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      await result.current.save(event);
+    });
+
+    expect(mockUseCreateProduct().mutateAsync).not.toHaveBeenCalled();
+    expect(result.current.showForm).toBe(true);
   });
 
   it("confirms deletion and clears the modal", async () => {
@@ -113,12 +130,12 @@ describe("useAdminCatalogueController", () => {
     const { result } = renderHook(() => useAdminCatalogueController());
 
     act(() => {
-      result.current.requestProductDelete(sampleProduct);
+      result.current.requestDelete(sampleProduct);
     });
     expect(result.current.deleteConfirm.open).toBe(true);
 
     await act(async () => {
-      await result.current.handleProductDeleteConfirmed();
+      await result.current.confirmDelete();
     });
 
     expect(mutateAsync).toHaveBeenCalledWith("prod-1");

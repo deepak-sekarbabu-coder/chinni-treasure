@@ -61,7 +61,9 @@ export async function POST(request: Request) {
     response.headers.set("Set-Cookie", cookie);
     return response;
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Admin login failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

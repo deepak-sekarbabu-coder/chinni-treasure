@@ -1,64 +1,106 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useToast } from "@/src/components/ui/ToastProvider";
 import {
   useCreateProduct,
   useDeleteProduct,
   useUpdateProduct,
 } from "@/src/lib/hooks/useAdminMutations";
-import { extractApiErrorMessage } from "@/src/lib/utils";
+import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
+import type { ProductFormData } from "@/src/types";
 import type { Product } from "@/src/lib/api/schemas";
 
-interface ProductFormState {
-  id: string;
-  name: string;
-  sku: string;
-  description: string;
-  price: string;
-  compareAtPrice: string;
-  stockQuantity: string;
-  imageUrl: string;
-  badge: string;
-  categoryId: string;
-  isActive: boolean;
-  allowGiftBoxBundling: boolean;
-  visibleHostnames: string;
-  images: Array<{ url: string; isPrimary: boolean; displayOrder: number }>;
+export type { ProductFormData };
+
+/**
+ * Catalogue policy over the shared admin-CRUD seam: everything entity-specific
+ * (form mapping, validation, payload, mutations, toast copy) lives here; the
+ * state machine and save/delete choreography live in useAdminCrud.
+ */
+export function useAdminCatalogueController(options?: {
+  onAfterSave?: (wasCreate: boolean) => void;
+}) {
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+  const onAfterSave = options?.onAfterSave;
+
+  return useAdminCrud<Product, ProductFormData, { open: boolean; productId: string; productName: string }, string, Parameters<typeof createProduct.mutateAsync>[0]>({
+    emptyForm: {
+      id: "",
+      name: "",
+      sku: "",
+      description: "",
+      price: "",
+      compareAtPrice: "",
+      stockQuantity: "",
+      imageUrl: "",
+      badge: "",
+      categoryId: "",
+      isActive: true,
+      allowGiftBoxBundling: false,
+        visibleHostnames: "",
+      images: [],
+    },
+    emptyDeleteState: { open: false, productId: "", productName: "" },
+    toFormState: productToFormState,
+    toDeleteState: (product: Product) => ({
+      open: true,
+      productId: product.id,
+      productName: product.name,
+    }),
+    deleteId: (state) => state.productId || null,
+    validate: (form) =>
+      !form.name.trim()
+        ? "Product name and a valid price are required"
+        : Number.isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0
+          ? "Product name and a valid price is required"
+          : null,
+    buildPayload: (form) => {
+      const price = parseFloat(form.price);
+      const compareAtPrice = form.compareAtPrice ? parseFloat(form.compareAtPrice) : null;
+      return {
+        name: form.name.trim(),
+        sku: form.sku.trim() || undefined,
+        description: form.description,
+        price,
+        compareAtPrice: compareAtPrice && compareAtPrice > 0 ? compareAtPrice : null,
+        stockQuantity: parseInt(form.stockQuantity) || 0,
+        imageUrl: form.imageUrl || undefined,
+        badge: form.badge || null,
+        categoryId: form.categoryId ? parseInt(form.categoryId) : null,
+        isActive: form.isActive,
+        allowGiftBoxBundling: form.allowGiftBoxBundling,
+        visibleHostnames: form.visibleHostnames || undefined,
+        images:
+          form.images.length > 0
+            ? form.images.map((img) => ({
+                url: img.url,
+                isPrimary: img.isPrimary,
+                displayOrder: img.displayOrder,
+              }))
+            : undefined,
+      };
+    },
+    save: async (form, payload, isEdit) => {
+      if (isEdit) {
+        await updateProduct.mutateAsync({ productId: form.id, input: payload });
+      } else {
+        await createProduct.mutateAsync(payload);
+      }
+    },
+    remove: (id) => deleteProduct.mutateAsync(id),
+    saving: createProduct.isPending || updateProduct.isPending,
+    deleting: deleteProduct.isPending,
+    createdToast: (form) => `Product "${form.name}" created successfully`,
+    updatedToast: (form) => `Product \"${form.name}\" updated successfully`,
+    deletedToast: "Product deleted successfully",
+    saveErrorFallback: "Failed to save product",
+    deleteErrorFallback: "Failed to delete product",
+    onSaved: onAfterSave,
+  });
 }
 
-const EMPTY_PRODUCT_FORM: ProductFormState = {
-  id: "",
-  name: "",
-  sku: "",
-  description: "",
-  price: "",
-  compareAtPrice: "",
-  stockQuantity: "",
-  imageUrl: "",
-  badge: "",
-  categoryId: "",
-  isActive: true,
-  allowGiftBoxBundling: false,
-  visibleHostnames: "",
-  images: [],
-};
-
-interface DeleteConfirmState {
-  open: boolean;
-  productId: string;
-  productName: string;
-}
-
-const CLOSED_DELETE: DeleteConfirmState = {
-  open: false,
-  productId: "",
-  productName: "",
-};
-
-const FORM_CLOSE_ANIMATION_MS = 300;
-
-function productToFormState(product: Product): ProductFormState {
+function productToFormState(product: Product): ProductFormData {
   return {
     id: product.id,
     name: product.name,
@@ -78,132 +120,5 @@ function productToFormState(product: Product): ProductFormState {
       isPrimary: img.isPrimary,
       displayOrder: img.displayOrder,
     })),
-  };
-}
-
-export function useAdminCatalogueController(options?: { onAfterSave?: (wasCreate: boolean) => void }) {
-  const { showToast } = useToast();
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
-  const onAfterSave = options?.onAfterSave;
-
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [productFormClosing, setProductFormClosing] = useState(false);
-  const [productForm, setProductForm] = useState<ProductFormState>(EMPTY_PRODUCT_FORM);
-  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>(CLOSED_DELETE);
-
-  const closeProductForm = useCallback(() => {
-    setProductFormClosing(true);
-    setTimeout(() => {
-      setShowProductForm(false);
-      setProductFormClosing(false);
-      setProductForm(EMPTY_PRODUCT_FORM);
-    }, FORM_CLOSE_ANIMATION_MS);
-  }, []);
-
-  const toggleProductForm = useCallback(() => {
-    if (showProductForm) {
-      closeProductForm();
-    } else {
-      setProductForm(EMPTY_PRODUCT_FORM);
-      setShowProductForm(true);
-    }
-  }, [showProductForm, closeProductForm]);
-
-  const editProduct = useCallback((product: Product) => {
-    setProductFormClosing(false);
-    setProductForm(productToFormState(product));
-    setShowProductForm(true);
-  }, []);
-  const requestProductDelete = useCallback((product: Product) => {
-    setDeleteConfirm({ open: true, productId: product.id, productName: product.name });
-  }, []);
-
-  const closeDeleteConfirm = useCallback(() => {
-    setDeleteConfirm(CLOSED_DELETE);
-  }, []);
-
-  const handleProductSave = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const isEdit = !!productForm.id;
-      const price = parseFloat(productForm.price);
-      if (!productForm.name.trim() || Number.isNaN(price) || price <= 0) {
-        showToast("Product name and a valid price are required", "error");
-        return;
-      }
-      const stockQuantity = parseInt(productForm.stockQuantity) || 0;
-      const compareAtPrice = productForm.compareAtPrice ? parseFloat(productForm.compareAtPrice) : null;
-      const payload = {
-        name: productForm.name.trim(),
-        sku: productForm.sku.trim() || undefined,
-        description: productForm.description,
-        price,
-        compareAtPrice: compareAtPrice && compareAtPrice > 0 ? compareAtPrice : null,
-        stockQuantity,
-        imageUrl: productForm.imageUrl || undefined,
-        badge: productForm.badge || null,
-        categoryId: productForm.categoryId ? parseInt(productForm.categoryId) : null,
-        isActive: productForm.isActive,
-        allowGiftBoxBundling: productForm.allowGiftBoxBundling,
-        visibleHostnames: productForm.visibleHostnames || undefined,
-        images: productForm.images.length > 0
-          ? productForm.images.map((img) => ({
-            url: img.url,
-            isPrimary: img.isPrimary,
-            displayOrder: img.displayOrder,
-          }))
-          : undefined,
-      };
-      try {
-        if (isEdit) {
-          await updateProduct.mutateAsync({ productId: productForm.id, input: payload });
-          showToast(`Product "${productForm.name}" updated successfully`, "success");
-        } else {
-          await createProduct.mutateAsync(payload);
-          showToast(`Product "${productForm.name}" created successfully`, "success");
-        }
-        onAfterSave?.(!isEdit);
-        closeProductForm();
-      } catch (err) {
-        console.error("Failed to save product:", err);
-        showToast(extractApiErrorMessage(err, "Failed to save product"), "error");
-      }
-    },
-    [productForm, createProduct, updateProduct, showToast, closeProductForm, onAfterSave],
-  );
-
-  const handleProductDeleteConfirmed = useCallback(async () => {
-    if (!deleteConfirm.productId) return;
-    try {
-      await deleteProduct.mutateAsync(deleteConfirm.productId);
-      showToast("Product deleted successfully", "success");
-      setDeleteConfirm(CLOSED_DELETE);
-    } catch (err) {
-      console.error("Failed to delete product:", err);
-      showToast(extractApiErrorMessage(err, "Failed to delete product"), "error");
-    }
-  }, [deleteConfirm.productId, deleteProduct, showToast]);
-
-  const onFormChange = useCallback((next: ProductFormState) => {
-    setProductForm(next);
-  }, []);
-
-  return {
-    showProductForm,
-    productFormClosing,
-    productForm,
-    deleteConfirm,
-    productLoading: createProduct.isPending || updateProduct.isPending,
-    loadingProductId: deleteProduct.isPending ? deleteConfirm.productId : null,
-    isDeleting: deleteProduct.isPending,
-    toggleProductForm,
-    editProduct,
-    requestProductDelete,
-    closeDeleteConfirm,
-    handleProductSave,
-    handleProductDeleteConfirmed,
-    onFormChange,
   };
 }

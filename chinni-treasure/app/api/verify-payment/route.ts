@@ -44,14 +44,13 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof RazorpayGatewayError) {
-      console.error("[verify-payment] Razorpay secret is not configured");
+      logger.error("Payment verification failed", { reason: "secret_missing" });
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     throw error;
   }
 
   if (!signatureMatches) {
-    console.warn("[verify-payment] Signature mismatch for order", razorpay_order_id);
     logger.warn("Payment verification failed", {
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,

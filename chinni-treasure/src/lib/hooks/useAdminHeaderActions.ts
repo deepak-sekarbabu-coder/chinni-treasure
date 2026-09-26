@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import { useExportToExcel, useLogout } from "@/src/lib/hooks/useAdminMutations";
-import { extractApiErrorMessage } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/api/client";
 
 export function useAdminHeaderActions() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export function useAdminHeaderActions() {
       showToast("Export downloaded successfully", "success");
     } catch (err) {
       console.error("Export failed:", err);
-      showToast(extractApiErrorMessage(err, "Failed to export data"), "error");
+      showToast(getErrorMessage(err, "Failed to export data"), "error");
     }
   }, [exportMutation, showToast]);
 

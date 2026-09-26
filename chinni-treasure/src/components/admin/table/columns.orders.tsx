@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import FallbackImage from "@/src/components/ui/FallbackImage";
@@ -26,23 +25,17 @@ export const STATE_TO_ORDER_SORT: Record<string, OrderSortKey> = {
 };
 
 function OrderThumbCell({ order }: { order: Order }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const imageUrl = order.items?.[0]?.product?.imageUrl;
-  const hasValidImage = imageUrl && !imgFailed && /^https?:\/\//.test(imageUrl);
+  // Empty src fails upfront inside FallbackImage — no gate needed here.
+  const imageUrl = order.items?.[0]?.product?.imageUrl ?? "";
   return (
     <div className="order-thumb" aria-hidden="true">
-      {hasValidImage ? (
-        <FallbackImage
-          src={imageUrl}
-          alt=""
-          width={32}
-          height={40}
-          className="order-thumb-img"
-          onError={() => setImgFailed(true)}
-        />
-      ) : (
-        <div className="product-img-placeholder" style={{ width: 32, height: 40, borderRadius: 0 }} />
-      )}
+      <FallbackImage
+        src={imageUrl}
+        alt=""
+        width={32}
+        height={40}
+        className="order-thumb-img"
+      />
     </div>
   );
 }

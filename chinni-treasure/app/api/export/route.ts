@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { buildWorkbook } from "@/src/lib/excel-export";
 import { withAdmin } from "@/src/lib/admin-route";
@@ -66,7 +67,9 @@ export const GET = withAdmin(async () => {
       },
     });
   } catch (error) {
-    console.error("Export failed:", error);
+    logger.error("Export failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "Failed to generate export" }, { status: 500 });
   }
 });
