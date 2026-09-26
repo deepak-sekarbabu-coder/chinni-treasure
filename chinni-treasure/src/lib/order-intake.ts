@@ -82,14 +82,7 @@ export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 
 /** The client may send an unvalidated payload; parse it here, fail as OrderError. */
 export function parseCreateOrderInput(raw: unknown): CreateOrderInput {
-  const parsed = CreateOrderSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new OrderError(
-      parsed.error.issues.map((i) => i.message).join(", "),
-      400,
-    );
-  }
-  return parsed.data;
+  return parseOrThrow(CreateOrderSchema, raw);
 }
 
 /** Error taxonomy of the Order intake — the adapter maps statusCode → HTTP response. */
@@ -99,6 +92,18 @@ export class OrderError extends Error {
     super(message);
     this.statusCode = statusCode;
   }
+}
+
+/** Every intake parse has the same shape: Zod in, `OrderError` (400) out. */
+function parseOrThrow<S extends z.ZodTypeAny>(schema: S, raw: unknown): z.infer<S> {
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success) {
+    throw new OrderError(
+      parsed.error.issues.map((i) => i.message).join(", "),
+      400,
+    );
+  }
+  return parsed.data;
 }
 
 /**
@@ -374,14 +379,7 @@ export interface TransitionResult {
 
 /** Parse an unvalidated transition request; fails as OrderError/400. */
 export function parseUpdateOrderStatusInput(raw: unknown): UpdateOrderStatusInput {
-  const parsed = UpdateOrderStatusInputSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new OrderError(
-      parsed.error.issues.map((i) => i.message).join(", "),
-      400,
-    );
-  }
-  return parsed.data;
+  return parseOrThrow(UpdateOrderStatusInputSchema, raw);
 }
 
 /**
@@ -505,14 +503,7 @@ export async function transitionOrderStatus(
 
 /** Parse the tracking-write payload through the shared fulfilment contract. */
 export function parseUpdateTrackingInput(raw: unknown): UpdateTrackingInput {
-  const parsed = UpdateTrackingInputSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new OrderError(
-      parsed.error.issues.map((i) => i.message).join(", "),
-      400,
-    );
-  }
-  return parsed.data;
+  return parseOrThrow(UpdateTrackingInputSchema, raw);
 }
 
 /**

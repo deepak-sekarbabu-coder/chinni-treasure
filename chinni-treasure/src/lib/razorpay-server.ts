@@ -114,7 +114,7 @@ export function verifyCheckoutSignature(orderId: string, paymentId: string, sign
  * Throws `RazorpayGatewayError` when the gateway is unreachable or the
  * payment does not exist.
  */
-export async function fetchRazorpayPayment(paymentId: string): Promise<RazorpayPaymentSnapshot> {
+async function fetchRazorpayPayment(paymentId: string): Promise<RazorpayPaymentSnapshot> {
   const client = createClient();
   try {
     const payment = (await client.payments.fetch(paymentId)) as {

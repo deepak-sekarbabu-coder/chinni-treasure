@@ -60,7 +60,7 @@ export const OrderSchema = z.object({
     .optional(),
 });
 
-export const PageMetaSchema = z.object({
+const PageMetaSchema = z.object({
   total: z.number(),
   page: z.number(),
   limit: z.number(),
@@ -79,7 +79,7 @@ export const OrdersResponseSchema = PageMetaSchema.extend({
  * silently blanks it (the ₹NaN class of bug, round 2, here for the customer
  * block). The hand-typed docs entry for `/api/track` is generated from this.
  */
-export const TrackOrderResultSchema = OrderSchema.omit({ version: true }).extend({
+const TrackOrderResultSchema = OrderSchema.omit({ version: true }).extend({
   itemCount: z.number().optional(),
 });
 
@@ -127,6 +127,8 @@ export const ProductsResponseSchema = PageMetaSchema.extend({
   products: z.array(ProductSchema),
 });
 
+// Stays exported: it is the declared source of the `CatalogueProduct` type the
+// catalogue grid consumes, so it is interface, not dead surface.
 export const CatalogueProductSchema = ProductCoreSchema.extend({
   category: z.object({ name: z.string() }).nullable(),
   images: z.array(ProductImageSchema).optional(),
@@ -350,7 +352,12 @@ export type ChartPoint = z.infer<typeof ChartPointSchema>;
 export type ProductSales = z.infer<typeof ProductSalesSchema>;
 export type StatsResponse = z.infer<typeof StatsResponseSchema>;
 export type AuthMeResponse = z.infer<typeof AuthMeResponseSchema>;
-export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
+/**
+ * The client wire shape for `POST /api/orders`. Named `Request` so it cannot
+ * be confused with the intake's `CreateOrderInput` (`order-intake.ts`), which
+ * is the server-parsed shape — two contracts, one name until now.
+ */
+export type CreateOrderRequest = z.infer<typeof CreateOrderInputSchema>;
 
 export const CreateRazorpayOrderInputSchema = z.object({
   amount: z.number().finite().positive(),

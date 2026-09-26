@@ -25,7 +25,7 @@ This ensures paid == stored for every new order. The exact paid-to-stored compar
 
 The paid==stored invariant is now **enforced server-side** at the Order intake seam, not merely assigned to it:
 
-1. `POST /api/orders` accepts `paymentGateway` (default `razorpay`) and `razorpayOrderId`. For razorpay placements it resolves the **authoritative charged amount** from Razorpay's own records via `fetchRazorpayPayment` (`src/lib/razorpay-server.ts`) — a client-claimed amount is never trusted — and verifies the payment belongs to the given Razorpay order and is `captured`/`authorized`.
+1. `POST /api/orders` accepts `paymentGateway` (default `razorpay`) and `razorpayOrderId`. For razorpay placements it resolves the **authoritative charged amount** from Razorpay's own records via the module-private `fetchRazorpayPayment` inside `src/lib/razorpay-server.ts` (the module's interface is `createGatewayOrder` / `verifyCheckoutSignature` / `acceptPlacementPayment`) — a client-claimed amount is never trusted — and verifies the payment belongs to the given Razorpay order and is `captured`/`authorized`.
 2. Inside the placement transaction, `placeOrder` calls `assertPaidAmountMatchesTotal(resolvedPaidPaise, totalAmount)` (integer paise on both sides) **before** the order is created. A mismatch aborts the order entirely — nothing is stored, no stock is deducted.
 3. Manual bank-transfer placements (`paymentGateway: "manual"`) skip the gateway check: there is no gateway record to compare against. Their reference is stored as `transactionId` and reconciliation remains an admin concern.
 

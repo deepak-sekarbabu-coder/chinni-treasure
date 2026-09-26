@@ -9,8 +9,6 @@ import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
 import type { ProductFormData } from "@/src/types";
 import type { Product } from "@/src/lib/api/schemas";
 
-export type { ProductFormData };
-
 /**
  * Catalogue policy over the shared admin-CRUD seam: everything entity-specific
  * (form mapping, validation, payload, mutations, toast copy) lives here; the

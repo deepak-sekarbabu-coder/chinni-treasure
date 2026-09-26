@@ -11,7 +11,7 @@ import { Prisma } from "@prisma/client";
  * mutation (placement, status change, tracking update) to keep the dashboard
  * fresh.
  */
-export const orderDetailCache = createRedisCache(30_000, "order");
+const orderDetailCache = createRedisCache(30_000, "order");
 export const trackingCache = createRedisCache(15_000, "track");
 
 export type DetailedOrder = Prisma.OrderGetPayload<{

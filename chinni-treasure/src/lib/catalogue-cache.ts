@@ -21,9 +21,9 @@ import type { LatestCategorySection } from "@/src/lib/api/schemas";
 export const productsCache = createRedisCache(30_000, "products");
 // Full active-product index per hostname; public catalogue searches filter
 // this list in memory instead of querying Postgres per keystroke.
-export const catIndexCache = createRedisCache(60_000, "catindex");
+const catIndexCache = createRedisCache(60_000, "catindex");
 export const categoriesCache = createRedisCache(300_000, "categories");
-export const catLatestCache = createRedisCache(60_000, "catlatest");
+const catLatestCache = createRedisCache(60_000, "catlatest");
 export const catPageCache = createRedisCache(60_000, "catpage");
 export const giftBoxCache = createRedisCache(60_000, "giftboxes");
 

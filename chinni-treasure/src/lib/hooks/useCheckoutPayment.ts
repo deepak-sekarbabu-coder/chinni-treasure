@@ -13,7 +13,7 @@ export type RazorpayOutcome =
   | { ok: true; orderId: string }
   | { ok: false; reason: "cancelled" | "failed" | "error"; message: string };
 
-export interface RazorpayPayParams {
+interface RazorpayPayParams {
   /** Total the gateway order is created against (the client preview total). */
   amount: number;
   /** Prefill fields for the Razorpay checkout form. */

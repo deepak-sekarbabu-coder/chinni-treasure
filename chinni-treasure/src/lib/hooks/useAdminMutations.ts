@@ -18,7 +18,7 @@ import {
 import type {
   CategoryDetail,
   CreateCategoryInput,
-  CreateOrderInput,
+  CreateOrderRequest,
   Order,
   Product,
   ProductInput,
@@ -142,7 +142,7 @@ export function useExportToExcel() {
 }
 
 export function usePlaceOrder() {
-  return useMutation<Order, Error, CreateOrderInput>({
+  return useMutation<Order, Error, CreateOrderRequest>({
     mutationFn: (input) => createOrder(input),
   });
 }

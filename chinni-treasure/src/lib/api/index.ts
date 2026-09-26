@@ -26,7 +26,7 @@ import {
   type CategoryDetail,
   type CategoryProductsResponse,
   type CreateCategoryInput,
-  type CreateOrderInput,
+  type CreateOrderRequest,
   type LatestCategoriesResponse,
   type UpdateCategoryInput,
   type CreateRazorpayOrderInput,
@@ -142,7 +142,7 @@ export function searchTrack(params: TrackQueryParams, signal?: AbortSignal) {
   });
 }
 
-export function createOrder(input: CreateOrderInput, signal?: AbortSignal) {
+export function createOrder(input: CreateOrderRequest, signal?: AbortSignal) {
   const parsed = CreateOrderInputSchema.parse(input);
   return apiFetch<Order>("/api/orders", {
     method: "POST",
