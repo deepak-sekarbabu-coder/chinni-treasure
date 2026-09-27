@@ -19,22 +19,9 @@ import {
 } from "@/src/components/admin/table/columns.orders";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
 import { formatMoney } from "@/src/lib/format";
+import { isDisplayableImageUrl } from "@/src/lib/product-display";
 import type { Order } from "@/src/lib/api/schemas";
-
-interface Props {
-  orders: Order[];
-  loading: boolean;
-  statusFilter: string;
-  onStatusFilterChange: (key: string) => void;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  advancingOrderId: string | null;
-  selectedOrder: Order | null;
-  onSelectOrder: (order: Order | null) => void;
-  sort: OrderSortKey;
-  onSortChange: (sort: OrderSortKey) => void;
-}
+import type { OrdersPanelViewModel } from "@/src/components/admin/useAdminOrdersPanel";
 
 function OrderCard({
   order,
@@ -48,7 +35,7 @@ function OrderCard({
   onSelect: () => void;
 }) {
   const imageUrl = order.items?.[0]?.product?.imageUrl;
-  const hasValidImage = imageUrl && /^https?:\/\//.test(imageUrl);
+  const hasValidImage = isDisplayableImageUrl(imageUrl);
 
   return (
     <div
@@ -106,20 +93,23 @@ function OrderCard({
   );
 }
 
-export default function AdminOrdersPanel({
-  orders,
-  loading,
-  statusFilter,
-  onStatusFilterChange,
-  currentPage,
-  totalPages,
-  onPageChange,
-  advancingOrderId,
-  selectedOrder,
-  onSelectOrder,
-  sort,
-  onSortChange,
-}: Props) {
+export default function AdminOrdersPanel({ panel }: { panel: OrdersPanelViewModel }) {
+  const {
+    orders,
+    statusFilter,
+    currentPage,
+    totalPages,
+    advancingOrderId,
+    selectedOrder,
+    sort,
+  } = panel.data;
+  const { loading } = panel;
+  const {
+    onStatusFilterChange,
+    onPageChange,
+    onSortChange,
+    onSelectOrder,
+  } = panel.actions;
   const sorting = useMemo(() => ORDER_SORT_TO_STATE[sort] ?? [], [sort]);
 
   const handleSortingChange: OnChangeFn<SortingState> = useCallback(

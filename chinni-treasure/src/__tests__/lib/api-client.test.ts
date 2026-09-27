@@ -102,5 +102,12 @@ describe("getErrorMessage", () => {
     expect(getErrorMessage({ message: "rate limited" }, "fb")).toBe("rate limited");
     expect(getErrorMessage("oops", "fb")).toBe("fb");
     expect(getErrorMessage(null)).toBe("Something went wrong");
+    expect(getErrorMessage(undefined, "fb")).toBe("fb");
+  });
+
+  it("falls back when message is missing or non-string", () => {
+    // Absorbed from the deleted utils.ts `extractApiErrorMessage` twin.
+    expect(getErrorMessage({}, "fb")).toBe("fb");
+    expect(getErrorMessage({ message: 42 }, "fb")).toBe("fb");
   });
 });

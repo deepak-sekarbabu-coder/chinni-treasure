@@ -1,12 +1,22 @@
 import { describe, it, expect } from "vitest";
+import { ProductBadge } from "@prisma/client";
 import {
   ORDER_STATUS_ACTIONS,
   ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_ICONS,
   INDIAN_STATES,
+  PRODUCT_BADGES,
   nextOrderStatus,
 } from "../../lib/constants";
+
+describe("PRODUCT_BADGES", () => {
+  it("matches the ProductBadge database enum", () => {
+    // The badge vocabulary backs every `z.enum` and the API docs. A new
+    // Prisma enum value must fail here, not silently 400 in production.
+    expect([...PRODUCT_BADGES].sort()).toEqual(Object.values(ProductBadge).sort());
+  });
+});
 
 
 describe("ORDER_STATUS_FLOW", () => {

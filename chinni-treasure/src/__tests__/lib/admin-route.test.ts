@@ -12,11 +12,15 @@ vi.mock("@/src/lib/csrf", () => ({
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
+vi.mock("@/src/lib/catalogue-cache", () => ({
+  invalidateCatalogCaches: vi.fn(),
+}));
 
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
 import { revalidatePath } from "next/cache";
-import { withAdmin, mapAdminRouteError, revalidateCatalogueSurfaces } from "@/src/lib/admin-route";
+import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
+import { withAdmin, mapAdminRouteError } from "@/src/lib/admin-route";
 
 const mockAdmin = { id: "admin-1", username: "admin", role: "admin" as const };
 
@@ -184,11 +188,12 @@ describe("withAdmin — error mapping", () => {
 });
 
 describe("withAdmin — catalogue revalidation", () => {
-  it("revalidates the three catalogue surfaces after a 2xx when opted in", async () => {
+  it("clears the catalogue caches and revalidates the three surfaces after a 2xx", async () => {
     const wrapped = withAdmin(() => ok({}), { revalidateCatalogue: true });
 
     await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
 
+    expect(invalidateCatalogCaches).toHaveBeenCalledTimes(1);
     expect(revalidatePath).toHaveBeenCalledWith("/catalogue");
     expect(revalidatePath).toHaveBeenCalledWith("/");
     expect(revalidatePath).toHaveBeenCalledWith("/category", "layout");
@@ -199,6 +204,7 @@ describe("withAdmin — catalogue revalidation", () => {
 
     await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
 
+    expect(invalidateCatalogCaches).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
@@ -207,6 +213,7 @@ describe("withAdmin — catalogue revalidation", () => {
 
     await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
 
+    expect(invalidateCatalogCaches).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
@@ -216,10 +223,5 @@ describe("standalone helpers", () => {
     // Guards the duck-type: an error-like object must NOT be trusted for status.
     const res = mapAdminRouteError({ statusCode: 200, message: "fake" }, "fallback");
     expect(res.status).toBe(500);
-  });
-
-  it("revalidateCatalogueSurfaces hits the three public surfaces", () => {
-    revalidateCatalogueSurfaces();
-    expect(revalidatePath).toHaveBeenCalledTimes(3);
   });
 });

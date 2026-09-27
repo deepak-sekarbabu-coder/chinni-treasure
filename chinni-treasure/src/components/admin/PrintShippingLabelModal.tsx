@@ -51,6 +51,53 @@ function productsFromOrder(order: Props["order"]): ProductRow[] {
     : [EMPTY_PRODUCT_ROW];
 }
 
+/** True when `selectorText` can match the print label — see `collectLabelCSS`. */
+function appliesToLabel(selectorText: string, classes: Set<string>): boolean {
+  const named = Array.from(selectorText.matchAll(/\.([\w-]+)/g), (match) => match[1]);
+  // The print window holds the label's subtree and nothing else, so a rule that
+  // names a class the label does not render cannot match there: it needs an
+  // ancestor or a descendant that isn't in the window. Every named class being
+  // one the label uses is therefore both necessary and sufficient — and it is
+  // what the old substring test got wrong in both directions, matching
+  // `.docs-content .swagger-ui .info .title` on its mention of `.title` while
+  // missing any label class that never made it into the hand-copied list.
+  return named.length > 0 && named.every((cls) => classes.has(cls));
+}
+
+/**
+ * Copy the app's label CSS into the print window, which gets only the label's
+ * markup and no stylesheets.
+ *
+ * The set of classes is read off the rendered label rather than restated as a
+ * 38-name allowlist, so a class added to ShippingLabel.tsx is picked up
+ * automatically and a stale name in the list can never go on matching.
+ */
+export function collectLabelCSS(
+  labelEl: HTMLElement,
+  sheets: ArrayLike<CSSStyleSheet>,
+): string {
+  const used = new Set<string>();
+  for (const el of [labelEl, ...labelEl.querySelectorAll("*")]) {
+    for (const cls of el.classList) used.add(cls);
+  }
+
+  const rules: string[] = [];
+  for (const sheet of Array.from(sheets)) {
+    let cssRules: CSSRuleList | undefined;
+    try {
+      cssRules = sheet.cssRules;
+    } catch {
+      continue; // cross-origin sheet — not readable, and not ours
+    }
+    for (const rule of Array.from(cssRules)) {
+      if (rule instanceof CSSStyleRule && appliesToLabel(rule.selectorText, used)) {
+        rules.push(rule.cssText);
+      }
+    }
+  }
+  return rules.join("\n");
+}
+
 export default function PrintShippingLabelModal({ order, isOpen, onClose }: Props) {
   // Helper: Today's date in YYYY-MM-DD
   const getTodayDateString = () => {
@@ -127,44 +174,13 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     setProducts([EMPTY_PRODUCT_ROW]);
   };
 
-  // Collect all shipping label CSS rules from the page stylesheets
-  const getLabelCSS = (): string => {
-    const labelSelectors = [
-      ".label-container", ".label-header", ".label-body", ".main-section",
-      ".pack-date", ".title", ".logo-small", ".courier-row", ".courier-cell",
-      ".payment-cell", ".mode-label", ".mode-value", ".id-row", ".id-cell",
-      ".ship-to-row", ".section-label", ".sold-by-row", ".sold-by-cell",
-      ".through-cell", ".logo-through", ".products-header", ".products-body",
-      ".product-row", ".col-sno", ".col-products", ".col-detail", ".col-price",
-      ".col-qty", ".col-qty-val", ".price-original", ".price-discounted",
-      ".handle-care", ".barcode-section", ".awb-text-block", ".awb-heading",
-      ".awb-label",
-    ];
-    const rules: string[] = [];
-    try {
-      for (const sheet of Array.from(document.styleSheets)) {
-        try {
-          for (const rule of Array.from(sheet.cssRules)) {
-            if (rule instanceof CSSStyleRule) {
-              const sel = rule.selectorText || "";
-              if (labelSelectors.some((s) => sel.includes(s))) {
-                rules.push(rule.cssText);
-              }
-            }
-          }
-        } catch { /* cross-origin sheet, skip */ }
-      }
-    } catch { /* ignore */ }
-    return rules.join("\n");
-  };
-
   // Print the label in a new popup window containing only the label content
   const handlePrint = () => {
     const labelEl = document.getElementById("labelContainer");
     if (!labelEl) return;
 
     const labelHTML = labelEl.innerHTML;
-    const labelCSS = getLabelCSS();
+    const labelCSS = collectLabelCSS(labelEl, document.styleSheets);
 
     const printWindow = window.open("", "_blank", "width=400,height=600");
     if (!printWindow) {
@@ -190,19 +206,10 @@ export default function PrintShippingLabelModal({ order, isOpen, onClose }: Prop
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .label-container {
-    width: 4in;
-    height: 6in;
-    background: white;
-    color: black;
-    padding: 0;
-    border: 2px solid #000;
-    position: relative;
-    overflow: hidden;
-    font-size: 11px;
-    font-family: Arial, sans-serif;
-    line-height: 1.2;
-  }
+  /* The label's own rules (app/styles/admin.css) follow, copied by
+     collectLabelCSS. .label-container among them: labelEl.innerHTML drops the
+     root's attributes, so the sizing has to arrive as a rule — but the
+     stylesheet is that rule's one home, not a restatement here. */
   ${labelCSS}
 </style>
 </head>

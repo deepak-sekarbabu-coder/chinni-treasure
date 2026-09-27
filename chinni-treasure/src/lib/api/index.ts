@@ -11,6 +11,7 @@ import {
   OrderSchema,
   OrdersResponseSchema,
   ProductInputSchema,
+  UpdateProductInputSchema,
   ProductSchema,
   ProductsResponseSchema,
   StatsResponseSchema,
@@ -195,7 +196,7 @@ export function updateProduct(
   input: ProductInput,
   signal?: AbortSignal,
 ) {
-  const parsed = ProductInputSchema.parse(input);
+  const parsed = UpdateProductInputSchema.parse(input);
   return apiFetch<Product>(`/api/products/${productId}`, {
     method: "PUT",
     body: parsed,

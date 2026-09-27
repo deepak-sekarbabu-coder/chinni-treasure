@@ -1,28 +1,26 @@
 "use client";
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
+import { PRODUCT_BADGES } from "@/src/lib/constants";
+import { isDisplayableImageUrl } from "@/src/lib/product-display";
 import type { ProductFormData } from "@/src/types";
 
+const BADGE_LABELS: Record<(typeof PRODUCT_BADGES)[number], string> = {
+  bestseller: "Bestseller",
+  new: "New",
+  premium: "Premium",
+  limited: "Limited",
+  luxury: "Luxury",
+};
+
+/** Options come from the shared vocabulary, so a new badge needs one edit. */
 const BADGE_OPTIONS = [
   { value: "", label: "None" },
-  { value: "bestseller", label: "Bestseller" },
-  { value: "new", label: "New" },
-  { value: "premium", label: "Premium" },
-  { value: "limited", label: "Limited" },
-  { value: "luxury", label: "Luxury" },
+  ...PRODUCT_BADGES.map((b) => ({ value: b, label: BADGE_LABELS[b] })),
 ];
-
-function isValidImageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 interface Props {
   open: boolean;
@@ -52,10 +50,21 @@ export default function ProductFormModal({
   const isGiftBoxCategory = categories.find(
     (c) => c.id === Number(productForm.categoryId)
   )?.slug === "box";
+
+  // The server rejects bundling on a Gift Box product (assertGiftBoxNotOnBox) and
+  // this control is disabled for that category, so a `true` here would make the
+  // whole form unsubmittable with no way to clear it — either by switching a
+  // product into Gift Boxes with the toggle already on, or by opening a row whose
+  // column was seeded true outside this guard. Reconcile instead of dead-ending.
+  useEffect(() => {
+    if (isGiftBoxCategory && productForm.allowGiftBoxBundling) {
+      onFormChange({ ...productForm, allowGiftBoxBundling: false });
+    }
+  }, [isGiftBoxCategory, productForm, onFormChange]);
+
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editUrl, setEditUrl] = useState("");
   const [imageUrlError, setImageUrlError] = useState("");
-  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -88,7 +97,7 @@ export default function ProductFormModal({
   const addImage = () => {
     const url = newImageUrl.trim();
     if (!url) return;
-    if (!isValidImageUrl(url)) {
+    if (!isDisplayableImageUrl(url)) {
       setImageUrlError("Please enter a valid HTTP or HTTPS URL.");
       return;
     }
@@ -115,14 +124,6 @@ export default function ProductFormModal({
     if (updated.length > 0 && !updated.some((img) => img.isPrimary)) {
       updated[0].isPrimary = true;
     }
-    setFailedImages((prev) => {
-      const next = new Set<number>();
-      for (const i of prev) {
-        if (i < index) next.add(i);
-        else if (i > index) next.add(i - 1);
-      }
-      return next;
-    });
     onFormChange({ ...productForm, images: updated });
   };
 
@@ -158,7 +159,7 @@ export default function ProductFormModal({
   const saveEditImage = (index: number) => {
     const trimmed = editUrl.trim();
     if (!trimmed) return;
-    if (!isValidImageUrl(trimmed)) {
+    if (!isDisplayableImageUrl(trimmed)) {
       setImageUrlError("Please enter a valid HTTP or HTTPS URL.");
       return;
     }
@@ -166,18 +167,9 @@ export default function ProductFormModal({
     const updated = productForm.images.map((img, i) =>
       i === index ? { ...img, url: trimmed } : img,
     );
-    setFailedImages((prev) => {
-      const next = new Set(prev);
-      next.delete(index);
-      return next;
-    });
     onFormChange({ ...productForm, images: updated });
     setEditingIndex(null);
     setEditUrl("");
-  };
-
-  const handleImageError = (index: number) => {
-    setFailedImages((prev) => new Set(prev).add(index));
   };
 
   return (
@@ -281,7 +273,7 @@ export default function ProductFormModal({
                     </span>
                   </label>
                   {isGiftBoxCategory && (
-                    <p className="form-hint" style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "4px" }}>
+                    <p className="form-hint">
                       Gift Box products cannot enable bundling
                     </p>
                   )}
@@ -342,21 +334,23 @@ export default function ProductFormModal({
                             <div
                               className="image-preview-thumb"
                               onClick={() => {
-                                if (!failedImages.has(idx) && isValidImageUrl(img.url)) {
+                                if (isDisplayableImageUrl(img.url)) {
                                   openLightbox(img.url);
                                 }
                               }}
                               title="Click to view high-res preview"
                             >
-                              {failedImages.has(idx) || !isValidImageUrl(img.url) ? (
-                                <div className="product-img-placeholder" style={{ width: "100%", height: "100%" }} title={!isValidImageUrl(img.url) ? "Invalid image URL" : "Image failed to load"} />
-                              ) : (
+                              {/* FallbackImage owns load failure — it swaps in the
+                                  shared placeholder itself, per src. */}
+                              {isDisplayableImageUrl(img.url) ? (
                                 <>
-                                  <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={300} height={300} className="image-preview-img" onError={() => handleImageError(idx)} />
+                                  <FallbackImage src={img.url} alt={`Product image ${idx + 1}`} width={300} height={300} className="image-preview-img" />
                                   <div className="image-zoom-overlay">
                                     <span>🔍 Inspect</span>
                                   </div>
                                 </>
+                              ) : (
+                                <div className="product-img-placeholder" style={{ width: "100%", height: "100%" }} title="Invalid image URL" />
                               )}
                             </div>
                             {editingIndex === idx ? (

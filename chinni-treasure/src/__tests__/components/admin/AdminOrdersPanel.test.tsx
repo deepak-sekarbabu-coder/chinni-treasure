@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import AdminOrdersPanel from "@/src/components/admin/AdminOrdersPanel";
+import type {
+  OrdersPanelActions,
+  OrdersPanelData,
+  OrdersPanelViewModel,
+} from "@/src/components/admin/useAdminOrdersPanel";
 import type { Order } from "@/src/lib/api/schemas";
 
 function makeOrder(overrides: Partial<Order> = {}): Order {
@@ -31,20 +36,39 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
   } as Order;
 }
 
-const baseProps = {
-  orders: [] as Order[],
-  loading: false,
-  statusFilter: "all",
-  onStatusFilterChange: vi.fn(),
-  currentPage: 1,
+const baseData: OrdersPanelData = {
+  orders: [],
   totalPages: 1,
-  onPageChange: vi.fn(),
+  statusFilter: "all",
+  currentPage: 1,
+  sort: "date-desc",
   advancingOrderId: null,
   selectedOrder: null,
-  onSelectOrder: vi.fn(),
-  sort: "date-desc",
-  onSortChange: vi.fn(),
+  trackingModal: { orderId: "", open: false },
 };
+
+function panel(
+  data: Partial<OrdersPanelData> = {},
+  actions: Partial<OrdersPanelActions> = {},
+): OrdersPanelViewModel {
+  return {
+    data: { ...baseData, ...data },
+    loading: false,
+    isTransitioning: false,
+    actions: {
+      onStatusFilterChange: vi.fn(),
+      onPageChange: vi.fn(),
+      onSortChange: vi.fn(),
+      onSelectOrder: vi.fn(),
+      handleAdvance: vi.fn(),
+      handleReject: vi.fn(),
+      handleTrackingSubmit: vi.fn(),
+      closeTrackingModal: vi.fn(),
+      handleUpdateTracking: vi.fn(),
+      ...actions,
+    },
+  };
+}
 
 describe("AdminOrdersPanel", () => {
   beforeEach(() => {
@@ -54,11 +78,12 @@ describe("AdminOrdersPanel", () => {
   it("renders orders as table rows with required columns", () => {
     render(
       <AdminOrdersPanel
-        {...baseProps}
-        orders={[
-          makeOrder(),
-          makeOrder({ id: "order-2", orderNumber: "ORD-002", customerName: "Grace Hopper" }),
-        ]}
+        panel={panel({
+          orders: [
+            makeOrder(),
+            makeOrder({ id: "order-2", orderNumber: "ORD-002", customerName: "Grace Hopper" }),
+          ],
+        })}
       />,
     );
     expect(screen.getByRole("columnheader", { name: /order #/i })).toBeInTheDocument();
@@ -75,7 +100,7 @@ describe("AdminOrdersPanel", () => {
   it("opens the detail flow on row click", () => {
     const order = makeOrder();
     const onSelectOrder = vi.fn();
-    render(<AdminOrdersPanel {...baseProps} orders={[order]} onSelectOrder={onSelectOrder} />);
+    render(<AdminOrdersPanel panel={panel({ orders: [order] }, { onSelectOrder })} />);
     fireEvent.click(screen.getByTestId("order-row-order-1"));
     expect(onSelectOrder).toHaveBeenCalledWith(order);
   });
@@ -84,10 +109,7 @@ describe("AdminOrdersPanel", () => {
     const onSelectOrder = vi.fn();
     render(
       <AdminOrdersPanel
-        {...baseProps}
-        orders={[makeOrder()]}
-        onSelectOrder={onSelectOrder}
-        advancingOrderId="order-1"
+        panel={panel({ orders: [makeOrder()], advancingOrderId: "order-1" }, { onSelectOrder })}
       />,
     );
     fireEvent.click(screen.getByTestId("order-row-order-1"));
@@ -95,21 +117,26 @@ describe("AdminOrdersPanel", () => {
   });
 
   it("header click reports the mapped sort value to onSortChange", () => {
-    render(<AdminOrdersPanel {...baseProps} orders={[makeOrder()]} />);
+    const onSortChange = vi.fn();
+    render(<AdminOrdersPanel panel={panel({ orders: [makeOrder()] }, { onSortChange })} />);
     fireEvent.click(screen.getByRole("button", { name: /sort by total/i }));
-    expect(baseProps.onSortChange).toHaveBeenCalledWith("total-asc");
+    expect(onSortChange).toHaveBeenCalledWith("total-asc");
   });
 
   it("shows skeleton rows while loading", () => {
-    const { container } = render(<AdminOrdersPanel {...baseProps} orders={[]} loading />);
+    const { container } = render(
+      <AdminOrdersPanel panel={{ ...panel({ orders: [] }), loading: true }} />,
+    );
     expect(container.querySelectorAll(".skeleton-text").length).toBeGreaterThan(0);
     expect(screen.queryByText(/ORD-/)).not.toBeInTheDocument();
   });
 
   it("keeps status tab buttons functional", () => {
-    render(<AdminOrdersPanel {...baseProps} orders={[makeOrder()]} />);
+    const onStatusFilterChange = vi.fn();
+    render(
+      <AdminOrdersPanel panel={panel({ orders: [makeOrder()] }, { onStatusFilterChange })} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Pending" }));
-    expect(baseProps.onStatusFilterChange).toHaveBeenCalledWith("pending");
+    expect(onStatusFilterChange).toHaveBeenCalledWith("pending");
   });
 });
-

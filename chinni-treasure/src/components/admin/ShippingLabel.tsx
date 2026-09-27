@@ -73,18 +73,10 @@ export default function ShippingLabel({
     <div
       className="label-container"
       id="labelContainer"
-      style={{
-        width: "4in",
-        height: "6in",
-        background: "white",
-        padding: "0",
-        boxShadow: "0 0 10px rgba(0, 0, 0, 0.4)",
-        border: "2px solid #000",
-        position: "relative",
-        overflow: "hidden",
-        fontSize: "11px",
-        fontFamily: "Arial, sans-serif",
-      }}
+      // Only the preview shadow is inline: every other declaration here was a
+      // third copy of `.label-container` in app/styles/admin.css. The print
+      // window never saw it anyway — innerHTML drops the root's own attributes.
+      style={{ boxShadow: "0 0 10px rgba(0, 0, 0, 0.4)" }}
     >
       {/* Header */}
       <div className="label-header">

@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { unstable_cache } from "next/cache";
 import { headers } from "next/headers";
-import { prisma } from "@/src/lib/prisma";
-import { listByCategory } from "@/src/lib/product-read";
+import { getCategoryBySlug, listByCategory } from "@/src/lib/product-read";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -21,21 +19,10 @@ const siteUrl = env.NEXT_PUBLIC_SITE_URL;
 export const dynamic = "force-dynamic";
 
 /**
- * Cached category lookup shared by generateMetadata and the page component
- * to avoid duplicate DB queries per request (each query holds a pool slot
- * and the Nhost free-tier limit is ~5 connections total). The `categories`
- * tag is revalidated by invalidateCatalogCaches() on any catalogue mutation.
+ * The category identity comes from the read module, which owns the cache key
+ * and the `categories` tag `invalidateCatalogCaches()` clears — it used to be a
+ * page-local `unstable_cache` here, so the tag name had no module owner.
  */
-const getCategoryBySlug = unstable_cache(
-  async (slug: string) =>
-    prisma.category.findUnique({
-      where: { slug },
-      select: { id: true, name: true, slug: true, description: true, isActive: true },
-    }),
-  ["category-by-slug"],
-  { revalidate: 60, tags: ["categories"] },
-);
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { slug } = await params;

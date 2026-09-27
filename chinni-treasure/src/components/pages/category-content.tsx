@@ -2,16 +2,11 @@
 
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
-import GiftBoxModal from "@/src/components/pages/GiftBoxModal";
-import ProductCard from "@/src/components/ui/ProductCard";
+import ProductGrid from "@/src/components/pages/ProductGrid";
 import SectionHeader from "@/src/components/ui/SectionHeader";
-import { ProductCardSkeleton } from "@/src/components/ui/SkeletonLoader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
-import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
-import { useAddToCart } from "@/src/lib/hooks/useAddToCart";
-import type { CategoryProductsResponse, Product } from "@/src/lib/api/schemas";
+import type { CatalogueProduct, CategoryProductsResponse } from "@/src/lib/api/schemas";
 
 interface CategoryInfo {
   id: number;
@@ -22,7 +17,7 @@ interface CategoryInfo {
 
 interface Props {
   category: CategoryInfo;
-  initialProducts: Product[];
+  initialProducts: CatalogueProduct[];
   initialTotal: number;
   initialTotalPages: number;
 }
@@ -41,32 +36,25 @@ export default function CategoryContent({
   initialTotal,
   initialTotalPages,
 }: Props) {
-  const {
-    show: shippingNudgeShow,
-    newTotal: shippingNudgeTotal,
-    shippingLeft: shippingNudgeLeft,
-    trigger: triggerShippingNudge,
-    dismiss: dismissShippingNudge,
-  } = useShippingNudge();
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortKey>("newest");
 
   const pageSize = useResponsivePageSize();
 
-  const initialData = useMemo(() => {
-    const sliced =
-      pageSize !== 12
-        ? initialProducts.slice(0, pageSize)
-        : initialProducts;
-    return {
-      category,
-      products: sliced,
-      total: initialTotal,
-      page: currentPage,
-      limit: pageSize,
-      totalPages: Math.max(1, Math.ceil(initialTotal / pageSize)),
-    } as CategoryProductsResponse;
-  }, [pageSize, initialProducts, initialTotal, currentPage, category]);
+  // The SSR payload is wider than the responsive page size; trim it so the
+  // first paint matches the page it claims to be.
+  const initialData = useMemo<CategoryProductsResponse>(
+    () =>
+      ({
+        category,
+        products: (initialProducts as CategoryProductsResponse["products"]).slice(0, pageSize),
+        total: initialTotal,
+        page: currentPage,
+        limit: pageSize,
+        totalPages: Math.max(1, Math.ceil(initialTotal / pageSize)),
+      }) as CategoryProductsResponse,
+    [pageSize, initialProducts, initialTotal, currentPage, category],
+  );
 
   const categoryQuery = useCategoryProducts(
     category.slug,
@@ -76,29 +64,20 @@ export default function CategoryContent({
     initialData,
   );
 
-  const products: Product[] = categoryQuery.data?.products ?? initialProducts;
+  const products = categoryQuery.data?.products ?? initialProducts;
   const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
+  const total = categoryQuery.data?.total ?? initialTotal;
   const loading = categoryQuery.isFetching;
 
-  const { handleAdd, giftBox } = useAddToCart({
-    triggerShippingNudge,
-  });
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    },
-    [],
-  );
-
-  const handleSortChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setSort(e.target.value as SortKey);
-      setCurrentPage(1);
-    },
-    [],
-  );
+  const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSort(e.target.value as SortKey);
+    setCurrentPage(1);
+  }, []);
 
   return (
     <div style={{ paddingTop: "72px" }}>
@@ -118,108 +97,43 @@ export default function CategoryContent({
       </section>
 
       <section className="section catalogue-section" aria-labelledby="category-products-heading">
-        <ShippingNudgePopup
-          show={shippingNudgeShow}
-          newTotal={shippingNudgeTotal}
-          shippingLeft={shippingNudgeLeft}
-          dismiss={dismissShippingNudge}
-        />
         <SectionHeader
           subtitle=""
           title={`${category.name} Products`}
           description={`Discover our latest ${category.name.toLowerCase()} — handcrafted and curated for you.`}
         />
 
-        <div className="catalogue-toolbar">
-          <span className="catalogue-count" aria-live="polite">
-            {loading && products.length === 0
-              ? "Loading…"
-              : `${initialTotal} product${initialTotal === 1 ? "" : "s"}`}
-          </span>
-          <label className="catalogue-sort">
-            <span className="sr-only">Sort products</span>
-            <select value={sort} onChange={handleSortChange} aria-label="Sort products">
-              {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {SORT_LABELS[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {loading && products.length === 0 ? (
-          <div className="products-grid" role="list" aria-label={`${category.name} products`}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <ProductCardSkeleton key={i} animationDelay={i * 0.06} />
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="products-grid" role="list" aria-label={`${category.name} products`}>
-              {products.length === 0 ? (
-                <p
-                  style={{
-                    textAlign: "center",
-                    color: "var(--text-muted)",
-                    gridColumn: "1 / -1",
-                    padding: "60px 0",
-                  }}
-                >
-                  No products in this category yet.
-                </p>
-              ) : (
-                products.map((product, idx) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAdd={handleAdd}
-                    transitionDelay={idx * 0.05}
-                    priority={idx < 6}
-                  />
-                ))
-              )}
-            </div>
-
-            {products.length > 0 && totalPages > 1 && (
-              <nav className="catalogue-pagination" aria-label="Category pagination">
-                <div className="catalogue-pagination-controls">
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    disabled={currentPage <= 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    aria-label="Previous page"
-                  >
-                    ← Prev
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      className={`btn btn-sm ${
-                        pageNum === currentPage ? "btn-primary" : "btn-secondary"
-                      }`}
-                      onClick={() => handlePageChange(pageNum)}
-                      aria-current={pageNum === currentPage ? "page" : undefined}
-                      aria-label={`Page ${pageNum}`}
-                    >
-                      {pageNum}
-                    </button>
+        <ProductGrid
+          label={`${category.name} products`}
+          products={products}
+          total={total}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          loading={loading}
+          emptyMessage="No products in this category yet."
+          countLabel={
+            <div className="catalogue-toolbar">
+              <span className="catalogue-count" aria-live="polite">
+                {loading && products.length === 0
+                  ? "Loading…"
+                  : `${initialTotal} product${initialTotal === 1 ? "" : "s"}`}
+              </span>
+              <label className="catalogue-sort">
+                <span className="sr-only">Sort products</span>
+                <select value={sort} onChange={handleSortChange} aria-label="Sort products">
+                  {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                    <option key={key} value={key}>
+                      {SORT_LABELS[key]}
+                    </option>
                   ))}
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    aria-label="Next page"
-                  >
-                    Next →
-                  </button>
-                </div>
-              </nav>
-            )}
-          </>
-        )}
+                </select>
+              </label>
+            </div>
+          }
+        />
       </section>
-      {giftBox && <GiftBoxModal {...giftBox} />}
     </div>
   );
 }

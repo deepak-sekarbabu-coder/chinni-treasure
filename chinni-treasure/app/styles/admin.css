@@ -1468,6 +1468,15 @@
     transform: translateX(24px) scale(0.92);
 }
 
+/* A disabled toggle was rendering identical to an enabled one — same gold
+   slider, same pointer cursor, same hover highlight — so it looked tappable and
+   silently swallowed the click. Dim the whole switch and drop the pointer cue;
+   :has() covers the label (which owns the cursor) from the input inside it. */
+.form-group .toggle-switch:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .form-group .toggle-label {
     font-size: 0.85rem;
     font-weight: 500;
@@ -1484,7 +1493,16 @@
 .form-group.toggle-form-group {
     display: flex;
     flex-direction: row;
+    /* An explanatory hint is a third child of this row; without wrapping it got
+       squeezed into the leftover ~55px beside the toggle and stacked one word
+       per line. The two-child cells (Active Status, Category Active) don't
+       overflow, so wrapping is a no-op for them. */
+    flex-wrap: wrap;
     align-items: center;
+    /* Pack the wrapped lines to the top. Centring them made the gift-box cell's
+       extra hint line push its toggle 17px above the paired "Active Status"
+       toggle, since the grid stretches both cells to the taller one's height. */
+    align-content: flex-start;
     gap: 16px;
     padding: 12px 0;
     margin-bottom: 0;
@@ -1500,6 +1518,12 @@
 .form-group.toggle-form-group .toggle-switch {
     margin-top: 0;
     margin-left: auto;
+}
+
+/* Drop the hint onto its own line under the toggle, at full cell width. */
+.form-group.toggle-form-group>.form-hint {
+    flex: 0 0 100%;
+    margin-top: 0;
 }
 
 @media (max-width: 480px) {

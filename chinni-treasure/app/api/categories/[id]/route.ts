@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
@@ -41,8 +40,6 @@ export const PUT = withAdmin<{ id: string }>(
       data,
     });
 
-    await invalidateCatalogCaches();
-
     return NextResponse.json(category);
   },
   {
@@ -80,8 +77,6 @@ export const DELETE = withAdmin<{ id: string }>(
     }
 
     await prisma.category.delete({ where: { id: categoryId } });
-
-    await invalidateCatalogCaches();
 
     return NextResponse.json({ success: true });
   },

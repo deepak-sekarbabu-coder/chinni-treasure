@@ -27,6 +27,7 @@ export interface CataloguePanelData {
   products: Product[];
   productTotalPages: number;
   categories: Category[];
+  categoriesLoading: boolean;
   filters: ProductFilters;
   currentPage: number;
   showForm: boolean;
@@ -114,6 +115,7 @@ export function useAdminCataloguePanel({
       products,
       productTotalPages,
       categories: categoriesQuery.data ?? [],
+      categoriesLoading: categoriesQuery.isLoading,
       filters: productFilters,
       currentPage: productPage,
       showForm: controller.showForm,

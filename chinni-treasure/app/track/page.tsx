@@ -6,6 +6,7 @@ import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import TrackOrderCard from "@/src/components/track/TrackOrderCard";
 import { useTrackSearch } from "@/src/lib/hooks/useTrackSearch";
 import { ApiError } from "@/src/lib/api/client";
+import { fieldIssue } from "@/src/lib/checkout-fields";
 import type { TrackOrderResult } from "@/src/lib/api/schemas";
 
 export default function TrackPage() {
@@ -27,9 +28,12 @@ export default function TrackPage() {
       return;
     }
     if (method === "phone") {
-      const clean = phone.replace(/\D/g, "");
-      if (clean.length !== 10) {
-        showToast("Please enter a valid 10-digit phone number", "error");
+      // The shared checkout field contract, not a re-typed 10-digit rule: this
+      // page used to say "Please enter a valid 10-digit phone number" while the
+      // server said "Phone must be exactly 10 digits".
+      const issue = fieldIssue("customerPhone", phone.replace(/\D/g, ""));
+      if (issue) {
+        showToast(issue, "error");
         return;
       }
     }

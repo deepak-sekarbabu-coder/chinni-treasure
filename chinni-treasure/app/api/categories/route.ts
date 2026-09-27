@@ -3,7 +3,6 @@ import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
 import { checkAuth } from "@/src/lib/auth";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
@@ -95,8 +94,6 @@ export const POST = withAdmin(
         isActive: parsed.data.isActive ?? true,
       },
     });
-
-    await invalidateCatalogCaches();
 
     return NextResponse.json(category, { status: 201 });
   },

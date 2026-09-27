@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractApiErrorMessage, generateOrderNumber, slugify } from "../../lib/utils";
+import { generateOrderNumber, slugify } from "../../lib/utils";
 
 describe("generateOrderNumber", () => {
   it("returns a string starting with ORD-", () => {
@@ -11,28 +11,6 @@ describe("generateOrderNumber", () => {
     const numbers = Array.from({ length: 10 }, () => generateOrderNumber());
     const unique = new Set(numbers);
     expect(unique.size).toBe(10);
-  });
-});
-
-describe("extractApiErrorMessage", () => {
-  it("returns the message from an Error instance", () => {
-    expect(extractApiErrorMessage(new Error("boom"), "fallback")).toBe("boom");
-  });
-
-  it("returns the message from an ApiError-like object", () => {
-    const err = { message: "rate limited" };
-    expect(extractApiErrorMessage(err, "fallback")).toBe("rate limited");
-  });
-
-  it("returns the fallback when value is not an object", () => {
-    expect(extractApiErrorMessage("oops", "fallback")).toBe("fallback");
-    expect(extractApiErrorMessage(null, "fallback")).toBe("fallback");
-    expect(extractApiErrorMessage(undefined, "fallback")).toBe("fallback");
-  });
-
-  it("returns the fallback when message is missing or non-string", () => {
-    expect(extractApiErrorMessage({}, "fallback")).toBe("fallback");
-    expect(extractApiErrorMessage({ message: 42 }, "fallback")).toBe("fallback");
   });
 });
 

@@ -70,6 +70,46 @@ export type ActiveCategoryOption = {
   displayOrder: number;
 };
 
+/** The category identity `/category/[slug]` renders and its metadata titles from. */
+export type CategoryIdentity = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  isActive: boolean;
+};
+
+const CATEGORY_IDENTITY_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  isActive: true,
+} as const satisfies Prisma.CategorySelect;
+
+/**
+ * One category by slug, cached under the module-owned `categories` tag.
+ *
+ * This used to be a page-local `unstable_cache` inside
+ * `app/category/[slug]/page.tsx` — a cache definition living in a route, with a
+ * tag name no module owned and no read surface other code could share. It lives
+ * here now so the key, the tag, and the query sit with the other catalogue
+ * reads and `invalidateCatalogCaches()` is the only invalidation entry point.
+ *
+ * Cached, unlike `listByCategory`'s inline lookup, because this path is the
+ * metadata title — a name that changes with the category, not a 404 verdict.
+ */
+const getCategoryBySlugCached = unstable_cache(
+  async (slug: string) =>
+    prisma.category.findUnique({ where: { slug }, select: CATEGORY_IDENTITY_SELECT }),
+  ["category-by-slug"],
+  { revalidate: 60, tags: ["categories"] },
+);
+
+export function getCategoryBySlug(slug: string): Promise<CategoryIdentity | null> {
+  return getCategoryBySlugCached(slug);
+}
+
 /**
  * Active categories for the catalogue filter dropdown / public /api/categories,
  * cached through the module-owned `categoriesCache` under the same `active` key
@@ -367,7 +407,7 @@ export async function listByCategory(
 
   const category = await prisma.category.findUnique({
     where: { slug },
-    select: { id: true, name: true, slug: true, description: true, isActive: true },
+    select: CATEGORY_IDENTITY_SELECT,
   });
 
   if (!category || !category.isActive) {

@@ -38,6 +38,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { checkAuth, type AdminSession } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { logger } from "@/lib/axiom/server";
 
 /** What the handler receives. `body`/`params` are present when the caller opts in. */
@@ -122,8 +123,14 @@ export function mapAdminRouteError(
   return NextResponse.json({ error: fallbackMessage }, { status: 500 });
 }
 
-/** The catalogue-refresh epilogue shared by catalogue-mutating admin routes. */
-export function revalidateCatalogueSurfaces(): void {
+/**
+ * The catalogue-refresh epilogue every catalogue-mutating route used to
+ * repeat: clear the six owned namespaces (Redis + in-memory fallback) and
+ * revalidate the three public surfaces. One declaration, one home — the
+ * `revalidateCatalogue` flag is the whole intent.
+ */
+export async function refreshCatalogue(): Promise<void> {
+  await invalidateCatalogCaches();
   revalidatePath("/catalogue");
   revalidatePath("/");
   revalidatePath("/category", "layout");
@@ -175,7 +182,7 @@ export function withAdmin<P = Record<string, string>>(
       const response = await handler({ request, admin, params, body });
 
       if (revalidateCatalogue && response.ok) {
-        revalidateCatalogueSurfaces();
+        await refreshCatalogue();
       }
       return response;
     } catch (error) {

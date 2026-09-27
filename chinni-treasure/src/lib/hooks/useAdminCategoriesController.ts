@@ -9,7 +9,8 @@ import {
   useUpdateCategory,
 } from "@/src/lib/hooks/useAdminMutations";
 import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
-import { extractApiErrorMessage, slugify } from "@/src/lib/utils";
+import { slugify } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/api/client";
 import type { Category } from "@/src/lib/api/schemas";
 
 export interface CategoryFormState {
@@ -117,7 +118,7 @@ export function useAdminCategoriesController() {
         );
       } catch (err) {
         console.error("Failed to toggle category:", err);
-        showToast(extractApiErrorMessage(err, "Failed to update category"), "error");
+        showToast(getErrorMessage(err, "Failed to update category"), "error");
       }
     },
     [toggleActive, showToast],

@@ -3,6 +3,7 @@ import {
   productDisplayView,
   primaryImage,
   stockHealth,
+  isDisplayableImageUrl,
   LOW_STOCK_MAX,
 } from "../../lib/product-display";
 import { IMAGE_UNAVAILABLE_PLACEHOLDER } from "../../lib/images";
@@ -29,6 +30,24 @@ describe("stockHealth", () => {
     expect(stockHealth(4)).toBe("in");
     expect(stockHealth(5)).toBe("in");
     expect(stockHealth(999)).toBe("in");
+  });
+});
+
+describe("isDisplayableImageUrl", () => {
+  it("accepts http and https", () => {
+    expect(isDisplayableImageUrl("https://cdn.example.com/a.jpg")).toBe(true);
+    expect(isDisplayableImageUrl("http://cdn.example.com/a.jpg")).toBe(true);
+  });
+
+  it("rejects empty, unparseable, and non-web schemes", () => {
+    // The gate the admin form, catalogue table, and order card all share.
+    expect(isDisplayableImageUrl("")).toBe(false);
+    expect(isDisplayableImageUrl(null)).toBe(false);
+    expect(isDisplayableImageUrl(undefined)).toBe(false);
+    expect(isDisplayableImageUrl("not a url")).toBe(false);
+    expect(isDisplayableImageUrl("/uploads/local.jpg")).toBe(false);
+    expect(isDisplayableImageUrl("javascript:alert(1)")).toBe(false);
+    expect(isDisplayableImageUrl("data:image/png;base64,AAA")).toBe(false);
   });
 });
 

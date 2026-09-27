@@ -1,3 +1,5 @@
+import type { ProductBadgeValue } from "@/src/lib/constants";
+
 export interface ProductFormData {
   id: string;
   name: string;
@@ -7,7 +9,7 @@ export interface ProductFormData {
   compareAtPrice: string;
   stockQuantity: string;
   imageUrl: string;
-  badge: string;
+  badge: ProductBadgeValue | "";
   categoryId: string;
   isActive: boolean;
   allowGiftBoxBundling: boolean;

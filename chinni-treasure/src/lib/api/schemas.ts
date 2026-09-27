@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CheckoutFields } from "@/src/lib/checkout-fields";
-import { ORDER_STATUS_ALL } from "@/src/lib/constants";
+import { ORDER_STATUS_ALL, PRODUCT_BADGES } from "@/src/lib/constants";
 
 const OrderStatusSchema = z.enum(ORDER_STATUS_ALL);
 
@@ -237,20 +237,48 @@ const ProductImageInputSchema = z.object({
   displayOrder: z.number().int().min(0).optional().default(0),
 });
 
+/**
+ * The **one** admin product write contract. Both `/api/products` handlers
+ * import these, and the client parses its outbound payload through the same
+ * declarations before it sends — the client used to carry its own weaker
+ * copies (`badge` was `z.string()`, so it happily sent values the server 400s).
+ * The field list lives here once; the routes hold only policy.
+ */
 export const ProductInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  sku: z.string().optional(),
-  description: z.string().optional(),
   price: z.coerce.number().positive("Price must be a positive number"),
-  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").nullable().optional(),
+  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
+  sku: z.string().optional(),
+  categoryId: z.coerce.number().int().positive().optional().nullable(),
+  description: z.string().optional(),
   stockQuantity: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional(),
-  badge: z.string().nullable().optional(),
-  categoryId: z.coerce.number().int().positive().nullable().optional(),
+  badge: z.enum(PRODUCT_BADGES).optional().nullable(),
   isActive: z.boolean().optional(),
-  allowGiftBoxBundling: z.boolean().optional(),
   visibleHostnames: z.string().optional(),
+  allowGiftBoxBundling: z.boolean().optional(),
   images: z.array(ProductImageInputSchema).optional(),
+});
+
+/** The same contract, every field optional and the clearable ones nullable. */
+export const UpdateProductInputSchema = z.object({
+  name: z.string().min(1, "Name is required").optional(),
+  price: z.coerce.number().positive("Price must be a positive number").optional(),
+  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
+  sku: z.string().optional().nullable(),
+  categoryId: z.coerce.number().int().positive().optional().nullable(),
+  description: z.string().optional().nullable(),
+  stockQuantity: z.coerce.number().int().min(0).optional(),
+  imageUrl: z.string().optional().nullable(),
+  badge: z.enum(PRODUCT_BADGES).optional().nullable(),
+  isActive: z.boolean().optional(),
+  visibleHostnames: z.string().optional().nullable(),
+  allowGiftBoxBundling: z.boolean().optional(),
+  images: z.array(z.object({
+    url: z.string().min(1),
+    isPrimary: z.boolean().optional(),
+    displayOrder: z.number().int().min(0).optional(),
+  })).optional(),
 });
 
 const CategorySchema = z.object({

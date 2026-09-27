@@ -31,6 +31,26 @@ export function primaryImage(p: Pick<DisplayInput, "imageUrl" | "images">): stri
   return p.images?.find((img) => img.isPrimary)?.url || p.imageUrl || IMAGE_UNAVAILABLE_PLACEHOLDER;
 }
 
+/**
+ * Whether a stored image URL is worth handing to `next/image`. This one
+ * verdict is read by every surface that renders a product/order image: the
+ * admin form gate, the catalogue table thumb, and the order card thumb. They
+ * used to each re-answer it — two as a `/^https?:\/\//` regex, the form as a
+ * `new URL` parse — so a URL one accepted and another rejected rendered
+ * differently depending on which screen you were on.
+ *
+ * Load *failures* are a different question and `FallbackImage` owns them.
+ */
+export function isDisplayableImageUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const protocol = new URL(url).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export interface ProductDisplayView {
   /** src for the card/detail image, never empty. */
   image: string;

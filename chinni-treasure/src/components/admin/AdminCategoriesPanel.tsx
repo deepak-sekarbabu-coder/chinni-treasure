@@ -13,48 +13,31 @@ import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
 import { createCategoryColumns } from "@/src/components/admin/table/columns.categories";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Category } from "@/src/lib/api/schemas";
-import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 import CategoryFormModal from "@/src/components/admin/CategoryFormModal";
+import type { CategoriesPanelViewModel } from "@/src/components/admin/useAdminCategoriesPanel";
 
-interface Props {
-  showForm: boolean;
-  formClosing: boolean;
-  form: CategoryFormState;
-  productLoading: boolean;
-  categories: Category[];
-  categoriesLoading: boolean;
-  deleteConfirm: { open: boolean; categoryName: string; productCount: number };
-  loadingCategoryId: number | null;
-  togglePendingId: number | null;
-  onToggleForm: () => void;
-  onFormChange: (form: CategoryFormState) => void;
-  onSave: (e: React.FormEvent) => Promise<void>;
-  onEdit: (category: Category) => void;
-  onRequestDelete: (category: Category & { productCount: number }) => void;
-  onCancelDelete: () => void;
-  onConfirmDelete: () => Promise<void>;
-  onToggleActive: (category: Category) => void;
-}
-
-export default function AdminCategoriesPanel({
-  showForm,
-  formClosing,
-  form,
-  productLoading,
-  categories,
-  categoriesLoading,
-  deleteConfirm,
-  loadingCategoryId,
-  togglePendingId,
-  onToggleForm,
-  onFormChange,
-  onSave,
-  onEdit,
-  onRequestDelete,
-  onCancelDelete,
-  onConfirmDelete,
-  onToggleActive,
-}: Props) {
+/** Takes the panel view-model whole — see AdminCataloguePanel for why. */
+export default function AdminCategoriesPanel({ panel }: { panel: CategoriesPanelViewModel }) {
+  const {
+    showForm,
+    formClosing,
+    form,
+    categories,
+    deleteConfirm,
+    loadingCategoryId,
+    togglePendingId,
+  } = panel.data;
+  const { loading: categoriesLoading, formSaving: productLoading } = panel;
+  const {
+    onToggleForm,
+    onFormChange,
+    onSave,
+    onEdit,
+    onRequestDelete,
+    onCancelDelete,
+    onConfirmDelete,
+    onToggleActive,
+  } = panel.actions;
   const deleteTrapRef = useFocusTrap(deleteConfirm.open);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");

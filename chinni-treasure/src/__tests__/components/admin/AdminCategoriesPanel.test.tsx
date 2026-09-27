@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import AdminCategoriesPanel from "@/src/components/admin/AdminCategoriesPanel";
+import type {
+  CategoriesPanelActions,
+  CategoriesPanelData,
+  CategoriesPanelViewModel,
+} from "@/src/components/admin/useAdminCategoriesPanel";
 import type { Category } from "@/src/lib/api/schemas";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 
@@ -24,29 +29,35 @@ const emptyForm = {
   isActive: true,
 } as unknown as CategoryFormState;
 
-function buildProps(
-  categories: Category[],
-  overrides: Record<string, unknown> = {},
-) {
+const baseData: CategoriesPanelData = {
+  categories: [],
+  showForm: false,
+  formClosing: false,
+  form: emptyForm,
+  deleteConfirm: { open: false, categoryId: 0, categoryName: "", productCount: 0 },
+  loadingCategoryId: null,
+  togglePendingId: null,
+};
+
+function panel(
+  data: Partial<CategoriesPanelData> = {},
+  actions: Partial<CategoriesPanelActions> = {},
+): CategoriesPanelViewModel {
   return {
-    showForm: false,
-    formClosing: false,
-    form: emptyForm,
-    productLoading: false,
-    categories,
-    categoriesLoading: false,
-    deleteConfirm: { open: false, categoryName: "", productCount: 0 },
-    loadingCategoryId: null,
-    togglePendingId: null,
-    onToggleForm: vi.fn(),
-    onFormChange: vi.fn(),
-    onSave: vi.fn(),
-    onEdit: vi.fn(),
-    onRequestDelete: vi.fn(),
-    onCancelDelete: vi.fn(),
-    onConfirmDelete: vi.fn(),
-    onToggleActive: vi.fn(),
-    ...overrides,
+    data: { ...baseData, ...data },
+    loading: false,
+    formSaving: false,
+    actions: {
+      onToggleForm: vi.fn(),
+      onFormChange: vi.fn(),
+      onSave: vi.fn(),
+      onEdit: vi.fn(),
+      onRequestDelete: vi.fn(),
+      onCancelDelete: vi.fn(),
+      onConfirmDelete: vi.fn(),
+      onToggleActive: vi.fn(),
+      ...actions,
+    },
   };
 }
 
@@ -54,7 +65,16 @@ describe("AdminCategoriesPanel", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("renders sortable column headers and rows", () => {
-    render(buildPanel([makeCategory(), makeCategory({ id: 2, name: "Silk", slug: "silk", displayOrder: 2 })]));
+    render(
+      <AdminCategoriesPanel
+        panel={panel({
+          categories: [
+            makeCategory(),
+            makeCategory({ id: 2, name: "Silk", slug: "silk", displayOrder: 2 }),
+          ],
+        })}
+      />,
+    );
     const table = within(screen.getByRole("table"));
     for (const header of [/name/i, /slug/i, /order/i, /products/i, /status/i]) {
       expect(screen.getByRole("columnheader", { name: header })).toBeInTheDocument();
@@ -64,7 +84,16 @@ describe("AdminCategoriesPanel", () => {
   });
 
   it("search input narrows rows by name and slug", () => {
-    render(buildPanel([makeCategory(), makeCategory({ id: 2, name: "Silk", slug: "silk", displayOrder: 2 })]));
+    render(
+      <AdminCategoriesPanel
+        panel={panel({
+          categories: [
+            makeCategory(),
+            makeCategory({ id: 2, name: "Silk", slug: "silk", displayOrder: 2 }),
+          ],
+        })}
+      />,
+    );
     const table = within(screen.getByRole("table"));
     fireEvent.change(screen.getByLabelText("Search categories"), { target: { value: "sil" } });
     expect(table.queryByText("Jewellery")).not.toBeInTheDocument();
@@ -75,11 +104,16 @@ describe("AdminCategoriesPanel", () => {
   });
 
   it("header click sorts rows client-side by display order", () => {
-    const silkFirst = [
-      makeCategory({ id: 1, name: "First", displayOrder: 2 }),
-      makeCategory({ id: 2, name: "Second", displayOrder: 1 }),
-    ];
-    render(buildPanel(silkFirst));
+    render(
+      <AdminCategoriesPanel
+        panel={panel({
+          categories: [
+            makeCategory({ id: 1, name: "First", displayOrder: 2 }),
+            makeCategory({ id: 2, name: "Second", displayOrder: 1 }),
+          ],
+        })}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /sort by order/i }));
     const rows = screen.getAllByRole("row");
     // skip index 0 (thead row)
@@ -91,7 +125,11 @@ describe("AdminCategoriesPanel", () => {
     const onToggleActive = vi.fn();
     const onEdit = vi.fn();
     const onRequestDelete = vi.fn();
-    render(buildPanel([makeCategory()], { onToggleActive, onEdit, onRequestDelete }));
+    render(
+      <AdminCategoriesPanel
+        panel={panel({ categories: [makeCategory()] }, { onToggleActive, onEdit, onRequestDelete })}
+      />,
+    );
     const table = within(screen.getByRole("table"));
     fireEvent.click(table.getByRole("button", { name: /^disable /i }));
     expect(onToggleActive).toHaveBeenCalled();
@@ -103,16 +141,15 @@ describe("AdminCategoriesPanel", () => {
 
   it("delete-guard modal still blocks when productCount > 0", () => {
     render(
-      buildPanel([makeCategory()], {
-        deleteConfirm: { open: true, categoryName: "Jewellery", productCount: 4 },
-      }),
+      <AdminCategoriesPanel
+        panel={panel({
+          categories: [makeCategory()],
+          deleteConfirm: { open: true, categoryId: 1, categoryName: "Jewellery", productCount: 4 },
+        })}
+      />,
     );
     expect(screen.getByText(/still has 4 active product/i)).toBeInTheDocument();
     const confirmBtn = screen.getByRole("button", { name: /cannot delete/i });
     expect(confirmBtn).toBeDisabled();
   });
 });
-
-function buildPanel(categories: Category[], overrides?: Record<string, unknown>) {
-  return <AdminCategoriesPanel {...buildProps(categories, overrides)} />;
-}

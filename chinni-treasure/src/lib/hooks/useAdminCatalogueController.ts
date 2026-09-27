@@ -6,8 +6,9 @@ import {
   useUpdateProduct,
 } from "@/src/lib/hooks/useAdminMutations";
 import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
-import type { ProductFormData } from "@/src/types";
+import { PRODUCT_BADGES } from "@/src/lib/constants";
 import type { Product } from "@/src/lib/api/schemas";
+import type { ProductFormData } from "@/src/types";
 
 /**
  * Catalogue policy over the shared admin-CRUD seam: everything entity-specific
@@ -99,6 +100,10 @@ export function useAdminCatalogueController(options?: {
 }
 
 function productToFormState(product: Product): ProductFormData {
+  // The stored badge is a plain string; the form only offers the shared
+  // vocabulary, so an unrecognised value falls back to "None" rather than
+  // rendering a select with no matching option.
+  const badge = PRODUCT_BADGES.find((b) => b === product.badge) ?? "";
   return {
     id: product.id,
     name: product.name,
@@ -108,7 +113,7 @@ function productToFormState(product: Product): ProductFormData {
     compareAtPrice: product.compareAtPrice?.toString() ?? "",
     stockQuantity: product.stockQuantity.toString(),
     imageUrl: product.imageUrl || "",
-    badge: product.badge || "",
+    badge,
     categoryId: product.categoryId ? product.categoryId.toString() : "",
     isActive: product.isActive,
     allowGiftBoxBundling: product.allowGiftBoxBundling ?? false,

@@ -1,65 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
 import { withAdmin } from "@/src/lib/admin-route";
-import { z } from "zod"
-import { ProductBadge } from "@prisma/client"
-import { normalizeVisibleHostnames } from "@/src/lib/domain-filter";
-import { assertGiftBoxNotOnBox } from "@/src/lib/catalogue-write";
-
-const ImageInputSchema = z.object({
-  url: z.string().min(1),
-  isPrimary: z.boolean().optional(),
-  displayOrder: z.number().int().min(0).optional(),
-});
-
-const UpdateProductSchema = z.object({
-  name: z.string().min(1).optional(),
-  price: z.coerce.number().positive("Price must be a positive number").optional(),
-  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
-  sku: z.string().optional().nullable(),
-  categoryId: z.coerce.number().int().positive().optional().nullable(),
-  description: z.string().optional().nullable(),
-  stockQuantity: z.coerce.number().int().min(0).optional(),
-  imageUrl: z.string().optional().nullable(),
-  badge: z.nativeEnum(ProductBadge).optional().nullable(),
-  isActive: z.boolean().optional(),
-  visibleHostnames: z.string().optional().nullable(),
-  allowGiftBoxBundling: z.boolean().optional(),
-  images: z.array(ImageInputSchema).optional(),
-});
-
-const FIELD_MAPPERS: Record<string, (v: unknown) => unknown> = {
-  sku: (v) => v,
-  name: (v) => sanitize(v as string),
-  categoryId: (v) => v ?? null,
-  description: (v) => (v ? sanitize(v as string) : null),
-  price: (v) => v,
-  compareAtPrice: (v) => v ?? null,
-  stockQuantity: (v) => v,
-  imageUrl: (v) => v || null,
-  badge: (v) => v || null,
-  isActive: (v) => v,
-  visibleHostnames: (v) => normalizeVisibleHostnames(v as string | null),
-};
-
-function buildUpdateData(parsed: Record<string, unknown>): Record<string, unknown> {
-  const data: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (value !== undefined && key !== "images") {
-      data[key] = FIELD_MAPPERS[key] ? FIELD_MAPPERS[key](value) : value;
-    }
-  }
-  return data;
-}
+import { assertGiftBoxNotOnBox, buildUpdateData } from "@/src/lib/catalogue-write";
+import { UpdateProductInputSchema } from "@/src/lib/api/schemas";
 
 // PUT /api/products/[id] — Update a product (admin only)
 export const PUT = withAdmin<{ id: string }>(
   async ({ body, params }) => {
     const { id } = params;
-    const parsed = validateOr400(UpdateProductSchema, body);
+    const parsed = validateOr400(UpdateProductInputSchema, body);
     if (!parsed.ok) return parsed.response;
 
     const { images, allowGiftBoxBundling, ...productFields } = parsed.data;
@@ -91,7 +41,7 @@ export const PUT = withAdmin<{ id: string }>(
       await assertGiftBoxNotOnBox(existing?.categoryId ?? null);
     }
 
-    const updateData = buildUpdateData(productFields as Record<string, unknown>) as Record<string, unknown>;
+    const updateData = buildUpdateData(productFields);
     if (updateData.sku !== undefined && existing && updateData.sku === existing.sku) {
       delete updateData.sku;
     }
@@ -107,8 +57,6 @@ export const PUT = withAdmin<{ id: string }>(
         images: { orderBy: { displayOrder: "asc" } },
       },
     });
-
-    await invalidateCatalogCaches();
 
     return NextResponse.json(product);
   },
@@ -134,8 +82,6 @@ export const DELETE = withAdmin<{ id: string }>(
       where: { id },
       data: { deletedAt: new Date() },
     });
-
-    await invalidateCatalogCaches();
 
     return NextResponse.json({ success: true });
   },

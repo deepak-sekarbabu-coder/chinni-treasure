@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useToast } from "@/src/components/ui/ToastProvider";
-import { extractApiErrorMessage } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/api/client";
 
 const FORM_CLOSE_ANIMATION_MS = 300;
 
@@ -119,7 +119,7 @@ export function useAdminCrud<
         closeForm();
       } catch (err) {
         console.error(`${cfg.saveErrorFallback}:`, err);
-        showToast(extractApiErrorMessage(err, cfg.saveErrorFallback), "error");
+        showToast(getErrorMessage(err, cfg.saveErrorFallback), "error");
       }
     },
     [form, cfg, closeForm, showToast],
@@ -134,7 +134,7 @@ export function useAdminCrud<
       setDeleteConfirm(cfg.emptyDeleteState);
     } catch (err) {
       console.error(`${cfg.deleteErrorFallback}:`, err);
-      showToast(extractApiErrorMessage(err, cfg.deleteErrorFallback), "error");
+      showToast(getErrorMessage(err, cfg.deleteErrorFallback), "error");
     }
   }, [deleteConfirm, cfg, showToast]);
 

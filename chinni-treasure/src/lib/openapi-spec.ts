@@ -10,6 +10,7 @@ import {
   TrackOrdersResponseSchema,
   UnauthenticatedResponseSchema,
   UpdateOrderStatusInputSchema,
+  UpdateTrackingInputSchema,
 } from "@/src/lib/api/schemas";
 import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 
@@ -69,6 +70,7 @@ export const openApiSpec = {
     { name: "Products", description: "Product catalog CRUD operations" },
     { name: "Orders", description: "Order placement, listing, and status management" },
     { name: "Tracking", description: "Public order tracking by order ID or phone" },
+    { name: "Payments", description: "Razorpay Standard Checkout order and signature verification" },
     { name: "Analytics", description: "Admin dashboard statistics" },
     {
       name: "Categories",
@@ -740,6 +742,138 @@ export const openApiSpec = {
         },
       },
     },
+    "/api/orders/{id}/tracking": {
+      patch: {
+        tags: ["Orders"],
+        summary: "Set the order tracking ID (admin only)",
+        operationId: "updateOrderTracking",
+        description:
+          "Sets or replaces the tracking ID. Sends `expectedVersion` for optimistic concurrency; a stale value answers 409.",
+        security: [{ sessionCookie: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: openApi(UpdateTrackingInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Order with the new tracking ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Order" },
+              },
+            },
+          },
+          "400": { description: "Tracking ID is required" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Order not found" },
+          "409": {
+            description:
+              "Version conflict — order was modified by another request",
+          },
+        },
+      },
+    },
+    "/api/create-order": {
+      post: {
+        tags: ["Payments"],
+        summary: "Create a Razorpay order for Standard Checkout",
+        operationId: "createRazorpayOrder",
+        description:
+          "Amount is in rupees. Rate limited to 5 attempts per IP per window; the Payment module converts to paise and owns the minimum-order policy. The response's `order_id` is what `POST /api/verify-payment` later checks the signature against.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["amount"],
+                properties: {
+                  amount: { type: "number", description: "Amount in rupees" },
+                  currency: { type: "string", default: "INR", minLength: 3, maxLength: 3 },
+                  receipt: { type: "string", maxLength: 40 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Razorpay order created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    order_id: { type: "string" },
+                    amount: { type: "number" },
+                    currency: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid body" },
+          "403": { description: "Origin check failed" },
+          "429": { description: "Rate limited" },
+        },
+      },
+    },
+    "/api/verify-payment": {
+      post: {
+        tags: ["Payments"],
+        summary: "Verify the Razorpay payment signature",
+        operationId: "verifyRazorpayPayment",
+        description:
+          "Server-side HMAC check of the three fields Razorpay returns after checkout. Never treat the client as authoritative — this response is the verdict.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["razorpay_order_id", "razorpay_payment_id", "razorpay_signature"],
+                properties: {
+                  razorpay_order_id: { type: "string" },
+                  razorpay_payment_id: { type: "string" },
+                  razorpay_signature: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Signature verified",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    ok: { type: "boolean" },
+                    order_id: { type: "string" },
+                    payment_id: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Missing fields or signature mismatch" },
+          "403": { description: "Origin check failed" },
+        },
+      },
+    },
     "/api/stats": {
       get: {
         tags: ["Analytics"],
@@ -858,7 +992,7 @@ export const openApiSpec = {
           stateCode: { type: "string" },
           postalCode: { type: "string" },
           countryCode: { type: "string" },
-          status: { type: "string" },
+          status: { type: "string", enum: ORDER_STATUS_ENUM },
           trackingId: { type: "string", nullable: true },
           subtotal: { type: "number" },
           shippingCost: { type: "number" },
@@ -900,7 +1034,7 @@ export const openApiSpec = {
                   type: "object",
                   properties: {
                     id: { type: "string", format: "uuid" },
-                    status: { type: "string" },
+                    status: { type: "string", enum: ORDER_STATUS_ENUM },
                     notes: { type: "string", nullable: true },
                     createdAt: { type: "string", format: "date-time" },
                   },

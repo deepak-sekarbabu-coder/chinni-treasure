@@ -91,6 +91,16 @@ export const ORDER_STATUS_FILTERS = [
 /** The key every status-keyed map here is indexed by. */
 export type OrderStatusKey = keyof typeof ORDER_STATUS_LABELS;
 
+/**
+ * The `ProductBadge` database enum, as the tuple that backs every badge
+ * `z.enum` — same "derive, don't re-state" rule as `ORDER_STATUS_ALL`, so the
+ * admin write contract and the API docs cannot disagree about the vocabulary.
+ * Pinned to the Prisma enum in `constants.test.ts`.
+ */
+export const PRODUCT_BADGES = ["bestseller", "new", "premium", "limited", "luxury"] as const;
+
+export type ProductBadgeValue = (typeof PRODUCT_BADGES)[number];
+
 export const INDIAN_STATES = [
   { code: "AN", name: "Andaman and Nicobar Islands" },
   { code: "AP", name: "Andhra Pradesh" },

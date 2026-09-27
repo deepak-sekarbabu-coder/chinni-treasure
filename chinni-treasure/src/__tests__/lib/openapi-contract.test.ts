@@ -49,6 +49,20 @@ function findEnums(node: unknown, out: string[][] = []): string[][] {
   return out;
 }
 
+/** Every value of `properties.<key>`, wherever that key appears in the spec. */
+function findProperties(node: unknown, key: string, out: unknown[] = []): unknown[] {
+  if (Array.isArray(node)) {
+    node.forEach((value) => findProperties(value, key, out));
+  } else if (node && typeof node === "object") {
+    const record = node as Record<string, unknown>;
+    for (const [name, value] of Object.entries(record)) {
+      if (name === key) out.push(value);
+      else findProperties(value, key, out);
+    }
+  }
+  return out;
+}
+
 /**
  * The spec is generated from the Zod contract; these assertions pin the
  * documented shapes back to that contract so a hand-typed edit (the drift
@@ -83,6 +97,17 @@ describe("docs contract: spec vs Zod schemas", () => {
     );
     expect(statuses.length).toBeGreaterThan(0);
     for (const status of statuses) expect(status).toEqual([...ORDER_STATUS_ALL]);
+  });
+
+  it("gives every `status` property an enum, not a bare string", () => {
+    // The response shapes are hand-written, so nothing generated them: `Order`
+    // and its status history both shipped `status: { type: "string" }` and the
+    // enum sweep above had nothing to find. Collect the property, not the enum.
+    const statuses = findProperties(openApiSpec, "status");
+    expect(statuses.length).toBeGreaterThan(0);
+    for (const status of statuses) {
+      expect(at(status, "enum")).toEqual([...ORDER_STATUS_ALL]);
+    }
   });
 
   it("documents the session role as an enum, not a plain string", () => {

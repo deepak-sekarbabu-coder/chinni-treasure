@@ -2,7 +2,7 @@
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { formatINR } from "@/src/lib/format";
-import { primaryImage, productDisplayView } from "@/src/lib/product-display";
+import { primaryImage, productDisplayView, isDisplayableImageUrl } from "@/src/lib/product-display";
 import { StockHealthCell, BadgeCell } from "@/src/components/admin/table/columns.catalogue";
 import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
@@ -18,56 +18,40 @@ import {
   sortingToApiSort,
   createCatalogueColumns,
 } from "@/src/components/admin/table/columns.catalogue";
-import type { Category, Product } from "@/src/lib/api/schemas";
-import type { ProductFormData } from "@/src/types";
-import type { ProductFilters } from "@/src/components/admin/useAdminCataloguePanel";
+import type { Product } from "@/src/lib/api/schemas";
+import type { ProductFilters, CataloguePanelViewModel } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
 
-interface Props {
-  showForm: boolean;
-  formClosing: boolean;
-  productForm: ProductFormData;
-  productLoading: boolean;
-  products: Product[];
-  productsLoading: boolean;
-  loadingProductId: string | null;
-  productPage: number;
-  productTotalPages: number;
-  categories: Category[];
-  categoriesLoading: boolean;
-  filters: ProductFilters;
-  onFilterChange: (updates: Partial<ProductFilters>) => void;
-  onFilterReset: () => void;
-  onToggleForm: () => void;
-  onFormChange: (form: ProductFormData) => void;
-  onSave: (e: React.FormEvent) => Promise<void>;
-  onEdit: (product: Product) => void;
-  onRequestDelete: (product: Product) => void;
-  onPageChange: (page: number) => void;
-}
-
-export default function AdminCataloguePanel({
-  showForm,
-  formClosing,
-  productForm,
-  productLoading,
-  products,
-  productsLoading,
-  loadingProductId,
-  productPage,
-  productTotalPages,
-  categories,
-  categoriesLoading: _categoriesLoading,
-  filters,
-  onFilterChange,
-  onFilterReset,
-  onToggleForm,
-  onFormChange,
-  onSave,
-  onEdit,
-  onRequestDelete,
-  onPageChange,
-}: Props) {
+/**
+ * Takes the panel view-model whole. It used to take 21 named props that
+ * `app/admin/page.tsx` unpacked from that same view-model by hand — the page
+ * restated the interface, and one field (`categoriesLoading`) was a hardcoded
+ * `false` that the panel never even read.
+ */
+export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelViewModel }) {
+  const {
+    showForm,
+    formClosing,
+    productForm,
+    products,
+    loadingProductId,
+    currentPage: productPage,
+    productTotalPages,
+    categories,
+    categoriesLoading,
+    filters,
+  } = panel.data;
+  const { loading: productsLoading, formSaving: productLoading } = panel;
+  const {
+    onFilterChange,
+    onFilterReset,
+    onToggleForm,
+    onFormChange,
+    onSave,
+    onEdit,
+    onRequestDelete,
+    onPageChange,
+  } = panel.actions;
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
 
   const sorting = useMemo(() => apiSortToSorting(filters.sort), [filters.sort]);
@@ -125,7 +109,7 @@ export default function AdminCataloguePanel({
         </button>
       </div>
 
-      <ProductFormModal open={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} categories={categories} categoriesLoading={_categoriesLoading} onFormChange={onFormChange} onSave={onSave} onClose={onToggleForm} />
+      <ProductFormModal open={showForm} formClosing={formClosing} productForm={productForm} productLoading={productLoading} categories={categories} categoriesLoading={categoriesLoading} onFormChange={onFormChange} onSave={onSave} onClose={onToggleForm} />
 
       <div className="admin-catalogue-filters">
         <div className="admin-catalogue-search">
@@ -408,7 +392,7 @@ function CatalogueCards({
         // Shared display contract: primary-image pick + discount math + stock state.
         const view = productDisplayView(product);
         const image = primaryImage(product);
-        const hasValidImage = /^https?:\/\//.test(image);
+        const hasValidImage = isDisplayableImageUrl(image);
         const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
         const isDeleting = loadingProductId === product.id;
 
