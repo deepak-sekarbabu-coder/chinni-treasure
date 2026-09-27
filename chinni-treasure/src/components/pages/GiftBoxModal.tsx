@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
@@ -169,7 +170,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
 
         <div className="gift-box-modal-product">
           <FallbackImage
-            src={product.image || "/placeholder.svg"}
+            src={product.image || GIFT_PLACEHOLDER}
             alt={product.name}
             width={48}
             height={48}
@@ -207,7 +208,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
                       onClick={() => toggleBox(box)}
                     >
                       <FallbackImage
-                        src={box.imageUrl || "/placeholder.svg"}
+                        src={box.imageUrl || GIFT_PLACEHOLDER}
                         alt={box.name}
                         width={48}
                         height={48}

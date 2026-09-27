@@ -23,5 +23,13 @@ export const BLUR_PLACEHOLDER =
  * image fails to load. Owned here so product surfaces share one copy
  * (see src/lib/product-display.ts `primaryImage`).
  */
+/**
+ * Branded gift-parcel placeholder, for cart lines and gift-box pickers where
+ * the item *is* a gift and the generic "Image unavailable" copy would be wrong.
+ * Deliberately distinct from IMAGE_UNAVAILABLE_PLACEHOLDER — named here so the
+ * two are a choice rather than a bare string repeated across five components.
+ */
+export const GIFT_PLACEHOLDER = "/placeholder.svg";
+
 export const IMAGE_UNAVAILABLE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23e8e0d4' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='sans-serif' font-size='14'%3EImage unavailable%3C/text%3E%3C/svg%3E";

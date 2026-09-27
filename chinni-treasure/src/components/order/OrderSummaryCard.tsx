@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 
 import { FREE_SHIPPING_THRESHOLD, shippingProgress } from "@/src/lib/pricing";
 import { formatMoney, formatRupees, formatShipping } from "@/src/lib/format";
@@ -80,7 +81,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
               {items.map((item) => (
                 <div key={item.productId} className={`order-summary-item${item.isGift ? " order-summary-item-gift" : ""}`}>
                   <FallbackImage
-                    src={item.image || "/placeholder.svg"}
+                    src={item.image || GIFT_PLACEHOLDER}
                     alt={item.name}
                     width={60}
                     height={70}
@@ -138,7 +139,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                           <div className="gift-box-linked-items">
                             {item.giftBoxes.map((gb) => (
                               <div key={gb.productId} className="gift-box-linked-item">
-                                <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
+                                <FallbackImage src={gb.image || GIFT_PLACEHOLDER} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
                                 <span className="gift-box-linked-name">📦 {gb.name}</span>
                                 <span className="gift-box-linked-qty">×{gb.quantity}</span>
                                 <span className="gift-box-linked-price">{formatMoney(gb.price * gb.quantity)}</span>

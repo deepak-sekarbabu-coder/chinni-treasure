@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { verifyCheckoutSignature, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { logger } from "@/lib/axiom/server";
 import { z } from "zod";
@@ -13,10 +14,22 @@ const VerifyPaymentSchema = z.object({
 });
 
 // POST /api/verify-payment — Verify the Razorpay payment signature.
-// Thin adapter: parse, then the Payment module owns the HMAC check.
+// Thin adapter: CSRF + rate limit are their own concerns (this is a public
+// route, so withAdmin does not apply), then parse, then the Payment module
+// owns the HMAC check.
 export async function POST(request: Request) {
   const csrfError = validateCsrfOrigin(request);
   if (csrfError) return csrfError;
+
+  // Signature verification is a guessing surface — bound it per IP, as
+  // create-order and track already do.
+  const { allowed } = await checkRateLimit(`verify:${getClientIp(request)}`, 5);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many verification attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
 
   let raw: unknown;
   try {

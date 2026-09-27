@@ -1,5 +1,6 @@
 import { prisma } from "@/src/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { fieldIssue } from "@/src/lib/checkout-fields";
 import { toOrderView, type OrderView } from "@/src/lib/order-view";
 
@@ -58,3 +59,41 @@ export async function queryOrdersByPhone(phone: string): Promise<TrackQueryResul
 export function formatOrderResults(orders: readonly OrderWithTimeline[]): OrderView[] {
   return orders.map(toOrderView);
 }
+
+/** An admin order list row: items with their product, for the orders table. */
+export type AdminOrderRow = Prisma.OrderGetPayload<{
+  include: { items: { include: { product: true } } };
+}>;
+
+export type AdminOrderSort = "date-desc" | "date-asc" | "total-desc" | "total-asc";
+
+/**
+ * The admin orders list read — the order-side sibling of `listProductsForQuery`.
+ *
+ * The dashboard needs the full row (including `adminNotes`, which is
+ * deliberately never projected into an OrderView: the tracking surface is
+ * unauthenticated, this one is not). What this owns is the query itself, so
+ * `GET /api/orders` is not the one order surface that reaches past this module
+ * straight into Prisma. Sequential queries, not Promise.all — concurrent
+ * queries saturate Nhost's pooler.
+ */
+export async function listOrdersForAdmin(params: {
+  status?: string;
+  orderBy: Prisma.OrderOrderByWithRelationInput;
+  skip: number;
+  take: number;
+}): Promise<{ orders: AdminOrderRow[]; total: number }> {
+  const where: Prisma.OrderWhereInput = params.status
+    ? { status: params.status as OrderStatus }
+    : {};
+  const orders = await prisma.order.findMany({
+    where,
+    include: { items: { include: { product: true } } },
+    orderBy: params.orderBy,
+    skip: params.skip,
+    take: params.take,
+  });
+  const total = await prisma.order.count({ where });
+  return { orders, total };
+}
+

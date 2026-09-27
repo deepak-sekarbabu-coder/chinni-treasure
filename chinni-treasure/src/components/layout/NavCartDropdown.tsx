@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
 import { formatMoney } from "@/src/lib/format";
 
@@ -46,7 +47,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
         ) : (
           items.map((item) => (
             <div key={item.productId} className={`cart-dropdown-item${item.isGift ? " cart-dropdown-item-gift" : ""}`}>
-              <FallbackImage src={item.image || "/placeholder.svg"} alt={item.name} width={50} height={60} sizes="50px" quality={75} />
+              <FallbackImage src={item.image || GIFT_PLACEHOLDER} alt={item.name} width={50} height={60} sizes="50px" quality={75} />
               <div className="cart-dropdown-item-info">
                 <h5>
                   {item.name}
@@ -84,7 +85,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
                       <div className="gift-box-linked-items">
                         {item.giftBoxes.map((gb) => (
                           <div key={gb.productId} className="gift-box-linked-item">
-                            <FallbackImage src={gb.image || "/placeholder.svg"} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
+                            <FallbackImage src={gb.image || GIFT_PLACEHOLDER} alt={gb.name} width={32} height={32} className="gift-box-linked-img" />
                             <span className="gift-box-linked-name">📦 {gb.name}</span>
                             <span className="gift-box-linked-qty">×{gb.quantity}</span>
                             <span className="gift-box-linked-price">{formatMoney(gb.price * gb.quantity)}</span>

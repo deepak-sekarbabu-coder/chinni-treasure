@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
@@ -128,7 +129,7 @@ export default function GiftBoxSelector({ parentQuantity, selected, onChange }: 
                   disabled={isSelected ? false : !canAddMore}
                 >
                   <FallbackImage
-                    src={box.imageUrl || "/placeholder.svg"}
+                    src={box.imageUrl || GIFT_PLACEHOLDER}
                     alt={box.name}
                     width={48}
                     height={48}

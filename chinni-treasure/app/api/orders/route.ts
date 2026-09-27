@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
-import { prisma } from "@/src/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
 import { withAdmin } from "@/src/lib/admin-route";
-import { Prisma, OrderStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { placeOrder, parseCreateOrderInput, OrderError } from "@/src/lib/order-intake";
+import { listOrdersForAdmin } from "@/src/lib/order-read";
 import { acceptPlacementPayment, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
@@ -32,18 +32,13 @@ export const GET = withAdmin(async ({ request }) => {
   const status = new URL(request.url).searchParams.get("status");
   const sortOrder = ORDER_SORTS[sort as keyof typeof ORDER_SORTS];
 
-  const where = status ? { status: status as OrderStatus } : {};
-
-  // Sequential queries to avoid saturating Nhost's pooler with
-  // concurrent connections.
-  const orders = await prisma.order.findMany({
-    where,
-    include: { items: { include: { product: true } } },
+  // The query lives in the Order read module; the route parses and envelopes.
+  const { orders, total } = await listOrdersForAdmin({
+    status: status ?? undefined,
     orderBy: sortOrder,
     skip,
     take: limit,
   });
-  const total = await prisma.order.count({ where });
 
   return NextResponse.json({
     orders,
