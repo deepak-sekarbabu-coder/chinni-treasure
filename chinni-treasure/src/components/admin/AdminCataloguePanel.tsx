@@ -2,7 +2,7 @@
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { formatINR } from "@/src/lib/format";
-import { primaryImage, productDisplayView, isDisplayableImageUrl } from "@/src/lib/product-display";
+import { primaryImage, productDisplayView, isDisplayableImageUrl, imageUrls } from "@/src/lib/product-display";
 import { StockHealthCell, BadgeCell } from "@/src/components/admin/table/columns.catalogue";
 import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import {
 import type { Product } from "@/src/lib/api/schemas";
 import type { ProductFilters, CataloguePanelViewModel } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
+import ImageLightbox from "@/src/components/ui/ImageLightbox";
 
 /**
  * Takes the panel view-model whole. It used to take 21 named props that
@@ -250,77 +251,15 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
 
       <PaginationBar page={productPage} totalPages={productTotalPages} onPageChange={onPageChange} />
 
-      {/* Table Image Gallery Lightbox Modal */}
+      {/* Table Image Gallery Lightbox — the shared core; the display module
+          picked the image list via imageUrls(), the viewer owns the viewing. */}
       {lightboxProduct && (
-        <CatalogueProductLightbox
-          product={lightboxProduct}
+        <ImageLightbox
+          images={imageUrls(lightboxProduct)}
+          alt={lightboxProduct.name}
           onClose={() => setLightboxProduct(null)}
         />
       )}
-    </div>
-  );
-}
-
-function CatalogueProductLightbox({ product, onClose }: { product: Product; onClose: () => void }) {
-  const images = product.images && product.images.length > 0
-    ? product.images.map((img) => img.url)
-    : product.imageUrl
-      ? [product.imageUrl]
-      : [];
-
-  const [activeIdx, setActiveIdx] = useState(0);
-  const currentUrl = images[activeIdx] || "";
-  const hasMultiple = images.length > 1;
-
-  const goPrev = () => setActiveIdx((i) => (i - 1 + images.length) % images.length);
-  const goNext = () => setActiveIdx((i) => (i + 1) % images.length);
-
-  return (
-    <div className="lightbox-overlay active" onClick={onClose} style={{ opacity: 1, visibility: "visible" }}>
-      <div className="lightbox-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
-        <div className="catalogue-lightbox-card">
-          <div className="catalogue-lightbox-header">
-            <h3>{product.name}</h3>
-            <div className="catalogue-lightbox-header-right">
-              {product.category?.name && <span className="category-pill-badge">{product.category.name}</span>}
-              <button type="button" className="catalogue-lightbox-close" onClick={onClose} aria-label="Close preview">
-                <X size={18} weight="bold" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <div className="catalogue-lightbox-main-img">
-            {hasMultiple && (
-              <button type="button" className="catalogue-lightbox-nav catalogue-lightbox-nav-prev" onClick={goPrev} aria-label="Previous image">
-                <CaretLeft size={22} weight="bold" aria-hidden="true" />
-              </button>
-            )}
-            {currentUrl ? (
-              <FallbackImage src={currentUrl} alt={product.name} width={500} height={500} className="lightbox-image" />
-            ) : (
-              <div className="product-img-placeholder" style={{ width: 250, height: 250 }} />
-            )}
-            {hasMultiple && (
-              <button type="button" className="catalogue-lightbox-nav catalogue-lightbox-nav-next" onClick={goNext} aria-label="Next image">
-                <CaretRight size={22} weight="bold" aria-hidden="true" />
-              </button>
-            )}
-          </div>
-          {hasMultiple && (
-            <div className="catalogue-lightbox-thumbs">
-              {images.map((url, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`catalogue-lightbox-thumb ${idx === activeIdx ? "active" : ""}`}
-                  onClick={() => setActiveIdx(idx)}
-                >
-                  <FallbackImage src={url} alt={`Preview ${idx + 1}`} width={60} height={60} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

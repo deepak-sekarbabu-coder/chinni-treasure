@@ -32,6 +32,20 @@ export function primaryImage(p: Pick<DisplayInput, "imageUrl" | "images">): stri
 }
 
 /**
+ * The full ordered image list for a product, as URLs — primary first (via the
+ * one picker's rule), then the rest of the gallery, then the single fallback.
+ * The Gallery & Lightbox module's callers hand this to the viewer instead of
+ * re-deriving the list, so a viewer never re-picks which images exist
+ * (the admin catalogue lightbox used to re-derive `images ?? imageUrl` here).
+ * Empty when there is nothing to show — the viewer renders its empty state.
+ */
+export function imageUrls(p: Pick<DisplayInput, "imageUrl" | "images">): string[] {
+  const urls = (p.images ?? []).map((img) => img.url).filter(Boolean);
+  if (urls.length > 0) return urls;
+  return p.imageUrl ? [p.imageUrl] : [];
+}
+
+/**
  * Whether a stored image URL is worth handing to `next/image`. This one
  * verdict is read by every surface that renders a product/order image: the
  * admin form gate, the catalogue table thumb, and the order card thumb. They

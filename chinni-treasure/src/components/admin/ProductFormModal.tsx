@@ -1,8 +1,9 @@
 "use client";
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import ImageLightbox from "@/src/components/ui/ImageLightbox";
 import type { Category } from "@/src/lib/api/schemas";
 import { PRODUCT_BADGES } from "@/src/lib/constants";
 import { isDisplayableImageUrl } from "@/src/lib/product-display";
@@ -66,29 +67,8 @@ export default function ProductFormModal({
   const [editUrl, setEditUrl] = useState("");
   const [imageUrlError, setImageUrlError] = useState("");
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
 
-  const ZOOM_MIN = 0.5;
-  const ZOOM_MAX = 3;
-  const ZOOM_STEP = 0.25;
-
-  const zoomIn = useCallback(() => setZoomLevel((z) => Math.min(z + ZOOM_STEP, ZOOM_MAX)), []);
-  const zoomOut = useCallback(() => setZoomLevel((z) => Math.max(z - ZOOM_STEP, ZOOM_MIN)), []);
-  const zoomReset = useCallback(() => setZoomLevel(1), []);
-
-  const handleLightboxWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    if (e.deltaY < 0) {
-      setZoomLevel((z) => Math.min(z + ZOOM_STEP, ZOOM_MAX));
-    } else {
-      setZoomLevel((z) => Math.max(z - ZOOM_STEP, ZOOM_MIN));
-    }
-  }, []);
-
-  const openLightbox = useCallback((url: string) => {
-    setZoomImageUrl(url);
-    setZoomLevel(1);
-  }, []);
+  const openLightbox = (url: string) => setZoomImageUrl(url);
 
   function setFormField(field: keyof ProductFormData, value: string) {
     onFormChange({ ...productForm, [field]: value });
@@ -448,32 +428,15 @@ export default function ProductFormModal({
         </div>
       </div>
 
-      {/* Lightbox / High-Res Preview Overlay */}
+      {/* High-Res Preview — the shared viewer; zoom is core behavior, not
+          a private wheel handler. Single-image list: no nav, zoom controls on. */}
       {zoomImageUrl && (
-        <div className="lightbox-overlay" onClick={() => setZoomImageUrl(null)} onWheel={handleLightboxWheel} style={{ opacity: 1, visibility: "visible" }}>
-          <div className="lightbox-container" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="lightbox-close" onClick={() => setZoomImageUrl(null)} aria-label="Close high-res preview">
-              ✕
-            </button>
-            <div className="lightbox-zoom-controls">
-              <button type="button" className="lightbox-zoom-btn" onClick={zoomOut} disabled={zoomLevel <= ZOOM_MIN} aria-label="Zoom out" title="Zoom out">
-                −
-              </button>
-              <span className="lightbox-zoom-level">{Math.round(zoomLevel * 100)}%</span>
-              <button type="button" className="lightbox-zoom-btn" onClick={zoomIn} disabled={zoomLevel >= ZOOM_MAX} aria-label="Zoom in" title="Zoom in">
-                +
-              </button>
-              {zoomLevel !== 1 && (
-                <button type="button" className="lightbox-zoom-btn lightbox-zoom-reset" onClick={zoomReset} aria-label="Reset zoom" title="Reset zoom">
-                  Reset
-                </button>
-              )}
-            </div>
-            <div className="lightbox-image-wrapper">
-              <FallbackImage src={zoomImageUrl} alt="Full resolution product image preview" width={800} height={800} className="lightbox-image" style={{ transform: `scale(${zoomLevel})`, transition: "transform 0.2s ease" }} />
-            </div>
-          </div>
-        </div>
+        <ImageLightbox
+          images={[zoomImageUrl]}
+          alt="Product image preview"
+          onClose={() => setZoomImageUrl(null)}
+          zoom
+        />
       )}
     </div>
   );
