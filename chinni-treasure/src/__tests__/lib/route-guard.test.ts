@@ -9,6 +9,9 @@ vi.mock("@/src/lib/auth", () => ({
 vi.mock("@/src/lib/csrf", () => ({
   validateCsrfOrigin: vi.fn(),
 }));
+vi.mock("@/src/lib/rate-limiter", () => ({
+  guardRateLimit: vi.fn(),
+}));
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
@@ -18,9 +21,10 @@ vi.mock("@/src/lib/catalogue-cache", () => ({
 
 import { checkAuth } from "@/src/lib/auth";
 import { validateCsrfOrigin } from "@/src/lib/csrf";
+import { guardRateLimit } from "@/src/lib/rate-limiter";
 import { revalidatePath } from "next/cache";
 import { invalidateCatalogCaches } from "@/src/lib/catalogue-cache";
-import { withAdmin, mapAdminRouteError } from "@/src/lib/admin-route";
+import { withAdmin, withPublic, requireAdmin, mapRouteError } from "@/src/lib/route-guard";
 
 const mockAdmin = { id: "admin-1", username: "admin", role: "admin" as const };
 
@@ -42,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(validateCsrfOrigin).mockReturnValue(null);
   vi.mocked(checkAuth).mockResolvedValue(mockAdmin);
+  vi.mocked(guardRateLimit).mockResolvedValue(null);
 });
 
 describe("withAdmin — guard order", () => {
@@ -137,9 +142,78 @@ describe("withAdmin — params", () => {
   });
 });
 
-describe("withAdmin — error mapping", () => {
+describe("withPublic — guard order", () => {
+  it("returns the CSRF rejection verbatim and never runs the handler", async () => {
+    const csrfResponse = NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    vi.mocked(validateCsrfOrigin).mockReturnValue(csrfResponse);
+    const handler = vi.fn();
+
+    const wrapped = withPublic(handler);
+    const res = await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
+
+    expect(res.status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("needs no session", async () => {
+    vi.mocked(checkAuth).mockResolvedValue(null);
+    const handler = vi.fn().mockResolvedValue(ok({ fine: true }));
+
+    const wrapped = withPublic(handler);
+    const res = await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
+
+    expect(res.status).toBe(200);
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({ request: expect.any(Request), params: {} }),
+    );
+  });
+
+  it("applies the named rate-limit policy before the handler and returns its 429", async () => {
+    const limited = NextResponse.json(
+      { error: "Too many order attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+    vi.mocked(guardRateLimit).mockResolvedValue(limited);
+    const handler = vi.fn();
+
+    const wrapped = withPublic(handler, { rateLimit: "order", parseBody: true });
+    const res = await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
+
+    expect(res.status).toBe(429);
+    expect(guardRateLimit).toHaveBeenCalledWith("order", expect.any(Request));
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("does not rate limit when no policy is declared", async () => {
+    const handler = vi.fn().mockResolvedValue(ok({}));
+    const wrapped = withPublic(handler);
+
+    await wrapped(createNextRequest("/api/x", { method: "POST", body: {} }));
+
+    expect(guardRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("parses the body for a public write and 400s invalid JSON", async () => {
+    const handler = vi.fn().mockResolvedValue(ok({}));
+    const wrapped = withPublic(handler, { parseBody: true });
+
+    await wrapped(createNextRequest("/api/x", { method: "POST", body: { a: 1 } }));
+    expect(handler).toHaveBeenCalledWith(expect.objectContaining({ body: { a: 1 } }));
+
+    const bad = new Request("http://localhost:3000/api/x", {
+      method: "POST",
+      body: "not-json{",
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await wrapped(bad);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "Invalid JSON body" });
+  });
+});
+
+describe("error mapping", () => {
   it("maps statusCode-bearing domain errors to their own status and message", async () => {
-    const wrapped = withAdmin(() => {
+    const wrapped = withPublic(() => {
       throw new FakeDomainError("Order was modified", 409);
     });
 
@@ -173,6 +247,30 @@ describe("withAdmin — error mapping", () => {
 
     expect(res.status).toBe(409);
     expect((await res.json()).error).toContain("Product_sku_key");
+  });
+
+  it("maps Prisma P2034 (serialization conflict) to 409 for either audience", async () => {
+    // The drift this guards against: placement answered 409 while an admin
+    // fulfilment answered 500, because only one copy knew the code.
+    const failure = () => {
+      throw new Prisma.PrismaClientKnownRequestError("conflict", {
+        code: "P2034",
+        clientVersion: "t",
+      });
+    };
+
+    const publicRes = await withPublic(failure, { fallbackError: "Failed to create order" })(
+      createNextRequest("/api/x", { method: "POST", body: {} }),
+    );
+    expect(publicRes.status).toBe(409);
+    expect(await publicRes.json()).toEqual({ error: "Conflict detected. Please retry." });
+
+    const adminRes = await withAdmin(failure, {
+      fallbackError: "Failed to update order status",
+      errorMessages: { p2034: "Conflict detected. Please retry your order." },
+    })(createNextRequest("/api/x", { method: "POST", body: {} }));
+    expect(adminRes.status).toBe(409);
+    expect(await adminRes.json()).toEqual({ error: "Conflict detected. Please retry your order." });
   });
 
   it("maps unknown errors to 500 with the fallback message", async () => {
@@ -218,10 +316,26 @@ describe("withAdmin — catalogue revalidation", () => {
   });
 });
 
+describe("requireAdmin — the hybrid routes' session refusal", () => {
+  it("returns the verified session", async () => {
+    expect(await requireAdmin()).toEqual(mockAdmin);
+  });
+
+  it("returns the shared 401 when there is none", async () => {
+    vi.mocked(checkAuth).mockResolvedValue(null);
+
+    const res = await requireAdmin();
+
+    expect(res).toBeInstanceOf(NextResponse);
+    expect((res as NextResponse).status).toBe(401);
+    expect(await (res as NextResponse).json()).toEqual({ error: "Unauthorized" });
+  });
+});
+
 describe("standalone helpers", () => {
-  it("mapAdminRouteError keeps statusCode errors first even when they are not Errors", () => {
+  it("mapRouteError keeps statusCode errors first even when they are not Errors", () => {
     // Guards the duck-type: an error-like object must NOT be trusted for status.
-    const res = mapAdminRouteError({ statusCode: 200, message: "fake" }, "fallback");
+    const res = mapRouteError({ statusCode: 200, message: "fake" }, "fallback");
     expect(res.status).toBe(500);
   });
 });

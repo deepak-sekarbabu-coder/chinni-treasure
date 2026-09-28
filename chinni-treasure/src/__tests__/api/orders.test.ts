@@ -7,9 +7,9 @@ vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 vi.mock("@/src/lib/order-cache", () => ({
   invalidateOrderCache: vi.fn().mockResolvedValue(undefined),
 }));
+// The route guard applies the rate limit; null == allowed.
 vi.mock("@/src/lib/rate-limiter", () => ({
-  checkRateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 3 }),
-  getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
+  guardRateLimit: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/src/lib/razorpay-server", () => ({
   acceptPlacementPayment: vi.fn().mockResolvedValue({

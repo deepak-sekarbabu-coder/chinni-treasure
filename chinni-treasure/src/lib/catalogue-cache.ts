@@ -1,6 +1,7 @@
 import { createRedisCache } from "@/src/lib/redis-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { SORT_OPTIONS, type SortKey } from "@/src/lib/sort-contract";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
 import { revalidateTag } from "next/cache";
 import type { LatestCategorySection } from "@/src/lib/api/schemas";
@@ -136,26 +137,12 @@ export type CatalogueIndexProduct = Prisma.ProductGetPayload<{
   include: { category: { select: { name: true } }; images: true };
 }>;
 
-// Sort vocabulary — the ONE order contract for the catalogue. Every entry is a
-// complete orderBy: in-stock first, then the chosen field, then id desc. The
-// /api/products DB branch (listProductsForQuery, in product-read), the category
-// pages (product-read), and this index's
-// in-memory comparator all derive from these exact arrays, so changing the
-// rule means editing this table — the three can't drift apart.
-export const SORT_OPTIONS = {
-  newest: [{ stockQuantity: "desc" as const }, { createdAt: "desc" as const }, { id: "desc" as const }],
-  oldest: [{ stockQuantity: "desc" as const }, { createdAt: "asc" as const }, { id: "desc" as const }],
-  "name-asc": [{ stockQuantity: "desc" as const }, { name: "asc" as const }, { id: "desc" as const }],
-  "name-desc": [{ stockQuantity: "desc" as const }, { name: "desc" as const }, { id: "desc" as const }],
-  "price-asc": [{ stockQuantity: "desc" as const }, { price: "asc" as const }, { id: "desc" as const }],
-  "price-desc": [{ stockQuantity: "desc" as const }, { price: "desc" as const }, { id: "desc" as const }],
-  "stock-desc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
-  "stock-asc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
-  "sku-asc": [{ stockQuantity: "desc" as const }, { sku: "asc" as const }, { id: "desc" as const }],
-  "sku-desc": [{ stockQuantity: "desc" as const }, { sku: "desc" as const }, { id: "desc" as const }],
-} as const;
-
-export type SortKey = keyof typeof SORT_OPTIONS;
+// The sort contract itself (key → orderBy, plus the picker labels and the
+// category subset) lives in the dependency-free sort-contract module so client
+// components and the OpenAPI spec can share it without importing this module's
+// Prisma/Redis graph. Re-exported here: the catalogue cache is the sort
+// surface's home, and existing server-side imports keep reading it from there.
+export { SORT_OPTIONS, type SortKey } from "@/src/lib/sort-contract";
 
 function sortFieldValue(p: CatalogueIndexProduct, field: string): string | number | null {
   switch (field) {

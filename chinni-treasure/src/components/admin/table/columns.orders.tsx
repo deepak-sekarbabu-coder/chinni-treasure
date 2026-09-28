@@ -1,6 +1,7 @@
 "use client";
 
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnSortSpec } from "@/src/components/admin/table/sort-adapter";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Order } from "@/src/lib/api/schemas";
@@ -12,17 +13,11 @@ export interface OrdersTableMeta {
 
 export type OrderSortKey = "date-desc" | "date-asc" | "total-desc" | "total-asc";
 
-export const ORDER_SORT_TO_STATE: Record<OrderSortKey, SortingState> = {
-  "date-desc": [{ id: "createdAt", desc: true }],
-  "date-asc": [{ id: "createdAt", desc: false }],
-  "total-desc": [{ id: "totalAmount", desc: true }],
-  "total-asc": [{ id: "totalAmount", desc: false }],
-};
-
-export const STATE_TO_ORDER_SORT: Record<string, OrderSortKey> = {
-  createdAt: "date-asc",
-  totalAmount: "total-asc",
-};
+/** The dashboard's own column order — the API's vocabulary, not the catalogue's. */
+export const ORDER_COLUMN_SORTS = {
+  createdAt: { asc: "date-asc", desc: "date-desc" },
+  totalAmount: { asc: "total-asc", desc: "total-desc" },
+} as const satisfies ColumnSortSpec<OrderSortKey>;
 
 function OrderThumbCell({ order }: { order: Order }) {
   // Empty src fails upfront inside FallbackImage — no gate needed here.

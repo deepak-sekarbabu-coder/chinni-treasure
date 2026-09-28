@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/axiom/server";
-import { validateCsrfOrigin } from "@/src/lib/csrf";
-import { validateOr400 } from "@/src/lib/validate";
-import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
-import { createGatewayOrder, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { z } from "zod";
+import { withPublic } from "@/src/lib/route-guard";
+import { validateOr400 } from "@/src/lib/validate";
+import { createGatewayOrder } from "@/src/lib/razorpay-server";
 
 export const runtime = "nodejs";
 
@@ -16,46 +14,21 @@ const CreateRazorpayOrderSchema = z.object({
   receipt: z.string().min(1).max(40).optional(),
 });
 
-// POST /api/create-order — Create a Razorpay order for Standard Checkout
-// Thin adapter: CSRF + rate limit are its own concerns, then
-// parse → Payment module call → error mapping.
-export async function POST(request: Request) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
+// POST /api/create-order — Create a Razorpay order for Standard Checkout.
+// The guard owns the origin check, the rate limit and the error taxonomy;
+// the Payment module owns the gateway call.
+export const POST = withPublic(
+  async ({ body }) => {
+    const parsed = validateOr400(CreateRazorpayOrderSchema, body);
+    if (!parsed.ok) return parsed.response;
 
-  const { allowed } = await checkRateLimit(`razorpay:${getClientIp(request)}`, 5);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many payment attempts. Please try again later." },
-      { status: 429, headers: { "Retry-After": "60" } },
-    );
-  }
-
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const parsed = validateOr400(CreateRazorpayOrderSchema, raw);
-  if (!parsed.ok) return parsed.response;
-
-  const { amount, currency, receipt } = parsed.data;
-  try {
+    const { amount, currency, receipt } = parsed.data;
     const order = await createGatewayOrder(amount, { currency, receipt });
     return NextResponse.json({
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
     });
-  } catch (error) {
-    if (error instanceof RazorpayGatewayError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    logger.error("Create-order unexpected error", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json({ error: "Failed to create payment order" }, { status: 500 });
-  }
-}
+  },
+  { rateLimit: "razorpay", parseBody: true, fallbackError: "Failed to create payment order" },
+);

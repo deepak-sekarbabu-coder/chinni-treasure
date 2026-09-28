@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
-import { withAdmin } from "@/src/lib/admin-route";
+import { withAdmin } from "@/src/lib/route-guard";
 import { assertGiftBoxNotOnBox, buildUpdateData } from "@/src/lib/catalogue-write";
 import { UpdateProductInputSchema } from "@/src/lib/api/schemas";
 

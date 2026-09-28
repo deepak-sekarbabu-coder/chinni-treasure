@@ -7,6 +7,11 @@ import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, CategoryProductsResponse } from "@/src/lib/api/schemas";
+import {
+  CATEGORY_SORT_KEYS,
+  SORT_LABELS,
+  type CategorySortKey,
+} from "@/src/lib/sort-contract";
 
 interface CategoryInfo {
   id: number;
@@ -22,13 +27,9 @@ interface Props {
   initialTotalPages: number;
 }
 
-type SortKey = "newest" | "price-asc" | "price-desc";
-
-const SORT_LABELS: Record<SortKey, string> = {
-  newest: "Newest first",
-  "price-asc": "Price: Low to High",
-  "price-desc": "Price: High to Low",
-};
+// The picker's keys, order and labels all come from the one catalogue sort
+// contract; this component used to keep its own copy of all three.
+type SortKey = CategorySortKey;
 
 export default function CategoryContent({
   category,
@@ -123,7 +124,7 @@ export default function CategoryContent({
               <label className="catalogue-sort">
                 <span className="sr-only">Sort products</span>
                 <select value={sort} onChange={handleSortChange} aria-label="Sort products">
-                  {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                  {CATEGORY_SORT_KEYS.map((key) => (
                     <option key={key} value={key}>
                       {SORT_LABELS[key]}
                     </option>

@@ -17,6 +17,11 @@ export interface OrderForm {
   paymentMethod: "razorpay" | "manual";
 }
 
+/** How many steps the checkout has. The one place that number is declared —
+ * the form rules below assign every validated field to a step, and the
+ * checkout page's next/prev bounds it. */
+export const CHECKOUT_STEP_COUNT = 3;
+
 const FORM_FIELD_RULES: Array<{
   field: keyof OrderForm;
   contractField: CheckoutFieldKey | null;

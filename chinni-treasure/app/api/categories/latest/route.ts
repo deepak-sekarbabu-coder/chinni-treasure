@@ -1,26 +1,15 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/axiom/server";
 import { loadLatestCategories } from "@/src/lib/catalogue-cache";
+import { withPublic } from "@/src/lib/route-guard";
 
 // GET /api/categories/latest
 // Returns the newest in-stock, active product for every active category.
 // The fetch itself is cached by catalogue-cache (60s TTL, purged on any
 // catalogue mutation), so this handler is a thin envelope around it.
-export async function GET() {
-  try {
-    const payload = await loadLatestCategories();
-    return NextResponse.json(payload, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-      },
-    });
-  } catch (error) {
-    logger.error("Failed to fetch latest category products", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json(
-      { error: "Failed to fetch latest category products" },
-      { status: 500 },
-    );
-  }
-}
+export const GET = withPublic(
+  async () =>
+    NextResponse.json(await loadLatestCategories(), {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+    }),
+  { fallbackError: "Failed to fetch latest category products" },
+);

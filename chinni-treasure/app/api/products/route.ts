@@ -3,8 +3,7 @@ import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
 import { SORT_OPTIONS, type SortKey } from "@/src/lib/catalogue-cache";
-import { withAdmin } from "@/src/lib/admin-route";
-import { checkAuth } from "@/src/lib/auth";
+import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { parseListQuery } from "@/src/lib/list-query";
 import { assertGiftBoxNotOnBox, buildCreateData } from "@/src/lib/catalogue-write";
@@ -13,6 +12,9 @@ import { listProductsForQuery, type ProductStatusFilter } from "@/src/lib/produc
 
 // GET /api/products — List products (optionally paginated). The active
 // catalogue is public; `isActive=all|inactive` requires an admin session.
+// Named exception to the route guard: this GET serves both audiences from one
+// handler (Next allows one exported GET), so it composes requireAdmin() and
+// keeps its own failure envelope rather than being wrapped.
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,8 +35,9 @@ export async function GET(request: Request) {
     // both audiences read through — rather than inside any branch the module
     // owns. Without this an anonymous caller could enumerate inactive products
     // by appending a query param.
-    if (status !== "active" && !(await checkAuth())) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (status !== "active") {
+      const admin = await requireAdmin();
+      if (admin instanceof NextResponse) return admin;
     }
 
     const rawCategoryId = searchParams.get("categoryId");

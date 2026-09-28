@@ -1,10 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 import { createNextRequest } from "@/src/__tests__/utils/api-test";
 
-const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
+// The route guard applies the named policy; null == allowed.
+const { guardRateLimit } = vi.hoisted(() => ({ guardRateLimit: vi.fn() }));
 vi.mock("@/src/lib/rate-limiter", () => ({
-  checkRateLimit,
-  getClientIp: () => "1.2.3.4",
+  guardRateLimit,
 }));
 
 import { POST } from "@/app/api/verify-payment/route";
@@ -18,14 +19,19 @@ const VALID_BODY = {
 describe("POST /api/verify-payment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    checkRateLimit.mockResolvedValue({ allowed: true });
+    guardRateLimit.mockResolvedValue(null);
   });
 
   // The rate limit is the reason this route has a test: signature verification
   // is a guessing surface, so an over-limit caller must be refused before the
   // HMAC check is ever reached.
-  it("returns 429 without verifying when the caller is over the limit", async () => {
-    checkRateLimit.mockResolvedValue({ allowed: false });
+  it("returns the guard's refusal without verifying when the caller is over the limit", async () => {
+    guardRateLimit.mockResolvedValue(
+      NextResponse.json(
+        { error: "Too many verification attempts. Please try again later." },
+        { status: 429, headers: { "Retry-After": "60" } },
+      ),
+    );
 
     const response = await POST(
       createNextRequest("/api/verify-payment", {
@@ -40,7 +46,7 @@ describe("POST /api/verify-payment", () => {
     expect(body.error).toContain("Too many verification attempts");
   });
 
-  it("rate limits per IP under a verify-namespaced key", async () => {
+  it("bounds verification under the named verify policy, not a hand-built key", async () => {
     await POST(
       createNextRequest("/api/verify-payment", {
         method: "POST",
@@ -48,6 +54,6 @@ describe("POST /api/verify-payment", () => {
       }),
     );
 
-    expect(checkRateLimit).toHaveBeenCalledWith("verify:1.2.3.4", 5);
+    expect(guardRateLimit).toHaveBeenCalledWith("verify", expect.any(Request));
   });
 });

@@ -1,30 +1,20 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/axiom/server";
 import { getOrderDetail } from "@/src/lib/order-cache";
+import { withPublic } from "@/src/lib/route-guard";
 
-// GET /api/orders/[id] — Get a single order by ID
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-
-    const order = await getOrderDetail(id);
+// GET /api/orders/[id] — Get a single order by ID. The Order cache module owns
+// the read; the guard owns the failure envelope.
+export const GET = withPublic<{ id: string }>(
+  async ({ params }) => {
+    const order = await getOrderDetail(params.id);
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json(order, {
-      headers: {
-        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
-      },
+      headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
     });
-  } catch (error) {
-    logger.error("Failed to fetch order", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
-  }
-}
+  },
+  { fallbackError: "Failed to fetch order" },
+);

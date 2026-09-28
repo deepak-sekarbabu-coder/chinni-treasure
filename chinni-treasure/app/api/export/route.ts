@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { buildWorkbook } from "@/src/lib/excel-export";
-import { withAdmin } from "@/src/lib/admin-route";
+import { withAdmin } from "@/src/lib/route-guard";
 
 const BATCH_SIZE = 1000;
 

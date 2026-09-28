@@ -1,21 +1,15 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  type SortingState,
-  type OnChangeFn,
-} from "@tanstack/react-table";
+import { type SortingState, type OnChangeFn } from "@tanstack/react-table";
 import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import { AdminCardList, AdminPaginationBar, useAdminListTable } from "@/src/components/admin/table/AdminList";
+import { fromSortingState, toSortingState } from "@/src/components/admin/table/sort-adapter";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import {
   createOrderColumns,
-  ORDER_SORT_TO_STATE,
-  STATE_TO_ORDER_SORT,
-  type OrderSortKey,
+  ORDER_COLUMN_SORTS,
 } from "@/src/components/admin/table/columns.orders";
 import { ORDER_STATUS_FILTERS } from "@/src/lib/constants";
 import { formatMoney } from "@/src/lib/format";
@@ -110,34 +104,24 @@ export default function AdminOrdersPanel({ panel }: { panel: OrdersPanelViewMode
     onSortChange,
     onSelectOrder,
   } = panel.actions;
-  const sorting = useMemo(() => ORDER_SORT_TO_STATE[sort] ?? [], [sort]);
+  const sorting = useMemo(() => toSortingState(ORDER_COLUMN_SORTS, sort), [sort]);
 
   const handleSortingChange: OnChangeFn<SortingState> = useCallback(
     (updater) => {
       const next = typeof updater === "function" ? updater(sorting) : updater;
-      const head = next[0];
-      if (!head) {
-        onSortChange("date-desc");
-        return;
-      }
-      const base = STATE_TO_ORDER_SORT[head.id];
-      if (!base) return;
-      onSortChange(head.desc ? (base.replace("-asc", "-desc") as OrderSortKey) : base);
+      onSortChange(fromSortingState(ORDER_COLUMN_SORTS, next, "date-desc"));
     },
     [sorting, onSortChange],
   );
 
   const columns = useMemo(() => createOrderColumns({ onSelectOrder }), [onSelectOrder]);
 
-  const table = useReactTable({
+  const table = useAdminListTable({
     data: orders,
     columns,
-    state: { sorting },
+    sorting,
     onSortingChange: handleSortingChange,
-    manualSorting: true,
-    manualPagination: true,
     pageCount: totalPages,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   const handlePageChange = useCallback(
@@ -182,63 +166,46 @@ export default function AdminOrdersPanel({ panel }: { panel: OrdersPanelViewMode
       />
 
       {/* Mobile cards */}
-      <div className="admin-order-cards">
-        {loading ? (
-          Array.from({ length: 4 }, (_, idx) => (
-            <div
-              key={`skeleton-${idx}`}
-              className="order-card order-card-skeleton"
-              style={{ animationDelay: `${idx * 0.06}s` }}
-            >
-              <div className="order-card-main">
-                <div className="order-card-thumb">
-                  <div className="skeleton-block" style={{ width: "100%", height: "100%" }} />
-                </div>
-                <div className="order-card-body" style={{ flex: 1 }}>
-                  <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "8px" }} />
-                  <div className="skeleton-text" style={{ width: "80px", height: "12px" }} />
-                </div>
+      <AdminCardList
+        className="admin-order-cards"
+        loading={loading}
+        isEmpty={orders.length === 0}
+        empty={<div className="empty-state">No orders found.</div>}
+        skeletonCount={4}
+        renderSkeleton={(index) => (
+          <div
+            className="order-card order-card-skeleton"
+            style={{ animationDelay: `${index * 0.06}s` }}
+          >
+            <div className="order-card-main">
+              <div className="order-card-thumb">
+                <div className="skeleton-block" style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="order-card-body" style={{ flex: 1 }}>
+                <div className="skeleton-text" style={{ width: "120px", height: "14px", marginBottom: "8px" }} />
+                <div className="skeleton-text" style={{ width: "80px", height: "12px" }} />
               </div>
             </div>
-          ))
-        ) : orders.length === 0 ? (
-          <div className="empty-state">No orders found.</div>
-        ) : (
-          orders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              isAdvancing={advancingOrderId === order.id}
-              isSelected={selectedOrder?.id === order.id}
-              onSelect={() => onSelectOrder(order)}
-            />
-          ))
+          </div>
         )}
-      </div>
+      >
+        {orders.map((order) => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            isAdvancing={advancingOrderId === order.id}
+            isSelected={selectedOrder?.id === order.id}
+            onSelect={() => onSelectOrder(order)}
+          />
+        ))}
+      </AdminCardList>
 
-      {totalPages > 1 && (
-        <div className="pagination-bar">
-          <button
-            className="btn btn-secondary btn-sm"
-            disabled={currentPage <= 1}
-            onClick={() => handlePageChange(currentPage - 1)}
-          >
-            <CaretLeft size={14} weight="bold" aria-hidden="true" />
-            Prev
-          </button>
-          <span className="pagination-text">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            className="btn btn-secondary btn-sm"
-            disabled={currentPage >= totalPages}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
-            Next
-            <CaretRight size={14} weight="bold" aria-hidden="true" />
-          </button>
-        </div>
-      )}
+      <AdminPaginationBar
+        page={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
+

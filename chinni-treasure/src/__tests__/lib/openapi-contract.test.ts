@@ -3,6 +3,7 @@ import { ProductBadge } from "@prisma/client";
 import { openApiSpec } from "../../lib/openapi-spec";
 import { ProductsResponseSchema, SessionSchema, TrackOrdersResponseSchema } from "../../lib/api/schemas";
 import { ORDER_STATUS_ALL } from "../../lib/constants";
+import { CATEGORY_SORT_KEYS } from "../../lib/sort-contract";
 
 /** Walk the spec's JSON by key path — keeps the assertions typed without `any`. */
 const at = (node: unknown, ...keys: Array<string | number>): unknown =>
@@ -114,6 +115,28 @@ describe("docs contract: spec vs Zod schemas", () => {
     const role = [...SessionSchema.shape.role.options];
     expect(at(json("/api/auth/me", "get"), "properties", "role", "enum")).toEqual(role);
     expect(at(json("/api/auth/login", "post"), "properties", "role", "enum")).toEqual(role);
+  });
+
+  it("documents the sort vocabulary the route actually accepts", () => {
+    // The category route rejects anything outside CATEGORY_SORT_MAP, so the
+    // documented enum is derived from the same contract — a hand-typed copy
+    // would drift the moment a key is added or removed.
+    expect(
+      at(
+        openApiSpec,
+        "paths",
+        "/api/category/{slug}/products",
+        "get",
+        "parameters",
+      ),
+    ).toBeDefined();
+    const sortParam = (
+      at(openApiSpec, "paths", "/api/category/{slug}/products", "get", "parameters") as {
+        name: string;
+        schema: { enum: string[] };
+      }[]
+    ).find((p) => p.name === "sort");
+    expect(sortParam?.schema.enum).toEqual([...CATEGORY_SORT_KEYS]);
   });
 
   it("documents one badge vocabulary, sourced from the database enum", () => {

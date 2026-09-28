@@ -4,20 +4,17 @@ import FallbackImage from "@/src/components/ui/FallbackImage";
 import { formatINR } from "@/src/lib/format";
 import { primaryImage, productDisplayView, isDisplayableImageUrl, imageUrls } from "@/src/lib/product-display";
 import { StockHealthCell, BadgeCell } from "@/src/components/admin/table/columns.catalogue";
-import { CaretLeft, CaretRight, Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
+import { Images, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  type SortingState,
-  type OnChangeFn,
-} from "@tanstack/react-table";
+import { type SortingState, type OnChangeFn } from "@tanstack/react-table";
 import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
+import { AdminCardList, AdminPaginationBar, useAdminListTable } from "@/src/components/admin/table/AdminList";
 import {
   apiSortToSorting,
   sortingToApiSort,
   createCatalogueColumns,
 } from "@/src/components/admin/table/columns.catalogue";
+import { SORT_KEYS, SORT_LABELS } from "@/src/lib/sort-contract";
 import type { Product } from "@/src/lib/api/schemas";
 import type { ProductFilters, CataloguePanelViewModel } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
@@ -76,16 +73,13 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
     [loadingProductId, onEdit, onRequestDelete],
   );
 
-  const table = useReactTable({
+  const table = useAdminListTable({
     data: products,
     columns,
-    state: { sorting, pagination: { pageIndex: productPage - 1, pageSize: 5 } },
+    sorting,
     onSortingChange: handleSortingChange,
-    manualSorting: true,
-    manualPagination: true,
-    sortDescFirst: false,
+    pagination: { pageIndex: productPage - 1, pageSize: 5 },
     pageCount: productTotalPages,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   const handleSearchChange = useCallback(
@@ -178,16 +172,11 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
             onChange={(e) => onFilterChange({ sort: e.target.value })}
             aria-label="Sort products"
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name-asc">Name A–Z</option>
-            <option value="name-desc">Name Z–A</option>
-            <option value="price-asc">Price: Low → High</option>
-            <option value="price-desc">Price: High → Low</option>
-            <option value="stock-desc">Stock: High → Low</option>
-            <option value="stock-asc">Stock: Low → High</option>
-            <option value="sku-asc">Code: A–Z</option>
-            <option value="sku-desc">Code: Z–A</option>
+            {SORT_KEYS.map((key) => (
+              <option key={key} value={key}>
+                {SORT_LABELS[key]}
+              </option>
+            ))}
           </select>
 
           {hasActiveFilters && (
@@ -240,16 +229,106 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
         emptyMessage="No products match your filters."
       />
 
-      <CatalogueCards
-        products={products}
+      <AdminCardList
+        as="ul"
+        className="admin-catalogue-cards"
         loading={productsLoading}
-        loadingProductId={loadingProductId}
-        onPreviewImages={setLightboxProduct}
-        onEdit={onEdit}
-        onRequestDelete={onRequestDelete}
-      />
+        isEmpty={products.length === 0}
+        empty={<p className="empty-state">No products match your filters.</p>}
+        skeletonCount={4}
+        renderSkeleton={catalogueCardSkeleton}
+      >
+        {products.map((product) => {
+          // Shared display contract: primary-image pick + discount math + stock state.
+          const view = productDisplayView(product);
+          const image = primaryImage(product);
+          const hasValidImage = isDisplayableImageUrl(image);
+          const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
+          const isDeleting = loadingProductId === product.id;
 
-      <PaginationBar page={productPage} totalPages={productTotalPages} onPageChange={onPageChange} />
+          return (
+            <li key={product.id} className="catalogue-card">
+              <button
+                type="button"
+                className="catalogue-card-thumb"
+                onClick={() => setLightboxProduct(product)}
+                aria-label={`View gallery for ${product.name}`}
+                title="Click to preview gallery images"
+              >
+                {hasValidImage ? (
+                  <FallbackImage
+                    src={image}
+                    alt=""
+                    width={72}
+                    height={72}
+                    className="catalogue-card-thumb-img"
+                  />
+                ) : (
+                  <div className="product-img-placeholder" style={{ width: 56, height: 72 }} />
+                )}
+                {imageCount > 0 && (
+                  <span className="catalogue-card-gallery-count">
+                    <Images size={12} weight="bold" aria-hidden="true" />
+                    {imageCount}
+                  </span>
+                )}
+              </button>
+              <div className="catalogue-card-body">
+                <div className="catalogue-card-head">
+                  <div className="catalogue-card-title">
+                    <strong className="catalogue-card-name">{product.name}</strong>
+                    {product.sku && <code className="sku-code">{product.sku}</code>}
+                  </div>
+                  <div className="catalogue-card-badges">
+                    {product.category?.name && (
+                      <span className="category-pill-badge">{product.category.name}</span>
+                    )}
+                    {view.badge && <BadgeCell badge={view.badge} />}
+                  </div>
+                </div>
+                <div className="catalogue-card-meta">
+                  <div className="table-price-cell">
+                    <div className="price-primary">₹{formatINR(view.price)}</div>
+                    {view.hasDiscount && view.compareAtPrice != null && (
+                      <div className="price-secondary">
+                        <span className="price-mrp">₹{formatINR(view.compareAtPrice)}</span>
+                        <span className="discount-badge">-{view.discountPercent}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <StockHealthCell qty={product.stockQuantity} />
+                </div>
+                <div className="catalogue-card-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary product-action-btn btn-sm"
+                    onClick={() => onEdit(product)}
+                    disabled={isDeleting}
+                  >
+                    <PencilSimple size={15} weight="bold" aria-hidden="true" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-danger product-action-btn btn-sm ${isDeleting ? "loading" : ""}`}
+                    onClick={() => onRequestDelete(product)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <span className="btn-spinner" aria-hidden="true" />
+                    ) : (
+                      <Trash size={15} weight="bold" aria-hidden="true" />
+                    )}
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </AdminCardList>
+
+      <AdminPaginationBar page={productPage} totalPages={productTotalPages} onPageChange={onPageChange} />
 
       {/* Table Image Gallery Lightbox — the shared core; the display module
           picked the image list via imageUrls(), the viewer owns the viewing. */}
@@ -264,157 +343,20 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
   );
 }
 
-function PaginationBar({ page, totalPages, onPageChange }: { page: number; totalPages: number; onPageChange: (page: number) => void }) {
-  if (totalPages <= 1) return null;
+/** The mobile card placeholder, drawn by the shared AdminCardList frame. */
+function catalogueCardSkeleton() {
   return (
-    <div className="pagination-bar">
-      <button className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-        <CaretLeft size={14} weight="bold" aria-hidden="true" />
-        Prev
-      </button>
-      <span className="pagination-text">Page {page} of {totalPages}</span>
-      <button className="btn btn-secondary btn-sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-        Next
-        <CaretRight size={14} weight="bold" aria-hidden="true" />
-      </button>
-    </div>
-  );
-}
-
-function CatalogueCardsSkeleton() {
-  return (
-    <div className="admin-catalogue-cards" aria-hidden="true">
-      {Array.from({ length: 4 }, (_, idx) => (
-        <div key={idx} className="catalogue-card">
-          <div className="catalogue-card-thumb">
-            <div className="skeleton-text" style={{ width: 72, height: 72 }} />
-          </div>
-          <div className="catalogue-card-body">
-            <div className="skeleton-text" style={{ width: "60%", height: 14 }} />
-            <div className="skeleton-text" style={{ width: "40%", height: 12, marginTop: 8 }} />
-            <div className="skeleton-text" style={{ width: "30%", height: 12, marginTop: 14 }} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CatalogueCards({
-  products,
-  loading,
-  loadingProductId,
-  onPreviewImages,
-  onEdit,
-  onRequestDelete,
-}: {
-  products: Product[];
-  loading: boolean;
-  loadingProductId: string | null;
-  onPreviewImages: (product: Product) => void;
-  onEdit: (product: Product) => void;
-  onRequestDelete: (product: Product) => void;
-}) {
-  if (loading) return <CatalogueCardsSkeleton />;
-
-  if (products.length === 0) {
-    return (
-      <div className="admin-catalogue-cards">
-        <p className="empty-state">No products match your filters.</p>
+    <li className="catalogue-card" aria-hidden="true">
+      <div className="catalogue-card-thumb">
+        <div className="skeleton-text" style={{ width: 72, height: 72 }} />
       </div>
-    );
-  }
-
-  return (
-    <ul className="admin-catalogue-cards">
-      {products.map((product) => {
-        // Shared display contract: primary-image pick + discount math + stock state.
-        const view = productDisplayView(product);
-        const image = primaryImage(product);
-        const hasValidImage = isDisplayableImageUrl(image);
-        const imageCount = product.images?.length || (product.imageUrl ? 1 : 0);
-        const isDeleting = loadingProductId === product.id;
-
-        return (
-          <li key={product.id} className="catalogue-card">
-            <button
-              type="button"
-              className="catalogue-card-thumb"
-              onClick={() => onPreviewImages(product)}
-              aria-label={`View gallery for ${product.name}`}
-              title="Click to preview gallery images"
-            >
-              {hasValidImage ? (
-                <FallbackImage
-                  src={image}
-                  alt=""
-                  width={72}
-                  height={72}
-                  className="catalogue-card-thumb-img"
-                />
-              ) : (
-                <div className="product-img-placeholder" style={{ width: 56, height: 72 }} />
-              )}
-              {imageCount > 0 && (
-                <span className="catalogue-card-gallery-count">
-                  <Images size={12} weight="bold" aria-hidden="true" />
-                  {imageCount}
-                </span>
-              )}
-            </button>
-            <div className="catalogue-card-body">
-              <div className="catalogue-card-head">
-                <div className="catalogue-card-title">
-                  <strong className="catalogue-card-name">{product.name}</strong>
-                  {product.sku && <code className="sku-code">{product.sku}</code>}
-                </div>
-                <div className="catalogue-card-badges">
-                  {product.category?.name && (
-                    <span className="category-pill-badge">{product.category.name}</span>
-                  )}
-                  {view.badge && <BadgeCell badge={view.badge} />}
-                </div>
-              </div>
-              <div className="catalogue-card-meta">
-                <div className="table-price-cell">
-                  <div className="price-primary">₹{formatINR(view.price)}</div>
-                  {view.hasDiscount && view.compareAtPrice != null && (
-                    <div className="price-secondary">
-                      <span className="price-mrp">₹{formatINR(view.compareAtPrice)}</span>
-                      <span className="discount-badge">-{view.discountPercent}%</span>
-                    </div>
-                  )}
-                </div>
-                <StockHealthCell qty={product.stockQuantity} />
-              </div>
-              <div className="catalogue-card-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary product-action-btn btn-sm"
-                  onClick={() => onEdit(product)}
-                  disabled={isDeleting}
-                >
-                  <PencilSimple size={15} weight="bold" aria-hidden="true" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-danger product-action-btn btn-sm ${isDeleting ? "loading" : ""}`}
-                  onClick={() => onRequestDelete(product)}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <span className="btn-spinner" aria-hidden="true" />
-                  ) : (
-                    <Trash size={15} weight="bold" aria-hidden="true" />
-                  )}
-                  Delete
-                </button>
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+      <div className="catalogue-card-body">
+        <div className="skeleton-text" style={{ width: "60%", height: 14 }} />
+        <div className="skeleton-text" style={{ width: "40%", height: 12, marginTop: 8 }} />
+        <div className="skeleton-text" style={{ width: "30%", height: 12, marginTop: 14 }} />
+      </div>
+    </li>
   );
 }
+
+

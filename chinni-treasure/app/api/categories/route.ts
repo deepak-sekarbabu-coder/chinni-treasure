@@ -3,8 +3,7 @@ import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { withAdmin } from "@/src/lib/admin-route";
-import { checkAuth } from "@/src/lib/auth";
+import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 import { slugify } from "@/src/lib/utils";
 import { generateUniqueSlug } from "@/src/lib/catalogue-write";
@@ -30,10 +29,10 @@ export async function GET(request: Request) {
       });
     }
 
-    const admin = await checkAuth();
-    if (!admin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Named exception to the route guard: this GET serves both audiences from
+    // one handler, so it composes requireAdmin() for the same 401.
+    const admin = await requireAdmin();
+    if (admin instanceof NextResponse) return admin;
 
     const categories = await prisma.category.findMany({
       where: {},

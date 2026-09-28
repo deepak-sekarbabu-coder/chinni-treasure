@@ -13,6 +13,7 @@ import {
   UpdateTrackingInputSchema,
 } from "@/src/lib/api/schemas";
 import { ORDER_STATUS_ALL } from "@/src/lib/constants";
+import { CATEGORY_SORT_KEYS } from "@/src/lib/sort-contract";
 
 /**
  * The docs interface is generated from the Zod contract rather than typed
@@ -321,7 +322,7 @@ export const openApiSpec = {
             name: "sort",
             in: "query",
             required: false,
-            schema: { type: "string", enum: ["newest", "price-asc", "price-desc"] },
+            schema: { type: "string", enum: [...CATEGORY_SORT_KEYS] },
           },
         ],
         responses: {

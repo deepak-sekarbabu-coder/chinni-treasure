@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { fromSortingState, toSortingState, type ColumnSortSpec } from "@/src/components/admin/table/sort-adapter";
 import { Images, MagnifyingGlassPlus, PencilSimple, Trash } from "@phosphor-icons/react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import type { Product } from "@/src/lib/api/schemas";
@@ -20,22 +21,15 @@ const COLUMN_API_SORTS = {
   stockQuantity: { asc: "stock-asc", desc: "stock-desc" },
   sku: { asc: "sku-asc", desc: "sku-desc" },
   createdAt: { asc: "oldest", desc: "newest" },
-} as const;
+} as const satisfies ColumnSortSpec<string>;
 
+/** "newest" is the API default and the table's unsorted baseline. */
 export function apiSortToSorting(apiSort: string): SortingState {
-  if (apiSort === "newest") return [];
-  for (const [id, pair] of Object.entries(COLUMN_API_SORTS)) {
-    if (pair.asc === apiSort) return [{ id, desc: false }];
-    if (pair.desc === apiSort) return [{ id, desc: true }];
-  }
-  return [];
+  return toSortingState(COLUMN_API_SORTS, apiSort, "newest");
 }
 
 export function sortingToApiSort(sorting: SortingState): string {
-  const head = sorting[0];
-  if (!head) return "newest";
-  const pair = COLUMN_API_SORTS[head.id as keyof typeof COLUMN_API_SORTS];
-  return pair ? (head.desc ? pair.desc : pair.asc) : "newest";
+  return fromSortingState(COLUMN_API_SORTS, sorting, "newest");
 }
 
 export function StockHealthCell({ qty }: { qty: number }) {

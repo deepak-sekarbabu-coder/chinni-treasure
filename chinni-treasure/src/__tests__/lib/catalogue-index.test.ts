@@ -8,6 +8,7 @@ vi.mock("@/src/lib/redis", () => ({ redis: createMockRedis() }));
 import { prisma } from "@/src/lib/prisma";
 import { redis } from "@/src/lib/redis";
 import { queryCatalogueIndex, SORT_OPTIONS } from "@/src/lib/catalogue-cache";
+import { SORT_KEYS, SORT_LABELS } from "@/src/lib/sort-contract";
 
 const mockRedis = redis as unknown as ReturnType<typeof createMockRedis>;
 
@@ -110,5 +111,11 @@ describe("queryCatalogueIndex", () => {
       expect(entries[0]).toEqual({ stockQuantity: "desc" });
       expect(entries[entries.length - 1]).toEqual({ id: "desc" });
     }
+  });
+
+  it("gives every accepted key a picker label, and every label a key", () => {
+    expect(SORT_KEYS).toEqual(Object.keys(SORT_OPTIONS));
+    expect(Object.keys(SORT_LABELS).sort()).toEqual([...SORT_KEYS].sort());
+    for (const key of SORT_KEYS) expect(SORT_LABELS[key]).toBeTruthy();
   });
 });

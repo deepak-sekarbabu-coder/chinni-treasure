@@ -1,13 +1,15 @@
 import {
-  SORT_OPTIONS,
   catPageCache,
   categoriesCache,
   giftBoxCache,
   productsCache,
   queryCatalogueIndex,
   type CatalogueIndexProduct,
+  SORT_OPTIONS,
   type SortKey,
 } from "@/src/lib/catalogue-cache";
+import { CATEGORY_SORT_MAP } from "@/src/lib/sort-contract";
+export { CATEGORY_SORT_MAP, CATEGORY_SORT_KEYS, type CategorySortKey } from "@/src/lib/sort-contract";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { domainFilterWhere, isVisibleOnDomain } from "@/src/lib/domain-filter";
@@ -54,14 +56,6 @@ export type CatalogueProductView = {
   allowGiftBoxBundling?: boolean;
   images?: { id: string; url: string; isPrimary: boolean; displayOrder: number }[];
 };
-
-// The category page's allowed sort keys, read straight from the shared
-// catalogue sort table — an allow-list, not a re-declaration of the rule.
-export const CATEGORY_SORT_MAP = {
-  newest: SORT_OPTIONS.newest,
-  "price-asc": SORT_OPTIONS["price-asc"],
-  "price-desc": SORT_OPTIONS["price-desc"],
-} as const;
 
 export type ActiveCategoryOption = {
   id: number;

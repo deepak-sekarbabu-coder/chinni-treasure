@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
-import { withAdmin } from "@/src/lib/admin-route";
+import { withAdmin } from "@/src/lib/route-guard";
 import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
 import { slugify } from "@/src/lib/utils";

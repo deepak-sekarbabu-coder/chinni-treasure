@@ -88,6 +88,34 @@ function isRetryableConnectionError(error: unknown): boolean {
 }
 
 /**
+ * The retry policy, named once: 3 attempts with exponential backoff (1s, 2s)
+ * on a retryable connection error, and the last error rethrown.
+ *
+ * Both call sites in this file composed the same twenty lines by hand, so
+ * backoff could drift between the model path and the top-level path. Exported
+ * (not just module-private) so the policy itself is testable without a
+ * database — see src/__tests__/lib/prisma.test.ts.
+ */
+export async function withDbRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (isRetryableConnectionError(error) && attempt < 2) {
+        // Exponential backoff: 1s, 2s — gives Nhost pooler time
+        // to free up a backend connection slot before retrying.
+        await new Promise((r) => setTimeout(r, 1_000 * Math.pow(2, attempt)));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
+/**
  * Recursively wraps a Prisma model proxy (e.g. `prisma.order`) so every
  * query method (findMany, count, create, …) is automatically retried up to
  * 3 times with exponential backoff (1s, 2s) when a retryable connection
@@ -103,24 +131,8 @@ function wrapModelProxy<T extends Record<string, unknown>>(target: T, depth = 0)
 
       // Wrap query methods with retry logic
       if (typeof value === "function") {
-        return async (...args: unknown[]) => {
-          let lastError: unknown;
-          for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-              return await Reflect.apply(value, obj, args);
-            } catch (error) {
-              lastError = error;
-              if (isRetryableConnectionError(error) && attempt < 2) {
-                // Exponential backoff: 1s, 2s — gives Nhost pooler time
-                // to free up a backend connection slot before retrying.
-                await new Promise((r) => setTimeout(r, 1_000 * Math.pow(2, attempt)));
-                continue;
-              }
-              throw error;
-            }
-          }
-          throw lastError;
-        };
+        return (...args: unknown[]) =>
+          withDbRetry(() => Reflect.apply(value, obj, args) as Promise<unknown>);
       }
 
       // Recursively wrap nested objects (e.g. prisma.order.items is another proxy)
@@ -153,22 +165,8 @@ export const prisma = new Proxy({} as unknown as PrismaClient, {
     // so they also retry on connection timeouts.
     if (typeof prop === "string" && RETRYABLE_TOP_LEVEL_FNS.has(prop)) {
       const fn = value as (...args: unknown[]) => Promise<unknown>;
-      return async (...args: unknown[]) => {
-        let lastError: unknown;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            return await fn.apply(globalForPrisma.prisma, args);
-          } catch (error) {
-            lastError = error;
-            if (isRetryableConnectionError(error) && attempt < 2) {
-              await new Promise((r) => setTimeout(r, 1_000 * Math.pow(2, attempt)));
-              continue;
-            }
-            throw error;
-          }
-        }
-        throw lastError;
-      };
+      return (...args: unknown[]) =>
+        withDbRetry(() => fn.apply(globalForPrisma.prisma, args));
     }
 
     // Wrap model proxies (prisma.order, prisma.category, …) so every

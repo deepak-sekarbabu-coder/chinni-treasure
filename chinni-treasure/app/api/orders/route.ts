@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/axiom/server";
-import { checkRateLimit, getClientIp } from "@/src/lib/rate-limiter";
-import { withAdmin } from "@/src/lib/admin-route";
 import { Prisma } from "@prisma/client";
-import { placeOrder, parseCreateOrderInput, OrderError } from "@/src/lib/order-intake";
+import { withAdmin, withPublic } from "@/src/lib/route-guard";
+import { placeOrder, parseCreateOrderInput } from "@/src/lib/order-intake";
 import { listOrdersForAdmin } from "@/src/lib/order-read";
-import { acceptPlacementPayment, RazorpayGatewayError } from "@/src/lib/razorpay-server";
+import { acceptPlacementPayment } from "@/src/lib/razorpay-server";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
 
@@ -49,25 +47,12 @@ export const GET = withAdmin(async ({ request }) => {
   });
 }, { fallbackError: "Failed to fetch orders" });
 
-// POST /api/orders — Place a new order (thin adapter over the Order intake module).
-// Public, rate-limited route: CSRF + rate limit are its own concerns, not the admin adapter's.
-import { validateCsrfOrigin } from "@/src/lib/csrf";
-
-export async function POST(request: Request) {
-  const csrfError = validateCsrfOrigin(request);
-  if (csrfError) return csrfError;
-
-  const { allowed } = await checkRateLimit(`order:${getClientIp(request)}`, 3);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many order attempts. Please try again later." },
-      { status: 429, headers: { "Retry-After": "60" } },
-    );
-  }
-
-  try {
-    const raw = await request.json();
-    const input = parseCreateOrderInput(raw);
+// POST /api/orders — Place a new order.
+// Public route: the route guard owns the origin check, the rate limit, the body
+// parse and the error taxonomy; the Order intake module owns placement.
+export const POST = withPublic(
+  async ({ body }) => {
+    const input = parseCreateOrderInput(body);
 
     // Resolve the authoritative paid amount from the gateway. The client's
     // claimed amount is never trusted: the Payment module applies the
@@ -83,24 +68,13 @@ export async function POST(request: Request) {
     const order = await placeOrder(input, { resolvedPaidPaise });
     await invalidateOrderCache(order.id);
     return NextResponse.json(order, { status: 201 });
-  } catch (error) {
-    if (error instanceof OrderError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof RazorpayGatewayError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2034") {
-        return NextResponse.json(
-          { error: "Conflict detected. Please retry your order." },
-          { status: 409 },
-        );
-      }
-    }
-    logger.error("Failed to create order", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
-  }
-}
+  },
+  {
+    rateLimit: "order",
+    parseBody: true,
+    fallbackError: "Failed to create order",
+    // A serializable placement can hit a write conflict; the retry wording is
+    // this route's, the 409 mapping is the guard's.
+    errorMessages: { p2034: "Conflict detected. Please retry your order." },
+  },
+);

@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { createMockPrisma } from "@/src/__tests__/mocks/prisma";
+import { createNextRequest } from "@/src/__tests__/utils/api-test";
 
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 vi.mock("@/src/lib/redis-cache", () => ({
@@ -46,7 +47,8 @@ describe("GET /api/categories/latest", () => {
       },
     ]);
 
-    const res = await GET();
+    // The route guard reads the request (origin check), even for a plain read.
+    const res = await GET(createNextRequest("/api/categories/latest"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body)).toBe(true);
@@ -67,14 +69,16 @@ describe("GET /api/categories/latest", () => {
       },
     ]);
 
-    const res = await GET();
+    // The route guard reads the request (origin check), even for a plain read.
+    const res = await GET(createNextRequest("/api/categories/latest"));
     const body = await res.json();
     expect(body).toHaveLength(0);
   });
 
   it("returns 500 on prisma failure", async () => {
     vi.mocked(prisma.category.findMany).mockRejectedValue(new Error("db"));
-    const res = await GET();
+    // The route guard reads the request (origin check), even for a plain read.
+    const res = await GET(createNextRequest("/api/categories/latest"));
     expect(res.status).toBe(500);
   });
 });

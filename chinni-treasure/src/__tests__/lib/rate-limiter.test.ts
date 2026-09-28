@@ -1,7 +1,19 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { checkRateLimit } from "../../lib/rate-limiter";
+import { guardRateLimit, RATE_LIMIT_POLICIES } from "../../lib/rate-limiter";
 
-describe("checkRateLimit", () => {
+/** A POST from a given IP — the limiter reads the forwarded header itself. */
+function requestFrom(ip: string): Request {
+  return new Request("http://localhost:3000/api/x", {
+    method: "POST",
+    headers: { "x-forwarded-for": ip },
+  });
+}
+
+async function attempt(policy: Parameters<typeof guardRateLimit>[0], ip: string) {
+  return guardRateLimit(policy, requestFrom(ip));
+}
+
+describe("guardRateLimit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -10,61 +22,63 @@ describe("checkRateLimit", () => {
     vi.useRealTimers();
   });
 
-  it("allows the first 5 requests within the window", async () => {
-    for (let i = 0; i < 5; i++) {
-      const result = await checkRateLimit("test-key");
-      expect(result.allowed).toBe(true);
+  it("allows attempts up to the policy ceiling and refuses the next with its wording", async () => {
+    const { max, message } = RATE_LIMIT_POLICIES.order;
+
+    for (let i = 0; i < max; i++) {
+      expect(await attempt("order", "ceiling-ip")).toBeNull();
     }
+
+    const refusal = await attempt("order", "ceiling-ip");
+    expect(refusal?.status).toBe(429);
+    expect(refusal?.headers.get("Retry-After")).toBe("60");
+    expect(await refusal?.json()).toEqual({ error: message });
   });
 
-  it("blocks the 6th request within the window", async () => {
-    for (let i = 0; i < 5; i++) {
-      await checkRateLimit("test-key");
+  it("applies each policy's own ceiling", async () => {
+    // order allows 3; track allows 10. If the policy table stopped driving the
+    // count, one of these would flip.
+    for (let i = 0; i < RATE_LIMIT_POLICIES.order.max; i++) {
+      await attempt("order", "distinct-ip");
     }
-    const result = await checkRateLimit("test-key");
-    expect(result.allowed).toBe(false);
-    expect(result.remaining).toBe(0);
+    expect(await attempt("order", "distinct-ip")).not.toBeNull();
+    expect(await attempt("track", "distinct-ip")).toBeNull();
+  });
+
+  it("counts each IP independently", async () => {
+    for (let i = 0; i < RATE_LIMIT_POLICIES.verify.max; i++) {
+      await attempt("verify", "ip-a");
+    }
+    expect(await attempt("verify", "ip-a")).not.toBeNull();
+    expect(await attempt("verify", "ip-b")).toBeNull();
+  });
+
+  it("counts each policy independently for the same IP", async () => {
+    for (let i = 0; i < RATE_LIMIT_POLICIES.order.max; i++) {
+      await attempt("order", "shared-ip");
+    }
+    expect(await attempt("order", "shared-ip")).not.toBeNull();
+    expect(await attempt("razorpay", "shared-ip")).toBeNull();
   });
 
   it("resets after the window expires", async () => {
-    for (let i = 0; i < 5; i++) {
-      await checkRateLimit("test-key");
+    for (let i = 0; i < RATE_LIMIT_POLICIES.login.max; i++) {
+      await attempt("login", "window-ip");
     }
-    // 6th should be blocked
-    expect((await checkRateLimit("test-key")).allowed).toBe(false);
+    expect(await attempt("login", "window-ip")).not.toBeNull();
 
-    // Advance past the 60s window
     vi.advanceTimersByTime(60_001);
 
-    // Should be allowed again
-    expect((await checkRateLimit("test-key")).allowed).toBe(true);
+    expect(await attempt("login", "window-ip")).toBeNull();
   });
 
-  it("tracks different keys independently", async () => {
-    for (let i = 0; i < 5; i++) {
-      await checkRateLimit("user-a");
+  it("counts an unidentified client under the shared 'unknown' bucket", async () => {
+    const bare = () =>
+      guardRateLimit("login", new Request("http://localhost:3000/api/x", { method: "POST" }));
+
+    for (let i = 0; i < RATE_LIMIT_POLICIES.login.max; i++) {
+      expect(await bare()).toBeNull();
     }
-    // user-a is blocked
-    expect((await checkRateLimit("user-a")).allowed).toBe(false);
-
-    // user-b is still allowed
-    expect((await checkRateLimit("user-b")).allowed).toBe(true);
-  });
-
-  it("reports remaining attempts", async () => {
-    const first = await checkRateLimit("remaining-key");
-    expect(first.remaining).toBe(4);
-
-    await checkRateLimit("remaining-key");
-    await checkRateLimit("remaining-key");
-    const fourth = await checkRateLimit("remaining-key");
-    expect(fourth.remaining).toBe(1);
-  });
-
-  it("supports a custom maxAttempts limit", async () => {
-    // Limit of 2 attempts
-    expect((await checkRateLimit("custom-key", 2)).allowed).toBe(true);
-    expect((await checkRateLimit("custom-key", 2)).allowed).toBe(true);
-    expect((await checkRateLimit("custom-key", 2)).allowed).toBe(false);
+    expect(await bare()).not.toBeNull();
   });
 });

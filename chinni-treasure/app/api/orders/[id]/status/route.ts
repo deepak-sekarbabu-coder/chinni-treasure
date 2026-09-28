@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { logger } from "@/lib/axiom/server";
-import { withAdmin } from "@/src/lib/admin-route";
+import { withAdmin } from "@/src/lib/route-guard";
 import {
   parseUpdateOrderStatusInput,
   transitionOrderStatus,
@@ -11,7 +11,7 @@ import {
 // Thin adapter over the Order intake module's fulfilment half: parse →
 // transitionOrderStatus → error mapping. Transition rules, version
 // concurrency, the tracking gate, and stock restore live in the module;
-// the admin-route adapter owns CSRF/auth/401 and the shared error mapping.
+// the route guard owns CSRF/auth/401 and the shared error mapping.
 export const PATCH = withAdmin<{ id: string }>(
   async ({ body, params }) => {
     const { id } = params;
