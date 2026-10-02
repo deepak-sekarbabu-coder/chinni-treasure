@@ -32,7 +32,11 @@ const nextConfig: NextConfig = {
       ? undefined
       : "standalone",
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "sharp"],
-  allowedDevOrigins: ['192.168.1.6'],
+  // 10.0.2.2 is how the Android emulator reaches this dev server from the
+  // mobile WebView; its subresource requests carry that Origin and would
+  // otherwise be 403'd. 192.168.1.9 is this machine's current LAN IP for
+  // testing on a physical phone.
+  allowedDevOrigins: ['192.168.1.6', '10.0.2.2', '192.168.1.9'],
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,

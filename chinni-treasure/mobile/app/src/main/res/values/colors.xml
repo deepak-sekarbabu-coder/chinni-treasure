@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Brand tokens, mirrored from app/styles/variables.css. The site's CSS owns
+    the real palette; these exist only for the native window chrome.
+-->
+<resources>
+    <color name="brand_black">#0d0d0d</color>
+    <color name="brand_cream">#f5f0e8</color>
+    <color name="brand_gold">#d4af37</color>
+</resources>

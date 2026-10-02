@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds only: allow cleartext HTTP so the WebView can load a local dev
+  server (e.g. -PSITE_URL=http://10.0.2.2:3000). The release manifest keeps
+  usesCleartextTraffic="false"; this overlay never ships.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>
