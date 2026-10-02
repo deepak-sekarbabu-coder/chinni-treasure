@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
 import { withAdmin } from "@/src/lib/route-guard";
-import { assertGiftBoxNotOnBox, buildUpdateData } from "@/src/lib/catalogue-write";
-import { normalizeImageSet } from "@/src/lib/image-set";
+import { updateProduct } from "@/src/lib/catalogue-write";
 import { UpdateProductInputSchema } from "@/src/lib/api/schemas";
 
 // PUT /api/products/[id] — Update a product (admin only)
@@ -13,48 +12,7 @@ export const PUT = withAdmin<{ id: string }>(
     const parsed = validateOr400(UpdateProductInputSchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const { images, allowGiftBoxBundling, ...productFields } = parsed.data;
-
-    // Handle image updates: delete existing, create new ones. The image-set
-    // module owns the invariant, so this route can't store two primaries.
-    if (images !== undefined) {
-      const imageSet = normalizeImageSet(images).map((img) => ({ productId: id, ...img }));
-      await prisma.productImage.deleteMany({ where: { productId: id } });
-      if (imageSet.length > 0) {
-        await prisma.productImage.createMany({ data: imageSet });
-      }
-    }
-
-    // Avoid unique-constraint collisions when the SKU is unchanged:
-    // only include `sku` in the update payload when it actually differs
-    // from the current product's value.
-    const existing = await prisma.product.findUnique({
-      where: { id },
-      select: { sku: true, categoryId: true, allowGiftBoxBundling: true },
-    });
-
-    if (allowGiftBoxBundling) {
-      await assertGiftBoxNotOnBox(existing?.categoryId ?? null);
-    }
-
-    const updateData = buildUpdateData(productFields);
-    if (updateData.sku !== undefined && existing && updateData.sku === existing.sku) {
-      delete updateData.sku;
-    }
-    if (allowGiftBoxBundling !== undefined) {
-      updateData.allowGiftBoxBundling = allowGiftBoxBundling;
-    }
-
-    const product = await prisma.product.update({
-      where: { id },
-      data: updateData as Parameters<typeof prisma.product.update>[0]["data"],
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
-    });
-
-    return NextResponse.json(product);
+    return NextResponse.json(await updateProduct(id, parsed.data));
   },
   {
     parseBody: true,

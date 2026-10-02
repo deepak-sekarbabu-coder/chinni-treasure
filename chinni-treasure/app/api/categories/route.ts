@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
-import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
 import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
-import { slugify } from "@/src/lib/utils";
-import { generateUniqueSlug } from "@/src/lib/catalogue-write";
+import { createCategory } from "@/src/lib/catalogue-write";
 import { CATALOGUE_CACHE_CONTROL } from "@/src/lib/catalogue-cache";
 import { loadActiveCategories } from "@/src/lib/product-read";
 
@@ -76,24 +74,7 @@ export const POST = withAdmin(
     const parsed = validateOr400(CreateCategorySchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const baseSlug = parsed.data.slug
-      ? slugify(parsed.data.slug)
-      : slugify(parsed.data.name);
-    const slug = await generateUniqueSlug(baseSlug);
-
-    const category = await prisma.category.create({
-      data: {
-        name: sanitize(parsed.data.name),
-        slug,
-        description: parsed.data.description
-          ? sanitize(parsed.data.description)
-          : null,
-        displayOrder: parsed.data.displayOrder ?? 0,
-        isActive: parsed.data.isActive ?? true,
-      },
-    });
-
-    return NextResponse.json(category, { status: 201 });
+    return NextResponse.json(await createCategory(parsed.data), { status: 201 });
   },
   {
     parseBody: true,

@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from "react";
 import { type SortingState, type OnChangeFn } from "@tanstack/react-table";
 import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
 import { AdminCardList, AdminPaginationBar, useAdminListTable } from "@/src/components/admin/table/AdminList";
+import { CardSkeletonLines } from "@/src/components/admin/table/CardSkeleton";
 import {
   apiSortToSorting,
   sortingToApiSort,
@@ -351,9 +352,7 @@ function catalogueCardSkeleton() {
         <div className="skeleton-text" style={{ width: 72, height: 72 }} />
       </div>
       <div className="catalogue-card-body">
-        <div className="skeleton-text" style={{ width: "60%", height: 14 }} />
-        <div className="skeleton-text" style={{ width: "40%", height: 12, marginTop: 8 }} />
-        <div className="skeleton-text" style={{ width: "30%", height: 12, marginTop: 14 }} />
+        <CardSkeletonLines />
       </div>
     </li>
   );

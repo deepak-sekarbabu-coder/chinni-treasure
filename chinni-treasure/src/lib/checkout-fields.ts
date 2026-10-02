@@ -91,6 +91,15 @@ export const CheckoutFields = {
 export type CheckoutFieldKey = keyof typeof CheckoutFields;
 
 /**
+ * Digits only, for the places a phone arrives as free text (query params,
+ * form input) and has to be compared against the stored value. The tracking
+ * seam rolled this at three call sites; the rule itself is `PhoneSchema`.
+ */
+export function normalizePhone(value: string | null | undefined): string {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+/**
  * Validate a single field value against the shared contract and return the
  * first issue message, or undefined when the value is valid. This is what
  * the checkout page's per-field error spans render.

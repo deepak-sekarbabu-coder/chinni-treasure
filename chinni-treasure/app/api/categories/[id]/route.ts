@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
-import { sanitize } from "@/src/lib/sanitize";
 import { validateOr400 } from "@/src/lib/validate";
 import { withAdmin } from "@/src/lib/route-guard";
-import { Prisma } from "@prisma/client";
 import { UpdateCategorySchema } from "@/src/lib/api/schemas";
-import { slugify } from "@/src/lib/utils";
-import { generateUniqueSlug } from "@/src/lib/catalogue-write";
+import { deleteCategory, updateCategory } from "@/src/lib/catalogue-write";
 
 // PUT /api/categories/[id] — Update a category (admin only)
 export const PUT = withAdmin<{ id: string }>(
@@ -20,27 +16,7 @@ export const PUT = withAdmin<{ id: string }>(
     const parsed = validateOr400(UpdateCategorySchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const data: Prisma.CategoryUpdateInput = {};
-    if (parsed.data.name !== undefined) data.name = sanitize(parsed.data.name);
-    if (parsed.data.description !== undefined) {
-      data.description = parsed.data.description
-        ? sanitize(parsed.data.description)
-        : null;
-    }
-    if (parsed.data.displayOrder !== undefined) {
-      data.displayOrder = parsed.data.displayOrder;
-    }
-    if (parsed.data.isActive !== undefined) data.isActive = parsed.data.isActive;
-    if (parsed.data.slug !== undefined) {
-      data.slug = await generateUniqueSlug(slugify(parsed.data.slug), categoryId);
-    }
-
-    const category = await prisma.category.update({
-      where: { id: categoryId },
-      data,
-    });
-
-    return NextResponse.json(category);
+    return NextResponse.json(await updateCategory(categoryId, parsed.data));
   },
   {
     parseBody: true,
@@ -63,20 +39,7 @@ export const DELETE = withAdmin<{ id: string }>(
       return NextResponse.json({ error: "Invalid category id" }, { status: 400 });
     }
 
-    const productCount = await prisma.product.count({
-      where: { categoryId, deletedAt: null },
-    });
-
-    if (productCount > 0) {
-      return NextResponse.json(
-        {
-          error: `Cannot delete category. ${productCount} active product(s) still belong to it. Reassign or delete them first.`,
-        },
-        { status: 409 },
-      );
-    }
-
-    await prisma.category.delete({ where: { id: categoryId } });
+    await deleteCategory(categoryId);
 
     return NextResponse.json({ success: true });
   },

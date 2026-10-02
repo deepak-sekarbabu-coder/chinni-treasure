@@ -3,7 +3,7 @@ import { statsCache } from "@/src/lib/stats-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
-import { fieldIssue } from "@/src/lib/checkout-fields";
+import { fieldIssue, normalizePhone } from "@/src/lib/checkout-fields";
 import type { OrderView } from "@/src/lib/order-view";
 import {
   buildTrackCacheKey,
@@ -74,14 +74,14 @@ export async function getOrderDetailForAudience(
   id: string,
   phone: string | null,
 ): Promise<OrderDetailResult> {
-  const cleanPhone = (phone ?? "").replace(/\D/g, "");
+  const cleanPhone = normalizePhone(phone);
   if (!cleanPhone) return { error: "Provide a phone parameter", status: 400 };
   const issue = fieldIssue("customerPhone", cleanPhone);
   if (issue) return { error: issue, status: 400 };
 
   const order = await getOrderDetail(id);
   // 404 for both "no such order" and "not your order" — one answer either way.
-  if (!order || order.customerPhone.replace(/\D/g, "") !== cleanPhone) {
+  if (!order || normalizePhone(order.customerPhone) !== cleanPhone) {
     return { error: "Order not found", status: 404 };
   }
   return { order };

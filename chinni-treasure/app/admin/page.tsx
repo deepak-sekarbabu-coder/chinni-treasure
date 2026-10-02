@@ -108,7 +108,7 @@ export default function AdminPage() {
 
       {cataloguePanel.data.deleteConfirm.open && (
         <AdminDeleteConfirm
-          productName={cataloguePanel.data.deleteConfirm.productName}
+          name={cataloguePanel.data.deleteConfirm.productName}
           loading={cataloguePanel.isDeleting}
           onConfirm={cataloguePanel.actions.onConfirmDelete}
           onCancel={cataloguePanel.actions.onCancelDelete}

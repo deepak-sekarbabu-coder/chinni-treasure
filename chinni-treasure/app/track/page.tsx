@@ -6,7 +6,7 @@ import OrderDetailModal from "@/src/components/order/OrderDetailModal";
 import TrackOrderCard from "@/src/components/track/TrackOrderCard";
 import { useTrackSearch } from "@/src/lib/hooks/useTrackSearch";
 import { ApiError } from "@/src/lib/api/client";
-import { fieldIssue } from "@/src/lib/checkout-fields";
+import { fieldIssue, normalizePhone } from "@/src/lib/checkout-fields";
 import type { TrackOrderResult } from "@/src/lib/api/schemas";
 
 export default function TrackPage() {
@@ -31,7 +31,7 @@ export default function TrackPage() {
       // The shared checkout field contract, not a re-typed 10-digit rule: this
       // page used to say "Please enter a valid 10-digit phone number" while the
       // server said "Phone must be exactly 10 digits".
-      const issue = fieldIssue("customerPhone", phone.replace(/\D/g, ""));
+      const issue = fieldIssue("customerPhone", normalizePhone(phone));
       if (issue) {
         showToast(issue, "error");
         return;
@@ -41,7 +41,7 @@ export default function TrackPage() {
     try {
       const params = method === "order-id"
         ? { orderId: orderId.trim() }
-        : { phone: phone.replace(/\D/g, "") };
+        : { phone: normalizePhone(phone) };
       const data = await trackSearch.mutateAsync(params);
       setResults(data);
       if (data.length === 0) {

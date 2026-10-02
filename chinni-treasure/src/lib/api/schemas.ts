@@ -249,7 +249,12 @@ const ProductImageInputSchema = z.object({
 export const ProductInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
   price: z.coerce.number().positive("Price must be a positive number"),
-  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
+  compareAtPrice: z.coerce
+    .number()
+    .positive("Compare at price must be positive")
+    .optional()
+    .nullable()
+    .describe("Original/comparison price (MRP) for showing discounts"),
   sku: z.string().optional(),
   categoryId: z.coerce.number().int().positive().optional().nullable(),
   description: z.string().optional(),
@@ -258,7 +263,10 @@ export const ProductInputSchema = z.object({
   badge: z.enum(PRODUCT_BADGES).optional().nullable(),
   isActive: z.boolean().optional(),
   visibleHostnames: z.string().optional(),
-  allowGiftBoxBundling: z.boolean().optional(),
+  allowGiftBoxBundling: z
+    .boolean()
+    .optional()
+    .describe("Allow customers to attach gift boxes to this product"),
   images: z.array(ProductImageInputSchema).optional(),
 });
 
@@ -266,7 +274,12 @@ export const ProductInputSchema = z.object({
 export const UpdateProductInputSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   price: z.coerce.number().positive("Price must be a positive number").optional(),
-  compareAtPrice: z.coerce.number().positive("Compare at price must be positive").optional().nullable(),
+  compareAtPrice: z.coerce
+    .number()
+    .positive("Compare at price must be positive")
+    .optional()
+    .nullable()
+    .describe("Original/comparison price (MRP) for showing discounts"),
   sku: z.string().optional().nullable(),
   categoryId: z.coerce.number().int().positive().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -275,7 +288,12 @@ export const UpdateProductInputSchema = z.object({
   badge: z.enum(PRODUCT_BADGES).optional().nullable(),
   isActive: z.boolean().optional(),
   visibleHostnames: z.string().optional().nullable(),
-  allowGiftBoxBundling: z.boolean().optional(),
+  allowGiftBoxBundling: z
+    .boolean()
+    .optional()
+    .describe(
+      "Allow customers to attach gift boxes to this product. Cannot be enabled on Gift Box category products.",
+    ),
   images: z.array(z.object({
     url: z.string().min(1),
     isPrimary: z.boolean().optional(),
@@ -392,9 +410,11 @@ export type AuthMeResponse = z.infer<typeof AuthMeResponseSchema>;
 export type CreateOrderRequest = z.infer<typeof CreateOrderInputSchema>;
 
 export const CreateRazorpayOrderInputSchema = z.object({
-  amount: z.number().finite().positive(),
-  currency: z.string().length(3).default("INR"),
-  receipt: z.string().optional(),
+  // Amount in rupees (the Pricing domain). The Payment module owns the paise
+  // conversion and the minimum-order policy.
+  amount: z.number().finite().positive("Amount must be greater than zero"),
+  currency: z.string().length(3, "Currency must be a 3-letter code").default("INR"),
+  receipt: z.string().min(1).max(40).optional(),
 });
 export type CreateRazorpayOrderInput = z.infer<typeof CreateRazorpayOrderInputSchema>;
 
@@ -406,9 +426,9 @@ export const CreateRazorpayOrderResponseSchema = z.object({
 export type CreateRazorpayOrderResponse = z.infer<typeof CreateRazorpayOrderResponseSchema>;
 
 export const VerifyRazorpayPaymentInputSchema = z.object({
-  razorpay_order_id: z.string().min(1),
-  razorpay_payment_id: z.string().min(1),
-  razorpay_signature: z.string().min(1),
+  razorpay_order_id: z.string().min(1, "razorpay_order_id is required"),
+  razorpay_payment_id: z.string().min(1, "razorpay_payment_id is required"),
+  razorpay_signature: z.string().min(1, "razorpay_signature is required"),
 });
 export type VerifyRazorpayPaymentInput = z.infer<typeof VerifyRazorpayPaymentInputSchema>;
 

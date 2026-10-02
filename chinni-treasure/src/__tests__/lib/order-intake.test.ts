@@ -6,6 +6,7 @@ import type { CreateOrderInput } from "@/src/lib/order-intake";
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 
 import { placeOrder, parseCreateOrderInput, assertPaidAmountMatchesTotal, OrderError } from "@/src/lib/order-intake";
+import { CreateOrderInputSchema } from "@/src/lib/api/schemas";
 import { prisma } from "@/src/lib/prisma";
 
 const mockProducts = [
@@ -68,6 +69,22 @@ describe("parseCreateOrderInput", () => {
 
   it("rejects an unknown state code", () => {
     expect(() => parseCreateOrderInput({ ...validInput, stateCode: "ZZ" })).toThrowError(OrderError);
+  });
+
+  // The server schema is now the client schema plus one stricter field, so the
+  // two cannot restate the payload and drift. This is the check that fails if
+  // someone splits them apart again.
+  it("rejects an empty razorpayOrderId that the client contract would accept", () => {
+    expect(() =>
+      parseCreateOrderInput({ ...validInput, razorpayOrderId: "" }),
+    ).toThrowError(OrderError);
+  });
+
+  it("keeps the client's own field rules — a payload the client accepts parses here", () => {
+    const clientAccepted = CreateOrderInputSchema.parse(validInput);
+    expect(parseCreateOrderInput(clientAccepted)).toMatchObject({
+      customerPhone: "9999999999",
+    });
   });
 });
 

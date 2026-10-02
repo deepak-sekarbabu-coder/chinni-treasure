@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useIsMobile } from "@/src/lib/hooks/useMediaQuery";
 
 const DESKTOP_PAGE_SIZE = 6;
 const MOBILE_PAGE_SIZE = 3;
-const MOBILE_BREAKPOINT = "(max-width: 768px)";
 
 /**
  * Returns a page size that adapts to the viewport width.
@@ -14,22 +13,7 @@ const MOBILE_BREAKPOINT = "(max-width: 768px)";
  * are removed during client hydration.
  */
 export function useResponsivePageSize(): number {
-    const [pageSize, setPageSize] = useState(MOBILE_PAGE_SIZE);
-
-    useEffect(() => {
-        const mql = window.matchMedia(MOBILE_BREAKPOINT);
-
-        const update = (e: MediaQueryListEvent | MediaQueryList) => {
-            setPageSize(e.matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE);
-        };
-
-        // Set initial value
-        update(mql);
-
-        // Listen for changes
-        mql.addEventListener("change", update);
-        return () => mql.removeEventListener("change", update);
-    }, []);
-
-    return pageSize;
+    // Mobile-first default, so the server render matches the mobile viewport.
+    const isMobile = useIsMobile(true);
+    return isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
 }

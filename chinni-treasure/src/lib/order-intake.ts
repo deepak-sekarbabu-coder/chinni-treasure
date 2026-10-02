@@ -4,10 +4,10 @@ import { generateOrderNumber } from "@/src/lib/utils";
 import { sanitize } from "@/src/lib/sanitize";
 import { ORDER_STATUS_ACTIONS } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
-import { CheckoutFields } from "@/src/lib/checkout-fields";
 import { isGiftBoxCategory } from "@/src/lib/gift-box";
 import { prisma } from "@/src/lib/prisma";
 import {
+  CreateOrderInputSchema,
   UpdateOrderStatusInputSchema,
   UpdateTrackingInputSchema,
 } from "@/src/lib/api/schemas";
@@ -35,40 +35,16 @@ export type { UpdateOrderStatusInput, UpdateTrackingInput };
  * ADR-0002) is asserted here via `assertPaidAmountMatchesTotal`.
  */
 
-const GiftBoxItemSchema = z.object({
-  id: z.string().min(1),
-  quantity: z.number().int().positive(),
-});
-
-const PaymentGatewaySchema = z.enum(["razorpay", "manual"]);
-
-const CreateOrderSchema = z.object({
-  // Per-field checkout rules live in one shared contract (checkout-fields.ts)
-  // so the client form, the client API schema, and this server schema can
-  // never disagree about a rule or its message.
-  customerName: CheckoutFields.customerName,
-  customerEmail: CheckoutFields.customerEmail,
-  customerPhone: CheckoutFields.customerPhone,
-  addressLine1: CheckoutFields.addressLine1,
-  addressLine2: z.string().optional(),
-  city: CheckoutFields.city,
-  stateCode: CheckoutFields.stateCode,
-  postalCode: CheckoutFields.postalCode,
-  transactionId: CheckoutFields.transactionId,
-  customerNotes: z.string().optional(),
-  /** Which channel recorded `transactionId`. Razorpay placements enforce paid == stored. */
-  paymentGateway: PaymentGatewaySchema.default("razorpay"),
-  /** Razorpay order id (`order_…`) the payment was made against. Required for razorpay. */
+/**
+ * The server intake contract is the **client** contract plus the server's extra
+ * strictness: a Razorpay placement must carry a non-empty `razorpayOrderId`.
+ * It used to restate the whole payload — which is how the two drifted (the
+ * client copy accepted `razorpayOrderId: ""`). Per-field checkout rules come
+ * from the shared contract (checkout-fields.ts) through that client schema, so
+ * a rule still changes once for the form, the wire, and this parse.
+ */
+const CreateOrderSchema = CreateOrderInputSchema.extend({
   razorpayOrderId: z.string().min(1).optional(),
-  items: z
-    .array(
-      z.object({
-        id: z.string().min(1, "Product ID is required"),
-        quantity: z.number().int().positive("Quantity must be a positive integer"),
-        giftBoxes: z.array(GiftBoxItemSchema).optional(),
-      }),
-    )
-    .min(1, "At least one item is required"),
 }).superRefine((data, ctx) => {
   if (data.paymentGateway === "razorpay" && !data.razorpayOrderId) {
     ctx.addIssue({

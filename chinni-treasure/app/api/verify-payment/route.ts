@@ -1,29 +1,20 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { withPublic } from "@/src/lib/route-guard";
+import { validateOr400 } from "@/src/lib/validate";
+import { VerifyRazorpayPaymentInputSchema } from "@/src/lib/api/schemas";
 import { verifyCheckoutSignature, RazorpayGatewayError } from "@/src/lib/razorpay-server";
 import { logger } from "@/lib/axiom/server";
 
 export const runtime = "nodejs";
 
-const VerifyPaymentSchema = z.object({
-  razorpay_order_id: z.string().min(1, "razorpay_order_id is required"),
-  razorpay_payment_id: z.string().min(1, "razorpay_payment_id is required"),
-  razorpay_signature: z.string().min(1, "razorpay_signature is required"),
-});
-
 // POST /api/verify-payment — Verify the Razorpay payment signature.
 // Signature verification is a guessing surface, so the guard's named policy
-// bounds it per IP; the Payment module owns the HMAC check.
+// bounds it per IP; the Payment module owns the HMAC check. The field contract
+// is the client's own (one declaration, no drift).
 export const POST = withPublic(
   async ({ body }) => {
-    const parsed = VerifyPaymentSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Missing required payment fields" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateOr400(VerifyRazorpayPaymentInputSchema, body);
+    if (!parsed.ok) return parsed.response;
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = parsed.data;
 

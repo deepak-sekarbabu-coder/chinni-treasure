@@ -1,7 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { ProductBadge } from "@prisma/client";
 import { openApiSpec } from "../../lib/openapi-spec";
-import { ProductsResponseSchema, SessionSchema, TrackOrdersResponseSchema } from "../../lib/api/schemas";
+import {
+  CreateOrderInputSchema,
+  CreateRazorpayOrderInputSchema,
+  OrdersResponseSchema,
+  ProductInputSchema,
+  ProductsResponseSchema,
+  SessionSchema,
+  StatsResponseSchema,
+  TrackOrdersResponseSchema,
+  UpdateProductInputSchema,
+  VerifyRazorpayPaymentInputSchema,
+} from "../../lib/api/schemas";
 import { ORDER_STATUS_ALL } from "../../lib/constants";
 import { CATEGORY_SORT_KEYS } from "../../lib/sort-contract";
 
@@ -145,5 +156,29 @@ describe("docs contract: spec vs Zod schemas", () => {
     );
     expect(badges.length).toBeGreaterThan(0);
     for (const badge of badges) expect(badge).toEqual(Object.values(ProductBadge));
+  });
+
+  // The request bodies were restated field-for-field beside the schema, so a
+  // field added to the contract silently stayed undocumented. These pin the
+  // documented shape to the schema that now generates it.
+  it.each([
+    ["/api/products", "post", ProductInputSchema],
+    ["/api/products/{id}", "put", UpdateProductInputSchema],
+    ["/api/orders", "post", CreateOrderInputSchema],
+    ["/api/create-order", "post", CreateRazorpayOrderInputSchema],
+    ["/api/verify-payment", "post", VerifyRazorpayPaymentInputSchema],
+  ])("documents the %s %s body from its schema", (path, method, schema) => {
+    expect(Object.keys(at(requestBody(path, method), "properties") as object).sort()).toEqual(
+      Object.keys(schema.shape).sort(),
+    );
+  });
+
+  it.each([
+    ["/api/orders", "get", OrdersResponseSchema],
+    ["/api/stats", "get", StatsResponseSchema],
+  ])("documents the %s %s response from its schema", (path, method, schema) => {
+    expect(Object.keys(at(json(path, method), "properties") as object).sort()).toEqual(
+      Object.keys(schema.shape).sort(),
+    );
   });
 });

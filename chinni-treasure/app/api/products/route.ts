@@ -6,8 +6,7 @@ import { CATALOGUE_CACHE_CONTROL, SORT_OPTIONS, type SortKey } from "@/src/lib/c
 import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { parseListQuery } from "@/src/lib/list-query";
-import { assertGiftBoxNotOnBox, buildCreateData } from "@/src/lib/catalogue-write";
-import { normalizeImageSet } from "@/src/lib/image-set";
+import { assertGiftBoxNotOnBox, buildCreateData, PRODUCT_WRITE_INCLUDE } from "@/src/lib/catalogue-write";
 import { ProductInputSchema } from "@/src/lib/api/schemas";
 import { listProductsForQuery, type ProductStatusFilter } from "@/src/lib/product-read";
 
@@ -76,28 +75,16 @@ export const POST = withAdmin(
     const parsed = validateOr400(ProductInputSchema, body);
     if (!parsed.ok) return parsed.response;
 
-    const { images, allowGiftBoxBundling, ...productData } = parsed.data;
-
+    const { allowGiftBoxBundling, categoryId } = parsed.data;
     if (allowGiftBoxBundling) {
-      await assertGiftBoxNotOnBox(productData.categoryId ?? null);
+      await assertGiftBoxNotOnBox(categoryId ?? null);
     }
 
-    // The image-set module owns the "one primary, contiguous order" invariant;
-    // the old `isPrimary ?? idx === 0` was dead (Zod defaults it false), so two
-    // primaries could be stored.
-    const imageSet = images ? normalizeImageSet(images) : [];
-
+    // The write module owns the field shaping and the gallery invariant (one
+    // primary, contiguous order) — the route holds no field policy.
     const product = await prisma.product.create({
-      data: {
-        ...buildCreateData({ ...productData, allowGiftBoxBundling }),
-        images: imageSet.length > 0
-          ? { create: imageSet }
-          : undefined,
-      },
-      include: {
-        category: { select: { name: true } },
-        images: { orderBy: { displayOrder: "asc" } },
-      },
+      data: buildCreateData(parsed.data),
+      include: PRODUCT_WRITE_INCLUDE,
     });
 
     return NextResponse.json(product, { status: 201 });

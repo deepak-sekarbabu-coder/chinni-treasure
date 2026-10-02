@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { shippingProgress } from "@/src/lib/pricing";
-
-const MOBILE_BREAKPOINT = "(max-width: 768px)";
+import { useIsMobile } from "@/src/lib/hooks/useMediaQuery";
 
 export interface ShippingNudgeState {
   show: boolean;
@@ -24,20 +23,10 @@ export function useShippingNudge(): ShippingNudgeState {
   const [newTotal, setNewTotal] = useState(0);
   const [shippingLeft, setShippingLeft] = useState(0);
 
-  useEffect(() => {
-    const mql = window.matchMedia(MOBILE_BREAKPOINT);
-
-    const update = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (!e.matches) {
-        setShow(false);
-      }
-    };
-
-    update(mql);
-    mql.addEventListener("change", update);
-
-    return () => mql.removeEventListener("change", update);
-  }, []);
+  // The popup is a mobile affordance: leaving the breakpoint hides it. Derived
+  // rather than synced in an effect, so widening the window cannot leave a
+  // stale popup mounted.
+  const isMobile = useIsMobile();
 
   const dismiss = useCallback(() => {
     setShow(false);
@@ -60,5 +49,5 @@ export function useShippingNudge(): ShippingNudgeState {
     [],
   );
 
-  return { show, newTotal, shippingLeft, trigger, dismiss };
+  return { show: show && isMobile, newTotal, shippingLeft, trigger, dismiss };
 }

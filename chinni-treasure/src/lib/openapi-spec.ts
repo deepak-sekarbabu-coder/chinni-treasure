@@ -1,16 +1,24 @@
 import { z } from "zod";
-import { ProductBadge } from "@prisma/client";
 import {
   CategoriesResponseSchema,
   CategoryProductsResponseSchema,
+  CreateOrderInputSchema,
+  CreateRazorpayOrderInputSchema,
+  CreateRazorpayOrderResponseSchema,
   LatestCategoriesResponseSchema,
+  OrdersResponseSchema,
+  ProductInputSchema,
   ProductSchema,
   ProductsResponseSchema,
   SessionSchema,
+  StatsResponseSchema,
   TrackOrdersResponseSchema,
   UnauthenticatedResponseSchema,
   UpdateOrderStatusInputSchema,
+  UpdateProductInputSchema,
   UpdateTrackingInputSchema,
+  VerifyRazorpayPaymentInputSchema,
+  VerifyRazorpayPaymentResponseSchema,
 } from "@/src/lib/api/schemas";
 import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 import { CATEGORY_SORT_KEYS } from "@/src/lib/sort-contract";
@@ -46,12 +54,29 @@ function dropClosed(value: unknown): unknown {
 // Enum vocabularies are read from their source, never re-typed beside it.
 const ROLE_ENUM = [...SessionSchema.shape.role.options];
 const ORDER_STATUS_ENUM = [...ORDER_STATUS_ALL];
-const BADGE_ENUM = Object.values(ProductBadge);
 
-// ponytail: only shapes with a schema are derived — request bodies that carry
-// prose (create/update product, checkout) and the Order/OrderDetail components
-// stay hand-typed. Derive those too once the prose moves into .describe() on
-// the schema; counts stay `number` until PageMeta/product counts use .int().
+/**
+ * The admin order list: the paged envelope derived from the schema, with
+ * `orders` pointing at the shared `Order` component so the list and the order
+ * detail document one shape instead of two copies.
+ */
+const ordersListSchema = (() => {
+  const envelope = openApi(OrdersResponseSchema) as {
+    properties: Record<string, unknown>;
+  };
+  return {
+    ...envelope,
+    properties: {
+      ...envelope.properties,
+      orders: { type: "array", items: { $ref: "#/components/schemas/Order" } },
+    },
+  };
+})();
+
+// ponytail: the `Order` / `OrderDetail` components stay hand-typed — they carry
+// prose the read modules own (admin notes never ship to a customer, the
+// gift-box parent link) and no single Zod schema is their contract. Derive them
+// when one is. Counts stay `number` until PageMeta uses `.int()`.
 
 export const openApiSpec = {
   openapi: "3.0.3",
@@ -422,29 +447,7 @@ export const openApiSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                required: ["name", "price"],
-                properties: {
-                  sku: { type: "string", description: "Stock keeping unit" },
-                  name: { type: "string", description: "Product name" },
-                  categoryId: { type: "integer", nullable: true },
-                  description: { type: "string", nullable: true },
-                  price: { type: "number", description: "Current selling price" },
-                  compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
-                  stockQuantity: { type: "integer", default: 0 },
-                  imageUrl: { type: "string", nullable: true },
-                  badge: {
-                    type: "string",
-                    enum: BADGE_ENUM,
-                    nullable: true,
-                  },
-                  allowGiftBoxBundling: {
-                    type: "boolean",
-                    description: "Allow customers to attach gift boxes to this product",
-                  },
-                },
-              },
+              schema: openApi(ProductInputSchema),
             },
           },
         },
@@ -472,29 +475,7 @@ export const openApiSpec = {
         requestBody: {
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  sku: { type: "string" },
-                  name: { type: "string" },
-                  categoryId: { type: "integer", nullable: true },
-                  description: { type: "string", nullable: true },
-                  price: { type: "number" },
-                  compareAtPrice: { type: "number", nullable: true, description: "Original/comparison price (MRP) for showing discounts" },
-                  stockQuantity: { type: "integer" },
-                  imageUrl: { type: "string", nullable: true },
-                  badge: {
-                    type: "string",
-                    enum: BADGE_ENUM,
-                    nullable: true,
-                  },
-                  isActive: { type: "boolean" },
-                  allowGiftBoxBundling: {
-                    type: "boolean",
-                    description: "Allow customers to attach gift boxes to this product. Cannot be enabled on Gift Box category products.",
-                  },
-                },
-              },
+              schema: openApi(UpdateProductInputSchema),
             },
           },
         },
@@ -575,19 +556,7 @@ export const openApiSpec = {
             description: "Paginated list of orders",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    orders: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/Order" },
-                    },
-                    total: { type: "integer" },
-                    page: { type: "integer" },
-                    limit: { type: "integer" },
-                    totalPages: { type: "integer" },
-                  },
-                },
+                schema: ordersListSchema,
               },
             },
           },
@@ -598,72 +567,13 @@ export const openApiSpec = {
         tags: ["Orders"],
         summary: "Place a new order (public)",
         operationId: "createOrder",
+        description:
+          "Amounts are never trusted from the client: the server re-prices every line, mutates stock in one transaction, and verifies a Razorpay placement against the gateway (paid == stored). `transactionId` is the Razorpay payment id (`pay_…`) or the bank-transfer reference for manual payments; `razorpayOrderId` (`order_…`) is required whenever `paymentGateway` is `razorpay`.",
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                required: [
-                  "customerName",
-                  "customerEmail",
-                  "customerPhone",
-                  "addressLine1",
-                  "city",
-                  "stateCode",
-                  "postalCode",
-                  "transactionId",
-                  "items",
-                ],
-                properties: {
-                  customerName: { type: "string" },
-                  customerEmail: { type: "string", format: "email" },
-                  customerPhone: { type: "string", description: "10-digit phone" },
-                  addressLine1: { type: "string" },
-                  addressLine2: { type: "string", nullable: true },
-                  city: { type: "string" },
-                  stateCode: { type: "string", description: "2-letter Indian state code" },
-                  postalCode: { type: "string", description: "6-digit PIN" },
-                  transactionId: {
-                    type: "string",
-                    description: "Razorpay payment id (pay_…) for razorpay payments, or the bank-transfer reference for manual payments",
-                  },
-                  paymentGateway: {
-                    type: "string",
-                    enum: ["razorpay", "manual"],
-                    default: "razorpay",
-                    description: "Which channel recorded transactionId. Razorpay placements are verified against the gateway (paid == stored).",
-                  },
-                  razorpayOrderId: {
-                    type: "string",
-                    description: "Razorpay order id (order_…) the payment was made against. Required for razorpay payments.",
-                  },
-                  customerNotes: { type: "string", nullable: true },
-                  items: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        id: { type: "string", format: "uuid", description: "Product ID" },
-                        quantity: { type: "integer", minimum: 1 },
-                        giftBoxes: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              id: { type: "string", format: "uuid", description: "Gift-box product ID" },
-                              quantity: { type: "integer", minimum: 1 },
-                            },
-                            required: ["id", "quantity"],
-                          },
-                          description: "Optional gift boxes to bundle with this product",
-                        },
-                      },
-                      required: ["id", "quantity"],
-                    },
-                  },
-                },
-              },
+              schema: openApi(CreateOrderInputSchema),
             },
           },
         },
@@ -818,15 +728,7 @@ export const openApiSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                required: ["amount"],
-                properties: {
-                  amount: { type: "number", description: "Amount in rupees" },
-                  currency: { type: "string", default: "INR", minLength: 3, maxLength: 3 },
-                  receipt: { type: "string", maxLength: 40 },
-                },
-              },
+              schema: openApi(CreateRazorpayOrderInputSchema),
             },
           },
         },
@@ -835,14 +737,7 @@ export const openApiSpec = {
             description: "Razorpay order created",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    order_id: { type: "string" },
-                    amount: { type: "number" },
-                    currency: { type: "string" },
-                  },
-                },
+                schema: openApi(CreateRazorpayOrderResponseSchema),
               },
             },
           },
@@ -863,15 +758,7 @@ export const openApiSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                required: ["razorpay_order_id", "razorpay_payment_id", "razorpay_signature"],
-                properties: {
-                  razorpay_order_id: { type: "string" },
-                  razorpay_payment_id: { type: "string" },
-                  razorpay_signature: { type: "string" },
-                },
-              },
+              schema: openApi(VerifyRazorpayPaymentInputSchema),
             },
           },
         },
@@ -880,14 +767,7 @@ export const openApiSpec = {
             description: "Signature verified",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    ok: { type: "boolean" },
-                    order_id: { type: "string" },
-                    payment_id: { type: "string" },
-                  },
-                },
+                schema: openApi(VerifyRazorpayPaymentResponseSchema),
               },
             },
           },
@@ -907,46 +787,7 @@ export const openApiSpec = {
             description: "Dashboard stats, chart data, and product sales",
             content: {
               "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    stats: {
-                      type: "object",
-                      properties: {
-                        totalOrders: { type: "integer" },
-                        pendingOrders: { type: "integer" },
-                        approvedOrders: { type: "integer" },
-                        packagingOrders: { type: "integer" },
-                        shippedOrders: { type: "integer" },
-                        deliveredOrders: { type: "integer" },
-                        rejectedOrders: { type: "integer" },
-                        totalRevenue: { type: "number" },
-                      },
-                    },
-                    chartData: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string" },
-                          orders: { type: "integer" },
-                          revenue: { type: "number" },
-                        },
-                      },
-                    },
-                    productSalesData: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          productName: { type: "string" },
-                          quantity: { type: "integer" },
-                          revenue: { type: "number" },
-                        },
-                      },
-                    },
-                  },
-                },
+                schema: openApi(StatsResponseSchema),
               },
             },
           },

@@ -3,13 +3,33 @@
 import Modal from "@/src/components/ui/Modal";
 
 interface Props {
-  productName: string;
+  /** The row being deleted, as it reads in the dialog. */
+  name: string;
   loading: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** What is being deleted — drives the label and the button copy. */
+  noun?: string;
+  /** Overrides the default warning line (e.g. a blocked delete's reason). */
+  warning?: string;
+  /** A delete the server will refuse: the confirm button is disabled, not hidden. */
+  blocked?: boolean;
 }
 
-export default function AdminDeleteConfirm({ productName, loading, onConfirm, onCancel }: Props) {
+/**
+ * The admin delete confirmation. The categories panel used to hand-print its
+ * own copy of this modal — same frame, same buttons, different noun and an
+ * extra "blocked" state — so a fix to the dialog reached only one of the two.
+ */
+export default function AdminDeleteConfirm({
+  name,
+  loading,
+  onConfirm,
+  onCancel,
+  noun = "Product",
+  warning = `This action will permanently remove the ${noun.toLowerCase()} from your catalogue.`,
+  blocked = false,
+}: Props) {
   return (
     <Modal
       open
@@ -20,27 +40,27 @@ export default function AdminDeleteConfirm({ productName, loading, onConfirm, on
     >
       <div className="modal-header">
         <h2 id="delete-modal-title">Confirm Delete</h2>
-        <button className="modal-close" onClick={onCancel}>✕</button>
+        <button className="modal-close" onClick={onCancel} aria-label="Close">
+          ×
+        </button>
       </div>
       <div className="modal-body">
-        <p className="delete-warning mb-10">
-          This action will permanently remove the product from your catalogue.
-        </p>
+        <p className="delete-warning mb-10">{warning}</p>
         <div className="delete-box">
-          <p className="delete-label">Product</p>
-          <p className="delete-name">{productName}</p>
+          <p className="delete-label">{noun}</p>
+          <p className="delete-name">{name}</p>
         </div>
         <div className="modal-actions">
           <button
             className={`btn btn-danger ${loading ? "loading" : ""}`}
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || blocked}
           >
             {loading && <span className="btn-spinner"></span>}
-            {loading ? "Deleting..." : "Yes, Delete Product"}
+            {blocked ? `Cannot Delete ${noun}` : loading ? `Deleting...` : `Yes, Delete ${noun}`}
           </button>
           <button className="btn btn-secondary" onClick={onCancel} autoFocus>
-            Keep Product
+            Keep {noun}
           </button>
         </div>
       </div>
