@@ -1,18 +1,8 @@
 import { prisma } from "@/src/lib/prisma";
+import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STATS_WINDOW_DAYS = 30;
-
-type StatsRow = {
-  total_orders: bigint;
-  pending_orders: bigint;
-  approved_orders: bigint;
-  packaging_orders: bigint;
-  shipped_orders: bigint;
-  delivered_orders: bigint;
-  rejected_orders: bigint;
-  total_revenue: bigint | null;
-};
 
 export type DashboardStats = {
   stats: {
@@ -29,53 +19,58 @@ export type DashboardStats = {
   productSalesData: { productName: string; quantity: number; revenue: number }[];
 };
 
+/** `pendingOrders` etc. — one field per status, named after the status. */
+const statusField = (status: string) =>
+  `${status}Orders` as keyof DashboardStats["stats"];
+
 /**
- * Dashboard statistics: window math, raw-SQL aggregates, bigint→Number
- * coercion, 30-day chart bucketing and product-sales reshaping. The stats
- * route only owns the cache boundary; the computation lives here.
+ * Dashboard statistics: per-status counts, window math, 30-day chart
+ * bucketing and product-sales reshaping. The stats route only owns the cache
+ * boundary; the computation lives here.
+ *
+ * The per-status counts come from ONE grouped query, keyed off
+ * `ORDER_STATUS_ALL`, rather than a subquery per status. The seven SQL
+ * literals this replaces restated the Fulfilment vocabulary in a second place,
+ * so adding a status silently left it out of the dashboard.
  */
 export async function computeDashboardStats(): Promise<DashboardStats> {
   const now = Date.now();
   const thirtyDaysAgo = new Date(now - STATS_WINDOW_DAYS * DAY_MS);
 
-  // Transient pooler failures are retried by the prisma proxy, one query at a
-  // time — no route-level retry needed here.
-  const [raw] = await prisma.$queryRaw<StatsRow[]>`
-    SELECT
-      (SELECT COUNT(*) FROM orders) AS total_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'pending') AS pending_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'approved') AS approved_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'packaging') AS packaging_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'shipped') AS shipped_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'delivered') AS delivered_orders,
-      (SELECT COUNT(*) FROM orders WHERE status = 'rejected') AS rejected_orders,
-      (SELECT COALESCE(SUM(total_amount), 0) FROM orders) AS total_revenue
-  `;
+  const [byStatus, totals, recentOrders, salesByProduct] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+      _sum: { totalAmount: true },
+    }),
+    prisma.order.aggregate({
+      _count: { _all: true },
+      _sum: { totalAmount: true },
+    }),
+    prisma.order.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: { totalAmount: true, createdAt: true },
+    }),
+    prisma.orderItem.groupBy({
+      by: ["productName"],
+      _sum: { quantity: true, unitPrice: true },
+      _count: true,
+      orderBy: { _sum: { unitPrice: "desc" } },
+    }),
+  ]);
 
-  // Recent orders for chart data (last 30 days)
-  const recentOrders = await prisma.order.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
-    select: { totalAmount: true, createdAt: true },
-  });
-
-  // Product sales data
-  const salesByProduct = await prisma.orderItem.groupBy({
-    by: ["productName"],
-    _sum: { quantity: true, unitPrice: true },
-    _count: true,
-    orderBy: { _sum: { unitPrice: "desc" } },
-  });
+  // Every status in the vocabulary gets a field, so a status can never be
+  // computed-but-unreachable the way packaging and rejected were.
+  const counts: Record<string, number> = {};
+  for (const row of byStatus) counts[row.status] = row._count._all;
 
   const stats = {
-    totalOrders: Number(raw.total_orders),
-    pendingOrders: Number(raw.pending_orders),
-    approvedOrders: Number(raw.approved_orders),
-    packagingOrders: Number(raw.packaging_orders),
-    shippedOrders: Number(raw.shipped_orders),
-    deliveredOrders: Number(raw.delivered_orders),
-    rejectedOrders: Number(raw.rejected_orders),
-    totalRevenue: Number(raw.total_revenue ?? 0),
-  };
+    totalOrders: totals._count._all,
+    totalRevenue: Number(totals._sum.totalAmount ?? 0),
+    ...Object.fromEntries(
+      ORDER_STATUS_ALL.map((status) => [statusField(status), counts[status] ?? 0]),
+    ),
+  } as DashboardStats["stats"];
 
   // Chart data: last 30 days
   const chartDataMap: Record<string, { orders: number; revenue: number }> = {};
@@ -98,7 +93,6 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, data]) => ({ date, ...data }));
 
-  // Product sales (aggregated by SQL)
   const productSalesData = salesByProduct.map((item) => ({
     productName: item.productName,
     quantity: item._sum.quantity ?? 0,

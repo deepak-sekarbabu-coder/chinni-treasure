@@ -1,30 +1,13 @@
 import { orderLineViews } from "@/src/lib/pricing";
+import type { OrderView } from "@/src/lib/order-view";
 
-export interface OrderItem {
-  id: string;
-  productName: string;
-  unitPrice: number;
-  quantity: number;
-  parentOrderItemId?: string | null;
-}
-
-export interface OrderData {
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  addressLine1: string;
-  addressLine2: string | null;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-  subtotal: number;
-  shippingCost: number;
-  totalAmount: number;
-  transactionId: string | null;
-  createdAt: string;
-  items: OrderItem[];
-}
+/**
+ * The invoice is drawn from the Order view projection — the same shape the
+ * confirmation page renders — rather than a document-local copy of the Order.
+ * That copy used to be satisfied structurally, so dropping a field from
+ * `OrderView` could have silently blanked a line on the PDF.
+ */
+export type OrderData = OrderView;
 
 export async function generateInvoice(order: OrderData, logoBase64?: string | null) {
   const { jsPDF } = await import("jspdf");

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { buildWorkbook } from '../src/lib/excel-export';
+import { dumpDatabase } from '../src/lib/export-read';
 
 // Load environment variables
 dotenv.config();
@@ -20,23 +21,11 @@ const prisma = new PrismaClient({ adapter });
 async function exportToExcel() {
   console.log('Starting database export to Excel...');
 
-  const categories = await prisma.category.findMany({ orderBy: { displayOrder: 'asc' } });
-  const products = await prisma.product.findMany({
-    include: { category: true, images: { orderBy: { displayOrder: 'asc' } } },
-  });
-  const productImages = await prisma.productImage.findMany({ orderBy: { createdAt: 'asc' } });
-  const orders = await prisma.order.findMany({ orderBy: { createdAt: 'desc' } });
-  const orderItems = await prisma.orderItem.findMany({
-    include: { order: { select: { orderNumber: true } } },
-    orderBy: { createdAt: 'asc' },
-  });
-  const statusHistory = await prisma.orderStatusHistory.findMany({
-    include: { order: { select: { orderNumber: true } } },
-    orderBy: { createdAt: 'asc' },
-  });
-  const admins = await prisma.admin.findMany({ orderBy: { createdAt: 'asc' } });
+  // The dump queries live in src/lib/export-read.ts — this script and the
+  // /api/export route are the two adapters over that one read surface.
+  const data = await dumpDatabase(prisma);
 
-  const workbook = buildWorkbook({ categories, products, productImages, orders, orderItems, statusHistory, admins });
+  const workbook = buildWorkbook(data);
 
   // Save the workbook
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);

@@ -45,14 +45,37 @@ import {
   type VerifyRazorpayPaymentResponse,
 } from "./schemas";
 
+/**
+ * Build a query string, dropping any value that equals its declared default —
+ * those are the same defaults the server applies, so sending them adds
+ * nothing. One encoder so a changed default is one edit, not one per caller.
+ */
+function qs(params: Record<string, string | number | undefined>, defaults?: Record<string, unknown>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === "" || value === defaults?.[key]) continue;
+    search.set(key, String(value));
+  }
+  const s = search.toString();
+  return s ? `?${s}` : "";
+}
+
+/** The one admin list page size the server defaults to. */
+const DEFAULT_LIMIT = 10;
+
 export async function fetchAuthMe(signal?: AbortSignal): Promise<AuthMeResponse> {
-  const res = await fetch("/api/auth/me", {
-    signal,
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  const json = (await res.json().catch(() => ({ authenticated: false }))) as unknown;
-  return AuthMeResponseSchema.parse(json);
+  // The one endpoint that must answer `{ authenticated: false }` rather than
+  // throw: an unauthenticated 401 is a normal state here, not a failure. It
+  // still goes through apiFetch, so headers, credentials and error shaping
+  // are the transport's, not this function's.
+  try {
+    return await apiFetch<AuthMeResponse>("/api/auth/me", {
+      signal,
+      schema: AuthMeResponseSchema,
+    });
+  } catch {
+    return { authenticated: false };
+  }
 }
 
 export function fetchStats(signal?: AbortSignal) {
@@ -67,20 +90,13 @@ export interface OrdersQueryParams {
 }
 
 export function fetchOrders(params: OrdersQueryParams, signal?: AbortSignal) {
-  const search = new URLSearchParams({
-    page: String(params.page),
-    limit: String(params.limit),
-  });
-  if (params.status && params.status !== "all") {
-    search.set("status", params.status);
-  }
-  if (params.sort && params.sort !== "date-desc") {
-    search.set("sort", params.sort);
-  }
-  return apiFetch<OrdersResponse>(`/api/orders?${search.toString()}`, {
-    signal,
-    schema: OrdersResponseSchema,
-  });
+  return apiFetch<OrdersResponse>(
+    `/api/orders${qs(
+      { page: params.page, limit: params.limit, status: params.status, sort: params.sort },
+      { limit: DEFAULT_LIMIT, status: "all", sort: "date-desc" },
+    )}`,
+    { signal, schema: OrdersResponseSchema },
+  );
 }
 
 export interface ProductsQueryParams {
@@ -94,19 +110,22 @@ export interface ProductsQueryParams {
 }
 
 export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal) {
-  const search = new URLSearchParams({
-    page: String(params.page),
-    limit: String(params.limit),
-  });
-  if (params.isActive) search.set("isActive", params.isActive);
-  if (params.search) search.set("search", params.search);
-  if (params.categoryId && Number.isFinite(params.categoryId)) search.set("categoryId", String(params.categoryId));
-  if (params.badge && params.badge !== "all") search.set("badge", params.badge);
-  if (params.sort && params.sort !== "newest") search.set("sort", params.sort);
-  return apiFetch<ProductsResponse>(`/api/products?${search.toString()}`, {
-    signal,
-    schema: ProductsResponseSchema,
-  });
+  return apiFetch<ProductsResponse>(
+    `/api/products${qs(
+      {
+        page: params.page,
+        limit: params.limit,
+        isActive: params.isActive,
+        search: params.search,
+        categoryId:
+          params.categoryId && Number.isFinite(params.categoryId) ? params.categoryId : undefined,
+        badge: params.badge,
+        sort: params.sort,
+      },
+      { limit: DEFAULT_LIMIT, badge: "all", sort: "newest" },
+    )}`,
+    { signal, schema: ProductsResponseSchema },
+  );
 }
 
 export function fetchCatalogueProducts(
@@ -119,13 +138,15 @@ export function fetchCatalogueProducts(
   // Defensive: ensure page and limit are valid numbers
   const safePage = typeof page === "number" && Number.isFinite(page) && page >= 1 ? page : 1;
   const safeLimit = typeof limit === "number" && Number.isFinite(limit) && limit >= 1 ? limit : 6;
-  const params = new URLSearchParams({ page: String(safePage), limit: String(safeLimit) });
-  if (search) params.set("search", search);
-  if (categoryId && Number.isFinite(categoryId)) params.set("categoryId", String(categoryId));
-  return apiFetch<ProductsResponse>(`/api/products?${params.toString()}`, {
-    signal,
-    schema: ProductsResponseSchema,
-  });
+  return apiFetch<ProductsResponse>(
+    `/api/products${qs({
+      page: safePage,
+      limit: safeLimit,
+      search,
+      categoryId: categoryId && Number.isFinite(categoryId) ? categoryId : undefined,
+    })}`,
+    { signal, schema: ProductsResponseSchema },
+  );
 }
 
 export interface TrackQueryParams {
@@ -134,13 +155,10 @@ export interface TrackQueryParams {
 }
 
 export function searchTrack(params: TrackQueryParams, signal?: AbortSignal) {
-  const search = new URLSearchParams();
-  if (params.orderId) search.set("orderId", params.orderId);
-  if (params.phone) search.set("phone", params.phone);
-  return apiFetch<TrackOrdersResponse>(`/api/track?${search.toString()}`, {
-    signal,
-    schema: TrackOrdersResponseSchema,
-  });
+  return apiFetch<TrackOrdersResponse>(
+    `/api/track${qs({ orderId: params.orderId, phone: params.phone })}`,
+    { signal, schema: TrackOrdersResponseSchema },
+  );
 }
 
 export function createOrder(input: CreateOrderRequest, signal?: AbortSignal) {
@@ -242,13 +260,11 @@ export function fetchCategoryProducts(
   params: CategoryProductsParams = {},
   signal?: AbortSignal,
 ) {
-  const search = new URLSearchParams();
-  if (params.page && params.page > 1) search.set("page", String(params.page));
-  if (params.limit) search.set("limit", String(params.limit));
-  if (params.sort && params.sort !== "newest") search.set("sort", params.sort);
-  const qs = search.toString();
   return apiFetch<CategoryProductsResponse>(
-    `/api/category/${encodeURIComponent(slug)}/products${qs ? `?${qs}` : ""}`,
+    `/api/category/${encodeURIComponent(slug)}/products${qs(
+      { page: params.page, limit: params.limit, sort: params.sort },
+      { page: 1, sort: "newest" },
+    )}`,
     { signal, schema: CategoryProductsResponseSchema },
   );
 }

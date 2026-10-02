@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { generateInvoice, type OrderData } from "../../lib/pdf-documents";
 
+// An OrderView: the invoice now reads the same projection the confirmation
+// page renders, so the fixture is a full view rather than a partial copy.
 const order: OrderData = {
+  id: "o1",
   orderNumber: "CH20260101",
+  status: "pending",
   customerName: "Test User",
   customerEmail: "test@example.com",
   customerPhone: "9876543210",
@@ -11,10 +15,15 @@ const order: OrderData = {
   city: "Chennai",
   stateCode: "TN",
   postalCode: "600001",
+  countryCode: "IN",
+  customerNotes: null,
   subtotal: 800,
   shippingCost: 0,
   totalAmount: 800,
   transactionId: null,
+  trackingId: null,
+  itemCount: 4,
+  statusHistory: [],
   createdAt: "2026-01-01T00:00:00.000Z",
   items: [
     { id: "p1", productName: "Gold Ring", unitPrice: 500, quantity: 1, parentOrderItemId: null },

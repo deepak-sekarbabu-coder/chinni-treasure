@@ -2,7 +2,7 @@
 
 import Modal from "@/src/components/ui/Modal";
 import { slugify } from "@/src/lib/utils";
-import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
+import type { CategoryFormState } from "@/src/components/admin/useAdminCategoriesPanel";
 
 interface Props {
   open: boolean;

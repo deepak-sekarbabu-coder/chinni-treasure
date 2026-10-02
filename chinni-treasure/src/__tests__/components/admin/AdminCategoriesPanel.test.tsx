@@ -7,7 +7,7 @@ import type {
   CategoriesPanelViewModel,
 } from "@/src/components/admin/useAdminCategoriesPanel";
 import type { Category } from "@/src/lib/api/schemas";
-import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
+import type { CategoryFormState } from "@/src/components/admin/useAdminCategoriesPanel";
 
 function makeCategory(overrides: Partial<Category> = {}): Category {
   return {

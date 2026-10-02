@@ -16,6 +16,7 @@ vi.mock("@/src/lib/auth", () => ({
 }));
 
 import { prisma } from "@/src/lib/prisma";
+import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 import { GET } from "@/app/api/stats/route";
 
 describe("GET /api/stats", () => {
@@ -24,19 +25,20 @@ describe("GET /api/stats", () => {
   });
 
   it("returns stats with counts and revenue", async () => {
-    // Mock the raw SQL query result
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([
-      {
-        total_orders: 10n,
-        pending_orders: 2n,
-        approved_orders: 1n,
-        packaging_orders: 1n,
-        shipped_orders: 2n,
-        delivered_orders: 3n,
-        rejected_orders: 1n,
-        total_revenue: 5000n,
-      },
-    ]);
+    // The stats module reads per-status counts from one grouped query, keyed
+    // off ORDER_STATUS_ALL — no raw SQL.
+    vi.mocked(prisma.order.groupBy).mockResolvedValue([
+      { status: "pending", _count: { _all: 2 }, _sum: { totalAmount: 1000 } },
+      { status: "approved", _count: { _all: 1 }, _sum: { totalAmount: 500 } },
+      { status: "packaging", _count: { _all: 1 }, _sum: { totalAmount: 500 } },
+      { status: "shipped", _count: { _all: 2 }, _sum: { totalAmount: 1500 } },
+      { status: "delivered", _count: { _all: 3 }, _sum: { totalAmount: 1500 } },
+      { status: "rejected", _count: { _all: 1 }, _sum: { totalAmount: 0 } },
+    ] as never);
+    vi.mocked(prisma.order.aggregate).mockResolvedValue({
+      _count: { _all: 10 },
+      _sum: { totalAmount: 5000 },
+    } as never);
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
     vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
 
@@ -44,26 +46,41 @@ describe("GET /api/stats", () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.stats).toBeDefined();
     expect(body.stats.totalOrders).toBe(10);
     expect(body.stats.totalRevenue).toBe(5000);
+    expect(body.stats.pendingOrders).toBe(2);
+    expect(body.stats.deliveredOrders).toBe(3);
     expect(body.chartData).toBeDefined();
     expect(body.productSalesData).toBeDefined();
   });
 
+  it("reports zero for a status with no orders rather than omitting it", async () => {
+    vi.mocked(prisma.order.groupBy).mockResolvedValue([
+      { status: "pending", _count: { _all: 1 }, _sum: { totalAmount: 100 } },
+    ] as never);
+    vi.mocked(prisma.order.aggregate).mockResolvedValue({
+      _count: { _all: 1 },
+      _sum: { totalAmount: 100 },
+    } as never);
+    vi.mocked(prisma.order.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
+
+    const body = await (await GET(createNextRequest("/api/stats"))).json();
+
+    // Every status in ORDER_STATUS_ALL is present, so the dashboard can
+    // render one it has no rows for.
+    for (const status of ORDER_STATUS_ALL) {
+      expect(body.stats).toHaveProperty(`${status}Orders`);
+    }
+    expect(body.stats.shippedOrders).toBe(0);
+  });
+
   it("returns chart data for last 30 days", async () => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([
-      {
-        total_orders: 0n,
-        pending_orders: 0n,
-        approved_orders: 0n,
-        packaging_orders: 0n,
-        shipped_orders: 0n,
-        delivered_orders: 0n,
-        rejected_orders: 0n,
-        total_revenue: 0n,
-      },
-    ]);
+    vi.mocked(prisma.order.groupBy).mockResolvedValue([] as never);
+    vi.mocked(prisma.order.aggregate).mockResolvedValue({
+      _count: { _all: 0 },
+      _sum: { totalAmount: 0 },
+    } as never);
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
     vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
 

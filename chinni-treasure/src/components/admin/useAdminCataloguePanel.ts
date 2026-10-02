@@ -2,7 +2,18 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { ADMIN_PAGE_SIZES, useAdminCategories, useAdminProducts } from "@/src/lib/hooks/useAdminData";
-import { useAdminCatalogueController } from "@/src/lib/hooks/useAdminCatalogueController";
+import {
+  useCreateProduct,
+  useDeleteProduct,
+  useUpdateProduct,
+} from "@/src/lib/hooks/useAdminMutations";
+import { useAdminCrud } from "@/src/lib/hooks/useAdminCrud";
+import {
+  EMPTY_PRODUCT_DRAFT,
+  draftFromProduct,
+  productDraftPayload,
+  validateProductDraft,
+} from "@/src/lib/product-draft";
 import type { Category, Product } from "@/src/lib/api/schemas";
 import type { ProductFormData } from "@/src/types";
 
@@ -21,7 +32,10 @@ const DEFAULT_FILTERS: ProductFilters = { search: "", categoryId: "", badge: "al
  *
  * Owns the products query (lazy-enabled on the catalogue tab), the category
  * list the product form needs, filters, pagination, and the product form /
- * delete-confirm controller — behind one typed view-model.
+ * delete-confirm state — behind one typed view-model.
+ *
+ * The CRUD config lives here rather than in a separate controller: it was a
+ * pure rename band over `useAdminCrud`, which is the actual seam.
  */
 export interface CataloguePanelData {
   products: Product[];
@@ -88,10 +102,46 @@ export function useAdminCataloguePanel({
   const products = useMemo(() => productsQuery.data?.products ?? [], [productsQuery.data?.products]);
   const productTotalPages = productsQuery.data?.totalPages ?? 1;
 
-  const controller = useAdminCatalogueController({
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+
+  const crud = useAdminCrud<
+    Product,
+    ProductFormData,
+    { open: boolean; productId: string; productName: string },
+    string,
+    Parameters<typeof createProduct.mutateAsync>[0]
+  >({
+    emptyForm: EMPTY_PRODUCT_DRAFT,
+    emptyDeleteState: { open: false, productId: "", productName: "" },
+    toFormState: draftFromProduct,
+    toDeleteState: (product: Product) => ({
+      open: true,
+      productId: product.id,
+      productName: product.name,
+    }),
+    deleteId: (state) => state.productId || null,
+    validate: validateProductDraft,
+    buildPayload: productDraftPayload,
+    save: async (form, payload, isEdit) => {
+      if (isEdit) {
+        await updateProduct.mutateAsync({ productId: form.id, input: payload });
+      } else {
+        await createProduct.mutateAsync(payload);
+      }
+    },
+    remove: (id) => deleteProduct.mutateAsync(id),
+    saving: createProduct.isPending || updateProduct.isPending,
+    deleting: deleteProduct.isPending,
+    createdToast: (form) => `Product "${form.name}" created successfully`,
+    updatedToast: (form) => `Product "${form.name}" updated successfully`,
+    deletedToast: "Product deleted successfully",
+    saveErrorFallback: "Failed to save product",
+    deleteErrorFallback: "Failed to delete product",
     // New products prepend to the list, so after a create go back to page 1
     // to make it visible.
-    onAfterSave: (wasCreate) => {
+    onSaved: (wasCreate) => {
       if (wasCreate) setProductPage(1);
     },
   });
@@ -118,26 +168,26 @@ export function useAdminCataloguePanel({
       categoriesLoading: categoriesQuery.isLoading,
       filters: productFilters,
       currentPage: productPage,
-      showForm: controller.showForm,
-      formClosing: controller.formClosing,
-      productForm: controller.form,
-      deleteConfirm: controller.deleteConfirm,
-      loadingProductId: controller.deletingId,
+      showForm: crud.showForm,
+      formClosing: crud.formClosing,
+      productForm: crud.form,
+      deleteConfirm: crud.deleteConfirm,
+      loadingProductId: crud.deletingId,
     },
     loading: productsQuery.isLoading || productsQuery.isFetching,
-    formSaving: controller.formSaving,
-    isDeleting: controller.deleting,
+    formSaving: crud.formSaving,
+    isDeleting: crud.deleting,
     actions: {
       onPageChange: handlePageChange,
       onFilterChange: handleFilterChange,
       onFilterReset: handleFilterReset,
-      onToggleForm: controller.toggleForm,
-      onFormChange: controller.onFormChange,
-      onSave: controller.save,
-      onEdit: controller.edit,
-      onRequestDelete: controller.requestDelete,
-      onCancelDelete: controller.closeDeleteConfirm,
-      onConfirmDelete: controller.confirmDelete,
+      onToggleForm: crud.toggleForm,
+      onFormChange: crud.onFormChange,
+      onSave: crud.save,
+      onEdit: crud.edit,
+      onRequestDelete: crud.requestDelete,
+      onCancelDelete: crud.closeDeleteConfirm,
+      onConfirmDelete: crud.confirmDelete,
     },
   };
 }

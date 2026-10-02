@@ -53,3 +53,36 @@ describe("skeleton stylesheet ownership", () => {
     expect(files).toEqual(["loading.css"]);
   });
 });
+
+/**
+ * The Modal module owns the dialog scaffold; every overlay that customises it
+ * must stack ABOVE `.modal-overlay`, because a nested modal (the shipping-label
+ * editor inside the order-detail modal) is a child of its parent's overlay and
+ * loses to it at equal-or-lower z-index. The editor sat at 10000 against the
+ * base 10001 and rendered behind the dialog that opened it.
+ */
+describe("modal overlay stacking", () => {
+  function zIndexOf(selector: string): number {
+    const sheet = sheets.find((s) => s.text.includes(`${selector} {`));
+    if (!sheet) throw new Error(`no stylesheet declares ${selector}`);
+    const block = sheet.text.slice(sheet.text.indexOf(`${selector} {`));
+    const match = block.match(/z-index:\s*(\d+)/);
+    if (!match) throw new Error(`${selector} declares no z-index`);
+    return Number(match[1]);
+  }
+
+  it("stacks the shipping-label editor above the base modal overlay", () => {
+    expect(zIndexOf(".print-label-overlay-active")).toBeGreaterThan(
+      zIndexOf(".modal-overlay"),
+    );
+  });
+
+  it("stacks the other modal overlays above the base too", () => {
+    const base = zIndexOf(".modal-overlay");
+    for (const selector of [".gift-box-modal-overlay", ".shipping-nudge-overlay"]) {
+      expect(`${selector}: ${zIndexOf(selector)}`).toBe(
+        `${selector}: above ${base}`,
+      );
+    }
+  });
+});

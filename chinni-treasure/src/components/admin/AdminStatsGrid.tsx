@@ -1,6 +1,7 @@
 "use client";
 
 import AdminStatCard from "@/src/components/ui/AdminStatCard";
+import { ORDER_STATUS_ALL, ORDER_STATUS_LABELS } from "@/src/lib/constants";
 import type { Stats } from "@/src/lib/api/schemas";
 import { formatINR } from "@/src/lib/format";
 
@@ -8,13 +9,30 @@ interface Props {
   stats: Stats | null;
 }
 
+/** Accent per status, so a status without one falls back rather than vanishing. */
+const STATUS_COLORS: Record<string, string> = {
+  pending: "var(--warning)",
+  approved: "var(--success)",
+  packaging: "#9b59b6",
+  shipped: "#9b59b6",
+  delivered: "var(--success)",
+  rejected: "var(--text-muted)",
+};
+
+/**
+ * One tile per status in the Fulfilment vocabulary, plus totals. The status
+ * list is read from `ORDER_STATUS_ALL` rather than hand-picked, so a status
+ * the stats module computes is also one the dashboard shows — previously
+ * `packaging` and `rejected` were both computed and never rendered.
+ */
 function buildStatTiles(stats: Stats) {
   return [
     { label: "Total Orders", value: stats.totalOrders, color: "var(--gold)" },
-    { label: "Pending", value: stats.pendingOrders, color: "var(--warning)" },
-    { label: "Approved", value: stats.approvedOrders, color: "var(--success)" },
-    { label: "Shipped", value: stats.shippedOrders, color: "#9b59b6" },
-    { label: "Delivered", value: stats.deliveredOrders, color: "var(--success)" },
+    ...ORDER_STATUS_ALL.map((status) => ({
+      label: ORDER_STATUS_LABELS[status],
+      value: stats[`${status}Orders` as keyof Stats] as number,
+      color: STATUS_COLORS[status] ?? "var(--text-muted)",
+    })),
     {
       label: "Revenue",
       value: `₹${formatINR(Number(stats.totalRevenue))}`,

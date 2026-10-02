@@ -1,64 +1,31 @@
+import type { ExportData } from "@/src/lib/export-read";
 import * as Excel from "exceljs";
 
-export type CategoryRow = {
-  id: number; name: string; slug: string; description: string | null;
-  displayOrder: number; isActive: boolean; createdAt: Date; updatedAt: Date;
-};
+/**
+ * Row shapes come from the Prisma payloads the export read surface returns,
+ * so a schema change breaks the typecheck here instead of silently dropping a
+ * column. The hand-written `*Row` copies these replaced were a second home for
+ * the schema.
+ */
+export type CategoryRow = ExportData["categories"][number];
+export type ProductRow = ExportData["products"][number];
+export type ProductImageRow = ExportData["productImages"][number];
+export type OrderRow = ExportData["orders"][number];
+export type OrderItemRow = ExportData["orderItems"][number];
+export type StatusHistoryRow = ExportData["statusHistory"][number];
+export type AdminRow = ExportData["admins"][number];
 
-export type ProductRow = {
-  id: string; sku: string | null; name: string; categoryId: number | null;
-  category: { name: string } | null; description: string | null; price: unknown;
-  compareAtPrice: unknown; stockQuantity: number; imageUrl: string | null;
-  badge: string | null; isActive: boolean; allowGiftBoxBundling: boolean;
-  visibleHostnames: string | null; deletedAt: Date | null; createdAt: Date; updatedAt: Date;
-};
-
-export type ProductImageRow = {
-  id: string; productId: string; url: string; isPrimary: boolean;
-  displayOrder: number; createdAt: Date;
-};
-
-export type OrderRow = {
-  id: string; orderNumber: string; customerName: string; customerEmail: string;
-  customerPhone: string; addressLine1: string; addressLine2: string | null;
-  city: string; stateCode: string; postalCode: string; countryCode: string;
-  status: string; trackingId: string | null; subtotal: unknown; shippingCost: unknown;
-  totalAmount: unknown; transactionId: string | null; customerNotes: string | null;
-  adminNotes: string | null; version: number; createdAt: Date; updatedAt: Date;
-};
-
-export type OrderItemRow = {
-  id: string; orderId: string; order: { orderNumber: string } | null;
-  productId: string | null; productName: string; unitPrice: unknown; quantity: number;
-  parentOrderItemId: string | null; createdAt: Date;
-};
-
-export type StatusHistoryRow = {
-  id: string; orderId: string; order: { orderNumber: string } | null;
-  status: string; notes: string | null; createdAt: Date;
-};
-
-export type AdminRow = {
-  id: string; username: string; email: string; role: string; isActive: boolean;
-  lastLoginAt: Date | null; createdAt: Date; updatedAt: Date;
-};
-
-export interface ExcelExportInput {
-  categories: CategoryRow[];
-  products: ProductRow[];
-  productImages: ProductImageRow[];
-  orders: OrderRow[];
-  orderItems: OrderItemRow[];
-  statusHistory: StatusHistoryRow[];
-  admins: AdminRow[];
-}
+export type ExcelExportInput = ExportData;
 
 type ColumnDef<T> = {
   header: string;
-  key: keyof T;
+  key: keyof T & string;
   width: number;
   format?: (value: unknown) => unknown;
 };
+
+/** Decimal columns are Prisma `Decimal`, not `number`. */
+const formatDecimal = (v: unknown) => (v ? String(v) : "");
 
 const headerStyle = {
   font: { bold: true, size: 11, color: { argb: "FFFFFFFF" } },
@@ -74,7 +41,7 @@ const headerStyle = {
 
 const formatDate = (v: unknown) => (v ? (v as Date).toISOString() : "");
 const formatBool = (v: unknown) => (v ? "Yes" : "No");
-const formatString = (v: unknown) => String(v ?? "");
+
 const formatOrderNumber = (v: unknown) => (v as { orderNumber?: string } | null)?.orderNumber ?? "";
 const formatCategoryName = (v: unknown) => (v as { name?: string } | null)?.name ?? "";
 
@@ -121,8 +88,8 @@ const productColumns: ColumnDef<ProductRow>[] = [
   { header: "Category ID", key: "categoryId", width: 10 },
   { header: "Category Name", key: "category", width: 25, format: formatCategoryName },
   { header: "Description", key: "description", width: 50 },
-  { header: "Price", key: "price", width: 12, format: formatString },
-  { header: "Compare At Price", key: "compareAtPrice", width: 18, format: (v) => (v ? String(v) : "") },
+  { header: "Price", key: "price", width: 12, format: formatDecimal },
+  { header: "Compare At Price", key: "compareAtPrice", width: 18, format: formatDecimal },
   { header: "Stock Quantity", key: "stockQuantity", width: 18 },
   { header: "Image URL", key: "imageUrl", width: 50 },
   { header: "Badge", key: "badge", width: 15 },
@@ -157,9 +124,9 @@ const orderColumns: ColumnDef<OrderRow>[] = [
   { header: "Country Code", key: "countryCode", width: 12 },
   { header: "Status", key: "status", width: 15 },
   { header: "Tracking ID", key: "trackingId", width: 20 },
-  { header: "Subtotal", key: "subtotal", width: 12, format: formatString },
-  { header: "Shipping Cost", key: "shippingCost", width: 15, format: formatString },
-  { header: "Total Amount", key: "totalAmount", width: 15, format: formatString },
+  { header: "Subtotal", key: "subtotal", width: 12, format: formatDecimal },
+  { header: "Shipping Cost", key: "shippingCost", width: 15, format: formatDecimal },
+  { header: "Total Amount", key: "totalAmount", width: 15, format: formatDecimal },
   { header: "Transaction ID", key: "transactionId", width: 30 },
   { header: "Customer Notes", key: "customerNotes", width: 40 },
   { header: "Admin Notes", key: "adminNotes", width: 40 },
@@ -174,7 +141,7 @@ const orderItemColumns: ColumnDef<OrderItemRow>[] = [
   { header: "Order Number", key: "order", width: 20, format: formatOrderNumber },
   { header: "Product ID", key: "productId", width: 36 },
   { header: "Product Name", key: "productName", width: 40 },
-  { header: "Unit Price", key: "unitPrice", width: 12, format: formatString },
+  { header: "Unit Price", key: "unitPrice", width: 12, format: formatDecimal },
   { header: "Quantity", key: "quantity", width: 10 },
   { header: "Parent Order Item ID", key: "parentOrderItemId", width: 36 },
   { header: "Created At", key: "createdAt", width: 20, format: formatDate },
