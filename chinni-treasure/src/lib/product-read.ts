@@ -14,10 +14,14 @@ import { prisma } from "@/src/lib/prisma";
 import { Prisma, ProductBadge } from "@prisma/client";
 import { domainFilterWhere, isVisibleOnDomain } from "@/src/lib/domain-filter";
 import { totalPages } from "@/src/lib/list-query";
+import { CATALOGUE_PAGE_SIZE } from "@/src/lib/constants";
+import { GIFT_BOX_CATEGORY_WHERE } from "@/src/lib/gift-box";
 import { unstable_cache } from "next/cache";
 
 const INCLUDE = {
-  category: { select: { name: true } },
+  // slug travels with name: the gift-box rule is the category's identity, and
+  // a client that only has the display name has to match on the label.
+  category: { select: { name: true, slug: true } },
   images: { orderBy: { displayOrder: "asc" } },
 } satisfies Prisma.ProductInclude;
 
@@ -30,7 +34,7 @@ export type ProductView = {
   compareAtPrice: number | null;
   imageUrl: string | null;
   description: string | null;
-  category: { name: string } | null;
+  category: { name: string; slug: string } | null;
   categoryId: number | null;
   stockQuantity: number;
   badge: string | null;
@@ -49,7 +53,7 @@ export type CatalogueProductView = {
   compareAtPrice: number | null;
   imageUrl: string | null;
   description: string | null;
-  category: { name: string } | null;
+  category: { name: string; slug: string } | null;
   stockQuantity: number;
   badge: string | null;
   sku: string | null;
@@ -190,7 +194,7 @@ export type ProductDetailView = {
   compareAtPrice: number | null;
   imageUrl: string;
   description: string;
-  category: { name: string } | null;
+  category: { name: string; slug: string } | null;
   stockQuantity: number;
   badge: string | null;
   sku: string | null;
@@ -357,7 +361,10 @@ export async function listCatalogue(
       where,
       include: INCLUDE,
       orderBy: [...SORT_OPTIONS.newest],
-      take: 6,
+      // The SSR payload width, from the one constant: the client re-slices it
+      // to the responsive page size, so this number and the hook's default
+      // limit have to be the same one.
+      take: CATALOGUE_PAGE_SIZE,
       skip: 0,
     }),
     prisma.product.count({ where }),
@@ -448,7 +455,7 @@ export async function listGiftBoxes(): Promise<
       isActive: true,
       deletedAt: null,
       stockQuantity: { gt: 0 },
-      category: { slug: "box" },
+      category: GIFT_BOX_CATEGORY_WHERE,
     },
     select: {
       id: true,

@@ -15,10 +15,10 @@ import {
   type ProductsQueryParams,
 } from "@/src/lib/api";
 import type { ProductsResponse, CategoryProductsResponse } from "@/src/lib/api/schemas";
+import { CATALOGUE_PAGE_SIZE } from "@/src/lib/constants";
 
 const ITEMS_PER_PAGE = 10;
 const PRODUCTS_PER_PAGE = 5;
-const CATALOGUE_PAGE_SIZE = 6;
 
 export function useAuthMe(enabled = true) {
   return useQuery({

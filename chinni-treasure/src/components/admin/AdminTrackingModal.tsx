@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 
 interface Props {
   onClose: () => void;
@@ -11,7 +11,6 @@ interface Props {
 export default function AdminTrackingModal({ onClose, onSubmit }: Props) {
   const [trackingId, setTrackingId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const trapRef = useFocusTrap(true);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,20 +24,14 @@ export default function AdminTrackingModal({ onClose, onSubmit }: Props) {
   }
 
   return (
-    <div
-      className="modal-overlay active"
-      ref={trapRef}
-      onClick={onClose}
-      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    <Modal
+      open
+      onClose={onClose}
+      labelledBy="tracking-modal-title"
+      overlayClassName="modal-overlay active"
+      contentClassName="modal-content modal-content-sm"
     >
-      <div
-        className="modal-content modal-content-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="tracking-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
+      <div className="modal-header">
           <h2 id="tracking-modal-title">Enter Tracking ID</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
@@ -73,7 +66,6 @@ export default function AdminTrackingModal({ onClose, onSubmit }: Props) {
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

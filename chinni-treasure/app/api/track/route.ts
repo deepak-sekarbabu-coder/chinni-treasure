@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { withPublic } from "@/src/lib/route-guard";
-import { getTrackedOrders } from "@/src/lib/order-cache";
+import { getTrackedOrders, TRACK_CACHE_CONTROL } from "@/src/lib/order-cache";
 
-const CACHE_HEADERS = { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } };
+const CACHE_HEADERS = { headers: { "Cache-Control": TRACK_CACHE_CONTROL } };
 
 // GET /api/track?orderId=xxx or /api/track?phone=xxx
 // The Order cache module owns the key, the hit/miss branch and the lookup's own

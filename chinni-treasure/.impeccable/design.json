@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T00:00:00.000Z",
+  "title": "Design System: Chinni Treasure",
+  "extensions": {
+    "colorMeta": {
+      "gold": {
+        "role": "primary",
+        "displayName": "Gilded Gold",
+        "canonical": "#d4af37",
+        "tonalRamp": ["#3a2f0a", "#5c4b12", "#8a6d0f", "#b8960f", "#d4af37", "#e3c765", "#f0d68a", "#faf0c4"]
+      },
+      "gold-light": {
+        "role": "primary",
+        "displayName": "Pale Gilt",
+        "canonical": "#f0d68a",
+        "tonalRamp": ["#4a3d12", "#6b591a", "#9a8128", "#c9ab3e", "#f0d68a", "#f5e0a8", "#faecc6", "#fef7e4"]
+      },
+      "gold-dark": {
+        "role": "primary",
+        "displayName": "Antique Gold",
+        "canonical": "#b8960f",
+        "tonalRamp": ["#33290b", "#4f4010", "#7d6815", "#a3821a", "#b8960f", "#ccaf3c", "#ddc86e", "#eee0a1"]
+      },
+      "gold-deep": {
+        "role": "primary",
+        "displayName": "Deep Patina Gold",
+        "canonical": "#8a6d0f",
+        "tonalRamp": ["#241c06", "#3a2e0c", "#5c4a11", "#745c14", "#8a6d0f", "#a68933", "#c2a757", "#ddc57b"]
+      },
+      "black": {
+        "role": "neutral",
+        "displayName": "Lacquer Black",
+        "canonical": "#0d0d0d",
+        "tonalRamp": ["#0d0d0d", "#1a1a1a", "#2a2a2a", "#3a3a3a", "#6d6d6d", "#a0a0a0", "#c9c9c9", "#f2f2f2"]
+      },
+      "near-black": {
+        "role": "neutral",
+        "displayName": "Soft Black",
+        "canonical": "#1a1a1a",
+        "tonalRamp": ["#1a1a1a", "#262626", "#333333", "#4a4a4a", "#6d6d6d", "#9a9a9a", "#c4c4c4", "#efefef"]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Atelier Cream",
+        "canonical": "#f5f0e8",
+        "tonalRamp": ["#f5f0e8", "#f2ece2", "#efe8dc", "#ece4d6", "#e8dfcf", "#e2d8c6", "#dbd0bb", "#d4c8b0"]
+      },
+      "cream-light": {
+        "role": "neutral",
+        "displayName": "Raw Linen",
+        "canonical": "#faf7f2",
+        "tonalRamp": ["#faf7f2", "#f7f3ec", "#f3eee6", "#efe9e0", "#ebe4d9", "#e6ded1", "#e0d7c8", "#d9cfbe"]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "Gallery White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#ffffff", "#fdfdfd", "#fafafa", "#f5f5f5", "#efefef", "#e5e5e5", "#dcdcdc", "#d4d4d4"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Ash Grey",
+        "canonical": "#6d6d6d",
+        "tonalRamp": ["#1a1a1a", "#2a2a2a", "#3f3f3f", "#555555", "#6d6d6d", "#8c8c8c", "#adadad", "#d0d0d0"]
+      },
+      "text-light": {
+        "role": "neutral",
+        "displayName": "Dust Grey",
+        "canonical": "#a0a0a0",
+        "tonalRamp": ["#242424", "#383838", "#505050", "#787878", "#a0a0a0", "#bcbcbc", "#d8d8d8", "#f0f0f0"]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Verdant",
+        "canonical": "#2ecc71",
+        "tonalRamp": ["#0d3d22", "#135630", "#1a703f", "#218a4e", "#2ecc71", "#59d78d", "#86e3aa", "#b3efc7"]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Cinnabar",
+        "canonical": "#e74c3c",
+        "tonalRamp": ["#4a0f0a", "#6b1811", "#952418", "#b83021", "#e74c3c", "#ec7568", "#f29e94", "#f8c7c0"]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Saffron",
+        "canonical": "#f39c12",
+        "tonalRamp": ["#4d3105", "#6b4507", "#8a5a0a", "#a8710e", "#f39c12", "#f6b245", "#f9c978", "#fce0ab"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Atelier Serif",
+        "purpose": "Hero and section headlines only. Cormorant Garamond carries the craft."
+      },
+      "headline": {
+        "displayName": "Atelier Serif",
+        "purpose": "Section headings, paired with a 48px gold rule beneath."
+      },
+      "title": {
+        "displayName": "Atelier Serif",
+        "purpose": "Product names, order-summary values, card titles."
+      },
+      "body": {
+        "displayName": "Atelier Sans",
+        "purpose": "All running copy, forms, tables, and UI chrome."
+      },
+      "label": {
+        "displayName": "Atelier Sans Caps",
+        "purpose": "Eyebrows, buttons, badges. Always uppercase with wide tracking."
+      },
+      "script": {
+        "displayName": "Pinyon Script",
+        "purpose": "Decorative only — the footer wordmark and the 'Little Love' tagline. Never for body or UI."
+      }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 2px 8px rgba(0, 0, 0, 0.06)", "purpose": "Barely-there lift for secondary surfaces." },
+      { "name": "shadow-md", "value": "0 4px 24px rgba(0, 0, 0, 0.1)", "purpose": "Default card and panel rest state." },
+      { "name": "shadow-lg", "value": "0 8px 48px rgba(0, 0, 0, 0.15)", "purpose": "Modals and overlays lifted clear of the page." },
+      { "name": "shadow-gold", "value": "0 4px 24px rgba(212, 175, 55, 0.15)", "purpose": "The signature. Hover glow beneath gold-accented controls." },
+      { "name": "inset-highlight", "value": "0 1px 0 rgba(255, 255, 255, 0.14) inset", "purpose": "1px light edge on top of dark buttons and cards, giving them a metal lip." }
+    ],
+    "motion": [
+      { "name": "transition-fast", "value": "0.15s cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Quick state flips such as hover colour." },
+      { "name": "transition", "value": "0.3s cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default UI transition." },
+      { "name": "transition-slow", "value": "0.4s cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Deliberate, cinematic changes such as modal entry." },
+      { "name": "motion-snappy", "value": "0.24s cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Transform and press feedback — the tactile half of the system." },
+      { "name": "motion-smooth", "value": "0.42s cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Shadow, border, and background transitions." },
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Decisive ease-out for reveals and the shimmer sweep." },
+      { "name": "premium-lift", "value": "translateY(-2px)", "purpose": "Standard hover lift on every interactive element." },
+      { "name": "premium-press", "value": "translateY(1px) scale(0.985)", "purpose": "Standard press-in. Confirms the touch landed." },
+      { "name": "shimmer-sweep", "value": "translateX(-130%) to translateX(130%), 0.75s", "purpose": "The diagonal light pass across gold buttons on hover." }
+    ],
+    "breakpoints": [
+      { "name": "xs", "value": "374px" },
+      { "name": "sm", "value": "480px" },
+      { "name": "sm-md", "value": "600px" },
+      { "name": "md", "value": "768px" },
+      { "name": "md-lg", "value": "850px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1200px" },
+      { "name": "2xl", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main commitment control. Gold gradient, black label, shimmer on hover.",
+      "html": "<button class=\"ds-btn-primary\">Add to Cart</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 36px; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#0d0d0d; background:linear-gradient(135deg,#d4af37 0%,#b8960f 100%); background-size:150% 100%; background-position:30% 0%; border:1px solid rgba(184,150,15,0.6); border-radius:4px; cursor:pointer; position:relative; overflow:hidden; isolation:isolate; box-shadow:0 1px 0 rgba(255,255,255,0.26) inset, 0 12px 28px rgba(184,150,15,0.28); transition:transform 0.24s cubic-bezier(0.22,1,0.36,1), box-shadow 0.42s cubic-bezier(0.22,1,0.36,1), background 0.42s cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary::before { content:''; position:absolute; inset:0; background:linear-gradient(110deg,transparent 18%,rgba(255,255,255,0.22) 45%,transparent 72%); transform:translateX(-130%); transition:transform 0.75s cubic-bezier(0.16,1,0.3,1); pointer-events:none; } .ds-btn-primary:hover { background-position:100% 0%; transform:translateY(-2px); box-shadow:0 1px 0 rgba(255,255,255,0.3) inset, 0 18px 30px rgba(184,150,15,0.34); filter:saturate(1.08); } .ds-btn-primary:hover::before { transform:translateX(130%); } .ds-btn-primary:active { transform:translateY(1px) scale(0.985); } .ds-btn-primary:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(212,175,55,0.25); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined gold that fills on hover. The quieter sibling.",
+      "html": "<button class=\"ds-btn-secondary\">View Collection</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 36px; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#d4af37; background:rgba(212,175,55,0.04); border:1px solid #d4af37; border-radius:4px; cursor:pointer; position:relative; overflow:hidden; isolation:isolate; transition:transform 0.24s cubic-bezier(0.22,1,0.36,1), background 0.42s cubic-bezier(0.22,1,0.36,1), color 0.24s cubic-bezier(0.22,1,0.36,1); } .ds-btn-secondary:hover { background:#d4af37; color:#0d0d0d; transform:translateY(-2px); box-shadow:0 4px 24px rgba(212,175,55,0.15); } .ds-btn-secondary:active { transform:translateY(1px) scale(0.985); } .ds-btn-secondary:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(212,175,55,0.25); }"
+    },
+    {
+      "name": "Add to Cart Button",
+      "kind": "button",
+      "refersTo": "button-add",
+      "description": "Dark-on-gold inversion used on product cards. Warms into gold on hover.",
+      "html": "<button class=\"ds-btn-add\">Add to Cart</button>",
+      "css": ".ds-btn-add { padding:10px 20px; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#d4af37; background:#0d0d0d; border:1px solid rgba(212,175,55,0.25); border-radius:4px; cursor:pointer; position:relative; overflow:hidden; isolation:isolate; box-shadow:0 1px 0 rgba(255,255,255,0.1) inset, 0 8px 20px rgba(0,0,0,0.2); transition:transform 0.24s cubic-bezier(0.22,1,0.36,1), background 0.42s cubic-bezier(0.22,1,0.36,1); } .ds-btn-add:hover { background:linear-gradient(135deg,#d4af37 0%,#b8960f 100%); color:#0d0d0d; border-color:#b8960f; transform:translateY(-1px); box-shadow:0 4px 16px rgba(212,175,55,0.2); } .ds-btn-add:active { transform:translateY(1px) scale(0.985); } .ds-btn-add:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(212,175,55,0.25); } .ds-btn-add:disabled { opacity:0.4; cursor:not-allowed; transform:none; filter:grayscale(0.2); }"
+    },
+    {
+      "name": "Cart Button",
+      "kind": "button",
+      "refersTo": "button-cart",
+      "description": "Navbar cart trigger. Quiet at rest, gold at attention.",
+      "html": "<button class=\"ds-cart-btn\">Cart · 2</button>",
+      "css": ".ds-cart-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.72rem; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:#a0a0a0; background:transparent; border:1px solid rgba(212,175,55,0.25); border-radius:4px; cursor:pointer; position:relative; overflow:hidden; isolation:isolate; transition:transform 0.24s cubic-bezier(0.22,1,0.36,1), color 0.24s cubic-bezier(0.22,1,0.36,1), background 0.42s cubic-bezier(0.22,1,0.36,1); } .ds-cart-btn:hover { color:#d4af37; border-color:#d4af37; background:rgba(212,175,55,0.08); box-shadow:0 4px 16px rgba(212,175,55,0.1); } .ds-cart-btn:active { transform:translateY(1px) scale(0.985); } .ds-cart-btn:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(212,175,55,0.25); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Cream field on linen ground. Border shifts gold on focus, with a single pulse.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Phone number</span><input class=\"ds-input\" placeholder=\"98765 43210\"></label>",
+      "css": ".ds-field { display:block; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; } .ds-field-label { display:block; font-size:0.7rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#6d6d6d; margin-bottom:6px; } .ds-input { width:100%; padding:14px 16px; font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.9rem; color:#1a1a1a; background:#faf7f2; border:1px solid #e0d8cc; border-radius:2px; transition:border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s cubic-bezier(0.4,0,0.2,1); } .ds-input::placeholder { color:#a0a0a0; } .ds-input:focus { outline:none; border-color:#d4af37; background:#fff; box-shadow:0 0 0 3px rgba(212,175,55,0.1); } .ds-input:focus-visible { outline:none; } .ds-input.is-error { border-color:#e74c3c; box-shadow:0 0 0 3px rgba(231,76,60,0.1); }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "The signature editorial block: gold eyebrow, serif headline, 48px gold rule.",
+      "html": "<div class=\"ds-section-header\"><p class=\"ds-eyebrow\">The Collection</p><h2>Latest in Every Category</h2></div>",
+      "css": ".ds-section-header { text-align:center; margin-bottom:48px; } .ds-eyebrow { font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#d4af37; margin-bottom:12px; } .ds-section-header h2 { display:inline-block; position:relative; font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif; font-size:clamp(1.8rem,3vw,2.8rem); font-weight:400; letter-spacing:0.01em; line-height:1.15; color:#1a1a1a; margin-bottom:16px; } .ds-section-header h2::after { content:''; display:block; width:48px; height:2px; background:#d4af37; border-radius:1px; margin:16px auto 0; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "product-card",
+      "description": "Gallery-first card. Photography leads; price and action sit beneath.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card-media\"></div><div class=\"ds-card-body\"><p class=\"ds-card-cat\">Silk Scarves</p><h3 class=\"ds-card-title\">Hand-rolled Mulberry Silk</h3><p class=\"ds-card-price\">₹2,400<span class=\"ds-card-was\">₹3,200</span></p><button class=\"ds-btn-add\">Add to Cart</button></div></article>",
+      "css": ".ds-card { background:#fff; border:1px solid #e8e2d8; border-radius:8px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.06); transition:transform 0.42s cubic-bezier(0.22,1,0.36,1), box-shadow 0.42s cubic-bezier(0.22,1,0.36,1); } .ds-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.12); } .ds-card-media { aspect-ratio:4/5; background:linear-gradient(135deg,#f5f0e8 0%,#ece4d6 100%); } .ds-card-body { padding:20px; } .ds-card-cat { font-family:'Albert Sans',sans-serif; font-size:0.65rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#8a6d0f; margin-bottom:8px; } .ds-card-title { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.25rem; font-weight:500; color:#1a1a1a; margin-bottom:10px; line-height:1.25; } .ds-card-price { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.15rem; color:#1a1a1a; margin-bottom:16px; } .ds-card-was { margin-left:8px; font-size:0.85rem; color:#a0a0a0; text-decoration:line-through; }"
+    },
+    {
+      "name": "Navbar",
+      "kind": "nav",
+      "refersTo": "navbar",
+      "description": "Dark bar with a gold hairline. Underline grows from the centre on hover.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-brand\">Chinni Treasure</a><ul class=\"ds-nav-links\"><li><a href=\"#\">Collection</a></li><li><a href=\"#\">Categories</a></li><li><a href=\"#\">Track Order</a></li></ul><button class=\"ds-cart-btn\">Cart · 2</button></nav>",
+      "css": ".ds-nav { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:16px 32px; background:#0d0d0d; border-bottom:1px solid rgba(212,175,55,0.25); } .ds-nav-brand { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.4rem; font-weight:500; letter-spacing:0.02em; color:#d4af37; text-decoration:none; } .ds-nav-links { display:flex; gap:28px; list-style:none; margin:0; padding:0; } .ds-nav-links a { position:relative; font-family:'Albert Sans',sans-serif; font-size:0.72rem; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:#f5f0e8; text-decoration:none; padding-bottom:4px; transition:color 0.3s cubic-bezier(0.4,0,0.2,1); } .ds-nav-links a::after { content:''; position:absolute; left:50%; bottom:0; width:0; height:1px; background:#d4af37; transform:translateX(-50%); transition:width 0.3s cubic-bezier(0.16,1,0.3,1); } .ds-nav-links a:hover { color:#d4af37; } .ds-nav-links a:hover::after { width:100%; } .ds-nav-links a:focus-visible { outline:none; color:#d4af37; box-shadow:0 0 0 3px rgba(212,175,55,0.25); }"
+    },
+    {
+      "name": "Eyebrow Label",
+      "kind": "chip",
+      "refersTo": "eyebrow-label",
+      "description": "The uppercase micro-label that opens every section. Tracking is the whole effect.",
+      "html": "<p class=\"ds-eyebrow-standalone\">Since 2019</p>",
+      "css": ".ds-eyebrow-standalone { font-family:'Albert Sans',-apple-system,'Segoe UI',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#d4af37; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Gilded Atelier",
+    "overview": "Chinni Treasure looks like a jeweller's workbench after closing time. The surface is dark and quiet — lacquer black, warm cream, a single precious metal — and the only thing that moves is light passing over gold. Nothing shouts. The gold appears in small, deliberate amounts: a 48px rule beneath a heading, a hairline under the navbar, a border that warms when you hover. Its scarcity is the point.\n\nRestraint carries the luxury because the price point cannot. At under ₹5,000, this is not a watch-company vault; it is a craft studio that has decided its work deserves to be presented properly. So craft is shown rather than claimed — large photography, generous whitespace, and a serif with real drawn contrast doing the talking. The body copy stays quiet and small; the eye should land on the object, not the sentence about the object.\n\nWarmth is engineered into the mechanics. Everything you can touch lifts two pixels and settles back when pressed. Gold controls catch a diagonal shimmer. This is warmth through the hands rather than through exclamation marks, which is what keeps 'Little Love' from tipping into sentimentality.",
+    "keyCharacteristics": [
+      "Gold is a punctuation mark, never a paragraph",
+      "Dark surfaces, cream content — the room is dim, the work is lit",
+      "Everything tactile lifts and presses",
+      "Uppercase micro-labels with wide tracking open every section",
+      "Photography is the largest element on any product surface",
+      "Motion is slow on entry and instant on response"
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "Gold appears on roughly a tenth of any given screen. Its rarity is the entire point — a page where gold is everywhere reads cheap, and cheap contradicts everything the brand claims.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Gold Rule",
+        "body": "Gold text on cream backgrounds uses --gold-deep, never --gold. The brighter gold fails WCAG AA 4.5:1 against a light ground, and luxury that nobody can read is not luxury.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three-Weight Rule",
+        "body": "Typography runs at three weights only — 300/400 light for serif display, 500/600 for sans labels and body. Nothing heavier, ever. Weight is not how this system creates emphasis; space and gold are.",
+        "section": "typography"
+      },
+      {
+        "name": "The Script Restriction Rule",
+        "body": "Pinyon Script is a signature, not a typeface. It appears only in the footer wordmark and the 'Little Love' tagline. It never touches a heading, body copy, form label, or price.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lift-and-Settle Rule",
+        "body": "Every interactive element lifts translateY(-2px) on hover and presses to translateY(1px) scale(0.985) on active. If something can be touched, it does this. Static interactivity is the fastest way to make a craft store feel like a template.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ambient Shadow Rule",
+        "body": "Shadows are gold-warm and atmospheric, never neutral-grey and structural. A shadow's job is to catch the light in the room, not to explain the stacking order.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Near-Sharp Corner Rule",
+        "body": "Corners stay between 2px and 8px. Nothing is fully square and nothing is pill-shaped, except true pills like badges and quantity controls. Soft-round reads friendly-consumer; fully square reads brutalist. This is neither.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do use --gold-deep for any text on cream or white.",
+      "Do keep photography at 4:5 aspect and let it be the largest thing in the card.",
+      "Do pair every section heading with the 48px gold rule.",
+      "Do lift on hover and press on active for anything clickable.",
+      "Do let the serif carry headlines and the sans carry everything functional.",
+      "Do preserve visible focus rings at 3px gold-tinted spread."
+    ],
+    "donts": [
+      "Don't use --gold for body text on light backgrounds — it fails contrast.",
+      "Don't add a second accent hue; the single-gold discipline is the system.",
+      "Don't set copy in Pinyon Script outside the footer wordmark.",
+      "Don't introduce heavy font weights (700+) to create emphasis.",
+      "Don't use fully square (0px) or pill (999px) corners on cards and buttons.",
+      "Don't add feature CSS to app/globals.css — new styles belong in their own module under app/styles/ and are wired through @import."
+    ]
+  }
+}

@@ -8,6 +8,7 @@ import { prisma } from "@/src/lib/prisma";
 import type { z } from "zod";
 import { sanitize } from "@/src/lib/sanitize";
 import { normalizeVisibleHostnames } from "@/src/lib/domain-filter";
+import { isGiftBoxCategory } from "@/src/lib/gift-box";
 import { ProductInputSchema, UpdateProductInputSchema } from "@/src/lib/api/schemas";
 
 export type CreateProductInput = z.infer<typeof ProductInputSchema>;
@@ -89,7 +90,7 @@ export async function assertGiftBoxNotOnBox(categoryId: number | null | undefine
     where: { id: categoryId },
     select: { slug: true },
   });
-  if (category?.slug === "box") {
+  if (isGiftBoxCategory(category)) {
     throw Object.assign(
       new Error("Gift box bundling cannot be enabled on Gift Box products"),
       { statusCode: 400 },

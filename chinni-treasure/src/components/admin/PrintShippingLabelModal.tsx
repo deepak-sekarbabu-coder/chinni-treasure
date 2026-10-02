@@ -2,7 +2,22 @@
 
 import { useState } from "react";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
+import Modal from "@/src/components/ui/Modal";
 import ShippingLabel, { type ProductRow } from "./ShippingLabel";
+import {
+  addRow,
+  clear,
+  courierName,
+  displayPackDate,
+  draftFromOrder,
+  removeRow,
+  reset,
+  selectCourier,
+  update,
+  updateRow,
+  type LabelDraft,
+  type LabelDraftPatch,
+} from "./label-draft";
 
 interface Props {
   order: Partial<Order> & TrackOrderResult;
@@ -23,33 +38,8 @@ const COURIER_OPTIONS = [
   "Other",
 ];
 
-const EMPTY_PRODUCT_ROW: ProductRow = {
-  orderId: "",
-  styleCode: "",
-  actualPrice: 0,
-  sellPrice: 0,
-  qty: 1,
-};
-
-/**
- * Order items → label rows. The label is a packing artifact with its own
- * projection (flat rows, compare-at as "actual", editable at pack time) —
- * see docs/adr/ADR-0003-document-line-projections.md for why it deliberately
- * does not use `orderLineViews`.
- */
-function productsFromOrder(order: Props["order"]): ProductRow[] {
-  return order.items && order.items.length > 0
-    ? order.items.map((item) => ({
-        orderId: item.product?.sku || item.productId || "-",
-        styleCode: item.productName,
-        actualPrice: item.product?.compareAtPrice
-          ? Number(item.product.compareAtPrice)
-          : Number(item.unitPrice),
-        sellPrice: Number(item.unitPrice),
-        qty: item.quantity,
-      }))
-    : [EMPTY_PRODUCT_ROW];
-}
+// EMPTY_PRODUCT_ROW and productsFromOrder (the label's ADR-0003 projection)
+// moved to ./label-draft.ts — one home, together with every field rule.
 
 /** True when `selectorText` can match the print label — see `collectLabelCSS`. */
 function appliesToLabel(selectorText: string, classes: Set<string>): boolean {
@@ -99,80 +89,14 @@ export function collectLabelCSS(
 }
 
 export default function PrintShippingLabelModal({ order, isOpen, onClose }: Props) {
-  // Helper: Today's date in YYYY-MM-DD
-  const getTodayDateString = () => {
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, "0");
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const yyyy = today.getFullYear();
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  // One draft, one state — init/reset/clear, the courier sync rule, the date
+  // defaults and the row invariants all live in ./label-draft.ts (CONTEXT.md →
+  // Packing label). The JSX only reads the draft and calls ops.
+  const [draft, setDraft] = useState<LabelDraft>(() => draftFromOrder(order));
+  const edit = (patch: LabelDraftPatch) => setDraft((d) => update(d, patch));
 
-  // Helper: Display date format in DD/MM/YYYY
-  const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return "--/--/----";
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return "--/--/----";
-    const [yyyy, mm, dd] = parts;
-    return `${dd}/${mm}/${yyyy}`;
-  };
-
-  const [products, setProducts] = useState<ProductRow[]>(productsFromOrder(order));
-
-  // Form State
-  const [packDate, setPackDate] = useState(getTodayDateString());
-  const [invoiceId, setInvoiceId] = useState(order.orderNumber || "");
-  const [awbNumber, setAwbNumber] = useState(order.trackingId || "");
-  const [paymentAmount, setPaymentAmount] = useState(order.totalAmount || 0);
-  const [courierName, setCourierName] = useState("Delhivery Pvt Ltd");
-  const [courierSelect, setCourierSelect] = useState("Delhivery Pvt Ltd");
-  const [courierCustom, setCourierCustom] = useState("");
-  const [paymentMode, setPaymentMode] = useState("Prepaid");
-  const [recipientName, setRecipientName] = useState(order.customerName || "");
-  const [recipientPhone, setRecipientPhone] = useState(order.customerPhone || "");
-  const [recipientAddress, setRecipientAddress] = useState(
-    [order.addressLine1, order.addressLine2].filter(Boolean).join(", ")
-  );
-  const [recipientCity, setRecipientCity] = useState(order.city || "");
-  const [recipientPincode, setRecipientPincode] = useState(order.postalCode || "");
-
-  // Reset to current order data
-  const resetToOrderData = () => {
-    setPackDate(getTodayDateString());
-    setInvoiceId(order.orderNumber || "");
-    setAwbNumber(order.trackingId || "");
-    setPaymentAmount(order.totalAmount || 0);
-    setCourierName("Delhivery Pvt Ltd");
-    setCourierSelect("Delhivery Pvt Ltd");
-    setCourierCustom("");
-    setPaymentMode("Prepaid");
-    setRecipientName(order.customerName || "");
-    setRecipientPhone(order.customerPhone || "");
-    setRecipientAddress(
-      [order.addressLine1, order.addressLine2].filter(Boolean).join(", ")
-    );
-    setRecipientCity(order.city || "");
-    setRecipientPincode(order.postalCode || "");
-    setProducts(productsFromOrder(order));
-  };
-
-  // Clear all fields
-  const clearAllData = () => {
-    setPackDate(getTodayDateString());
-    setInvoiceId("");
-    setAwbNumber("");
-    setPaymentAmount(0);
-    setCourierName("");
-    setCourierSelect("");
-    setCourierCustom("");
-    setPaymentMode("Prepaid");
-    setRecipientName("");
-    setRecipientPhone("");
-    setRecipientAddress("");
-    setRecipientCity("");
-    setRecipientPincode("");
-    setProducts([EMPTY_PRODUCT_ROW]);
-  };
+  const resetToOrderData = () => setDraft(reset(order));
+  const clearAllData = () => setDraft(clear());
 
   // Print the label in a new popup window containing only the label content
   const handlePrint = () => {
@@ -225,38 +149,28 @@ ${labelHTML}
     }, 500);
   };
 
-  if (!isOpen) return null;
+  // The Modal module renders nothing when closed.
 
-  // Product Actions
+  // Row ops — the ≥1-row invariant stays behind the draft interface.
   const handleProductChange = (index: number, key: keyof ProductRow, val: string | number) => {
-    const updated = [...products];
-    updated[index] = {
-      ...updated[index],
-      [key]: val,
-    };
-    setProducts(updated);
+    setDraft((d) => updateRow(d, index, { [key]: val } as Partial<ProductRow>));
   };
 
-  const addProductRow = () => {
-    setProducts([...products, { ...EMPTY_PRODUCT_ROW }]);
-  };
-
-  const removeProductRow = (index: number) => {
-    const updated = products.filter((_, i) => i !== index);
-    setProducts(updated.length > 0 ? updated : [{ ...EMPTY_PRODUCT_ROW }]);
-  };
+  const addProductRow = () => setDraft((d) => addRow(d));
+  const removeProductRow = (index: number) => setDraft((d) => removeRow(d, index));
 
   const labelContent = (
-    <div
-      className="modal-overlay active print-label-overlay-active"
-      onClick={(e) => e.stopPropagation()}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="shipping-label-editor-title"
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      labelledBy="shipping-label-editor-title"
+      // The editor is deliberately dismissed only by its own Close button —
+      // an operator mid-label shouldn't lose a half-typed AWB to a stray key.
+      // It still sits on the Modal stack, so the parent modal stands down.
+      closeOnEscape={false}
+      overlayClassName="modal-overlay active print-label-overlay-active"
+      contentClassName="print-label-modal-box"
     >
-      <div
-        className="print-label-modal-box"
-      >
         {/* Left Side: Editor Form */}
         <div
           className="print-label-editor-panel"
@@ -291,16 +205,16 @@ ${labelHTML}
                 <label>Packaging Date</label>
                 <input
                   type="date"
-                  value={packDate}
-                  onChange={(e) => setPackDate(e.target.value)}
+                  value={draft.packDate}
+                  onChange={(e) => edit({ packDate: e.target.value })}
                 />
               </div>
               <div className="control-group">
                 <label>Invoice ID</label>
                 <input
                   type="text"
-                  value={invoiceId}
-                  onChange={(e) => setInvoiceId(e.target.value)}
+                  value={draft.invoiceId}
+                  onChange={(e) => edit({ invoiceId: e.target.value })}
                   placeholder="e.g. CH20260701"
                 />
               </div>
@@ -310,8 +224,8 @@ ${labelHTML}
                 <label>AWB Number</label>
                 <input
                   type="text"
-                  value={awbNumber}
-                  onChange={(e) => setAwbNumber(e.target.value)}
+                  value={draft.awbNumber}
+                  onChange={(e) => edit({ awbNumber: e.target.value })}
                   placeholder="Enter AWB / Tracking number"
                 />
               </div>
@@ -319,8 +233,8 @@ ${labelHTML}
                 <label>Payment Amount (₹)</label>
                 <input
                   type="number"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                  value={draft.paymentAmount}
+                  onChange={(e) => edit({ paymentAmount: Number(e.target.value) })}
                   placeholder="0.00"
                   step="0.01"
                 />
@@ -335,31 +249,19 @@ ${labelHTML}
               <div className="control-group">
                 <label>Courier Name</label>
                 <select
-                  value={courierSelect}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setCourierSelect(val);
-                    if (val !== "Other") {
-                      setCourierName(val);
-                      setCourierCustom("");
-                    } else {
-                      setCourierName(courierCustom);
-                    }
-                  }}
+                  value={draft.courierOption}
+                  onChange={(e) => setDraft((d) => selectCourier(d, e.target.value))}
                 >
                   <option value="">Select courier...</option>
                   {COURIER_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
-                {courierSelect === "Other" && (
+                {draft.courierOption === "Other" && (
                   <input
                     type="text"
-                    value={courierCustom}
-                    onChange={(e) => {
-                      setCourierCustom(e.target.value);
-                      setCourierName(e.target.value);
-                    }}
+                    value={draft.courierCustom}
+                    onChange={(e) => edit({ courierCustom: e.target.value })}
                     placeholder="Enter courier name"
                     style={{ marginTop: "6px" }}
                   />
@@ -368,8 +270,8 @@ ${labelHTML}
               <div className="control-group">
                 <label>Payment Mode</label>
                 <select
-                  value={paymentMode}
-                  onChange={(e) => setPaymentMode(e.target.value)}
+                  value={draft.paymentMode}
+                  onChange={(e) => edit({ paymentMode: e.target.value })}
                 >
                   <option value="Prepaid">Prepaid</option>
                   <option value="COD">Cash on Delivery (COD)</option>
@@ -387,8 +289,8 @@ ${labelHTML}
                 <label>Receiver Name</label>
                 <input
                   type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
+                  value={draft.recipientName}
+                  onChange={(e) => edit({ recipientName: e.target.value })}
                   placeholder="Full name"
                 />
               </div>
@@ -396,17 +298,16 @@ ${labelHTML}
                 <label>Receiver Phone</label>
                 <input
                   type="text"
-                  value={recipientPhone}
-                  onChange={(e) => setRecipientPhone(e.target.value)}
+                  value={draft.recipientPhone}
+                  onChange={(e) => edit({ recipientPhone: e.target.value })}
                   placeholder="+91 XXXXX XXXXX"
                 />
               </div>
             </div>
             <div className="control-group">
               <label>Address</label>
-              <textarea
-                value={recipientAddress}
-                onChange={(e) => setRecipientAddress(e.target.value)}
+              <textarea                  value={draft.recipientAddress}
+                  onChange={(e) => edit({ recipientAddress: e.target.value })}
                 placeholder="Street, Locality, Landmark"
               />
             </div>
@@ -415,8 +316,8 @@ ${labelHTML}
                 <label>City</label>
                 <input
                   type="text"
-                  value={recipientCity}
-                  onChange={(e) => setRecipientCity(e.target.value)}
+                  value={draft.recipientCity}
+                  onChange={(e) => edit({ recipientCity: e.target.value })}
                   placeholder="City"
                 />
               </div>
@@ -424,8 +325,8 @@ ${labelHTML}
                 <label>Pincode</label>
                 <input
                   type="text"
-                  value={recipientPincode}
-                  onChange={(e) => setRecipientPincode(e.target.value)}
+                  value={draft.recipientPincode}
+                  onChange={(e) => edit({ recipientPincode: e.target.value })}
                   placeholder="6 digit pincode"
                 />
               </div>
@@ -436,9 +337,9 @@ ${labelHTML}
           <div className="form-section">
             <div className="section-title">🛍 Product Details</div>
             <div>
-              {products.map((p, idx) => (
+              {draft.products.map((p, idx) => (
                 <div key={idx} className="product-entry" style={{ position: "relative" }}>
-                  {products.length > 1 && (
+                  {draft.products.length > 1 && (
                     <button
                       className="btn-remove"
                       onClick={() => removeProductRow(idx)}
@@ -533,22 +434,21 @@ ${labelHTML}
           className="print-label-preview-panel"
         >
           <ShippingLabel
-            displayPackDate={formatDisplayDate(packDate)}
-            courierName={courierName}
-            paymentMode={paymentMode}
-            paymentAmount={paymentAmount}
-            invoiceId={invoiceId}
-            awbNumber={awbNumber}
-            recipientName={recipientName}
-            recipientPhone={recipientPhone}
-            recipientAddress={recipientAddress}
-            recipientCity={recipientCity}
-            recipientPincode={recipientPincode}
-            products={products}
+            displayPackDate={displayPackDate(draft.packDate)}
+            courierName={courierName(draft)}
+            paymentMode={draft.paymentMode}
+            paymentAmount={draft.paymentAmount}
+            invoiceId={draft.invoiceId}
+            awbNumber={draft.awbNumber}
+            recipientName={draft.recipientName}
+            recipientPhone={draft.recipientPhone}
+            recipientAddress={draft.recipientAddress}
+            recipientCity={draft.recipientCity}
+            recipientPincode={draft.recipientPincode}
+            products={draft.products}
           />
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 
   return labelContent;

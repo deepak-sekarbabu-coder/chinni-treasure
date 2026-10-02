@@ -1,6 +1,6 @@
 "use client";
 
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 import { slugify } from "@/src/lib/utils";
 import type { CategoryFormState } from "@/src/lib/hooks/useAdminCategoriesController";
 
@@ -23,24 +23,16 @@ export default function CategoryFormModal({
   onSave,
   onClose,
 }: Props) {
-  const trapRef = useFocusTrap(open);
   const isEdit = form.id !== null;
 
   return (
-    <div
-      className={`modal-overlay ${open ? "active" : ""} ${formClosing ? "closing" : ""}`}
-      ref={trapRef}
-      onClick={onClose}
-      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
-      aria-hidden={!open}
+    <Modal
+      open={open}
+      onClose={onClose}
+      labelledBy="category-form-modal-title"
+      overlayClassName={`modal-overlay ${open ? "active" : ""} ${formClosing ? "closing" : ""}`}
+      contentClassName="modal-content category-form-modal"
     >
-      <div
-        className="modal-content category-form-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="category-form-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="modal-header">
           <h2 id="category-form-modal-title" className="font-serif">
             {isEdit ? "Edit Category" : "Add New Category"}
@@ -114,7 +106,6 @@ export default function CategoryFormModal({
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

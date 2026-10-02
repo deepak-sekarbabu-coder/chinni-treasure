@@ -14,6 +14,7 @@ import {
 } from "@/src/lib/api/schemas";
 import { ORDER_STATUS_ALL } from "@/src/lib/constants";
 import { CATEGORY_SORT_KEYS } from "@/src/lib/sort-contract";
+import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
 
 /**
  * The docs interface is generated from the Zod contract rather than typed
@@ -368,7 +369,8 @@ export const openApiSpec = {
             headers: {
               "Cache-Control": {
                 schema: { type: "string" },
-                description: "public, s-maxage=60, stale-while-revalidate=120",
+                // Derived from the gift-box cache's own TTL, never restated.
+                description: publicCacheControl(PUBLIC_TTL.giftBoxes),
               },
             },
           },
@@ -402,7 +404,9 @@ export const openApiSpec = {
             headers: {
               "Cache-Control": {
                 schema: { type: "string" },
-                description: "public, s-maxage=60",
+                // Derived from the products cache's own TTL. The admin
+                // (isActive=all|inactive) responses answer `private, no-store`.
+                description: publicCacheControl(PUBLIC_TTL.products),
               },
             },
           },
@@ -684,7 +688,9 @@ export const openApiSpec = {
     "/api/orders/{id}": {
       get: {
         tags: ["Orders"],
-        summary: "Get a single order by ID (public)",
+        summary: "Get a single order by ID (public, phone-verified)",
+        description:
+          "Unauthenticated read, same contract as `/api/track`: the order id **and** the phone number on the order. A bare id is not a credential, and a mismatch answers 404 like a missing order, so the endpoint cannot be used to probe which ids exist. Rate-limited like tracking, and never edge-cached (`private, no-store`).",
         operationId: "getOrder",
         parameters: [
           {
@@ -692,6 +698,13 @@ export const openApiSpec = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "phone",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "The order's 10-digit customer phone number.",
           },
         ],
         responses: {
@@ -702,8 +715,16 @@ export const openApiSpec = {
                 schema: { $ref: "#/components/schemas/OrderDetail" },
               },
             },
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string" },
+                description: "private, no-store",
+              },
+            },
           },
-          "404": { description: "Order not found" },
+          "400": { description: "Missing or invalid phone parameter" },
+          "404": { description: "Order not found, or the phone does not match" },
+          "429": { description: "Rate limited" },
         },
       },
     },

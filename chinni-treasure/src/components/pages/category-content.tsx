@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import ProductGrid from "@/src/components/pages/ProductGrid";
+import { ssrPageSlice, useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
@@ -24,7 +25,6 @@ interface Props {
   category: CategoryInfo;
   initialProducts: CatalogueProduct[];
   initialTotal: number;
-  initialTotalPages: number;
 }
 
 // The picker's keys, order and labels all come from the one catalogue sort
@@ -35,20 +35,19 @@ export default function CategoryContent({
   category,
   initialProducts,
   initialTotal,
-  initialTotalPages,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortKey>("newest");
 
   const pageSize = useResponsivePageSize();
 
-  // The SSR payload is wider than the responsive page size; trim it so the
-  // first paint matches the page it claims to be.
+  // The SSR payload is CATALOGUE_PAGE_SIZE wide; trim it to the responsive
+  // page size so the first paint matches the page it claims to be.
   const initialData = useMemo<CategoryProductsResponse>(
     () =>
       ({
         category,
-        products: (initialProducts as CategoryProductsResponse["products"]).slice(0, pageSize),
+        products: ssrPageSlice(initialProducts as CategoryProductsResponse["products"], pageSize),
         total: initialTotal,
         page: currentPage,
         limit: pageSize,
@@ -65,15 +64,11 @@ export default function CategoryContent({
     initialData,
   );
 
-  const products = categoryQuery.data?.products ?? initialProducts;
-  const totalPages = categoryQuery.data?.totalPages ?? initialTotalPages;
-  const total = categoryQuery.data?.total ?? initialTotal;
-  const loading = categoryQuery.isFetching;
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const listing = useCatalogueListing({
+    query: categoryQuery,
+    initial: { products: initialProducts, total: initialTotal },
+    setCurrentPage,
+  });
 
   const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSort(e.target.value as SortKey);
@@ -106,18 +101,20 @@ export default function CategoryContent({
 
         <ProductGrid
           label={`${category.name} products`}
-          products={products}
-          total={total}
-          totalPages={totalPages}
-          pageSize={pageSize}
+          products={listing.products}
+          total={listing.total}
+          totalPages={listing.totalPages}
+          pageSize={listing.pageSize}
           currentPage={currentPage}
-          onPageChange={handlePageChange}
-          loading={loading}
+          onPageChange={listing.onPageChange}
+          loading={listing.loading}
+          filterLoading={listing.filterLoading}
+          filterError={listing.filterError}
           emptyMessage="No products in this category yet."
           countLabel={
             <div className="catalogue-toolbar">
               <span className="catalogue-count" aria-live="polite">
-                {loading && products.length === 0
+                {listing.loading && listing.products.length === 0
                   ? "Loading…"
                   : `${initialTotal} product${initialTotal === 1 ? "" : "s"}`}
               </span>

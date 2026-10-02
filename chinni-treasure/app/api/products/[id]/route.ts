@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
 import { withAdmin } from "@/src/lib/route-guard";
 import { assertGiftBoxNotOnBox, buildUpdateData } from "@/src/lib/catalogue-write";
+import { normalizeImageSet } from "@/src/lib/image-set";
 import { UpdateProductInputSchema } from "@/src/lib/api/schemas";
 
 // PUT /api/products/[id] — Update a product (admin only)
@@ -14,18 +15,13 @@ export const PUT = withAdmin<{ id: string }>(
 
     const { images, allowGiftBoxBundling, ...productFields } = parsed.data;
 
-    // Handle image updates: delete existing, create new ones
+    // Handle image updates: delete existing, create new ones. The image-set
+    // module owns the invariant, so this route can't store two primaries.
     if (images !== undefined) {
+      const imageSet = normalizeImageSet(images).map((img) => ({ productId: id, ...img }));
       await prisma.productImage.deleteMany({ where: { productId: id } });
-      if (images.length > 0) {
-        await prisma.productImage.createMany({
-          data: images.map((img, idx) => ({
-            productId: id,
-            url: img.url,
-            isPrimary: img.isPrimary ?? idx === 0,
-            displayOrder: img.displayOrder ?? idx,
-          })),
-        });
+      if (imageSet.length > 0) {
+        await prisma.productImage.createMany({ data: imageSet });
       }
     }
 

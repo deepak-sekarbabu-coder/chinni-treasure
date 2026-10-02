@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FREE_SHIPPING_THRESHOLD, shippingProgress } from "@/src/lib/pricing";
 import { formatRupees } from "@/src/lib/format";
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 import type { ShippingNudgeState } from "@/src/lib/hooks/useShippingNudge";
 
 interface Props {
@@ -20,29 +20,17 @@ export default function ShippingNudgePopup({
   shippingLeft,
   dismiss,
 }: Props) {
-  const trapRef = useFocusTrap(show);
-
-  if (!show) return null;
-
   const { percent: progress } = shippingProgress(newTotal);
 
   return (
-    <div
-      className="shipping-nudge-overlay"
-      ref={trapRef}
-      onClick={dismiss}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") dismiss();
-      }}
+    <Modal
+      open={show}
+      onClose={dismiss}
+      labelledBy="shipping-nudge-title"
+      describedBy="shipping-nudge-description"
+      overlayClassName="shipping-nudge-overlay"
+      contentClassName="shipping-nudge-sheet"
     >
-      <div
-        className="shipping-nudge-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="shipping-nudge-title"
-        aria-describedby="shipping-nudge-description"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="shipping-nudge-handle" aria-hidden="true" />
         <div className="shipping-nudge-header">
           <p className="shipping-nudge-kicker">Free shipping unlocked soon</p>
@@ -72,7 +60,6 @@ export default function ShippingNudgePopup({
             No thanks
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

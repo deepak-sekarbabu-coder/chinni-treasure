@@ -12,7 +12,7 @@ import {
 import AdminDataTable from "@/src/components/admin/table/AdminDataTable";
 import { AdminCardList } from "@/src/components/admin/table/AdminList";
 import { createCategoryColumns } from "@/src/components/admin/table/columns.categories";
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 import CategoryFormModal from "@/src/components/admin/CategoryFormModal";
 import type { CategoriesPanelViewModel } from "@/src/components/admin/useAdminCategoriesPanel";
 
@@ -38,7 +38,6 @@ export default function AdminCategoriesPanel({ panel }: { panel: CategoriesPanel
     onConfirmDelete,
     onToggleActive,
   } = panel.actions;
-  const deleteTrapRef = useFocusTrap(deleteConfirm.open);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
@@ -199,57 +198,48 @@ export default function AdminCategoriesPanel({ panel }: { panel: CategoriesPanel
         })}
       </AdminCardList>
 
-      {deleteConfirm.open && (
-        <div
-          className="modal-overlay active"
-          ref={deleteTrapRef}
-          onClick={onCancelDelete}
-          onKeyDown={(e) => { if (e.key === "Escape") onCancelDelete(); }}
-        >
-          <div
-            className="modal-content modal-content-md"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-cat-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2 id="delete-cat-title">Confirm Delete</h2>
-              <button className="modal-close" onClick={onCancelDelete}>
-                <X size={16} weight="bold" aria-hidden="true" />
+      <Modal
+        open={deleteConfirm.open}
+        onClose={onCancelDelete}
+        labelledBy="delete-cat-title"
+        overlayClassName="modal-overlay active"
+        contentClassName="modal-content modal-content-md"
+      >
+          <div className="modal-header">
+            <h2 id="delete-cat-title">Confirm Delete</h2>
+            <button className="modal-close" onClick={onCancelDelete}>
+              <X size={16} weight="bold" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="modal-body">
+            {deleteConfirm.productCount > 0 ? (
+              <p className="delete-warning mb-10">
+                This category still has {deleteConfirm.productCount} active product(s).
+                Reassign or delete them first before removing the category.
+              </p>
+            ) : (
+              <p className="delete-warning mb-10">
+                This action will permanently remove the category.
+              </p>
+            )}
+            <div className="delete-box">
+              <p className="delete-label">Category</p>
+              <p className="delete-name">{deleteConfirm.categoryName}</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn btn-danger"
+                onClick={onConfirmDelete}
+                disabled={deleteConfirm.productCount > 0}
+              >
+                {deleteConfirm.productCount > 0 ? "Cannot Delete" : "Yes, Delete Category"}
+              </button>
+              <button className="btn btn-secondary" onClick={onCancelDelete} autoFocus>
+                Keep Category
               </button>
             </div>
-            <div className="modal-body">
-              {deleteConfirm.productCount > 0 ? (
-                <p className="delete-warning mb-10">
-                  This category still has {deleteConfirm.productCount} active product(s).
-                  Reassign or delete them first before removing the category.
-                </p>
-              ) : (
-                <p className="delete-warning mb-10">
-                  This action will permanently remove the category.
-                </p>
-              )}
-              <div className="delete-box">
-                <p className="delete-label">Category</p>
-                <p className="delete-name">{deleteConfirm.categoryName}</p>
-              </div>
-              <div className="modal-actions">
-                <button
-                  className="btn btn-danger"
-                  onClick={onConfirmDelete}
-                  disabled={deleteConfirm.productCount > 0}
-                >
-                  {deleteConfirm.productCount > 0 ? "Cannot Delete" : "Yes, Delete Category"}
-                </button>
-                <button className="btn btn-secondary" onClick={onCancelDelete} autoFocus>
-                  Keep Category
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

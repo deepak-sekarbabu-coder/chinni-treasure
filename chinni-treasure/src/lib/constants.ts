@@ -101,6 +101,14 @@ export const PRODUCT_BADGES = ["bestseller", "new", "premium", "limited", "luxur
 
 export type ProductBadgeValue = (typeof PRODUCT_BADGES)[number];
 
+/**
+ * How wide the catalogue and category pages render server-side. It sizes the
+ * SSR payload, so the page that fetches and the hook that seeds React Query
+ * with that payload must agree — one number, here. The client re-slices to the
+ * responsive page size for the first paint (see `useCatalogueListing`).
+ */
+export const CATALOGUE_PAGE_SIZE = 6;
+
 export const INDIAN_STATES = [
   { code: "AN", name: "Andaman and Nicobar Islands" },
   { code: "AP", name: "Andhra Pradesh" },

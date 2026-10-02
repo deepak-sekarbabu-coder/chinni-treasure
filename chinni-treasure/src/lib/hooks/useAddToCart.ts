@@ -5,6 +5,7 @@ import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import type { GiftBoxModalProduct, SelectedGiftBox } from "@/src/components/pages/GiftBoxModal";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
+import { canBundleGiftBoxes } from "@/src/lib/gift-box";
 
 /** A gift-box line the customer picked in the modal. */
 type GiftBoxItem = SelectedGiftBox;
@@ -71,7 +72,7 @@ export function useAddToCart(options: {
 
   const handleAdd = useCallback(
     (p: CatalogueProduct) => {
-      if (p.allowGiftBoxBundling && p.category?.name !== "Gift Boxes") {
+      if (canBundleGiftBoxes(p)) {
         setGiftBoxProduct({
           id: p.id,
           name: p.name,

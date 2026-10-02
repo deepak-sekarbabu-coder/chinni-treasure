@@ -5,6 +5,7 @@ import { sanitize } from "@/src/lib/sanitize";
 import { ORDER_STATUS_ACTIONS } from "@/src/lib/constants";
 import { computePricing } from "@/src/lib/pricing";
 import { CheckoutFields } from "@/src/lib/checkout-fields";
+import { isGiftBoxCategory } from "@/src/lib/gift-box";
 import { prisma } from "@/src/lib/prisma";
 import {
   UpdateOrderStatusInputSchema,
@@ -195,7 +196,7 @@ export async function placeOrder(
         // Validate gift box bundling rules
         if (item.giftBoxes && item.giftBoxes.length > 0) {
           // A gift box product cannot be used as a bundle parent
-          if (product.category?.slug === "box") {
+          if (isGiftBoxCategory(product.category)) {
             throw new OrderError(
               "Gift box products cannot be bundled onto other products",
               400,
@@ -213,7 +214,7 @@ export async function placeOrder(
             if (!gbProduct) {
               throw new OrderError(`Gift box product ${gb.id} not found`, 404);
             }
-            if (gbProduct.category?.slug !== "box") {
+            if (!isGiftBoxCategory(gbProduct.category)) {
               throw new OrderError(
                 `Product ${gbProduct.name} is not a gift box`,
                 400,

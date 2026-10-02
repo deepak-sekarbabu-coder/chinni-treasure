@@ -114,7 +114,9 @@ const ProductCoreSchema = z.object({
 });
 
 export const ProductSchema = ProductCoreSchema.extend({
-  category: z.object({ name: z.string() }).nullable(),
+  // slug travels with name: the gift-box rule keys on the category's identity,
+  // so a client given only the display name has to match on the label.
+  category: z.object({ name: z.string(), slug: z.string() }).nullable(),
   categoryId: z.number().nullable(),
   isActive: z.boolean(),
   visibleHostnames: z.string().nullable().optional(),
@@ -130,7 +132,7 @@ export const ProductsResponseSchema = PageMetaSchema.extend({
 // Stays exported: it is the declared source of the `CatalogueProduct` type the
 // catalogue grid consumes, so it is interface, not dead surface.
 export const CatalogueProductSchema = ProductCoreSchema.extend({
-  category: z.object({ name: z.string() }).nullable(),
+  category: z.object({ name: z.string(), slug: z.string() }).nullable(),
   images: z.array(ProductImageSchema).optional(),
 });
 

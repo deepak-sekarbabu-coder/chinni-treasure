@@ -2,11 +2,19 @@
 
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { useState, useEffect } from "react";
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 import ImageLightbox from "@/src/components/ui/ImageLightbox";
 import type { Category } from "@/src/lib/api/schemas";
 import { PRODUCT_BADGES } from "@/src/lib/constants";
 import { isDisplayableImageUrl } from "@/src/lib/product-display";
+import { isGiftBoxCategory } from "@/src/lib/gift-box";
+import {
+  addImage as addImageToSet,
+  editImage,
+  moveImage as moveImageInSet,
+  removeImage as removeImageFromSet,
+  setPrimary as setSetPrimary,
+} from "@/src/lib/image-set";
 import type { ProductFormData } from "@/src/types";
 
 const BADGE_LABELS: Record<(typeof PRODUCT_BADGES)[number], string> = {
@@ -46,11 +54,10 @@ export default function ProductFormModal({
   onSave,
   onClose,
 }: Props) {
-  const trapRef = useFocusTrap(open);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const isGiftBoxCategory = categories.find(
-    (c) => c.id === Number(productForm.categoryId)
-  )?.slug === "box";
+  const inGiftBoxCategory = isGiftBoxCategory(
+    categories.find((c) => c.id === Number(productForm.categoryId)),
+  );
 
   // The server rejects bundling on a Gift Box product (assertGiftBoxNotOnBox) and
   // this control is disabled for that category, so a `true` here would make the
@@ -58,10 +65,10 @@ export default function ProductFormModal({
   // product into Gift Boxes with the toggle already on, or by opening a row whose
   // column was seeded true outside this guard. Reconcile instead of dead-ending.
   useEffect(() => {
-    if (isGiftBoxCategory && productForm.allowGiftBoxBundling) {
+    if (inGiftBoxCategory && productForm.allowGiftBoxBundling) {
       onFormChange({ ...productForm, allowGiftBoxBundling: false });
     }
-  }, [isGiftBoxCategory, productForm, onFormChange]);
+  }, [inGiftBoxCategory, productForm, onFormChange]);
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editUrl, setEditUrl] = useState("");
@@ -74,6 +81,8 @@ export default function ProductFormModal({
     onFormChange({ ...productForm, [field]: value });
   }
 
+  // Every image edit is an op from the image-set module, so the admin form and
+  // both write routes enforce one invariant instead of four hand-rolled copies.
   const addImage = () => {
     const url = newImageUrl.trim();
     if (!url) return;
@@ -82,48 +91,20 @@ export default function ProductFormModal({
       return;
     }
     setImageUrlError("");
-    const isFirst = productForm.images.length === 0;
-    onFormChange({
-      ...productForm,
-      images: [
-        ...productForm.images,
-        { url, isPrimary: isFirst, displayOrder: productForm.images.length },
-      ],
-    });
+    onFormChange({ ...productForm, images: addImageToSet(productForm.images, url) });
     setNewImageUrl("");
   };
 
   const removeImage = (index: number) => {
-    const remaining = productForm.images.filter((_, i) => i !== index);
-    const updated = remaining.map((img, i) => ({
-      ...img,
-      displayOrder: i,
-      isPrimary: img.isPrimary,
-    }));
-    // Ensure at least one primary image
-    if (updated.length > 0 && !updated.some((img) => img.isPrimary)) {
-      updated[0].isPrimary = true;
-    }
-    onFormChange({ ...productForm, images: updated });
+    onFormChange({ ...productForm, images: removeImageFromSet(productForm.images, index) });
   };
 
   const setPrimary = (index: number) => {
-    const updated = productForm.images.map((img, i) => ({
-      ...img,
-      isPrimary: i === index,
-    }));
-    onFormChange({ ...productForm, images: updated });
+    onFormChange({ ...productForm, images: setSetPrimary(productForm.images, index) });
   };
 
-  const moveImage = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= productForm.images.length) return;
-    const updated = [...productForm.images];
-    [updated[index], updated[target]] = [updated[target], updated[index]];
-    onFormChange({
-      ...productForm,
-      images: updated.map((img, i) => ({ ...img, displayOrder: i })),
-    });
+  const moveImageRow = (index: number, direction: -1 | 1) => {
+    onFormChange({ ...productForm, images: moveImageInSet(productForm.images, index, direction) });
   };
 
   const startEditImage = (index: number) => {
@@ -144,26 +125,20 @@ export default function ProductFormModal({
       return;
     }
     setImageUrlError("");
-    const updated = productForm.images.map((img, i) =>
-      i === index ? { ...img, url: trimmed } : img,
-    );
-    onFormChange({ ...productForm, images: updated });
+    onFormChange({ ...productForm, images: editImage(productForm.images, index, trimmed) });
     setEditingIndex(null);
     setEditUrl("");
   };
 
   return (
-    <div
-      className={`modal-overlay ${open ? "active" : ""} ${formClosing ? "closing" : ""}`}
-      ref={trapRef}
-      aria-hidden={!open}
-    >
-      <div
-        className="modal-content product-form-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="product-form-modal-title"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        labelledBy="product-form-modal-title"
+        closeOnOverlayClick={false}
+        overlayClassName={`modal-overlay ${open ? "active" : ""} ${formClosing ? "closing" : ""}`}
+        contentClassName="modal-content product-form-modal"
       >
         <div className="modal-header">
           <h2 id="product-form-modal-title" className="font-serif">
@@ -245,14 +220,14 @@ export default function ProductFormModal({
                       type="checkbox"
                       checked={productForm.allowGiftBoxBundling}
                       onChange={(e) => onFormChange({ ...productForm, allowGiftBoxBundling: e.target.checked })}
-                      disabled={isGiftBoxCategory}
+                      disabled={inGiftBoxCategory}
                     />
                     <span className="toggle-slider"></span>
                     <span className="toggle-label">
                       {productForm.allowGiftBoxBundling ? "Enabled" : "Disabled"}
                     </span>
                   </label>
-                  {isGiftBoxCategory && (
+                  {inGiftBoxCategory && (
                     <p className="form-hint">
                       Gift Box products cannot enable bundling
                     </p>
@@ -372,7 +347,7 @@ export default function ProductFormModal({
                               <button
                                 type="button"
                                 className="btn btn-xs btn-secondary"
-                                onClick={() => moveImage(idx, -1)}
+                                onClick={() => moveImageRow(idx, -1)}
                                 disabled={idx === 0 || editingIndex !== null}
                                 title="Move left"
                               >
@@ -381,7 +356,7 @@ export default function ProductFormModal({
                               <button
                                 type="button"
                                 className="btn btn-xs btn-secondary"
-                                onClick={() => moveImage(idx, 1)}
+                                onClick={() => moveImageRow(idx, 1)}
                                 disabled={idx === productForm.images.length - 1 || editingIndex !== null}
                                 title="Move right"
                               >
@@ -426,7 +401,7 @@ export default function ProductFormModal({
             </div>
           </form>
         </div>
-      </div>
+      </Modal>
 
       {/* High-Res Preview — the shared viewer; zoom is core behavior, not
           a private wheel handler. Single-image list: no nav, zoom controls on. */}
@@ -438,7 +413,7 @@ export default function ProductFormModal({
           zoom
         />
       )}
-    </div>
+    </>
   );
 }
 

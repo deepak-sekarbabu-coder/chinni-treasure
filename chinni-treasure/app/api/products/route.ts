@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
 import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
-import { SORT_OPTIONS, type SortKey } from "@/src/lib/catalogue-cache";
+import { CATALOGUE_CACHE_CONTROL, SORT_OPTIONS, type SortKey } from "@/src/lib/catalogue-cache";
 import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { parseListQuery } from "@/src/lib/list-query";
 import { assertGiftBoxNotOnBox, buildCreateData } from "@/src/lib/catalogue-write";
+import { normalizeImageSet } from "@/src/lib/image-set";
 import { ProductInputSchema } from "@/src/lib/api/schemas";
 import { listProductsForQuery, type ProductStatusFilter } from "@/src/lib/product-read";
 
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
       // the session that was allowed to see them — a shared edge cache would
       // hand them to anonymous callers.
       status === "active"
-        ? { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
+        ? { headers: { "Cache-Control": CATALOGUE_CACHE_CONTROL.products } }
         : { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
@@ -81,17 +82,16 @@ export const POST = withAdmin(
       await assertGiftBoxNotOnBox(productData.categoryId ?? null);
     }
 
+    // The image-set module owns the "one primary, contiguous order" invariant;
+    // the old `isPrimary ?? idx === 0` was dead (Zod defaults it false), so two
+    // primaries could be stored.
+    const imageSet = images ? normalizeImageSet(images) : [];
+
     const product = await prisma.product.create({
       data: {
         ...buildCreateData({ ...productData, allowGiftBoxBundling }),
-        images: images && images.length > 0
-          ? {
-            create: images.map((img, idx) => ({
-              url: img.url,
-              isPrimary: img.isPrimary ?? idx === 0,
-              displayOrder: img.displayOrder ?? idx,
-            })),
-          }
+        images: imageSet.length > 0
+          ? { create: imageSet }
           : undefined,
       },
       include: {

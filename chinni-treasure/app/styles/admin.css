@@ -1352,35 +1352,6 @@
     pointer-events: none;
 }
 
-/* ── Stagger delays ── */
-.delay-1 {
-    animation-delay: 0.05s;
-}
-
-.delay-2 {
-    animation-delay: 0.1s;
-}
-
-.delay-3 {
-    animation-delay: 0.15s;
-}
-
-.delay-4 {
-    animation-delay: 0.2s;
-}
-
-.delay-5 {
-    animation-delay: 0.25s;
-}
-
-.delay-6 {
-    animation-delay: 0.3s;
-}
-
-.delay-7 {
-    animation-delay: 0.35s;
-}
-
 /* ── Toggle Switch ── */
 .form-group .toggle-switch {
     position: relative;
@@ -1560,18 +1531,6 @@
         font-size: 0.8rem;
         min-width: 50px;
     }
-}
-
-.delay-8 {
-    animation-delay: 0.4s;
-}
-
-.delay-9 {
-    animation-delay: 0.45s;
-}
-
-.delay-10 {
-    animation-delay: 0.5s;
 }
 
 /* ── Fade in scroll animation ── */

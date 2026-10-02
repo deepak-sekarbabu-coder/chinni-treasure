@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { SORT_OPTIONS, type SortKey } from "@/src/lib/sort-contract";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
 import { revalidateTag } from "next/cache";
+import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
 import type { LatestCategorySection } from "@/src/lib/api/schemas";
 
 /**
@@ -19,14 +20,26 @@ import type { LatestCategorySection } from "@/src/lib/api/schemas";
  * The active-product index (catIndex) is loaded and cached here, so the
  * filtering/sorting vocabulary used to query that index lives here too.
  */
-export const productsCache = createRedisCache(30_000, "products");
+export const productsCache = createRedisCache(PUBLIC_TTL.products, "products");
 // Full active-product index per hostname; public catalogue searches filter
 // this list in memory instead of querying Postgres per keystroke.
 const catIndexCache = createRedisCache(60_000, "catindex");
-export const categoriesCache = createRedisCache(300_000, "categories");
-const catLatestCache = createRedisCache(60_000, "catlatest");
-export const catPageCache = createRedisCache(60_000, "catpage");
-export const giftBoxCache = createRedisCache(60_000, "giftboxes");
+export const categoriesCache = createRedisCache(PUBLIC_TTL.categories, "categories");
+const catLatestCache = createRedisCache(PUBLIC_TTL.latest, "catlatest");
+export const catPageCache = createRedisCache(PUBLIC_TTL.categoryPage, "catpage");
+export const giftBoxCache = createRedisCache(PUBLIC_TTL.giftBoxes, "giftboxes");
+
+/**
+ * The public `Cache-Control` for each catalogue read, derived from the TTL the
+ * cache above is built with — routes spread these instead of restating seconds.
+ */
+export const CATALOGUE_CACHE_CONTROL = {
+  products: publicCacheControl(PUBLIC_TTL.products),
+  categories: publicCacheControl(PUBLIC_TTL.categories),
+  latest: publicCacheControl(PUBLIC_TTL.latest),
+  categoryPage: publicCacheControl(PUBLIC_TTL.categoryPage),
+  giftBoxes: publicCacheControl(PUBLIC_TTL.giftBoxes),
+} as const;
 
 const CATALOGUE_CACHES = [
   productsCache,
@@ -134,7 +147,7 @@ export async function loadLatestCategories(): Promise<LatestCategorySection[]> {
 // ---------------------------------------------------------------------------
 
 export type CatalogueIndexProduct = Prisma.ProductGetPayload<{
-  include: { category: { select: { name: true } }; images: true };
+  include: { category: { select: { name: true; slug: true } }; images: true };
 }>;
 
 // The sort contract itself (key → orderBy, plus the picker labels and the
@@ -196,7 +209,7 @@ async function loadActiveIndex(hostname: string | null): Promise<CatalogueIndexP
   const products = await prisma.product.findMany({
     where: { isActive: true, deletedAt: null, ...domainFilterWhere(hostname) },
     include: {
-      category: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
       images: { orderBy: { displayOrder: "asc" } },
     },
     orderBy: [{ stockQuantity: "desc" }, { id: "desc" }],

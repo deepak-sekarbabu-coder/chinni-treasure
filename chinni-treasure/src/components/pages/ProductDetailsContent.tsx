@@ -12,6 +12,7 @@ import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/Gi
 import type { ProductDetailView } from "@/src/lib/product-read";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
 import { productDisplayView } from "@/src/lib/product-display";
+import { canBundleGiftBoxes } from "@/src/lib/gift-box";
 import { formatMoney } from "@/src/lib/format";
 
 interface Props {
@@ -148,7 +149,7 @@ export default function ProductDetailsContent({ product }: Props) {
                     </div>
 
                     <div className="product-details-actions">
-                        {product.allowGiftBoxBundling && product.category?.name !== "Gift Boxes" && (
+                        {canBundleGiftBoxes(product) && (
                             <GiftBoxSelector
                                 parentQuantity={quantity}
                                 selected={selectedGiftBoxes}

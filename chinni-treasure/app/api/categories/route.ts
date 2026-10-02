@@ -7,6 +7,7 @@ import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 import { slugify } from "@/src/lib/utils";
 import { generateUniqueSlug } from "@/src/lib/catalogue-write";
+import { CATALOGUE_CACHE_CONTROL } from "@/src/lib/catalogue-cache";
 import { loadActiveCategories } from "@/src/lib/product-read";
 
 // GET /api/categories
@@ -23,9 +24,7 @@ export async function GET(request: Request) {
     if (!includeInactive) {
       const categories = await loadActiveCategories();
       return NextResponse.json(categories, {
-        headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-        },
+        headers: { "Cache-Control": CATALOGUE_CACHE_CONTROL.categories },
       });
     }
 

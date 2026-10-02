@@ -27,8 +27,6 @@ export const metadata: Metadata = {
   },
 };
 
-const CATALOGUE_PAGE_SIZE = 6;
-
 interface CategoryOption {
   id: number;
   name: string;
@@ -46,7 +44,6 @@ export default async function CataloguePage(props: {
   let products: Awaited<ReturnType<typeof listCatalogue>>["products"] = [];
   let categories: CategoryOption[] = [];
   let total = 0;
-  let totalPages = 1;
 
   const headersList = await headers();
   const hostname = headersList.get("host");
@@ -61,7 +58,6 @@ export default async function CataloguePage(props: {
     const result = await listCatalogue(hostname, validCategoryId);
     products = result.products;
     total = result.total;
-    totalPages = Math.max(1, Math.ceil(total / CATALOGUE_PAGE_SIZE));
   } catch (err) {
     console.error("Failed to fetch catalogue data:", err);
   }
@@ -87,7 +83,6 @@ export default async function CataloguePage(props: {
       <CatalogueContent
         initialProducts={products}
         initialTotal={total}
-        initialTotalPages={totalPages}
         initialSearch={initialSearch}
         initialCategories={categories ?? []}
         initialCategoryId={validCategoryId}

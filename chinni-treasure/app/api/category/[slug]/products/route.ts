@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getHostFromRequest } from "@/src/lib/domain-filter";
 import { listByCategory } from "@/src/lib/product-read";
 import { CATEGORY_SORT_MAP, type CategorySortKey } from "@/src/lib/sort-contract";
+import { CATALOGUE_CACHE_CONTROL } from "@/src/lib/catalogue-cache";
 import { parseListQuery } from "@/src/lib/list-query";
 import { withPublic } from "@/src/lib/route-guard";
 
 const RESPONSE_HEADERS = {
-  headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+  headers: { "Cache-Control": CATALOGUE_CACHE_CONTROL.categoryPage },
 };
 
 // GET /api/category/[slug]/products

@@ -2,6 +2,8 @@ import { createRedisCache } from "@/src/lib/redis-cache";
 import { statsCache } from "@/src/lib/stats-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
+import { fieldIssue } from "@/src/lib/checkout-fields";
 import type { OrderView } from "@/src/lib/order-view";
 import {
   buildTrackCacheKey,
@@ -18,8 +20,11 @@ import {
  * mutation (placement, status change, tracking update) to keep the dashboard
  * fresh.
  */
-const orderDetailCache = createRedisCache(30_000, "order");
-export const trackingCache = createRedisCache(15_000, "track");
+const orderDetailCache = createRedisCache(PUBLIC_TTL.orderDetail, "order");
+export const trackingCache = createRedisCache(PUBLIC_TTL.tracking, "track");
+
+/** The public `Cache-Control` for `/api/track`, derived from the TTL above. */
+export const TRACK_CACHE_CONTROL = publicCacheControl(PUBLIC_TTL.tracking);
 
 export type DetailedOrder = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } }; statusHistory: true };
@@ -27,9 +32,9 @@ export type DetailedOrder = Prisma.OrderGetPayload<{
 
 /**
  * Read one order through the order-detail cache — the module's single order
- * detail pipeline. /api/orders/[id] and the SSR confirmation page both call
- * this, so invalidation (invalidateOrderCache(id) → orderDetailCache.remove)
- * reaches both with no extra wiring.
+ * detail pipeline. `getOrderDetailForAudience` and the SSR confirmation page
+ * both call this, so invalidation (invalidateOrderCache(id) →
+ * orderDetailCache.remove) reaches both with no extra wiring.
  */
 export async function getOrderDetail(id: string): Promise<DetailedOrder | null> {
   const cached = (await orderDetailCache.get(id)) as DetailedOrder | null;
@@ -45,6 +50,42 @@ export async function getOrderDetail(id: string): Promise<DetailedOrder | null> 
 
 /** Tracking lookup: the projected orders, or the 400/404 the route maps. */
 export type TrackResult = { error: string; status: number } | { orders: OrderView[] };
+
+/** An unauthenticated order read: the order, or the 400/404 the route maps. */
+export type OrderDetailResult =
+  | { error: string; status: number }
+  | { order: DetailedOrder };
+
+/**
+ * Read one order for an **unauthenticated** caller — the one audience rule for
+ * "look at an Order without a session", shared with the tracking seam.
+ *
+ * The route used to answer a bare UUID from the edge, which made a
+ * shared CDN entry and a PII disclosure for anyone holding a link. An
+ * unauthenticated read now needs the same second factor tracking does
+ * (id **and** the order's phone), and a mismatch answers 404 rather than 403
+ * so the endpoint cannot be used to probe which ids exist. The response is
+ * `private, no-store` (see the route): a phone-keyed PII body has no business
+ * in a shared cache.
+ *
+ * The admin/session surfaces are unaffected — they read `getOrderDetail`.
+ */
+export async function getOrderDetailForAudience(
+  id: string,
+  phone: string | null,
+): Promise<OrderDetailResult> {
+  const cleanPhone = (phone ?? "").replace(/\D/g, "");
+  if (!cleanPhone) return { error: "Provide a phone parameter", status: 400 };
+  const issue = fieldIssue("customerPhone", cleanPhone);
+  if (issue) return { error: issue, status: 400 };
+
+  const order = await getOrderDetail(id);
+  // 404 for both "no such order" and "not your order" — one answer either way.
+  if (!order || order.customerPhone.replace(/\D/g, "") !== cleanPhone) {
+    return { error: "Order not found", status: 404 };
+  }
+  return { order };
+}
 
 /**
  * Read orders through the tracking cache — the module's tracking surface.

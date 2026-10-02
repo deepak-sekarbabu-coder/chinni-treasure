@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
+import Modal from "@/src/components/ui/Modal";
 
 const SHOW_DELAY_MS = 600;
 const AUTO_DISMISS_MS = 10000;
@@ -27,7 +27,6 @@ export default function ComplementaryGiftPopup() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const trapRef = useFocusTrap(visible && !leaving);
 
   const dismiss = useCallback(() => {
     if (leaving) return;
@@ -61,25 +60,15 @@ export default function ComplementaryGiftPopup() {
     return () => window.clearTimeout(timer);
   }, [visible, leaving, dismiss]);
 
-  if (!visible) return null;
-
   return (
-    <div
-      className={`gift-popup-overlay${leaving ? " leaving" : ""}`}
-      ref={trapRef}
-      onClick={dismiss}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") dismiss();
-      }}
+    <Modal
+      open={visible}
+      onClose={dismiss}
+      labelledBy="gift-popup-title"
+      describedBy="gift-popup-copy"
+      overlayClassName={`gift-popup-overlay${leaving ? " leaving" : ""}`}
+      contentClassName="gift-popup-card"
     >
-      <div
-        className="gift-popup-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="gift-popup-title"
-        aria-describedby="gift-popup-copy"
-        onClick={(e) => e.stopPropagation()}
-      >
         <button
           type="button"
           className="gift-popup-close"
@@ -121,7 +110,6 @@ export default function ComplementaryGiftPopup() {
             Shop The Collection
           </Link>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

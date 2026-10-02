@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import StatusBadge from "@/src/components/ui/StatusBadge";
+import Modal from "@/src/components/ui/Modal";
 import {
   ORDER_STATUS_FLOW,
   ORDER_STATUS_LABELS,
@@ -9,7 +10,6 @@ import {
 } from "@/src/lib/constants";
 import type { FlowStatus } from "@/src/lib/constants";
 
-import { useFocusTrap } from "@/src/lib/useFocusTrap";
 import type { Order, TrackOrderResult } from "@/src/lib/api/schemas";
 import { formatMoney, formatShipping } from "@/src/lib/format";
 import { orderLineViews } from "@/src/lib/pricing";
@@ -37,7 +37,6 @@ function TimelineDate({ at }: { at: string | null }) {
 }
 
 export default function OrderDetailModal({ order, onClose, showActions, onAdvance, onReject, isTransitioning, onUpdateTracking }: Props) {
-  const trapRef = useFocusTrap(true);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isEditingTracking, setIsEditingTracking] = useState(false);
   const [editTrackingValue, setEditTrackingValue] = useState(order.trackingId || "");
@@ -54,20 +53,9 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
     }
   };
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      // The nested shipping-label modal is intentionally dismissed only by
-      // its own Close button, so the parent must not handle Escape while it
-      // is open.
-      if (e.key === "Escape" && !showPrintModal) onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [onClose, showPrintModal]);
+  // Escape and the body scroll lock are the Modal module's job. It also owns
+  // the nesting rule: the shipping-label editor sits on top of the stack while
+  // it is open, so this modal no longer has to stand down for it.
 
   const flow = ORDER_STATUS_FLOW as readonly FlowStatus[];
 
@@ -78,8 +66,14 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
   const nextStatus = nextOrderStatus(order.status);
 
   return (
-    <div className="modal-overlay active" ref={trapRef} onClick={onClose}>
-      <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="order-detail-modal-title" onClick={(e) => e.stopPropagation()}>
+    <>
+      <Modal
+        open
+        onClose={onClose}
+        labelledBy="order-detail-modal-title"
+        overlayClassName="modal-overlay active"
+        contentClassName="modal-content"
+      >
         <div className={`modal-loading-overlay ${isTransitioning ? "active" : ""}`}>
           <div className="modal-loading-spinner"></div>
           <div className="modal-loading-text">Updating Order Status...</div>
@@ -300,7 +294,7 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
             </div>
           )}
         </div>
-      </div>
+      </Modal>
       {showPrintModal && (
         <PrintShippingLabelModal
           order={order}
@@ -308,6 +302,6 @@ export default function OrderDetailModal({ order, onClose, showActions, onAdvanc
           onClose={() => setShowPrintModal(false)}
         />
       )}
-    </div>
+    </>
   );
 }

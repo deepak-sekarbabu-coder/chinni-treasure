@@ -58,7 +58,6 @@ export default async function CategoryPage({ params }: Props) {
   } | null = null;
   let products: Awaited<ReturnType<typeof listByCategory>>["products"] = [];
   let total = 0;
-  let totalPages = 1;
 
   try {
     const headersList = await headers();
@@ -73,7 +72,6 @@ export default async function CategoryPage({ params }: Props) {
     category = result.category;
     products = result.products;
     total = result.total;
-    totalPages = result.totalPages;
   } catch (err) {
     console.error("Failed to fetch category page:", err);
   }
@@ -104,7 +102,6 @@ export default async function CategoryPage({ params }: Props) {
         category={category!}
         initialProducts={products}
         initialTotal={total}
-        initialTotalPages={totalPages}
       />
     </>
   );

@@ -6,6 +6,8 @@ export function createRedisCache<T = unknown>(ttlMs: number, namespace: string) 
   const ttlSeconds = Math.max(1, Math.ceil(ttlMs / 1000));
 
   return {
+    /** The TTL this cache was built with — the number the edge header derives from. */
+    ttlMs,
     async get(key: string): Promise<T | null> {
       if (!redis) return fallback.get(key);
       try {

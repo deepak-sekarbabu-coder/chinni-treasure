@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
+import Modal from "@/src/components/ui/Modal";
 import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
@@ -42,8 +43,6 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
   const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SelectedGiftBox[]>([]);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
 // Reset selection and reload gift boxes each time the modal opens. React's
   // documented "adjust state when a prop changes" render-phase pattern — avoids
@@ -78,30 +77,7 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
     return () => { cancelled = true; };
   }, [open]);
 
-  // Focus the close button on open
-  useEffect(() => {
-    if (open) {
-      closeButtonRef.current?.focus();
-    }
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
-  }, [open]);
+  // Focus, Escape and the body scroll lock are the Modal module's job now.
 
   const toggleBox = useCallback((box: GiftBox) => {
     setSelected((prev) => {
@@ -135,31 +111,19 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
     );
   }, []);
 
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === overlayRef.current) onClose();
-    },
-    [onClose],
-  );
-
   const giftBoxTotal = selected.reduce((sum, s) => sum + s.price * s.quantity, 0);
 
-  if (!open) return null;
-
   return (
-    <div
-      className="gift-box-modal-overlay"
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Select a gift box"
+    <Modal
+      open={open}
+      onClose={onClose}
+      label="Select a gift box"
+      overlayClassName="gift-box-modal-overlay"
+      contentClassName="gift-box-modal"
     >
-      <div className="gift-box-modal">
         <div className="gift-box-modal-header">
           <h2 className="gift-box-modal-title">Add a Gift Box for Packing</h2>
           <button
-            ref={closeButtonRef}
             className="gift-box-modal-close"
             onClick={onClose}
             aria-label="Close"
@@ -272,7 +236,6 @@ export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose
             Add to Cart{giftBoxTotal > 0 ? ` (+${formatMoney(giftBoxTotal)})` : ""}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
