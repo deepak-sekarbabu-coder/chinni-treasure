@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
 import { withAdmin } from "@/src/lib/route-guard";
-import { updateProduct } from "@/src/lib/catalogue-write";
+import { softDeleteProduct, updateProduct } from "@/src/lib/catalogue-write";
 import { UpdateProductInputSchema } from "@/src/lib/api/schemas";
 
 // PUT /api/products/[id] — Update a product (admin only)
@@ -32,10 +31,7 @@ export const PUT = withAdmin<{ id: string }>(
 export const DELETE = withAdmin<{ id: string }>(
   async ({ params }) => {
     const { id } = params;
-    await prisma.product.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await softDeleteProduct(id);
 
     return NextResponse.json({ success: true });
   },

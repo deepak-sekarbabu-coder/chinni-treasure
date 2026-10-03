@@ -130,6 +130,22 @@ export async function updateProduct(id: string, parsed: UpdateProductInput) {
 }
 
 /**
+ * Soft-delete a product: stamp `deletedAt` rather than dropping the row, so
+ * historical OrderItems keep their snapshot and the product leaves every
+ * catalogue read (which filters `deletedAt: null`) in one place.
+ *
+ * The route held this inline, which made it the one catalogue write that
+ * reached past this module into Prisma — the same shape that leaked the
+ * SKU-unique re-patch and the gift-box re-attach into the adapter.
+ */
+export async function softDeleteProduct(id: string) {
+  return prisma.product.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+}
+
+/**
  * Gift box bundling cannot be enabled on products in the `box` category.
  * `ponytail: one extra `category.findUnique` when the flag is set — harmless
  * at admin write volume; pass the category in if it's ever already loaded.

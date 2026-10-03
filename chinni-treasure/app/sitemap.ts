@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/src/lib/prisma";
 import { env } from "@/src/lib/env";
+import { listSitemapCategories, listSitemapProducts } from "@/src/lib/product-read";
 
 const BASE_URL = env.NEXT_PUBLIC_SITE_URL;
 
@@ -39,11 +39,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const products = await prisma.product.findMany({
-      where: { isActive: true, deletedAt: null },
-      select: { id: true, updatedAt: true },
-      orderBy: { updatedAt: "desc" },
-    });
+    // The visibility predicate (active, not soft-deleted) is the read module's,
+    // so a change to it reaches the sitemap instead of leaving it stale here.
+    const products = await listSitemapProducts();
 
     for (const product of products) {
       entries.push({
@@ -58,11 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const categories = await prisma.category.findMany({
-      where: { isActive: true },
-      select: { slug: true, updatedAt: true },
-      orderBy: { displayOrder: "asc" },
-    });
+    const categories = await listSitemapCategories();
 
     for (const category of categories) {
       entries.push({

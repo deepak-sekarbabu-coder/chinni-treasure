@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/axiom/server";
-import { prisma } from "@/src/lib/prisma";
 import { validateOr400 } from "@/src/lib/validate";
 import { requireAdmin, withAdmin } from "@/src/lib/route-guard";
 import { CreateCategorySchema } from "@/src/lib/api/schemas";
 import { createCategory } from "@/src/lib/catalogue-write";
 import { CATALOGUE_CACHE_CONTROL } from "@/src/lib/catalogue-cache";
-import { loadActiveCategories } from "@/src/lib/product-read";
+import { listAllCategories, loadActiveCategories } from "@/src/lib/product-read";
 
 // GET /api/categories
 // Public: returns active categories ordered by displayOrder.
@@ -31,28 +30,9 @@ export async function GET(request: Request) {
     const admin = await requireAdmin();
     if (admin instanceof NextResponse) return admin;
 
-    const categories = await prisma.category.findMany({
-      where: {},
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        displayOrder: true,
-        isActive: true,
-        _count: { select: { products: { where: { deletedAt: null } } } },
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { displayOrder: "asc" },
-    });
-
-    const payload = categories.map((c) => ({
-      ...c,
-      productCount: c._count ? c._count.products ?? 0 : undefined,
-    }));
-
-    return NextResponse.json(payload, {
+    // The admin read goes through the same module as the public one — the
+    // select and the `productCount` coercion are the module's, not the route's.
+    return NextResponse.json(await listAllCategories(), {
       headers: {
         "Cache-Control": "no-store",
       },

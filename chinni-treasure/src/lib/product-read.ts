@@ -68,6 +68,15 @@ export type ActiveCategoryOption = {
   displayOrder: number;
 };
 
+/** The admin categories view: every category, with its live product count. */
+export type AdminCategoryOption = ActiveCategoryOption & {
+  description: string | null;
+  isActive: boolean;
+  productCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 /** The category identity `/category/[slug]` renders and its metadata titles from. */
 export type CategoryIdentity = {
   id: number;
@@ -124,6 +133,66 @@ export async function loadActiveCategories(): Promise<ActiveCategoryOption[]> {
   });
   await categoriesCache.set("active", rows);
   return rows;
+}
+
+/**
+ * Every category for the admin panel (`?includeInactive=true`), uncached — the
+ * admin view must never serve a stale active/inactive flag or a stale count.
+ *
+ * The select and the `_count → productCount` coercion used to live inline in
+ * `/api/categories`, which made that route the one catalogue read with two
+ * shapes: the public branch went through `loadActiveCategories()` and the admin
+ * branch went straight to Prisma. A new Category field therefore had to be
+ * added in two places, and only one of them was testable through this module.
+ *
+ * The count filters `deletedAt: null`, matching what the public surfaces count.
+ */
+export async function listAllCategories(): Promise<AdminCategoryOption[]> {
+  const rows = await prisma.category.findMany({
+    where: {},
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      displayOrder: true,
+      isActive: true,
+      _count: { select: { products: { where: { deletedAt: null } } } },
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: { displayOrder: "asc" },
+  });
+
+  return rows.map(({ _count, ...c }) => ({
+    ...c,
+    productCount: _count?.products ?? 0,
+  }));
+}
+
+/**
+ * The two sitemap surfaces — just enough of a row to build a URL.
+ *
+ * `app/sitemap.ts` used to query the catalogue directly and restate "active and
+ * not soft-deleted" itself, which was the third copy of that predicate. If the
+ * visibility rule ever changed, the sitemap would keep listing deleted products
+ * after the other two were fixed. Uncached on purpose: a sitemap is generated
+ * by the platform, not by a visitor, so there is nothing to serve from a cache.
+ */
+export async function listSitemapProducts(): Promise<{ id: string; updatedAt: Date }[]> {
+  return prisma.product.findMany({
+    where: { isActive: true, deletedAt: null },
+    select: { id: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function listSitemapCategories(): Promise<{ slug: string; updatedAt: Date }[]> {
+  return prisma.category.findMany({
+    where: { isActive: true },
+    select: { slug: true, updatedAt: true },
+    orderBy: { displayOrder: "asc" },
+  });
 }
 
 function toProductView(row: ProductRow): ProductView {
