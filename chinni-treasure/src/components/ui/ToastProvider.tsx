@@ -57,14 +57,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`toast ${t.type}`}
+            className={`toast ${t.type}${t.removing ? " toast--removing" : ""}`}
             role="alert"
             tabIndex={0}
-            style={{
-              opacity: t.removing ? "0" : "1",
-              transform: t.removing ? "translateX(100px)" : "translateX(0)",
-              transition: "opacity 0.3s ease, transform 0.3s ease",
-            }}
           >
             <span>{iconMap[t.type]}</span> {t.message}
             <button

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
+import { launchCartFlight } from "@/src/lib/cart-flight";
 import type { GiftBoxModalProduct, SelectedGiftBox } from "@/src/components/pages/GiftBoxModal";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
 import { canBundleGiftBoxes } from "@/src/lib/gift-box";
@@ -33,9 +34,14 @@ export function useAddToCart(options: {
   const { addItem } = useCart();
   const { showToast } = useToast();
   const [giftBoxProduct, setGiftBoxProduct] = useState<GiftBoxModalProduct | null>(null);
+  // Where the flight should launch from once a gift-box decision comes back.
+  // Held in a ref, not state: it is read by the confirm/skip callbacks during
+  // the same render cycle the modal closes in, and re-rendering to carry a
+  // pointer to the old button would be a wasted frame.
+  const flightOriginRef = useRef<HTMLElement | null>(null);
 
   const handleAddDirectly = useCallback(
-    (p: CatalogueProduct, giftBoxes?: GiftBoxItem[]) => {
+    (p: CatalogueProduct, giftBoxes?: GiftBoxItem[], pressedFrom?: HTMLElement | null) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;
@@ -64,6 +70,14 @@ export function useAddToCart(options: {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
+      // The one authored moment: the product's image leaves the card and
+      // arrives at the cart, because this gesture's cause and effect sit in
+      // different places. Fired here rather than at the button so every add
+      // path — card, gift-box modal, quick actions — gets the same
+      // acknowledgement, and fired only on a real add so a refused one (max
+      // quantity, out of stock) never flies an item that did not land.
+      launchCartFlight(p.imageUrl ?? "", pressedFrom ?? null);
+
       triggerShippingNudge(newTotal);
       showToast(`${p.name} added to cart`, "success");
     },
@@ -71,7 +85,8 @@ export function useAddToCart(options: {
   );
 
   const handleAdd = useCallback(
-    (p: CatalogueProduct) => {
+    (p: CatalogueProduct, pressedFrom?: HTMLElement | null) => {
+      flightOriginRef.current = pressedFrom ?? null;
       if (canBundleGiftBoxes(p)) {
         setGiftBoxProduct({
           id: p.id,
@@ -82,7 +97,7 @@ export function useAddToCart(options: {
         });
         return;
       }
-      handleAddDirectly(p);
+      handleAddDirectly(p, undefined, pressedFrom);
     },
     [handleAddDirectly],
   );
@@ -91,6 +106,7 @@ export function useAddToCart(options: {
     (
       modalProduct: { id: string; name: string; price: number; image: string } | null,
       giftBoxes: GiftBoxItem[],
+      pressedFrom?: HTMLElement | null,
     ) => {
       if (modalProduct) {
         const { image, ...product } = modalProduct;
@@ -105,6 +121,7 @@ export function useAddToCart(options: {
             category: null,
           },
           giftBoxes.length > 0 ? giftBoxes : undefined,
+          pressedFrom,
         );
       }
     },
@@ -120,13 +137,13 @@ export function useAddToCart(options: {
       open: true,
       product: giftBoxProduct,
       onConfirm: (giftBoxes: GiftBoxItem[]) => {
-        handleModalConfirm(giftBoxProduct, giftBoxes);
+        handleModalConfirm(giftBoxProduct, giftBoxes, flightOriginRef.current);
         close();
       },
       // Skip is confirm-with-no-boxes; `handleModalConfirm` passes the empty
       // list as `undefined`, which is exactly what the old skip path sent.
       onSkip: () => {
-        handleModalConfirm(giftBoxProduct, []);
+        handleModalConfirm(giftBoxProduct, [], flightOriginRef.current);
         close();
       },
       onClose: close,

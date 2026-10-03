@@ -6,6 +6,7 @@ import FallbackImage from "@/src/components/ui/FallbackImage";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/components/cart/CartProvider";
 import NavCartDropdown from "@/src/components/layout/NavCartDropdown";
+import { onCartReceived } from "@/src/lib/cart-flight";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -23,6 +24,18 @@ export default function Navbar() {
   const pathname = usePathname();
   const cartRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
+  // Set by the cart flight when its image lands here; clears itself so a
+  // count change that arrives without a flight (a quantity edit, a restored
+  // session) never inherits the bloom.
+  const [cartReceived, setCartReceived] = useState(false);
+
+  useEffect(() => onCartReceived(() => setCartReceived(true)), []);
+
+  useEffect(() => {
+    if (!cartReceived) return;
+    const timer = setTimeout(() => setCartReceived(false), 400);
+    return () => clearTimeout(timer);
+  }, [cartReceived]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -157,7 +170,10 @@ export default function Navbar() {
                 </svg>
                 <span className="cart-label">Cart</span>
                 {mounted && count > 0 && (
-                  <span className="cart-count" aria-live="polite" style={{ animation: bounceKey ? 'countBounce 0.4s cubic-bezier(0.22, 1, 0.36, 1)' : undefined }}>
+                  <span
+                    className={`cart-count${bounceKey ? " cart-bounce" : ""}${cartReceived ? " cart-receive" : ""}`}
+                    aria-live="polite"
+                  >
                     {count}
                   </span>
                 )}

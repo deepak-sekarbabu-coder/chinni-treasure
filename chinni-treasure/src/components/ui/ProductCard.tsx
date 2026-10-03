@@ -17,7 +17,7 @@ interface Props {
   // The card renders the catalogue contract itself, not a hand-rolled twin —
   // a schema field can no longer stop reaching the card without a type error.
   product: CatalogueProduct;
-  onAdd: (product: CatalogueProduct) => void;
+  onAdd: (product: CatalogueProduct, pressedFrom?: HTMLElement | null) => void;
   transitionDelay?: number;
   priority?: boolean;
   loadImageImmediately?: boolean;
@@ -107,7 +107,9 @@ export default function ProductCard({
           <button
             className="btn-add"
             disabled={isOutOfStock}
-            onClick={() => onAdd(product)}
+            // The pressed element travels with the add so the cart flight can
+            // start from the card the visitor actually touched.
+            onClick={(e) => onAdd(product, e.currentTarget)}
           >
             {isOutOfStock ? "Sold Out" : "Add to Cart"}
           </button>

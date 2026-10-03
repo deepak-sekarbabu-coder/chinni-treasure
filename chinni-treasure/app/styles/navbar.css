@@ -143,7 +143,12 @@ body:has(.admin-page-root) .navbar {
        voice — the hover already warmed to gold, so the rest state now sits
        one step above the dust grey it replaced. */
     color: var(--cream);
-    transition: color 0.3s ease, background 0.3s ease, transform var(--motion-snappy);
+    /* A hover is an acknowledgement of the pointer, not a scene change: it
+       runs on the state token so it cannot be mistaken for a transition. */
+    transition:
+        color var(--motion-state) var(--ease-out),
+        background var(--motion-state) var(--ease-out),
+        transform var(--motion-snappy);
     border-radius: 2px;
 }
 
@@ -195,6 +200,70 @@ body:has(.admin-page-root) .navbar {
 
 .cart-btn.cart-pulse .cart-icon-svg {
     animation: cartIconPop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The receiving half of the flight. The card's image arcs toward the cart and
+   this is where it lands: a single bounded bloom, then the badge's own count
+   bounce takes over. Kept separate from `cart-pulse` so the two effects cannot
+   overwrite each other — the pulse lives on the button, the bloom on the badge,
+   and the visitor sees one gesture resolve in two places. */
+.cart-count.cart-receive {
+    animation:
+        cartReceiveBloom var(--motion-arrive) var(--ease-out),
+        countBounce var(--motion-arrive) var(--ease-out);
+}
+
+/* The ordinary count bounce, for a count change with no flight behind it —
+   a quantity step in the dropdown, a session restored from storage. The
+   flight's own arrival is `.cart-receive`, which layers the bloom on top of
+   this rather than replacing it. */
+.cart-count.cart-bounce {
+    animation: countBounce var(--motion-arrive) var(--ease-out);
+}
+
+/* The flight's travelling element. Fixed to the viewport so its travel is
+   measured against the screen, not the card, and `pointer-events: none`
+   because nothing may interrupt a gesture the visitor already completed. */
+.cart-flight-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10002;
+    pointer-events: none;
+    width: var(--flight-from-size, 64px);
+    height: var(--flight-from-size, 64px);
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    transform: translate3d(
+        var(--flight-from-left, 0px),
+        var(--flight-from-top, 0px),
+        0
+    );
+    animation: addToCartFlight var(--motion-entrance) var(--ease-out) forwards;
+    will-change: transform, opacity;
+}
+
+/* Reduced motion: no flight. The item still visibly lands — the badge blooms
+   and takes the gold fill — so "it went into the cart" survives without the
+   travel. The ghost is removed by the module's backstop timer rather than
+   `animationend`, which never fires for an animation that was never run. */
+@media (prefers-reduced-motion: reduce) {
+    .cart-flight-ghost {
+        animation: none;
+        display: none;
+    }
+}
+
+/* Reduced motion: the flight is replaced by the destination acknowledging the
+   arrival. No travel, no arc — the badge takes one deliberate step of scale,
+   which carries the same "it arrived" information without moving anything
+   across the screen. */
+@media (prefers-reduced-motion: reduce) {
+    .cart-count.cart-receive {
+        animation: cartReceiveAcknowledge 220ms var(--ease-out);
+    }
 }
 
 /* ── Cart Dropdown ── */
@@ -454,10 +523,14 @@ body:has(.admin-page-root) .navbar {
     z-index: 9997;
     cursor: default;
     pointer-events: none;
+    /* Depth, not decoration: the cart sheet sits above the page it dims, so
+       the blur resolving as the sheet arrives is what makes that relationship
+       legible. Tokenised because it was one of the places still hand-writing
+       `0.3s ease` while the rest of the chrome used the motion vocabulary. */
     transition:
-        background 0.3s ease,
-        backdrop-filter 0.3s ease,
-        -webkit-backdrop-filter 0.3s ease;
+        background var(--motion-arrive) var(--ease-out),
+        backdrop-filter var(--motion-arrive) var(--ease-out),
+        -webkit-backdrop-filter var(--motion-arrive) var(--ease-out);
 }
 
 .cart-overlay.active {

@@ -212,6 +212,114 @@
     100% { background-position: -200% center; }
 }
 
+/* ===== NOTIFICATION ARRIVAL =====
+   A toast is the only thing that speaks unprompted, so it arrives from the
+   edge it leaves by and gains a little scale — the size change is what makes
+   it read as arriving rather than being revealed. Paired with `.toast--removing`
+   in toast.css, which reverses the travel under --motion-exit. */
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(24px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* ===== ADD TO CART: THE FLIGHT =====
+   The one authored focal moment. Adding to the cart is the only action on
+   this site whose cause and effect sit in different places — the visitor
+   presses a button on a card and the result happens in the navbar — so the
+   product's own image leaves the card and arrives at the cart.
+
+   It travels along an arc rather than a straight line because a straight line
+   between two points reads as a diagram; the arc reads as an object being
+   carried. The image shrinks as it goes (it is receding into the cart, not
+   growing) and the last few percent is a gold bloom at the destination, which
+   is the moment the cart badge answers with its own pulse.
+
+   Two properties only — transform and opacity — so this composites on the
+   GPU and never touches layout. The card keeps its place; nothing reflows.
+
+   Travel is measured, not assumed: the ghost is positioned at the source
+   image and the keyframes move it by `--flight-dx` / `--flight-dy`, which the
+   module sets from the real distance to the cart. Percentages would be
+   relative to the ghost's own size, so a fixed arc would overshoot wildly on a
+   tall card and barely move on a small one.
+
+   The mid-keyframe rises to `--flight-lift` above the straight line between
+   the two points. That overshoot is the whole effect — an object carried
+   rather than a dot diagrammed along a line. */
+@keyframes addToCartFlight {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    /* Peak of the arc, past the straight line. */
+    46% {
+        opacity: 1;
+        transform: translate3d(
+                calc(var(--flight-dx, 0px) * 0.44),
+                calc(var(--flight-dy, 0px) * 0.44 - var(--flight-lift, 120px)),
+                0
+            )
+            scale(0.42);
+    }
+
+    84% {
+        opacity: 1;
+        transform: translate3d(
+                calc(var(--flight-dx, 0px) * 0.92),
+                calc(var(--flight-dy, 0px) * 0.92 - var(--flight-lift, 120px) * 0.12),
+                0
+            )
+            scale(0.12);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate3d(var(--flight-dx, 0px), var(--flight-dy, 0px), 0) scale(0.06);
+    }
+}
+
+/* The gold bloom that lands with the cart: a hairline ring that expands once
+   and dies. Bounded to a 6px spread and a single iteration so it never
+   becomes the looping-halo decoration it resembles. */
+@keyframes cartReceiveBloom {
+    0% {
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.55);
+    }
+
+    100% {
+        box-shadow: 0 0 0 6px rgba(212, 175, 55, 0);
+    }
+}
+
+/* The reduced-motion arrival: one step of scale on the badge. Substituting
+   acknowledgement for travel is the whole idea — the visitor still learns the
+   item went somewhere, without anything crossing the viewport. */
+@keyframes cartReceiveAcknowledge {
+    0% {
+        transform: scale(1);
+    }
+
+    45% {
+        transform: scale(1.28);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* ===== TIMELINE ===== */
 @keyframes timelinePulse {
 

@@ -68,6 +68,24 @@
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* ===== MOTION ROLES =====
+       What each kind of movement is for, so a surface picks by meaning rather
+       than by taste. The durations are the ones that read as intentional at
+       this pace: an acknowledgement lands inside a tenth of a second, a state
+       change settles in a quarter, a piece of the interface arriving takes a
+       third, and only a deliberate focal entrance is allowed to reach half a
+       second. Exits are always shorter than the entrance that preceded them —
+       a dismissal the visitor did not ask to wait for reads as latency.
+
+       --ease-out is the system's default arrival: exponential deceleration,
+       which is what makes something look placed rather than thrown. */
+    --motion-acknowledge: 120ms;   /* a press, a toggle, a tick */
+    --motion-state: 220ms;        /* hover, colour, opacity, a swap */
+    --motion-arrive: 320ms;       /* overlay, panel, dropdown */
+    --motion-entrance: 520ms;     /* the one authored focal moment */
+    --motion-exit: 200ms;         /* always under --motion-arrive */
+    --motion-looping: 2.4s;       /* a loop that must read as slow, not urgent */
+
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.15);

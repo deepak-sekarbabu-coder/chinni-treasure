@@ -16,12 +16,30 @@
     border-radius: 4px;
     box-shadow: var(--shadow-lg);
     font-size: 0.85rem;
-    animation: slideInRight 0.3s ease-out;
+    /* Arrives from the edge it will be dismissed from, so the two halves of
+       the notification read as one object travelling rather than a panel that
+       blinks. The exit is the same travel reversed, faster — dismissal should
+       never cost the visitor more attention than the arrival did. Both live
+       here; the provider used to hand-write the exit as an inline style on
+       every render, which meant it re-declared the transition in JS and eased
+       slower than the entrance it was answering. */
+    animation: toastIn var(--motion-arrive) var(--ease-out);
+    transition:
+        opacity var(--motion-exit) var(--ease-out),
+        transform var(--motion-exit) var(--ease-out);
     display: flex;
     align-items: center;
     gap: 12px;
     min-width: 280px;
-    border-left: 3px solid var(--gold);
+    border-left: 1px solid var(--gold);
+}
+
+/* The state the provider marks while it waits to unmount, now a class rather
+   than an inline style. `.toast` already owns the transition, so this only
+   has to state the destination. */
+.toast--removing {
+    opacity: 0;
+    transform: translateX(24px);
 }
 
 .toast.success {
@@ -34,4 +52,17 @@
 
 .toast.info {
     border-left-color: var(--gold);
+}
+
+/* Reduced motion keeps the notification legible — it still fades, it just no
+   longer travels. A confirmation the visitor cannot perceive is not a
+   confirmation, so the opacity change stays and the spatial move goes. */
+@media (prefers-reduced-motion: reduce) {
+    .toast {
+        animation: none;
+    }
+
+    .toast--removing {
+        transform: none;
+    }
 }
