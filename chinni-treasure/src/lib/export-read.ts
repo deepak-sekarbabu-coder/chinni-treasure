@@ -31,7 +31,9 @@ async function batchedFetch<T extends { id: string }>(
   return results;
 }
 
-/** The db client the dump needs — overridable so tests and the script can pass their own. */
+/** The db client the dump needs. `Pick` keeps the module testable with a
+ *  hand-built fake; the script passes its own connection because it runs
+ *  outside Next. */
 type ExportDb = Pick<
   typeof prisma,
   "category" | "product" | "productImage" | "order" | "orderItem" | "orderStatusHistory" | "admin"

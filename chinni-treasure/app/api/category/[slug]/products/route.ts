@@ -5,6 +5,7 @@ import { CATEGORY_SORT_MAP, type CategorySortKey } from "@/src/lib/sort-contract
 import { CATALOGUE_CACHE_CONTROL } from "@/src/lib/catalogue-cache";
 import { parseListQuery } from "@/src/lib/list-query";
 import { withPublic } from "@/src/lib/route-guard";
+import { LIST_QUERY_LIMITS } from "@/src/lib/constants";
 
 const RESPONSE_HEADERS = {
   headers: { "Cache-Control": CATALOGUE_CACHE_CONTROL.categoryPage },
@@ -17,9 +18,7 @@ export const GET = withPublic<{ slug: string }>(
     const { searchParams } = new URL(request.url);
 
     const parsedQuery = parseListQuery(searchParams, {
-      defaultLimit: 12,
-      maxLimit: 60,
-      defaultSort: "newest",
+      ...LIST_QUERY_LIMITS.categoryProducts,
       sortMap: CATEGORY_SORT_MAP,
     });
     if (parsedQuery instanceof NextResponse) return parsedQuery;

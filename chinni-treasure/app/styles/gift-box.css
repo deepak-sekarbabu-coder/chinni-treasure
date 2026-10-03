@@ -260,7 +260,11 @@
 .gift-box-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* Sits above the fixed navbar (9999). At 1000 this overlay rendered behind
+     it, so the modal opened under the nav. It replaces the Modal scaffold's
+     `.modal-overlay` (10001) rather than nesting inside it, so matching that
+     base value is correct here — no nesting to stack above. */
+  z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;

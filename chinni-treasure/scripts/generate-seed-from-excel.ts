@@ -36,6 +36,39 @@ function extractUrl(val: unknown): string | null {
   return null;
 }
 
+/**
+ * Decode a sheet into rows keyed by its header text, lowercased and trimmed.
+ *
+ * The exporter (`src/lib/excel-export.ts`) declares every column as
+ * `ColumnDef.header`; this reads by that header instead of by cell index, so a
+ * column added, removed or reordered upstream is one edit here instead of a
+ * silent misread. The previous positional reads (`getCell(3)`, and the
+ * `buildProductColMap` fallbacks that guessed `idx["image url"] - 1`) had
+ * already drifted out of step with the exporter's column order.
+ */
+function sheetRows(wb: ExcelJS.Workbook, name: string): Record<string, unknown>[] {
+  const sheet = wb.getWorksheet(name);
+  if (!sheet) return [];
+  const header = sheet.getRow(1);
+  const keys: string[] = [];
+  header.eachCell((cell, col) => {
+    keys[col - 1] = String(cell.value ?? "").toLowerCase().trim();
+  });
+  const rows: Record<string, unknown>[] = [];
+  sheet.eachRow((row, i) => {
+    if (i === 1) return;
+    const record: Record<string, unknown> = {};
+    keys.forEach((key, idx) => {
+      if (key) record[key] = row.getCell(idx + 1).value;
+    });
+    rows.push(record);
+  });
+  return rows;
+}
+
+const str = (v: unknown, fallback = ""): string => String(v ?? fallback);
+const strOrNull = (v: unknown): string | null => (v ? String(v) : null);
+
 async function main() {
   // Auto-discover the latest export file if no path provided
   let filePath = process.argv[2];
@@ -62,209 +95,108 @@ async function main() {
   await wb.xlsx.readFile(filePath);
 
   // --- Categories ---
-  const catSheet = wb.getWorksheet("Categories")!;
-  const categories: {
-    name: string;
-    slug: string;
-    description: string | null;
-    displayOrder: number;
-    isActive: boolean;
-  }[] = [];
-  catSheet.eachRow((row, i) => {
-    if (i === 1) return;
-    categories.push({
-      name: String(row.getCell(2).value || ""),
-      slug: String(row.getCell(3).value || ""),
-      description: row.getCell(4).value
-        ? String(row.getCell(4).value)
-        : null,
-      displayOrder: parseNum(row.getCell(5).value),
-      isActive: parseBool(row.getCell(6).value),
-    });
-  });
+  const categories = sheetRows(wb, "Categories").map((r) => ({
+    name: str(r.name),
+    slug: str(r.slug),
+    description: strOrNull(r.description),
+    displayOrder: parseNum(r["display order"]),
+    isActive: parseBool(r["is active"]),
+  }));
 
   // --- Products ---
-  const prodSheet = wb.getWorksheet("Products")!;
-  type ProductColMap = { sku: number; name: number; price: number; compareAtPrice: number | null; stockQuantity: number; imageUrl: number; description: number; badge: number; isActive: number | null; allowGiftBoxBundling: number | null; visibleHostnames: number | null; deletedAt: number | null };
-  function buildProductColMap(): ProductColMap {
-    const header = prodSheet.getRow(1);
-    const idx: Record<string, number> = {};
-    header.eachCell((cell, col) => { idx[String(cell.value).toLowerCase().trim()] = col; });
-    return {
-      sku: idx["sku"] || 2,
-      name: idx["name"] || 3,
-      description: idx["description"] || 6,
-      price: idx["price"] || 7,
-      compareAtPrice: idx["compare at price"] || null,
-      stockQuantity: idx["stock quantity"] || (idx["image url"] ? idx["image url"] - 1 : 8),
-      imageUrl: idx["image url"] || (idx["badge"] ? idx["badge"] - 1 : 9),
-      badge: idx["badge"] || 10,
-      isActive: idx["is active"] || null,
-      allowGiftBoxBundling: idx["allow gift box bundling"] || null,
-      visibleHostnames: idx["visible hostnames"] || null,
-      deletedAt: idx["deleted at"] || null,
-    };
-  }
-  const prodCol = buildProductColMap();
-  const products: {
-    sku: string;
-    name: string;
-    categorySlug: string;
-    price: number;
-    compareAtPrice: number | null;
-    stockQuantity: number;
-    imageUrl: string | null;
-    description: string | null;
-    badge: string | null;
-    isActive: boolean;
-    allowGiftBoxBundling: boolean;
-    visibleHostnames: string | null;
-    deletedAt: string | null;
-  }[] = [];
-  prodSheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const comparePrice = prodCol.compareAtPrice ? row.getCell(prodCol.compareAtPrice).value : null;
-    products.push({
-      sku: String(row.getCell(prodCol.sku).value || ""),
-      name: String(row.getCell(prodCol.name).value || ""),
-      categorySlug: "",
-      price: parseNum(row.getCell(prodCol.price).value),
-      compareAtPrice: comparePrice ? parseNum(comparePrice) : null,
-      stockQuantity: parseNum(row.getCell(prodCol.stockQuantity).value),
-      imageUrl: extractUrl(row.getCell(prodCol.imageUrl).value),
-      description: row.getCell(prodCol.description).value ? String(row.getCell(prodCol.description).value) : null,
-      badge: row.getCell(prodCol.badge).value ? String(row.getCell(prodCol.badge).value) : null,
-      isActive: prodCol.isActive ? parseBool(row.getCell(prodCol.isActive).value) : true,
-      allowGiftBoxBundling: prodCol.allowGiftBoxBundling ? parseBool(row.getCell(prodCol.allowGiftBoxBundling).value) : false,
-      visibleHostnames: prodCol.visibleHostnames && row.getCell(prodCol.visibleHostnames).value
-        ? String(row.getCell(prodCol.visibleHostnames).value)
-        : null,
-      deletedAt: prodCol.deletedAt ? parseDate(row.getCell(prodCol.deletedAt).value) : null,
-    });
-  });
+  const productRows = sheetRows(wb, "Products");
+  const products = productRows.map((r) => ({
+    sku: str(r.sku),
+    name: str(r.name),
+    categorySlug: "",
+    price: parseNum(r.price),
+    compareAtPrice: r["compare at price"] ? parseNum(r["compare at price"]) : null,
+    stockQuantity: parseNum(r["stock quantity"]),
+    imageUrl: extractUrl(r["image url"]),
+    description: strOrNull(r.description),
+    badge: strOrNull(r.badge),
+    // Absent column means an older export: fall back to the schema default
+    // rather than reading the wrong cell.
+    isActive: r["is active"] === undefined ? true : parseBool(r["is active"]),
+    allowGiftBoxBundling: parseBool(r["allow gift box bundling"]),
+    visibleHostnames: strOrNull(r["visible hostnames"]),
+    deletedAt: parseDate(r["deleted at"]),
+  }));
 
-  // Build category ID to slug mapping
+  // Build category ID to slug mapping, then map category slugs to products
   const catIdToSlug: Record<number, string> = {};
-  catSheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const id = parseNum(row.getCell(1).value);
-    const slug = String(row.getCell(3).value || "");
-    catIdToSlug[id] = slug;
-  });
-
-  // Map category slugs to products
-  prodSheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const catId = row.getCell(4).value ? parseNum(row.getCell(4).value) : null;
-    products[i - 2].categorySlug = catId && catIdToSlug[catId]
-      ? catIdToSlug[catId]
-      : "";
+  for (const row of sheetRows(wb, "Categories")) {
+    catIdToSlug[parseNum(row.id)] = str(row.slug);
+  }
+  productRows.forEach((row, i) => {
+    const catId = row["category id"] ? parseNum(row["category id"]) : null;
+    products[i].categorySlug = (catId && catIdToSlug[catId]) || "";
   });
 
   // Build product ID to additional images mapping from Product Images sheet
   const productImagesByProductId: Record<string, string[]> = {};
-  const imgSheet = wb.getWorksheet("Product Images");
-  if (imgSheet) {
-    const imgRows: { productId: string; url: string; isPrimary: boolean; displayOrder: number }[] = [];
-    imgSheet.eachRow((row, i) => {
-      if (i === 1) return;
-      const url = extractUrl(row.getCell(3).value);
-      if (url) {
-        imgRows.push({
-          productId: String(row.getCell(2).value || ""),
-          url,
-          isPrimary: parseBool(row.getCell(4).value),
-          displayOrder: parseNum(row.getCell(5).value),
-        });
-      }
-    });
-    imgRows.sort((a, b) => a.displayOrder - b.displayOrder);
-    for (const img of imgRows) {
-      if (!productImagesByProductId[img.productId]) {
-        productImagesByProductId[img.productId] = [];
-      }
-      productImagesByProductId[img.productId].push(img.url);
-    }
+  const imgRows = sheetRows(wb, "Product Images")
+    .map((r) => ({
+      productId: str(r["product id"]),
+      url: extractUrl(r.url),
+      isPrimary: parseBool(r["is primary"]),
+      displayOrder: parseNum(r["display order"]),
+    }))
+    .filter((img): img is { productId: string; url: string; isPrimary: boolean; displayOrder: number } =>
+      Boolean(img.url));
+  imgRows.sort((a, b) => a.displayOrder - b.displayOrder);
+  for (const img of imgRows) {
+    (productImagesByProductId[img.productId] ??= []).push(img.url);
   }
 
   // Build product SKU to images and product name to SKU mappings
   const prodIdToSku: Record<string, string> = {};
   const prodSkuToImages: Record<string, string[]> = {};
   const prodNameToSku: Record<string, string> = {};
-  prodSheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const id = String(row.getCell(1).value || "");
-    const sku = String(row.getCell(2).value || "");
-    const name = String(row.getCell(3).value || "").toLowerCase().trim();
+  for (const row of productRows) {
+    const id = str(row.id);
+    const sku = str(row.sku);
     prodIdToSku[id] = sku;
     if (productImagesByProductId[id]) {
       prodSkuToImages[sku] = productImagesByProductId[id];
     }
-    prodNameToSku[name] = sku;
-  });
+    prodNameToSku[str(row.name).toLowerCase().trim()] = sku;
+  }
 
   // --- Orders ---
-  const orderSheet = wb.getWorksheet("Orders");
-  const orders: {
-    orderNumber: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    addressLine1: string;
-    addressLine2: string | null;
-    city: string;
-    stateCode: string;
-    postalCode: string;
-    countryCode: string;
-    status: string;
-    trackingId: string | null;
-    subtotal: number;
-    shippingCost: number;
-    totalAmount: number;
-    transactionId: string | null;
-    customerNotes: string | null;
-    adminNotes: string | null;
-    version: number;
-    createdAt: string | null;
-    updatedAt: string | null;
-  }[] = [];
-  if (orderSheet) {
-    const orderCol: Record<string, number> = {};
-    orderSheet.getRow(1).eachCell((cell, col) => { orderCol[String(cell.value).toLowerCase().trim()] = col; });
-    const cell = (row: ExcelJS.Row, key: string): unknown => {
-      const col = orderCol[key];
-      return col ? row.getCell(col).value : null;
-    };
-    orderSheet.eachRow((row, i) => {
-      if (i === 1) return;
-      orders.push({
-        orderNumber: String(cell(row, "order number") || ""),
-        customerName: String(cell(row, "customer name") || ""),
-        customerEmail: String(cell(row, "customer email") || ""),
-        customerPhone: String(cell(row, "customer phone") || ""),
-        addressLine1: String(cell(row, "address line 1") || ""),
-        addressLine2: cell(row, "address line 2") ? String(cell(row, "address line 2")) : null,
-        city: String(cell(row, "city") || ""),
-        stateCode: String(cell(row, "state code") || ""),
-        postalCode: String(cell(row, "postal code") || ""),
-        countryCode: String(cell(row, "country code") || "IN"),
-        status: String(cell(row, "status") || "pending"),
-        trackingId: cell(row, "tracking id") ? String(cell(row, "tracking id")) : null,
-        subtotal: parseNum(cell(row, "subtotal")),
-        shippingCost: parseNum(cell(row, "shipping cost")),
-        totalAmount: parseNum(cell(row, "total amount")),
-        transactionId: cell(row, "transaction id") ? String(cell(row, "transaction id")) : null,
-        customerNotes: cell(row, "customer notes") ? String(cell(row, "customer notes")) : null,
-        adminNotes: cell(row, "admin notes") ? String(cell(row, "admin notes")) : null,
-        version: parseNum(cell(row, "version")),
-        createdAt: parseDate(cell(row, "created at")),
-        updatedAt: parseDate(cell(row, "updated at")),
-      });
-    });
+  const orderRows = sheetRows(wb, "Orders");
+  const orders = orderRows.map((cell) => ({
+      orderNumber: str(cell["order number"]),
+      customerName: str(cell["customer name"]),
+      customerEmail: str(cell["customer email"]),
+      customerPhone: str(cell["customer phone"]),
+      addressLine1: str(cell["address line 1"]),
+      addressLine2: strOrNull(cell["address line 2"]),
+      city: str(cell.city),
+      stateCode: str(cell["state code"]),
+      postalCode: str(cell["postal code"]),
+      countryCode: str(cell["country code"], "IN"),
+      status: str(cell.status, "pending"),
+      trackingId: strOrNull(cell["tracking id"]),
+      subtotal: parseNum(cell.subtotal),
+      shippingCost: parseNum(cell["shipping cost"]),
+      totalAmount: parseNum(cell["total amount"]),
+      transactionId: strOrNull(cell["transaction id"]),
+      customerNotes: strOrNull(cell["customer notes"]),
+      adminNotes: strOrNull(cell["admin notes"]),
+      version: parseNum(cell.version),
+      createdAt: parseDate(cell["created at"]),
+      updatedAt: parseDate(cell["updated at"]),
+    }));
+
+  // Order id -> order number, read once and shared by items and status history
+  const orderIdToNumber: Record<string, string> = {};
+  for (const row of orderRows) {
+    orderIdToNumber[str(row.id)] = str(row["order number"]);
   }
 
   // --- Order Items ---
-  const oiSheet = wb.getWorksheet("Order Items");
+  const itemIdToSku: Record<string, string> = {};
   const orderItems: {
     orderNumber: string;
     productSku: string;
@@ -274,107 +206,44 @@ async function main() {
     parentProductSku: string | null;
     createdAt: string | null;
   }[] = [];
-  if (oiSheet) {
-    const oiCol: Record<string, number> = {};
-    oiSheet.getRow(1).eachCell((cell, col) => { oiCol[String(cell.value).toLowerCase().trim()] = col; });
-    const oiCell = (row: ExcelJS.Row, key: string): unknown => {
-      const col = oiCol[key];
-      return col ? row.getCell(col).value : null;
-    };
-
-    // Build order ID to order number mapping from Orders sheet
-    const orderIdToNumber: Record<string, string> = {};
-    orderSheet?.eachRow((row, i) => {
-      if (i === 1) return;
-      orderIdToNumber[String(row.getCell(1).value || "")] = String(row.getCell(2).value || "");
-    });
-
-    const itemIdToSku: Record<string, string> = {};
-    const rawItems: { id: string; orderId: string; sku: string; productName: string; unitPrice: number; quantity: number; parentItemId: string | null; createdAt: string | null }[] = [];
-    oiSheet.eachRow((row, i) => {
-      if (i === 1) return;
-      const id = String(oiCell(row, "id") || "");
-      const prodId = String(oiCell(row, "product id") || "");
-      const prodName = String(oiCell(row, "product name") || "");
-      let sku = prodIdToSku[prodId] || "";
-      // Fallback: try matching by product name
-      if (!sku) {
-        sku = prodNameToSku[prodName.toLowerCase().trim()] || "";
-      }
-      if (id && sku) {
-        itemIdToSku[id] = sku;
-      }
-      rawItems.push({
-        id,
-        orderId: String(oiCell(row, "order id") || ""),
-        sku,
-        productName: prodName,
-        unitPrice: parseNum(oiCell(row, "unit price")),
-        quantity: parseNum(oiCell(row, "quantity")),
-        parentItemId: oiCell(row, "parent order item id") ? String(oiCell(row, "parent order item id")) : null,
-        createdAt: parseDate(oiCell(row, "created at")),
-      });
-    });
-    for (const it of rawItems) {
-      orderItems.push({
-        orderNumber: orderIdToNumber[it.orderId] || "",
-        productSku: it.sku,
-        productName: it.productName,
-        unitPrice: it.unitPrice,
-        quantity: it.quantity,
-        parentProductSku: it.parentItemId ? itemIdToSku[it.parentItemId] ?? null : null,
-        createdAt: it.createdAt,
-      });
+  for (const cell of sheetRows(wb, "Order Items")) {
+    const id = str(cell.id);
+    const productName = str(cell["product name"]);
+    // Prefer the product id; fall back to a name match when the product row
+    // is gone from the export.
+    const productSku = prodIdToSku[str(cell["product id"])]
+      || prodNameToSku[productName.toLowerCase().trim()]
+      || "";
+    if (id && productSku) {
+      itemIdToSku[id] = productSku;
     }
+    const parentItemId = strOrNull(cell["parent order item id"]);
+    orderItems.push({
+      orderNumber: orderIdToNumber[str(cell["order id"])] || "",
+      productSku,
+      productName,
+      unitPrice: parseNum(cell["unit price"]),
+      quantity: parseNum(cell.quantity),
+      parentProductSku: parentItemId ? itemIdToSku[parentItemId] ?? null : null,
+      createdAt: parseDate(cell["created at"]),
+    });
   }
 
   // --- Order Status History ---
-  const oshSheet = wb.getWorksheet("Order Status History");
-  const orderStatusHistory: {
-    orderNumber: string;
-    status: string;
-    notes: string | null;
-    createdAt: string | null;
-  }[] = [];
-  if (oshSheet) {
-    // Build order ID to order number mapping from Orders sheet
-    const orderIdToNumber: Record<string, string> = {};
-    orderSheet?.eachRow((row, i) => {
-      if (i === 1) return;
-      orderIdToNumber[String(row.getCell(1).value || "")] = String(row.getCell(2).value || "");
-    });
-
-    oshSheet.eachRow((row, i) => {
-      if (i === 1) return;
-      const orderId = String(row.getCell(2).value || "");
-      orderStatusHistory.push({
-        orderNumber: orderIdToNumber[orderId] || "",
-        status: String(row.getCell(4).value || ""),
-        notes: row.getCell(5).value ? String(row.getCell(5).value) : null,
-        createdAt: parseDate(row.getCell(6).value),
-      });
-    });
-  }
+  const orderStatusHistory = sheetRows(wb, "Order Status History").map((cell) => ({
+    orderNumber: orderIdToNumber[str(cell["order id"])] || "",
+    status: str(cell.status),
+    notes: strOrNull(cell.notes),
+    createdAt: parseDate(cell["created at"]),
+  }));
 
   // --- Admins ---
-  const adminSheet = wb.getWorksheet("Admins");
-  const admins: {
-    username: string;
-    email: string;
-    role: string;
-    isActive: boolean;
-  }[] = [];
-  if (adminSheet) {
-    adminSheet.eachRow((row, i) => {
-      if (i === 1) return;
-      admins.push({
-        username: String(row.getCell(2).value || ""),
-        email: String(row.getCell(3).value || ""),
-        role: String(row.getCell(4).value || "admin"),
-        isActive: parseBool(row.getCell(5).value),
-      });
-    });
-  }
+  const admins = sheetRows(wb, "Admins").map((cell) => ({
+    username: str(cell.username),
+    email: str(cell.email),
+    role: str(cell.role, "admin"),
+    isActive: parseBool(cell["is active"]),
+  }));
 
   // Output as TypeScript
   const seedOrdersJson = JSON.stringify(

@@ -15,9 +15,9 @@ import {
   type ProductsQueryParams,
 } from "@/src/lib/api";
 import type { ProductsResponse, CategoryProductsResponse } from "@/src/lib/api/schemas";
-import { CATALOGUE_PAGE_SIZE } from "@/src/lib/constants";
+import { CATALOGUE_PAGE_SIZE, ADMIN_LIST_PAGE_SIZE } from "@/src/lib/constants";
 
-const ITEMS_PER_PAGE = 10;
+/** The admin catalogue grid is deliberately denser than the orders table. */
 const PRODUCTS_PER_PAGE = 5;
 
 export function useAuthMe(enabled = true) {
@@ -101,7 +101,7 @@ export function useCategoryProducts(
 }
 
 export const ADMIN_PAGE_SIZES = {
-  orders: ITEMS_PER_PAGE,
+  orders: ADMIN_LIST_PAGE_SIZE,
   products: PRODUCTS_PER_PAGE,
   catalogue: CATALOGUE_PAGE_SIZE,
 } as const;

@@ -1,11 +1,13 @@
 import "dotenv/config";
-import { PrismaClient, OrderStatus } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { OrderStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { createPrismaConnection } from "../src/lib/prisma";
+import { normalizeImageSet } from "../src/lib/image-set";
 import { SEED_CATEGORIES, SEED_PRODUCTS, SEED_ORDERS } from "./seed-data";
 
-const adapter = new PrismaPg({ connectionString: process.env["DATABASE_URL"] });
-const prisma = new PrismaClient({ adapter });
+// The connection policy (pool sizing, sslmode normalisation) is prisma.ts's,
+// shared with the app. The seeder used to construct its own client with no pool.
+const { client: prisma, close } = createPrismaConnection();
 
 async function seedCategories() {
   const categories = await Promise.all(
@@ -61,23 +63,19 @@ async function seedProducts(categoryMap: Record<string, number>): Promise<Record
     });
     skuMap[p.sku] = product.id;
 
-    const seenUrls = new Set<string>();
-    for (let i = 0; i < p.additionalImages.length; i++) {
-      const url = p.additionalImages[i];
-      if (seenUrls.has(url)) continue;
-      seenUrls.add(url);
-
+    // The gallery invariant (one primary, contiguous order from 0, no blank or
+    // duplicate URLs) is image-set.ts's, shared with the admin form and both
+    // write routes. The seeder used to re-derive it with `isPrimary: i === 0`.
+    const imageSet = normalizeImageSet(
+      p.additionalImages.map((url) => ({ url })),
+    );
+    for (const img of imageSet) {
       const existing = await prisma.productImage.findFirst({
-        where: { productId: product.id, url },
+        where: { productId: product.id, url: img.url },
       });
       if (!existing) {
         await prisma.productImage.create({
-          data: {
-            productId: product.id,
-            url,
-            isPrimary: i === 0,
-            displayOrder: i,
-          },
+          data: { productId: product.id, ...img },
         });
       }
     }
@@ -211,4 +209,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(close);

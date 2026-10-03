@@ -136,14 +136,14 @@ export const CatalogueProductSchema = ProductCoreSchema.extend({
   images: z.array(ProductImageSchema).optional(),
 });
 
+// One field per Fulfilment status, derived from the vocabulary so a new status
+// cannot reach `computeDashboardStats` and be stripped here. Same
+// derive-don't-re-state rule as OrderStatusSchema above.
 const StatsSchema = z.object({
   totalOrders: z.number(),
-  pendingOrders: z.number(),
-  approvedOrders: z.number(),
-  packagingOrders: z.number(),
-  shippedOrders: z.number(),
-  deliveredOrders: z.number(),
-  rejectedOrders: z.number(),
+  ...Object.fromEntries(
+    ORDER_STATUS_ALL.map((status) => [`${status}Orders`, z.number()]),
+  ) as Record<`${(typeof ORDER_STATUS_ALL)[number]}Orders`, z.ZodNumber>,
   totalRevenue: z.number(),
 });
 

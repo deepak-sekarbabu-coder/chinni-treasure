@@ -109,6 +109,27 @@ export type ProductBadgeValue = (typeof PRODUCT_BADGES)[number];
  */
 export const CATALOGUE_PAGE_SIZE = 6;
 
+/**
+ * The admin lists' page size. The server's `parseListQuery` default and the
+ * client's `qs()` default-dropping both read this, so a mismatch can't make the
+ * client silently send a page size the server wouldn't have chosen.
+ */
+export const ADMIN_LIST_PAGE_SIZE = 10;
+
+/**
+ * Per-list `parseListQuery` bounds. One declaration, read by the route (as
+ * `defaultLimit`/`maxLimit`) and — via `LIST_QUERY_DEFAULTS` — by the client's
+ * `qs()`, which drops any param equal to its server default.
+ *
+ * `adminList` is the one both admin lists share; `categoryProducts` is the
+ * public category page's own, wider page.
+ */
+export const LIST_QUERY_LIMITS = {
+  adminList: { defaultLimit: ADMIN_LIST_PAGE_SIZE, maxLimit: 100, defaultSort: "newest" },
+  orders: { defaultLimit: ADMIN_LIST_PAGE_SIZE, maxLimit: 100, defaultSort: "date-desc" },
+  categoryProducts: { defaultLimit: 12, maxLimit: 60, defaultSort: "newest" },
+} as const satisfies Record<string, { defaultLimit: number; maxLimit: number; defaultSort: string }>;
+
 export const INDIAN_STATES = [
   { code: "AN", name: "Andaman and Nicobar Islands" },
   { code: "AP", name: "Andhra Pradesh" },

@@ -1,27 +1,22 @@
 import { prisma } from "@/src/lib/prisma";
 import { ORDER_STATUS_ALL } from "@/src/lib/constants";
+import type { StatsResponse } from "@/src/lib/api/schemas";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STATS_WINDOW_DAYS = 30;
 
-export type DashboardStats = {
-  stats: {
-    totalOrders: number;
-    pendingOrders: number;
-    approvedOrders: number;
-    packagingOrders: number;
-    shippedOrders: number;
-    deliveredOrders: number;
-    rejectedOrders: number;
-    totalRevenue: number;
-  };
-  chartData: { date: string; orders: number; revenue: number }[];
-  productSalesData: { productName: string; quantity: number; revenue: number }[];
-};
+/**
+ * The dashboard shape is the API contract, not a second declaration of it:
+ * `StatsResponseSchema` derives its per-status fields from `ORDER_STATUS_ALL`,
+ * so adding a status here cannot produce a field the schema would strip.
+ */
+export type DashboardStats = StatsResponse;
+
+type StatusCounts = DashboardStats["stats"];
 
 /** `pendingOrders` etc. — one field per status, named after the status. */
 const statusField = (status: string) =>
-  `${status}Orders` as keyof DashboardStats["stats"];
+  `${status}Orders` as keyof StatusCounts;
 
 /**
  * Dashboard statistics: per-status counts, window math, 30-day chart
@@ -64,13 +59,13 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
   const counts: Record<string, number> = {};
   for (const row of byStatus) counts[row.status] = row._count._all;
 
-  const stats = {
+  const stats: StatusCounts = {
     totalOrders: totals._count._all,
     totalRevenue: Number(totals._sum.totalAmount ?? 0),
     ...Object.fromEntries(
       ORDER_STATUS_ALL.map((status) => [statusField(status), counts[status] ?? 0]),
     ),
-  } as DashboardStats["stats"];
+  } as StatusCounts;
 
   // Chart data: last 30 days
   const chartDataMap: Record<string, { orders: number; revenue: number }> = {};

@@ -9,6 +9,7 @@ import { parseListQuery } from "@/src/lib/list-query";
 import { assertGiftBoxNotOnBox, buildCreateData, PRODUCT_WRITE_INCLUDE } from "@/src/lib/catalogue-write";
 import { ProductInputSchema } from "@/src/lib/api/schemas";
 import { listProductsForQuery, type ProductStatusFilter } from "@/src/lib/product-read";
+import { LIST_QUERY_LIMITS } from "@/src/lib/constants";
 
 // GET /api/products — List products (optionally paginated). The active
 // catalogue is public; `isActive=all|inactive` requires an admin session.
@@ -19,9 +20,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const parsedQuery = parseListQuery(searchParams, {
-      defaultLimit: 10,
-      maxLimit: 100,
-      defaultSort: "newest",
+      ...LIST_QUERY_LIMITS.adminList,
       sortMap: SORT_OPTIONS,
     });
     if (parsedQuery instanceof NextResponse) return parsedQuery;

@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { LIST_QUERY_LIMITS } from "@/src/lib/constants";
 import {
   AuthMeResponseSchema,
   CategoriesResponseSchema,
@@ -60,8 +61,27 @@ function qs(params: Record<string, string | number | undefined>, defaults?: Reco
   return s ? `?${s}` : "";
 }
 
-/** The one admin list page size the server defaults to. */
-const DEFAULT_LIMIT = 10;
+/**
+ * The `qs()` defaults for each list, read from the same `LIST_QUERY_LIMITS`
+ * the routes hand `parseListQuery` — so the client can never drop a param the
+ * server no longer defaults to. `sort: "all"` for status is the orders list's
+ * `status=all` filter row, not a server default.
+ */
+const ADMIN_LIST_DEFAULTS = {
+  limit: LIST_QUERY_LIMITS.orders.defaultLimit,
+  sort: LIST_QUERY_LIMITS.orders.defaultSort,
+} as const;
+
+const PRODUCTS_LIST_DEFAULTS = {
+  limit: LIST_QUERY_LIMITS.adminList.defaultLimit,
+  badge: "all",
+  sort: LIST_QUERY_LIMITS.adminList.defaultSort,
+} as const;
+
+const CATEGORY_PRODUCTS_DEFAULTS = {
+  page: 1,
+  sort: LIST_QUERY_LIMITS.categoryProducts.defaultSort,
+} as const;
 
 export async function fetchAuthMe(signal?: AbortSignal): Promise<AuthMeResponse> {
   // The one endpoint that must answer `{ authenticated: false }` rather than
@@ -93,7 +113,7 @@ export function fetchOrders(params: OrdersQueryParams, signal?: AbortSignal) {
   return apiFetch<OrdersResponse>(
     `/api/orders${qs(
       { page: params.page, limit: params.limit, status: params.status, sort: params.sort },
-      { limit: DEFAULT_LIMIT, status: "all", sort: "date-desc" },
+      { ...ADMIN_LIST_DEFAULTS, status: "all" },
     )}`,
     { signal, schema: OrdersResponseSchema },
   );
@@ -122,7 +142,7 @@ export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal)
         badge: params.badge,
         sort: params.sort,
       },
-      { limit: DEFAULT_LIMIT, badge: "all", sort: "newest" },
+      PRODUCTS_LIST_DEFAULTS,
     )}`,
     { signal, schema: ProductsResponseSchema },
   );
@@ -263,7 +283,7 @@ export function fetchCategoryProducts(
   return apiFetch<CategoryProductsResponse>(
     `/api/category/${encodeURIComponent(slug)}/products${qs(
       { page: params.page, limit: params.limit, sort: params.sort },
-      { page: 1, sort: "newest" },
+      CATEGORY_PRODUCTS_DEFAULTS,
     )}`,
     { signal, schema: CategoryProductsResponseSchema },
   );

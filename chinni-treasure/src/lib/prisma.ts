@@ -7,6 +7,26 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+/**
+ * One connection policy: the pool sizing, the sslmode normalisation and the
+ * pool error handler live here, so the export script and the seeder get the
+ * same answers as the app instead of re-deriving them.
+ *
+ * `close()` disconnects the client and ends the pool — scripts and short-lived
+ * jobs must call it; the Next runtime reuses `prisma` below and never closes.
+ */
+export function createPrismaConnection() {
+  const pool = createPool();
+  const client = new PrismaClient({ adapter: new PrismaPg(pool) });
+  return {
+    client,
+    close: async () => {
+      await client.$disconnect();
+      await pool.end();
+    },
+  };
+}
+
 function createPool() {
   const url = new URL(env.DATABASE_URL);
 

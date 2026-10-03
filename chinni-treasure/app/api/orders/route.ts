@@ -6,6 +6,7 @@ import { listOrdersForAdmin } from "@/src/lib/order-read";
 import { acceptPlacementPayment } from "@/src/lib/razorpay-server";
 import { invalidateOrderCache } from "@/src/lib/order-cache";
 import { parseListQuery, totalPages } from "@/src/lib/list-query";
+import { LIST_QUERY_LIMITS } from "@/src/lib/constants";
 
 const ORDER_SORTS: Record<
   "date-desc" | "date-asc" | "total-desc" | "total-asc",
@@ -20,9 +21,7 @@ const ORDER_SORTS: Record<
 // GET /api/orders — List paginated orders (admin only)
 export const GET = withAdmin(async ({ request }) => {
   const parsedQuery = parseListQuery(new URL(request.url).searchParams, {
-    defaultLimit: 10,
-    maxLimit: 100,
-    defaultSort: "date-desc",
+    ...LIST_QUERY_LIMITS.orders,
     sortMap: ORDER_SORTS,
   });
   if (parsedQuery instanceof NextResponse) return parsedQuery;

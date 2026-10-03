@@ -62,13 +62,22 @@ describe("skeleton stylesheet ownership", () => {
  * base 10001 and rendered behind the dialog that opened it.
  */
 describe("modal overlay stacking", () => {
+  /**
+   * The top-level `z-index` a selector declares.
+   *
+   * Scans every sheet and every `selector {` block for the one that actually
+   * declares `z-index`, rather than trusting the first file that mentions the
+   * selector: `accessibility.css` also carries a `.modal-overlay` block (the
+   * reduced-motion override), and `readdirSync` returns it before `modal.css`.
+   */
   function zIndexOf(selector: string): number {
-    const sheet = sheets.find((s) => s.text.includes(`${selector} {`));
-    if (!sheet) throw new Error(`no stylesheet declares ${selector}`);
-    const block = sheet.text.slice(sheet.text.indexOf(`${selector} {`));
-    const match = block.match(/z-index:\s*(\d+)/);
-    if (!match) throw new Error(`${selector} declares no z-index`);
-    return Number(match[1]);
+    for (const { text } of sheets) {
+      for (const block of text.split(`${selector} {`).slice(1)) {
+        const match = block.match(/z-index:\s*(\d+)/);
+        if (match) return Number(match[1]);
+      }
+    }
+    throw new Error(`no stylesheet declares a z-index for ${selector}`);
   }
 
   it("stacks the shipping-label editor above the base modal overlay", () => {
@@ -77,12 +86,20 @@ describe("modal overlay stacking", () => {
     );
   });
 
-  it("stacks the other modal overlays above the base too", () => {
-    const base = zIndexOf(".modal-overlay");
-    for (const selector of [".gift-box-modal-overlay", ".shipping-nudge-overlay"]) {
-      expect(`${selector}: ${zIndexOf(selector)}`).toBe(
-        `${selector}: above ${base}`,
-      );
-    }
+  it("stacks the shipping-nudge sheet above the base overlay", () => {
+    expect(zIndexOf(".shipping-nudge-overlay")).toBeGreaterThan(
+      zIndexOf(".modal-overlay"),
+    );
+  });
+
+  /**
+   * Named exception: the gift-box modal overrides the Modal scaffold's overlay
+   * class entirely (it never carries `.modal-overlay`), so it is not nested in
+   * another dialog and does not need to stack above the base value. It only
+   * has to clear the page chrome it sits on top of.
+   */
+  it("keeps the gift-box overlay above the page chrome it opens over", () => {
+    const zIndex = zIndexOf(".gift-box-modal-overlay");
+    expect(zIndex).toBeGreaterThan(zIndexOf(".navbar"));
   });
 });

@@ -1,29 +1,24 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { buildWorkbook } from '../src/lib/excel-export';
 import { dumpDatabase } from '../src/lib/export-read';
+import { createPrismaConnection } from '../src/lib/prisma';
 
 // Load environment variables
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 30_000,
-  idleTimeoutMillis: 30_000,
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+// The connection policy (pool sizing, sslmode normalisation) is prisma.ts's,
+// shared with the app. The script used to build its own Pool/PrismaPg/PrismaClient
+// with different numbers and no normalisation.
+const { client, close } = createPrismaConnection();
 
 async function exportToExcel() {
   console.log('Starting database export to Excel...');
 
   // The dump queries live in src/lib/export-read.ts — this script and the
   // /api/export route are the two adapters over that one read surface.
-  const data = await dumpDatabase(prisma);
+  const data = await dumpDatabase(client);
 
   const workbook = buildWorkbook(data);
 
@@ -50,7 +45,4 @@ exportToExcel()
     console.error('Export failed:', error);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
-  });
+  .finally(close);
