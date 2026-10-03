@@ -95,13 +95,14 @@ export function productDraftPayload(form: ProductFormData) {
     isActive: form.isActive,
     allowGiftBoxBundling: form.allowGiftBoxBundling,
     visibleHostnames: form.visibleHostnames || undefined,
-    images:
-      form.images.length > 0
-        ? form.images.map((img) => ({
-            url: img.url,
-            isPrimary: img.isPrimary,
-            displayOrder: img.displayOrder,
-          }))
-        : undefined,
+    // Always the array, never undefined: the form holds the whole desired
+    // gallery, so `[]` means "cleared it". Sending undefined here made
+    // `updateProduct`'s `images !== undefined` guard skip the replace and
+    // leave the old rows in the database.
+    images: form.images.map((img) => ({
+      url: img.url,
+      isPrimary: img.isPrimary,
+      displayOrder: img.displayOrder,
+    })),
   };
 }

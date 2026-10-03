@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import Navbar from "../../../components/layout/Navbar";
 import { CartProvider, useCart } from "@/src/components/cart/CartProvider";
+import { LOW_STOCK_MAX } from "@/src/lib/product-display";
 
 function renderNavbar() {
   return render(
@@ -311,14 +312,24 @@ describe("Navbar", () => {
     expect(screen.getByText("Your cart is empty")).toBeInTheDocument();
   });
 
-  it("low-stock warning appears when stock is 3 or fewer", () => {
-    render(
+  it("warns when stock is low, and not when it is not", () => {
+    // Stated against the display module's threshold rather than a literal, so
+    // moving LOW_STOCK_MAX fails this test instead of silently skipping it.
+    const { unmount } = render(
       <CartProvider>
-        <NavbarTestHelperLowStock />
+        <NavbarTestHelperLowStock stock={LOW_STOCK_MAX} />
       </CartProvider>,
     );
     fireEvent.click(screen.getByLabelText("Shopping cart"));
-    expect(screen.getByText(/only 3 left/i)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`only ${LOW_STOCK_MAX} left`, "i"))).toBeInTheDocument();
+    unmount();
+
+    render(
+      <CartProvider>
+        <NavbarTestHelperLowStock stock={LOW_STOCK_MAX + 1} />
+      </CartProvider>,
+    );
+    expect(screen.queryByText(/left$/i)).not.toBeInTheDocument();
   });
 
   it("shows linked gift boxes beneath items in cart dropdown", () => {
@@ -362,12 +373,12 @@ function NavbarTestHelper() {
   return <Navbar />;
 }
 
-function NavbarTestHelperLowStock() {
+function NavbarTestHelperLowStock({ stock }: { stock: number }) {
   const { addItem } = useCart();
   React.useEffect(() => {
-    addItem({ id: "prod-1", name: "Low Stock Product", price: 49.99, image: "/test.jpg", stock: 3 });
+    addItem({ id: "prod-1", name: "Low Stock Product", price: 49.99, image: "/test.jpg", stock });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [stock]);
   return <Navbar />;
 }
 

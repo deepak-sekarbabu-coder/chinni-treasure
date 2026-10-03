@@ -1,34 +1,17 @@
 import { describe, expect, it } from "vitest";
-import ExcelJS from "exceljs";
 import { buildWorkbook } from "../../lib/excel-export";
+import { sheetRows } from "@/src/lib/sheet-rows";
 
 /**
  * The seed round trip is export → workbook → import. `buildWorkbook` declares
- * every column as a `ColumnDef.header`; the importer (`scripts/generate-seed-from-excel.ts`)
- * reads by those headers. This pins the two sides together: the importer used to
- * read by cell index, with fallbacks guessed from neighbouring columns, and had
- * already drifted out of step with the exporter's column order.
+ * every column as a `ColumnDef.header`; the importer reads by those headers
+ * through the shared `sheetRows`. This pins the two sides together: the importer
+ * used to read by cell index, with fallbacks guessed from neighbouring columns,
+ * and had already drifted out of step with the exporter's column order.
+ *
+ * `sheetRows` is imported, not copied — this test used to carry its own
+ * re-implementation, which meant changing the real decoder left it green.
  */
-
-/** Decode a sheet by header, the way the importer's `sheetRows` does. */
-function sheetRows(wb: ExcelJS.Workbook, name: string): Record<string, unknown>[] {
-  const sheet = wb.getWorksheet(name);
-  if (!sheet) return [];
-  const keys: string[] = [];
-  sheet.getRow(1).eachCell((cell, col) => {
-    keys[col - 1] = String(cell.value ?? "").toLowerCase().trim();
-  });
-  const rows: Record<string, unknown>[] = [];
-  sheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const record: Record<string, unknown> = {};
-    keys.forEach((key, idx) => {
-      if (key) record[key] = row.getCell(idx + 1).value;
-    });
-    rows.push(record);
-  });
-  return rows;
-}
 
 const data = {
   categories: [
@@ -98,5 +81,41 @@ describe("seed round trip", () => {
     const images = sheetRows(wb, "Product Images");
     expect(images[0]).toMatchObject({ "product id": "p1", url: "https://cdn.test/a.jpg", "display order": 0 });
     expect(images[0]["is primary"]).toBe("Yes");
+  });
+
+  // The guard the copied decoder could not give: every header the importer
+  // projects by name is a header the exporter actually writes. A renamed or
+  // dropped column now fails here instead of silently importing `undefined`.
+  it("gives every header the importer reads a header the exporter writes", () => {
+    const written = new Set<string>();
+    wb.eachSheet((sheet) => {
+      sheet.getRow(1).eachCell((cell) => {
+        const header = String(cell.value ?? "").toLowerCase().trim();
+        if (header) written.add(`${sheet.name}:${header}`);
+      });
+    });
+
+    // The header literals `scripts/generate-seed-from-excel.ts` reads.
+    const read: Array<[string, string[]]> = [
+      ["Products", ["sku", "name", "category id", "description", "price", "compare at price",
+        "stock quantity", "image url", "badge", "is active", "allow gift box bundling",
+        "visible hostnames", "deleted at"]],
+      ["Categories", ["id", "name", "slug", "description", "display order", "is active"]],
+      ["Product Images", ["id", "product id", "url", "is primary", "display order"]],
+      ["Orders", ["id", "order number", "customer name", "customer email", "customer phone",
+        "address line 1", "address line 2", "city", "state code", "postal code",
+        "country code", "status", "tracking id", "subtotal", "shipping cost",
+        "total amount", "transaction id", "customer notes", "admin notes", "version"]],
+      ["Order Items", ["id", "order id", "order number", "product id", "product name",
+        "unit price", "quantity", "parent order item id"]],
+      ["Order Status History", ["id", "order id", "order number", "status", "notes"]],
+      ["Admins", ["id", "username", "email", "role", "is active", "last login at"]],
+    ];
+
+    for (const [sheet, headers] of read) {
+      for (const header of headers) {
+        expect(written.has(`${sheet}:${header}`), `${sheet} is missing a "${header}" column`).toBe(true);
+      }
+    }
   });
 });

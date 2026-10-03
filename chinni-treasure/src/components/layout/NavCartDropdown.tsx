@@ -4,6 +4,7 @@ import Link from "next/link";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { FREE_SHIPPING_THRESHOLD } from "@/src/lib/constants";
+import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 
 interface CartItem {
@@ -78,7 +79,7 @@ export default function NavCartDropdown({ items, total, open, onRemove, onUpdate
                         +
                       </button>
                     </div>
-                    {item.stock <= 3 && item.stock > 0 && (
+                    {stockHealth(item.stock) === "low" && (
                       <p className="cart-dropdown-low-stock">Only {item.stock} left</p>
                     )}
                     {item.giftBoxes && item.giftBoxes.length > 0 && (

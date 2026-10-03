@@ -8,21 +8,15 @@ import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, CategoryProductsResponse } from "@/src/lib/api/schemas";
+import type { CategoryIdentity } from "@/src/lib/product-read";
 import {
   CATEGORY_SORT_KEYS,
   SORT_LABELS,
   type CategorySortKey,
 } from "@/src/lib/sort-contract";
 
-interface CategoryInfo {
-  id: number;
-  name: string;
-  slug: string;
-  description: string | null;
-}
-
 interface Props {
-  category: CategoryInfo;
+  category: CategoryIdentity;
   initialProducts: CatalogueProduct[];
   initialTotal: number;
 }

@@ -30,8 +30,11 @@ export const queryKeys = {
       [...queryKeys.categories.lists(), { includeInactive: !!includeInactive }] as const,
     detail: (id: number) => [...queryKeys.categories.all(), "detail", id] as const,
     latest: () => [...queryKeys.categories.all(), "latest"] as const,
-    products: (slug: string, page: number, sort?: string) =>
-      [...queryKeys.categories.all(), "products", slug, { page, sort: sort || "newest" }] as const,
+    // Takes the same params object the read is called with, so a key part cannot
+// be forgotten: this used to take (slug, page, sort) and silently dropped the
+// `limit` the fetch sent, serving one page's data under another's key.
+products: (slug: string, params: { page: number; limit: number; sort?: string }) =>
+      [...queryKeys.categories.all(), "products", slug, { ...params, sort: params.sort || "newest" }] as const,
   },
   track: {
     all: () => [...queryKeys.all, "track"] as const,

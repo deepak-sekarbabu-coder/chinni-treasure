@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { sheetRows } from "@/src/lib/sheet-rows";
 
 function parseNum(val: unknown): number {
   if (typeof val === "number") return val;
@@ -34,36 +35,6 @@ function extractUrl(val: unknown): string | null {
     return url || null;
   }
   return null;
-}
-
-/**
- * Decode a sheet into rows keyed by its header text, lowercased and trimmed.
- *
- * The exporter (`src/lib/excel-export.ts`) declares every column as
- * `ColumnDef.header`; this reads by that header instead of by cell index, so a
- * column added, removed or reordered upstream is one edit here instead of a
- * silent misread. The previous positional reads (`getCell(3)`, and the
- * `buildProductColMap` fallbacks that guessed `idx["image url"] - 1`) had
- * already drifted out of step with the exporter's column order.
- */
-function sheetRows(wb: ExcelJS.Workbook, name: string): Record<string, unknown>[] {
-  const sheet = wb.getWorksheet(name);
-  if (!sheet) return [];
-  const header = sheet.getRow(1);
-  const keys: string[] = [];
-  header.eachCell((cell, col) => {
-    keys[col - 1] = String(cell.value ?? "").toLowerCase().trim();
-  });
-  const rows: Record<string, unknown>[] = [];
-  sheet.eachRow((row, i) => {
-    if (i === 1) return;
-    const record: Record<string, unknown> = {};
-    keys.forEach((key, idx) => {
-      if (key) record[key] = row.getCell(idx + 1).value;
-    });
-    rows.push(record);
-  });
-  return rows;
 }
 
 const str = (v: unknown, fallback = ""): string => String(v ?? fallback);

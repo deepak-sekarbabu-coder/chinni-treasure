@@ -72,9 +72,11 @@ describe("ProductCard", () => {
     render(<ProductCard product={baseProduct} onAdd={onAdd} />);
     fireEvent.click(screen.getByText("Add to Cart"));
     expect(onAdd).toHaveBeenCalledTimes(1);
-    // The second argument is the pressed button, which the cart flight uses as
-    // its launch point — the add is not complete to the caller without it.
-    expect(onAdd).toHaveBeenCalledWith(baseProduct, expect.any(HTMLElement));
+    // The options carry the pressed button, which the cart flight uses as its
+    // launch point — the add is not complete to the caller without it.
+    expect(onAdd).toHaveBeenCalledWith(baseProduct, {
+      pressedFrom: expect.any(HTMLElement),
+    });
   });
 
   it("applies transition delay style", () => {

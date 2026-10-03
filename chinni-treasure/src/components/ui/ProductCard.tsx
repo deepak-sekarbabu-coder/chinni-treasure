@@ -12,12 +12,13 @@ import {
 import { productDisplayView } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
+import type { AddToCartOptions } from "@/src/lib/hooks/useAddToCart";
 
 interface Props {
   // The card renders the catalogue contract itself, not a hand-rolled twin —
   // a schema field can no longer stop reaching the card without a type error.
   product: CatalogueProduct;
-  onAdd: (product: CatalogueProduct, pressedFrom?: HTMLElement | null) => void;
+  onAdd: (product: CatalogueProduct, opts: AddToCartOptions) => void;
   transitionDelay?: number;
   priority?: boolean;
   loadImageImmediately?: boolean;
@@ -109,7 +110,7 @@ export default function ProductCard({
             disabled={isOutOfStock}
             // The pressed element travels with the add so the cart flight can
             // start from the card the visitor actually touched.
-            onClick={(e) => onAdd(product, e.currentTarget)}
+            onClick={(e) => onAdd(product, { pressedFrom: e.currentTarget })}
           >
             {isOutOfStock ? "Sold Out" : "Add to Cart"}
           </button>

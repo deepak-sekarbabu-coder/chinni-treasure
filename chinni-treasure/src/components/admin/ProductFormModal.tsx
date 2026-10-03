@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/src/components/ui/Modal";
 import ImageLightbox from "@/src/components/ui/ImageLightbox";
 import type { Category } from "@/src/lib/api/schemas";
-import { PRODUCT_BADGES } from "@/src/lib/constants";
+import { PRODUCT_BADGE_OPTIONS } from "@/src/lib/constants";
 import { isDisplayableImageUrl } from "@/src/lib/product-display";
 import { isGiftBoxCategory } from "@/src/lib/gift-box";
 import {
@@ -16,20 +16,6 @@ import {
   setPrimary as setSetPrimary,
 } from "@/src/lib/image-set";
 import type { ProductFormData } from "@/src/types";
-
-const BADGE_LABELS: Record<(typeof PRODUCT_BADGES)[number], string> = {
-  bestseller: "Bestseller",
-  new: "New",
-  premium: "Premium",
-  limited: "Limited",
-  luxury: "Luxury",
-};
-
-/** Options come from the shared vocabulary, so a new badge needs one edit. */
-const BADGE_OPTIONS = [
-  { value: "", label: "None" },
-  ...PRODUCT_BADGES.map((b) => ({ value: b, label: BADGE_LABELS[b] })),
-];
 
 interface Props {
   open: boolean;
@@ -77,7 +63,16 @@ export default function ProductFormModal({
 
   const openLightbox = (url: string) => setZoomImageUrl(url);
 
-  function setFormField(field: keyof ProductFormData, value: string) {
+  /**
+   * Typed to the field it writes, so `setFormField("badge", "not-a-badge")` is
+   * a compile error rather than a 400 from the server. The badge select is the
+   * one call site that needs a cast: it reads a DOM string back out of a
+   * `<select>` whose options are the shared vocabulary.
+   */
+  function setFormField<K extends keyof ProductFormData>(
+    field: K,
+    value: ProductFormData[K],
+  ) {
     onFormChange({ ...productForm, [field]: value });
   }
 
@@ -171,8 +166,9 @@ export default function ProductFormModal({
                 </div>
                 <div className="form-group">
                   <label>Badge</label>
-                  <select value={productForm.badge} onChange={(e) => setFormField("badge", e.target.value)} className="input-cream">
-                    {BADGE_OPTIONS.map((b) => (<option key={b.value} value={b.value}>{b.label}</option>))}
+                  <select value={productForm.badge} onChange={(e) => setFormField("badge", e.target.value as ProductFormData["badge"])} className="input-cream">
+                    <option value="">None</option>
+                    {PRODUCT_BADGE_OPTIONS.map((b) => (<option key={b.value} value={b.value}>{b.label}</option>))}
                   </select>
                 </div>
               </div>

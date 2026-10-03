@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getCategoryBySlug, listByCategory } from "@/src/lib/product-read";
+import { getCategoryBySlug, listByCategory, type CategoryIdentity } from "@/src/lib/product-read";
 import CategoryContent from "@/src/components/pages/category-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
@@ -50,12 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
 
-  let category: {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-  } | null = null;
+  // The read module already declares this shape; the page restated it inline.
+  let category: CategoryIdentity | null = null;
   let products: Awaited<ReturnType<typeof listByCategory>>["products"] = [];
   let total = 0;
 

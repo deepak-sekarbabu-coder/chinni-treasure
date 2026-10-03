@@ -102,6 +102,25 @@ export const PRODUCT_BADGES = ["bestseller", "new", "premium", "limited", "luxur
 export type ProductBadgeValue = (typeof PRODUCT_BADGES)[number];
 
 /**
+ * The badge's display label, beside the vocabulary itself. These were
+ * hand-written twice — once in the product form, once in the admin catalogue
+ * filter — so the two pickers could offer a badge the vocabulary does not have.
+ */
+export const PRODUCT_BADGE_LABELS: Record<ProductBadgeValue, string> = {
+  bestseller: "Bestseller",
+  new: "New",
+  premium: "Premium",
+  limited: "Limited",
+  luxury: "Luxury",
+};
+
+/** Badge options for a picker, in vocabulary order. */
+export const PRODUCT_BADGE_OPTIONS = PRODUCT_BADGES.map((badge) => ({
+  value: badge,
+  label: PRODUCT_BADGE_LABELS[badge],
+}));
+
+/**
  * How wide the catalogue and category pages render server-side. It sizes the
  * SSR payload, so the page that fetches and the hook that seeds React Query
  * with that payload must agree — one number, here. The client re-slices to the

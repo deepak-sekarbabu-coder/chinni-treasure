@@ -45,6 +45,13 @@ describe("product-draft", () => {
     expect(EMPTY_PRODUCT_DRAFT.badge).toBe("");
   });
 
+  // A cleared gallery must reach the server as `[]`, never undefined: the
+  // update contract reads undefined as "untouched" and would keep the rows.
+  it("sends an empty array, not undefined, for a cleared gallery", () => {
+    const payload = productDraftPayload({ ...EMPTY_PRODUCT_DRAFT, name: "X", price: "10" });
+    expect(payload.images).toEqual([]);
+  });
+
   // The bug this module exists to prevent: the controller used to return two
   // different strings for the same "price must be positive" rule.
   it("returns one stable message per invalid field", () => {

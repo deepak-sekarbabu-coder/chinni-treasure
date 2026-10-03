@@ -2,7 +2,7 @@ import CatalogueContent from "@/src/components/pages/catalogue-content";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import JsonLd from "@/src/components/ui/JsonLd";
 import { headers } from "next/headers";
-import { listCatalogue, loadActiveCategories } from "@/src/lib/product-read";
+import { listCatalogue, loadActiveCategories, type ActiveCategoryOption } from "@/src/lib/product-read";
 import type { Metadata } from "next";
 import { env } from "@/src/lib/env";
 
@@ -27,12 +27,6 @@ export const metadata: Metadata = {
   },
 };
 
-interface CategoryOption {
-  id: number;
-  name: string;
-  slug: string;
-}
-
 export default async function CataloguePage(props: {
   searchParams: Promise<{ search?: string; category?: string }>;
 }) {
@@ -42,7 +36,7 @@ export default async function CataloguePage(props: {
   const validCategoryId = initialCategoryId && Number.isFinite(initialCategoryId) ? initialCategoryId : undefined;
 
   let products: Awaited<ReturnType<typeof listCatalogue>>["products"] = [];
-  let categories: CategoryOption[] = [];
+  let categories: ActiveCategoryOption[] = [];
   let total = 0;
 
   const headersList = await headers();
@@ -54,7 +48,9 @@ export default async function CataloguePage(props: {
   // param never reaches these fetches (the client re-queries /api/products),
   // so it is deliberately not part of any cache key.
   try {
-    categories = (await loadActiveCategories()).map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+    // Passed through whole: the read already returns the option shape, so the
+    // page used to re-project it by hand purely to fit its own local type.
+    categories = await loadActiveCategories();
     const result = await listCatalogue(hostname, validCategoryId);
     products = result.products;
     total = result.total;

@@ -294,11 +294,9 @@ export const UpdateProductInputSchema = z.object({
     .describe(
       "Allow customers to attach gift boxes to this product. Cannot be enabled on Gift Box category products.",
     ),
-  images: z.array(z.object({
-    url: z.string().min(1),
-    isPrimary: z.boolean().optional(),
-    displayOrder: z.number().int().min(0).optional(),
-  })).optional(),
+  // The same element schema as create, so the `isPrimary` / `displayOrder`
+  // defaults can't drift between the two contracts.
+  images: z.array(ProductImageInputSchema).optional(),
 });
 
 const CategorySchema = z.object({

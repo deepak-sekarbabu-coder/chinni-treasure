@@ -7,18 +7,13 @@ import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
 import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
-
-interface CategoryOption {
-  id: number;
-  name: string;
-  slug: string;
-}
+import type { ActiveCategoryOption } from "@/src/lib/product-read";
 
 interface Props {
   initialProducts: CatalogueProduct[];
   initialTotal: number;
   initialSearch?: string;
-  initialCategories?: CategoryOption[];
+  initialCategories?: ActiveCategoryOption[];
   initialCategoryId?: number;
 }
 

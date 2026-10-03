@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import { LIST_QUERY_LIMITS } from "@/src/lib/constants";
+import type { CategorySortKey } from "@/src/lib/sort-contract";
 import {
   AuthMeResponseSchema,
   CategoriesResponseSchema,
@@ -149,8 +150,10 @@ export function fetchProducts(params: ProductsQueryParams, signal?: AbortSignal)
 }
 
 export function fetchCatalogueProducts(
-  page: number = 1,
-  limit: number = 6,
+  page: number,
+  // Required, not defaulted: the one number lives in `CATALOGUE_PAGE_SIZE` and
+  // restating it here was a drift surface with no caller relying on the default.
+  limit: number,
   search?: string,
   signal?: AbortSignal,
   categoryId?: number,
@@ -272,7 +275,7 @@ export function fetchLatestCategories(signal?: AbortSignal) {
 export interface CategoryProductsParams {
   page?: number;
   limit?: number;
-  sort?: "newest" | "price-asc" | "price-desc";
+  sort?: CategorySortKey;
 }
 
 export function fetchCategoryProducts(

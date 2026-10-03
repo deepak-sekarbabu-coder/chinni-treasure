@@ -90,10 +90,11 @@ export function useCategoryProducts(
   sort: CategoryProductsParams["sort"] = "newest",
   initialData?: CategoryProductsResponse,
 ) {
+  const params = { page, limit, sort };
   return useQuery({
-    queryKey: queryKeys.categories.products(slug, page, sort),
-    queryFn: ({ signal }) =>
-      fetchCategoryProducts(slug, { page, limit, sort }, signal),
+    // Key and fetch share one params object, so they cannot drift apart.
+    queryKey: queryKeys.categories.products(slug, params),
+    queryFn: ({ signal }) => fetchCategoryProducts(slug, params, signal),
     initialData: page === 1 ? initialData : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,

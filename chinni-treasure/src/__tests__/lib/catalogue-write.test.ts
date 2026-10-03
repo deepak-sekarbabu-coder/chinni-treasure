@@ -60,6 +60,27 @@ describe("updateProduct", () => {
     });
   });
 
+  it("deletes every image row when the gallery is sent empty", async () => {
+    vi.mocked(prisma.product.findUnique).mockResolvedValue({ sku: null, categoryId: 2 } as never);
+    vi.mocked(prisma.product.update).mockResolvedValue({ id: "p1" } as never);
+    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+
+    await updateProduct("p1", parsed({ images: [] }));
+
+    const batch = vi.mocked(prisma.$transaction).mock.calls[0][0] as unknown[];
+    expect(batch).toHaveLength(1);
+    expect(prisma.productImage.createMany).not.toHaveBeenCalled();
+  });
+
+  it("leaves the gallery alone when images is omitted entirely", async () => {
+    vi.mocked(prisma.product.findUnique).mockResolvedValue({ sku: null, categoryId: 2 } as never);
+    vi.mocked(prisma.product.update).mockResolvedValue({ id: "p1" } as never);
+
+    await updateProduct("p1", parsed({ price: 500 }));
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("refuses gift-box bundling on a Gift Box category product (400)", async () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValue({ sku: null, categoryId: 1 } as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue({ slug: "box" } as never);

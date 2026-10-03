@@ -3,14 +3,13 @@
 import { useCallback, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import Markdown from "@/src/components/ui/Markdown";
-import { useCart } from "@/src/components/cart/CartProvider";
-import { useToast } from "@/src/components/ui/ToastProvider";
 import ShippingNudgePopup from "@/src/components/ui/ShippingNudgePopup";
 import StockBadge from "@/src/components/ui/StockBadge";
 import ProductImageGallery from "@/src/components/ui/ProductImageGallery";
 import GiftBoxSelector, { type SelectedGiftBox } from "@/src/components/pages/GiftBoxSelector";
 import type { ProductDetailView } from "@/src/lib/product-read";
 import { useShippingNudge } from "@/src/lib/hooks/useShippingNudge";
+import { useAddToCart } from "@/src/lib/hooks/useAddToCart";
 import { productDisplayView } from "@/src/lib/product-display";
 import { canBundleGiftBoxes } from "@/src/lib/gift-box";
 import { formatMoney } from "@/src/lib/format";
@@ -20,8 +19,6 @@ interface Props {
 }
 
 export default function ProductDetailsContent({ product }: Props) {
-    const { addItem } = useCart();
-    const { showToast } = useToast();
     const {
         show: shippingNudgeShow,
         newTotal: shippingNudgeTotal,
@@ -32,6 +29,8 @@ export default function ProductDetailsContent({ product }: Props) {
     const [quantity, setQuantity] = useState(1);
     const [selectedGiftBoxes, setSelectedGiftBoxes] = useState<SelectedGiftBox[]>([]);
 
+    // The gallery takes image objects (it needs id/isPrimary for the strip), so
+    // this is a shape adapter onto the single-image fallback, not a re-pick.
     const allImages = product.images.length > 0
         ? product.images
         : product.imageUrl
@@ -43,6 +42,9 @@ export default function ProductDetailsContent({ product }: Props) {
 
     const addBtnRef = useRef<HTMLButtonElement>(null);
     const [btnSuccess, setBtnSuccess] = useState(false);
+    // No `giftBox` bundle here: this surface always passes `giftBoxes`, so the
+    // decision is made here and the seam never opens its modal.
+    const { handleAdd } = useAddToCart({ triggerShippingNudge });
 
     const handleRipple = useCallback((e: ReactMouseEvent<HTMLButtonElement>) => {
         const btn = e.currentTarget;
@@ -56,42 +58,16 @@ export default function ProductDetailsContent({ product }: Props) {
     }, []);
 
     const handleAddToCart = useCallback(() => {
-        if (product.stockQuantity <= 0) {
-            showToast(`${product.name} is out of stock`, "error");
-            return;
-        }
-        let newTotal = 0;
-        for (let i = 0; i < quantity; i++) {
-            const { result, newTotal: totalAfterAdd } = addItem({
-                id: product.id,
-                name: product.name,
-                price: Number(product.price),
-                image: product.imageUrl ?? "",
-                stock: product.stockQuantity,
-                sku: product.sku ?? undefined,
-                giftBoxes: i === 0 && selectedGiftBoxes.length > 0 ? selectedGiftBoxes : undefined,
-            });
-            if (result === "max_one") {
-                showToast(`Max 1 Qty per user for ${product.name}`, "info");
-                return;
-            }
-            if (result === "max_reached") {
-                showToast(`Maximum available quantity reached (${product.stockQuantity} in stock)`, "info");
-                return;
-            }
-            if (result === "out_of_stock") {
-                showToast(`${product.name} is out of stock`, "error");
-                return;
-            }
-            newTotal = totalAfterAdd;
-        }
-        // The Cart module computed the total from the fresh state on each add;
-        // the last successful add's total is the cart total now.
-        triggerShippingNudge(newTotal);
-        showToast(`${quantity} × ${product.name} added to cart`, "success");
+        // `giftBoxes` present means the decision is made, so the seam adds
+        // straight away instead of opening its modal — this surface collects
+        // the customer's own box picks above the button.
+        handleAdd(
+          product,
+          { giftBoxes: selectedGiftBoxes, pressedFrom: addBtnRef.current, quantity },
+        );
         setBtnSuccess(true);
         setTimeout(() => setBtnSuccess(false), 600);
-    }, [product, quantity, selectedGiftBoxes, addItem, showToast, triggerShippingNudge]);
+    }, [product, quantity, selectedGiftBoxes, handleAdd]);
 
     return (
         <div className="product-details-page">

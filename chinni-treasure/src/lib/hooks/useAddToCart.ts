@@ -12,15 +12,42 @@ import { canBundleGiftBoxes } from "@/src/lib/gift-box";
 type GiftBoxItem = SelectedGiftBox;
 
 /**
+ * What an add was asked to do beyond "add this product". The detail page
+ * already collected a quantity and the customer's own box picks, so it passes
+ * `giftBoxes` — and their presence means the gift-box decision is made, which
+ * is what keeps that surface out of a second copy of this flow.
+ */
+export interface AddToCartOptions {
+  giftBoxes?: GiftBoxItem[];
+  pressedFrom?: HTMLElement | null;
+  quantity?: number;
+}
+
+/** The one answer to a refused add; three surfaces used to word it differently. */
+function refusalCopy(
+  result: "max_reached" | "max_one" | "out_of_stock",
+  p: CatalogueProduct,
+): { message: string; tone: "info" | "error" } {
+  if (result === "out_of_stock") return { message: `${p.name} is out of stock`, tone: "error" };
+  if (result === "max_one") return { message: `Max 1 Qty per user for ${p.name}`, tone: "info" };
+  return {
+    message: `Maximum available quantity reached for ${p.name} (${p.stockQuantity})`,
+    tone: "info",
+  };
+}
+
+/**
  * The add-to-cart seam, gift-box flow included.
  *
  * Owns the whole "add this product" lifecycle: eligible products open the
  * gift-box modal instead of adding straight away, and the modal's
  * confirm / skip / close resolve back into the same add. Callers get two
- * things — `handleAdd` for the card's Add button, and `giftBox`, the modal
+ * things — `handleAdd` for the Add button, and `giftBox`, the modal
  * props bundle a page spreads into `<GiftBoxModal {...giftBox} />` (or renders
- * as `null`). No page keeps modal state, and the two page modules cannot
- * drift apart.
+ * as `null`). No page keeps modal state, and no page keeps its own copy of the
+ * add: the detail page passes a quantity and the customer's own box picks
+ * through `AddToCartOptions`, so the classification, the toasts, the nudge and
+ * the flight stay here for every surface.
  *
  * The Cart module owns the post-add total: addItem returns it computed from
  * the fresh state, so callers never re-derive "total after this add" and the
@@ -41,52 +68,62 @@ export function useAddToCart(options: {
   const flightOriginRef = useRef<HTMLElement | null>(null);
 
   const handleAddDirectly = useCallback(
-    (p: CatalogueProduct, giftBoxes?: GiftBoxItem[], pressedFrom?: HTMLElement | null) => {
+    (
+      p: CatalogueProduct,
+      giftBoxes?: GiftBoxItem[],
+      pressedFrom?: HTMLElement | null,
+      quantity = 1,
+    ) => {
       if (p.stockQuantity <= 0) {
         showToast(`${p.name} is out of stock`, "error");
         return;
       }
-      const { result: addResult, newTotal } = addItem({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        image: p.imageUrl ?? "",
-        stock: p.stockQuantity,
-        sku: p.sku ?? undefined,
-        giftBoxes,
-      });
-      if (addResult === "max_one") {
-        showToast(`Max 1 Qty per user for ${p.name}`, "info");
-        return;
-      }
-      if (addResult === "max_reached") {
-        showToast(
-          `Maximum available quantity reached for ${p.name} (${p.stockQuantity})`,
-          "info",
-        );
-        return;
-      }
-      if (addResult === "out_of_stock") {
-        showToast(`${p.name} is out of stock`, "error");
-        return;
+      let newTotal = 0;
+      for (let i = 0; i < quantity; i++) {
+        const { result: addResult, newTotal: totalAfterAdd } = addItem({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          image: p.imageUrl ?? "",
+          stock: p.stockQuantity,
+          sku: p.sku ?? undefined,
+          // Boxes ride on the first unit only, so adding 3 of a product does
+          // not add 3 sets of boxes.
+          giftBoxes: i === 0 ? giftBoxes : undefined,
+        });
+        if (addResult !== "added") {
+          const refusal = refusalCopy(addResult, p);
+          showToast(refusal.message, refusal.tone);
+          return;
+        }
+        newTotal = totalAfterAdd;
       }
       // The one authored moment: the product's image leaves the card and
       // arrives at the cart, because this gesture's cause and effect sit in
       // different places. Fired here rather than at the button so every add
-      // path — card, gift-box modal, quick actions — gets the same
+      // path — card, gift-box modal, detail page — gets the same
       // acknowledgement, and fired only on a real add so a refused one (max
       // quantity, out of stock) never flies an item that did not land.
       launchCartFlight(p.imageUrl ?? "", pressedFrom ?? null);
 
       triggerShippingNudge(newTotal);
-      showToast(`${p.name} added to cart`, "success");
+      showToast(
+        quantity > 1 ? `${quantity} × ${p.name} added to cart` : `${p.name} added to cart`,
+        "success",
+      );
     },
     [addItem, showToast, triggerShippingNudge],
   );
 
   const handleAdd = useCallback(
-    (p: CatalogueProduct, pressedFrom?: HTMLElement | null) => {
-      flightOriginRef.current = pressedFrom ?? null;
+    (p: CatalogueProduct, opts: AddToCartOptions = {}) => {
+      flightOriginRef.current = opts.pressedFrom ?? null;
+      // Boxes already chosen by the caller: the decision is made, so skip the
+      // modal and add straight away.
+      if (opts.giftBoxes) {
+        handleAddDirectly(p, opts.giftBoxes, opts.pressedFrom, opts.quantity);
+        return;
+      }
       if (canBundleGiftBoxes(p)) {
         setGiftBoxProduct({
           id: p.id,
@@ -97,7 +134,7 @@ export function useAddToCart(options: {
         });
         return;
       }
-      handleAddDirectly(p, undefined, pressedFrom);
+      handleAddDirectly(p, undefined, opts.pressedFrom, opts.quantity);
     },
     [handleAddDirectly],
   );

@@ -16,6 +16,7 @@ import {
   createCatalogueColumns,
 } from "@/src/components/admin/table/columns.catalogue";
 import { SORT_KEYS, SORT_LABELS } from "@/src/lib/sort-contract";
+import { PRODUCT_BADGE_OPTIONS } from "@/src/lib/constants";
 import type { Product } from "@/src/lib/api/schemas";
 import type { ProductFilters, CataloguePanelViewModel } from "@/src/components/admin/useAdminCataloguePanel";
 import ProductFormModal from "@/src/components/admin/ProductFormModal";
@@ -149,11 +150,9 @@ export default function AdminCataloguePanel({ panel }: { panel: CataloguePanelVi
             aria-label="Filter by badge"
           >
             <option value="all">All Badges</option>
-            <option value="bestseller">Bestseller</option>
-            <option value="new">New</option>
-            <option value="premium">Premium</option>
-            <option value="limited">Limited</option>
-            <option value="luxury">Luxury</option>
+            {PRODUCT_BADGE_OPTIONS.map((b) => (
+              <option key={b.value} value={b.value}>{b.label}</option>
+            ))}
           </select>
 
           <select

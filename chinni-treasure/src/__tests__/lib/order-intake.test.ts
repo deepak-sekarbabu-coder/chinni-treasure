@@ -187,6 +187,111 @@ describe("placeOrder", () => {
   });
 });
 
+// The gift-box bundling rules. These used to live only in the HTTP harness,
+// where they were proven through Prisma mocks and a route; they are the
+// module's rules, so they are proven through the module.
+describe("placeOrder — gift-box bundling rules", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const bundleInput = (boxQty: number, parentQty = 2): CreateOrderInput => ({
+    ...validInput,
+    items: [{ id: "p1", quantity: parentQty, giftBoxes: [{ id: "p2", quantity: boxQty }] }],
+  });
+
+  const parent = { ...mockProducts[0], allowGiftBoxBundling: true, category: null };
+  const box = { ...mockProducts[1], category: { slug: "box" } };
+
+  it("links boxes to their parent order item and decrements both stocks", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([parent, box]);
+    vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
+    vi.mocked(mockTx.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      items: [
+        mockOrder.items[0],
+        {
+          id: "box-item-1",
+          productId: "p2",
+          productName: "Gift Box",
+          unitPrice: 200,
+          quantity: 2,
+          orderId: "order-uuid",
+          parentOrderItemId: mockOrder.items[0].id,
+          createdAt: new Date(),
+        },
+      ],
+    });
+    vi.mocked(mockTx.product.update).mockResolvedValue({ ...parent, stockQuantity: 8 });
+    withTx();
+
+    const order = await placeOrder(bundleInput(2));
+
+    // Boxes ride on the parent's own order item, not as loose rows.
+    expect(mockTx.orderItem.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          productId: "p2",
+          quantity: 2,
+          parentOrderItemId: mockOrder.items[0].id,
+        }),
+      ],
+    });
+    expect(mockTx.product.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { stockQuantity: { decrement: 2 } } }),
+    );
+    expect(order.items).toHaveLength(2);
+  });
+
+  it("rejects box quantity above the parent quantity", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([parent, box]);
+    withTx();
+
+    await expect(placeOrder(bundleInput(3, 1))).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("cannot exceed"),
+    });
+    expect(mockTx.order.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects a bundled product that is not in the gift box category", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([
+      parent,
+      { ...mockProducts[1], category: { slug: "jewellery" } },
+    ]);
+    withTx();
+
+    await expect(placeOrder(bundleInput(1))).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("is not a gift box"),
+    });
+  });
+
+  it("rejects insufficient box stock", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([
+      parent,
+      { ...box, stockQuantity: 1 },
+    ]);
+    withTx();
+
+    await expect(placeOrder(bundleInput(5))).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("Insufficient stock for gift box"),
+    });
+  });
+
+  it("rejects a gift box used as a bundle parent", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([
+      { ...mockProducts[0], allowGiftBoxBundling: true, category: { slug: "box" } },
+      box,
+    ]);
+    withTx();
+
+    await expect(placeOrder(bundleInput(1))).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("cannot be bundled onto"),
+    });
+  });
+});
+
 describe("assertPaidAmountMatchesTotal (ADR-0002 invariant)", () => {
   it("passes when the paid paise equal the stored total", () => {
     expect(() => assertPaidAmountMatchesTotal(60000, 600)).not.toThrow();
