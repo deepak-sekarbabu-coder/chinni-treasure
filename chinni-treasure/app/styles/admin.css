@@ -455,14 +455,17 @@
 
 .orders-chart-caption {
     fill: var(--text-muted);
-    font-size: 9px;
+    /* rem, not px: chart text is screen UI and must honour the user's browser
+       font size. The label row below it stays in px — that is physical print
+       geometry, not interface type. */
+    font-size: var(--text-label);
     font-weight: 600;
     font-family: var(--font-sans);
 }
 
 .orders-chart-axis-label {
     fill: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--text-label);
     font-family: var(--font-sans);
     font-weight: 500;
 }
@@ -2075,9 +2078,16 @@
     border: 2px solid #000;
     position: relative;
     overflow: hidden;
-    font-size: 11px;
-    font-family: 'Arial', sans-serif;
-    line-height: 1.2;
+    /* Literal, not a token. `collectLabelCSS` copies only class-matching rules
+       into the print window — `:root` never makes the trip — so a `var()` here
+       would resolve to nothing on the printed label and fall back silently.
+       The stack is Albert Sans with system sans behind it, so the preview and
+       the print agree where the face is available and still read cleanly where
+       it is not; Arial was the one family guaranteed to disagree with the rest
+       of the label's own type. */
+    font-size: 0.7rem;
+    font-family: "Albert Sans", -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.3;
 }
 
 .label-header {

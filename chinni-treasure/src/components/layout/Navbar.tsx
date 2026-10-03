@@ -79,7 +79,10 @@ export default function Navbar() {
             />
           </div>
           <div className="brand-text-wrap" style={{ textAlign: "center" }}>
-            <div style={{ fontWeight: "bold" }}>Chinni Treasure</div>
+            {/* The wordmark's type lives in navbar.css (`.brand-wordmark`) —
+                it was an inline `fontWeight: bold`, a 700 the Three-Weight
+                Rule bans, on an element no stylesheet could reach. */}
+            <div className="brand-wordmark">Chinni Treasure</div>
             <div style={{ fontSize: "1.08rem", textAlign: "center" }}>
               <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span>{" "}
               <span className="brand-heart">❤</span>

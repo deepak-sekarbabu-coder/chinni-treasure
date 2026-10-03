@@ -81,14 +81,26 @@ body:has(.admin-page-root) .navbar {
     justify-content: center;
 }
 
-.nav-brand span:not(.brand-tagline) {
-    font-family: var(--font-sans);
-    font-size: 0.55rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    font-weight: 400;
+/* The wordmark: the serif name at title scale. It was an inline
+   `fontWeight: bold` on a classless div — a 700 the Three-Weight Rule does not
+   allow, invisible to the stylesheet and therefore to every rule below. The
+   Cormorant's own drawn contrast carries the weight at this size, so 500 is
+   all the emphasis the name needs. */
+.brand-wordmark {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    font-size-adjust: 0.48;
+    color: var(--gold);
 }
+
+/* The tagline is one shared mark used in both the navbar and the footer, and
+   `footer.css` owns it (imported later, so it wins). The old rule here was
+   `span:not(.brand-tagline)`, which matched the two hearts instead of the
+   text — a selector that never styled what its name claimed. The hearts now
+   carry their own `.brand-heart` rule below and nothing else reaches them. */
 
 .brand-heart,
 .nav-brand span.brand-heart {
@@ -120,11 +132,17 @@ body:has(.admin-page-root) .navbar {
 
 .nav-links li a {
     padding: 10px 20px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 1.5px;
+    /* The functional-label role, on one token so nav, buttons, eyebrows and
+       table heads are all cut from the same material. */
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    line-height: var(--leading-label);
     text-transform: uppercase;
-    color: var(--text-light);
+    /* Was --text-light (#a0a0a0) on lacquer black. Cream is the nav's resting
+       voice — the hover already warmed to gold, so the rest state now sits
+       one step above the dust grey it replaced. */
+    color: var(--cream);
     transition: color 0.3s ease, background 0.3s ease, transform var(--motion-snappy);
     border-radius: 2px;
 }
@@ -158,8 +176,11 @@ body:has(.admin-page-root) .navbar {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    font-size: 0.6rem;
-    font-weight: 700;
+    /* The count is a number, not a label: 600 keeps it legible against the
+       gold fill without the 700 the Three-Weight Rule bans. */
+    font-size: var(--text-label);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     display: flex;
     align-items: center;
     justify-content: center;

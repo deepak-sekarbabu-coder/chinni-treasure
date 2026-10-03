@@ -22,6 +22,46 @@
     --font-sans: "Albert Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-script: "Pinyon Script", "Brush Script MT", cursive;
 
+    /* ===== TYPE SCALE =====
+       The seven roles the interface needs, named for purpose rather than
+       value. Size alone never carries hierarchy: each step also changes face,
+       weight, tracking or leading, so adjacent roles stay legible apart.
+
+       These are the roles DESIGN.md documents (display / headline / title /
+       body / label) plus the two the build already needed but never named —
+       meta for secondary prose, price for money. Nothing ships below
+       --text-label; the smallest step is 11.2px, which is the floor the
+       primary mobile audience in India reads comfortably at arm's length.
+
+       Cormorant carries display through price; Albert Sans carries body
+       through label. Pinyon Script is the footer signature only and is
+       deliberately absent here — it is not a role, it is a mark. */
+    --text-display: clamp(2.5rem, 5vw, 4.2rem);
+    --text-headline: clamp(1.8rem, 3vw, 2.8rem);
+    --text-title: 1.25rem;
+    --text-body: 1rem;
+    --text-meta: 0.82rem;
+    --text-label: 0.7rem;
+    --text-price: 1.15rem;
+
+    /* Leading runs inversely with measure: the wider the line, the more it
+       needs. Display is set tight because a serif at that size carries its
+       own rhythm; body opens up because Albert Sans at 1rem over a 60ch
+       measure needs the air. */
+    --leading-display: 1.1;
+    --leading-headline: 1.15;
+    --leading-title: 1.25;
+    --leading-body: 1.6;
+    --leading-meta: 1.5;
+    --leading-label: 1.3;
+    --leading-price: 1.2;
+
+    /* Labels are the system's one tracked style — the engraved-tag voice.
+       Everything functional (buttons, eyebrows, table heads, nav links) uses
+       this one tracking value, so the small type reads as one material
+       wherever it appears. */
+    --tracking-label: 0.125em;
+
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);

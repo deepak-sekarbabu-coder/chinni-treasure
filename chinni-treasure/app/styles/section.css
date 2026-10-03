@@ -11,21 +11,27 @@
 }
 
 .section-subtitle {
-    font-size: 0.65rem;
+    font-size: var(--text-label);
     font-weight: 600;
-    letter-spacing: 3px;
+    letter-spacing: var(--tracking-label);
+    line-height: var(--leading-label);
     text-transform: uppercase;
-    color: var(--gold);
+    color: var(--gold-deep);
     margin-bottom: 12px;
 }
 
 .section-header h2 {
     font-family: var(--font-serif);
-    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-size: var(--text-headline);
+    line-height: var(--leading-headline);
     color: var(--near-black);
     margin-bottom: 16px;
     font-weight: 400;
     letter-spacing: 0.01em;
+    /* The signature block is the most repeated pattern in the system, so its
+       headline gets the balanced setting — a two-line section title should
+       break evenly rather than leaving one orphan word on the second line. */
+    text-wrap: balance;
     position: relative;
     display: inline-block;
 }
@@ -41,11 +47,14 @@
 }
 
 .section-header p {
-    font-size: 0.95rem;
+    font-size: var(--text-body);
     color: var(--text-muted);
-    max-width: 560px;
+    /* 62ch — inside the 65–75ch reading band at this face, and centred so the
+       intro paragraph never runs the width of the 1200px container. */
+    max-width: 62ch;
     margin: 0 auto;
-    line-height: 1.7;
+    line-height: var(--leading-body);
+    text-wrap: pretty;
 }
 
 /* ── Section padding utilities ── */
