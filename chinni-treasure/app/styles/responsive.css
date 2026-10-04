@@ -417,7 +417,9 @@
         font-size: 1.54rem;
     }
 
-    .brand-text-wrap>div:last-child {
+    /* The tagline row, not "whatever the last child is": the row keeps both
+       hearts beside the words at every width. */
+    .brand-tagline-line {
         font-size: 1.7rem !important;
     }
 
@@ -491,8 +493,11 @@
         font-size: 1.9rem;
     }
 
+    /* Scales with the viewport below the cap so the hearts and the words
+       still fit on one line between the logo and the cart at 375px and below,
+       where a fixed 1.35rem pushed the trailing heart onto its own line. */
     .nav-brand span {
-        font-size: 1.35rem;
+        font-size: min(1.35rem, 5vw);
     }
 
     .section {
@@ -1002,9 +1007,17 @@
         font-size: 1.6rem;
     }
 
+    /* Narrowest tier: a smaller mark frees the width for the tagline row, and
+       the wide tracking that used to sit here is what pushed it onto a second
+       line. */
+    .brand-logo-wrap {
+        width: 56px;
+        height: 56px;
+    }
+
     .nav-brand span {
-        font-size: 1.15rem;
-        letter-spacing: 2px;
+        font-size: min(1.15rem, 4.5vw);
+        letter-spacing: 0;
     }
 
     .nav-links li a {

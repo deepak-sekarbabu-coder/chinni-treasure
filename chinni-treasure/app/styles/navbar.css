@@ -79,6 +79,11 @@ body:has(.admin-page-root) .navbar {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    /* Was an inline `textAlign: center` on the element. `min-width: 0` lets the
+       block shrink inside `.nav-brand` rather than pushing the cart and
+       hamburger off the bar. */
+    text-align: center;
+    min-width: 0;
 }
 
 /* The wordmark: the serif name at title scale. It was an inline
@@ -94,6 +99,21 @@ body:has(.admin-page-root) .navbar {
     letter-spacing: 0.02em;
     font-size-adjust: 0.48;
     color: var(--gold);
+}
+
+/* The tagline line: hearts and words are a single mark, so it is a flex row
+   rather than a run of inline text. On a narrow phone the trailing heart used
+   to wrap onto a line of its own — the row is `nowrap` so it cannot, and
+   `responsive.css` sizes it down in step with the viewport to keep it fitting
+   beside the cart and hamburger. */
+.brand-tagline-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.3em;
+    white-space: nowrap;
+    font-size: 1.08rem;
+    line-height: 1.2;
 }
 
 /* The tagline is one shared mark used in both the navbar and the footer, and
