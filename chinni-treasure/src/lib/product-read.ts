@@ -1,4 +1,5 @@
 import {
+  catLatestCache,
   catPageCache,
   categoriesCache,
   giftBoxCache,
@@ -17,6 +18,7 @@ import { totalPages } from "@/src/lib/list-query";
 import { CATALOGUE_PAGE_SIZE } from "@/src/lib/constants";
 import { GIFT_BOX_CATEGORY_WHERE } from "@/src/lib/gift-box";
 import { unstable_cache } from "next/cache";
+import type { LatestCategorySection } from "@/src/lib/api/schemas";
 
 const INCLUDE = {
   // slug travels with name: the gift-box rule is the category's identity, and
@@ -545,5 +547,82 @@ export async function listGiftBoxes(): Promise<
     stockQuantity: p.stockQuantity,
   }));
   await giftBoxCache.set("all", payload);
+  return payload;
+}
+
+/**
+ * Latest in-stock product per active category — the data behind both the
+ * homepage block and GET /api/categories/latest. Cached through the
+ * module-owned `catLatestCache`, so the two surfaces share one cached fetch
+ * instead of each hitting Postgres per request, and `invalidateCatalogCaches()`
+ * purges it with every catalogue mutation. It used to live in the cache module,
+ * which made the homepage the one catalogue SSR read that bypassed this module
+ * and kept its own query and projection.
+ * ponytail: the 60s cache is per-instance when Redis is off, so cold serverless
+ * instances still pay one query per request; a CDN/ISR layer needs the
+ * root-layout cookies() call removed first.
+ * retrigger: if the prod boot warning in instrumentation.ts fires in production
+ * (which would mean REDIS_URL is set) — set REDIS_URL, no code change; only
+ * pursue the ISR path if Redis is in place and cold-start latency shows.
+ */
+export async function listLatestPerCategory(): Promise<LatestCategorySection[]> {
+  const cached = (await catLatestCache.get("latest")) as LatestCategorySection[] | null;
+  if (cached) return cached;
+
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { displayOrder: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      products: {
+        where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          compareAtPrice: true,
+          imageUrl: true,
+          description: true,
+          stockQuantity: true,
+          badge: true,
+          images: {
+            orderBy: { displayOrder: "asc" },
+            select: { id: true, url: true, isPrimary: true, displayOrder: true },
+          },
+        },
+      },
+    },
+  });
+
+  const payload: LatestCategorySection[] = categories
+    .filter((c) => c.products.length > 0)
+    .map((c) => {
+      const [product] = c.products;
+      return {
+        category: { id: c.id, name: c.name, slug: c.slug },
+        product: {
+          id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+          imageUrl: product.imageUrl ?? null,
+          description: product.description ?? null,
+          stockQuantity: product.stockQuantity,
+          badge: product.badge ?? null,
+          images: product.images.map((img) => ({
+            id: img.id,
+            url: img.url,
+            isPrimary: img.isPrimary,
+            displayOrder: img.displayOrder,
+          })),
+        },
+      };
+    });
+
+  await catLatestCache.set("latest", payload);
   return payload;
 }

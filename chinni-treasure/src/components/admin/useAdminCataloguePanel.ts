@@ -51,17 +51,30 @@ export interface CataloguePanelData {
   loadingProductId: string | null;
 }
 
+/** The CRUD module's own return type, so the panel's actions are derived from
+ *  it rather than re-declared: a renamed or dropped `useAdminCrud` action
+ *  becomes a type error here instead of a panel calling `undefined`. */
+type CatalogueCrud = ReturnType<
+  typeof useAdminCrud<
+    Product,
+    ProductFormData,
+    { open: boolean; productId: string; productName: string },
+    string,
+    Parameters<ReturnType<typeof useCreateProduct>["mutateAsync"]>[0]
+  >
+>;
+
 export interface CataloguePanelActions {
   onPageChange: (page: number) => void;
   onFilterChange: (updates: Partial<ProductFilters>) => void;
   onFilterReset: () => void;
-  onToggleForm: () => void;
-  onFormChange: (form: ProductFormData) => void;
-  onSave: (e: React.FormEvent) => Promise<void>;
-  onEdit: (product: Product) => void;
-  onRequestDelete: (product: Product) => void;
-  onCancelDelete: () => void;
-  onConfirmDelete: () => Promise<void>;
+  onToggleForm: CatalogueCrud["toggleForm"];
+  onFormChange: CatalogueCrud["onFormChange"];
+  onSave: CatalogueCrud["save"];
+  onEdit: CatalogueCrud["edit"];
+  onRequestDelete: CatalogueCrud["requestDelete"];
+  onCancelDelete: CatalogueCrud["closeDeleteConfirm"];
+  onConfirmDelete: CatalogueCrud["confirmDelete"];
 }
 
 export interface CataloguePanelViewModel {

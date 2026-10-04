@@ -4,7 +4,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useCart } from "@/src/components/cart/CartProvider";
 import { useToast } from "@/src/components/ui/ToastProvider";
 import { launchCartFlight } from "@/src/lib/cart-flight";
-import type { GiftBoxModalProduct, SelectedGiftBox } from "@/src/components/pages/GiftBoxModal";
+import type { GiftBoxModalProduct } from "@/src/components/pages/GiftBoxModal";
+import type { SelectedGiftBox } from "@/src/components/pages/gift-box-picker";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
 import { canBundleGiftBoxes } from "@/src/lib/gift-box";
 

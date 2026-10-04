@@ -1,5 +1,5 @@
 import HomeContent from "@/src/components/pages/home-content";
-import { loadLatestCategories } from "@/src/lib/catalogue-cache";
+import { listLatestPerCategory } from "@/src/lib/product-read";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -20,10 +20,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  let latestCategories: Awaited<ReturnType<typeof loadLatestCategories>> = [];
+  // Left undefined on failure, not `[]`: the block's own client fetch is the
+  // recovery path, and an empty array would read as "no categories" and render
+  // an empty section instead.
+  let latestCategories: Awaited<ReturnType<typeof listLatestPerCategory>> | undefined;
 
   try {
-    latestCategories = await loadLatestCategories();
+    latestCategories = await listLatestPerCategory();
   } catch (err) {
     console.error("Failed to fetch latest category products:", err);
   }

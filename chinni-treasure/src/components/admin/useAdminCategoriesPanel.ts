@@ -64,14 +64,27 @@ export interface CategoriesPanelData {
   togglePendingId: number | null;
 }
 
+/** The CRUD module's own return type, so the panel's actions are derived from
+ *  it rather than re-declared: a renamed or dropped `useAdminCrud` action
+ *  becomes a type error here instead of a panel calling `undefined`. */
+type CategoriesCrud = ReturnType<
+  typeof useAdminCrud<
+    Category,
+    CategoryFormState,
+    DeleteConfirmState,
+    number,
+    Parameters<ReturnType<typeof useCreateCategory>["mutateAsync"]>[0]
+  >
+>;
+
 export interface CategoriesPanelActions {
-  onToggleForm: () => void;
-  onFormChange: (form: CategoryFormState) => void;
-  onSave: (e: React.FormEvent) => Promise<void>;
-  onEdit: (category: Category) => void;
-  onRequestDelete: (category: Category & { productCount: number }) => void;
-  onCancelDelete: () => void;
-  onConfirmDelete: () => Promise<void>;
+  onToggleForm: CategoriesCrud["toggleForm"];
+  onFormChange: CategoriesCrud["onFormChange"];
+  onSave: CategoriesCrud["save"];
+  onEdit: CategoriesCrud["edit"];
+  onRequestDelete: CategoriesCrud["requestDelete"];
+  onCancelDelete: CategoriesCrud["closeDeleteConfirm"];
+  onConfirmDelete: CategoriesCrud["confirmDelete"];
   onToggleActive: (category: Category) => void;
 }
 

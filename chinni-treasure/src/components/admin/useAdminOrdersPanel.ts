@@ -15,6 +15,23 @@ import type { Order } from "@/src/lib/api/schemas";
  * page/aggregate level (the order-detail modal renders there); this module
  * consumes it via `selectedOrderId` + the selection callbacks.
  */
+type OrdersController = ReturnType<typeof useAdminOrdersController>;
+
+/**
+ * The fulfilment half of the panel's actions is `Pick`ed from the controller
+ * rather than re-declared key by key: a renamed or dropped controller action is
+ * a type error here instead of a panel that silently calls `undefined`.
+ */
+export type OrdersPanelActions = Pick<
+  OrdersController,
+  "handleAdvance" | "handleReject" | "handleTrackingSubmit" | "closeTrackingModal" | "handleUpdateTracking"
+> & {
+  onStatusFilterChange: (key: string) => void;
+  onPageChange: (page: number) => void;
+  onSortChange: (sort: OrderSortKey) => void;
+  onSelectOrder: (order: Order | null) => void;
+};
+
 export interface OrdersPanelData {
   orders: Order[];
   totalPages: number;
@@ -24,18 +41,6 @@ export interface OrdersPanelData {
   advancingOrderId: string | null;
   selectedOrder: Order | null;
   trackingModal: { orderId: string; open: boolean };
-}
-
-export interface OrdersPanelActions {
-  onStatusFilterChange: (key: string) => void;
-  onPageChange: (page: number) => void;
-  onSortChange: (sort: OrderSortKey) => void;
-  onSelectOrder: (order: Order | null) => void;
-  handleAdvance: (orderId: string) => Promise<void>;
-  handleReject: (orderId: string) => Promise<void>;
-  handleTrackingSubmit: (trackingId: string) => Promise<void>;
-  closeTrackingModal: () => void;
-  handleUpdateTracking: (orderId: string, trackingId: string) => Promise<void>;
 }
 
 export interface OrdersPanelViewModel {
@@ -75,6 +80,7 @@ export function useAdminOrdersPanel({
   );
 
   const controller = useAdminOrdersController(orders, clearSelectedOrder);
+  const { advancingOrderId, trackingModal, isTransitioning, ...fulfilmentActions } = controller;
 
   const handleStatusFilterChange = useCallback((key: string) => {
     setStatusFilter(key);
@@ -103,22 +109,18 @@ export function useAdminOrdersPanel({
       statusFilter,
       currentPage,
       sort,
-      advancingOrderId: controller.advancingOrderId,
+      advancingOrderId,
       selectedOrder,
-      trackingModal: controller.trackingModal,
+      trackingModal,
     },
     loading: ordersQuery.isLoading || ordersQuery.isFetching,
-    isTransitioning: controller.isTransitioning,
+    isTransitioning,
     actions: {
       onStatusFilterChange: handleStatusFilterChange,
       onPageChange: handlePageChange,
       onSortChange: handleSortChange,
       onSelectOrder: handleSelectOrder,
-      handleAdvance: controller.handleAdvance,
-      handleReject: controller.handleReject,
-      handleTrackingSubmit: controller.handleTrackingSubmit,
-      closeTrackingModal: controller.closeTrackingModal,
-      handleUpdateTracking: controller.handleUpdateTracking,
+      ...fulfilmentActions,
     },
   };
 }

@@ -15,6 +15,8 @@ import {
   type ProductsQueryParams,
 } from "@/src/lib/api";
 import type { ProductsResponse, CategoryProductsResponse } from "@/src/lib/api/schemas";
+import { listingSeed, type ListingSeed } from "@/src/components/pages/useCatalogueListing";
+import type { CategoryIdentity } from "@/src/lib/product-read";
 import { CATALOGUE_PAGE_SIZE, ADMIN_LIST_PAGE_SIZE } from "@/src/lib/constants";
 
 /** The admin catalogue grid is deliberately denser than the orders table. */
@@ -62,13 +64,20 @@ export function useCatalogueProducts(
   page: number,
   limit: number = CATALOGUE_PAGE_SIZE,
   search?: string,
-  initialData?: ProductsResponse,
+  seed?: ListingSeed,
   categoryId?: number,
 ) {
   return useQuery({
     queryKey: queryKeys.products.catalogue(page, limit, search, categoryId),
     queryFn: ({ signal }) => fetchCatalogueProducts(page, limit, search, signal, categoryId),
-    initialData: page === 1 && !search && !categoryId ? initialData : undefined,
+    // The seed is the query's own answer for an unfiltered first page. It is
+    // built here, next to the rule that decides when it applies, so no page has
+    // to know the response envelope. The row cast is the one place the narrow
+    // grid shape meets the endpoint's wider `Product`.
+    initialData:
+      page === 1 && !search && !categoryId && seed
+        ? (listingSeed(seed, page, limit, {}) as ProductsResponse)
+        : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,
   });
@@ -88,14 +97,17 @@ export function useCategoryProducts(
   page: number,
   limit: number = CATALOGUE_PAGE_SIZE,
   sort: CategoryProductsParams["sort"] = "newest",
-  initialData?: CategoryProductsResponse,
+  seed?: ListingSeed & { category: CategoryIdentity },
 ) {
   const params = { page, limit, sort };
   return useQuery({
     // Key and fetch share one params object, so they cannot drift apart.
     queryKey: queryKeys.categories.products(slug, params),
     queryFn: ({ signal }) => fetchCategoryProducts(slug, params, signal),
-    initialData: page === 1 ? initialData : undefined,
+    initialData:
+      page === 1 && seed
+        ? (listingSeed(seed, page, limit, { category: seed.category }) as CategoryProductsResponse)
+        : undefined,
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,
   });

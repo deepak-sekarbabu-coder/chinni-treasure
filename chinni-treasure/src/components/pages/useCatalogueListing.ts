@@ -17,8 +17,35 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
+import { totalPages as pageCount } from "@/src/lib/list-query";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
+
+/** What a catalogue page's SSR read hands to the client query. */
+export interface ListingSeed {
+  products: readonly CatalogueProduct[];
+  total: number;
+}
+
+/**
+ * The one seed. The server renders `CATALOGUE_PAGE_SIZE` wide and the client
+ * page is 3 or 6, so React Query adopts a payload trimmed to the client page
+ * size, with its page count derived from that same number.
+ *
+ * It lives beside the page-count rule because a seed that disagrees with
+ * `pageSize` paints a row the layout can't hold and paginates at the wrong
+ * width — and the two pages each used to restate the whole envelope, cast their
+ * SSR rows to the query's wider row shape, and re-inline the page count.
+ */
+export function listingSeed<E extends object>(seed: ListingSeed, page: number, pageSize: number, extra: E) {
+  return {
+    ...extra,
+    products: seed.products.slice(0, pageSize),
+    total: seed.total,
+    page,
+    limit: pageSize,
+    totalPages: pageCount(seed.total, pageSize),
+  };
+}
 
 /** The slice of a `useQuery` result this module reads. Both listing queries
  *  conform, which is why one hook can drive both surfaces. */
@@ -34,17 +61,6 @@ export interface ListingQuery {
 export interface ListingInitial {
   products: CatalogueProduct[];
   total: number;
-}
-
-/**
- * Trim an SSR payload to the responsive page size. The page renders
- * CATALOGUE_PAGE_SIZE wide; the client page is 3 or 6, so the first paint has
- * to be re-sliced or the page shows a row the layout can't hold. Generic in the
- * element type, because each seed is a different response row (`Product` vs
- * `CategoryProductsResponse["products"]`).
- */
-export function ssrPageSlice<T>(products: readonly T[], pageSize: number): T[] {
-  return (products as T[]).slice(0, pageSize);
 }
 
 export interface CatalogueListing {
@@ -66,6 +82,13 @@ export interface ListingOptions {
   initial: ListingInitial;
   /** Set the page — the page's own filter state, which it also feeds its read. */
   setCurrentPage: (page: number) => void;
+  /**
+   * The responsive page width, from the one `useResponsivePageSize` call the
+   * page already makes to size its query. Passed in rather than read here so
+   * each page subscribes to the media query once and the seed and the query can
+   * never be sized differently.
+   */
+  pageSize: number;
   /** Wording for the failed-fetch branch. */
   errorMessage?: string;
 }
@@ -74,9 +97,9 @@ export function useCatalogueListing({
   query,
   initial,
   setCurrentPage,
+  pageSize,
   errorMessage = "We couldn’t load products for this selection. Please try again.",
 }: ListingOptions): CatalogueListing {
-  const pageSize = useResponsivePageSize();
   const { refetch } = query;
 
   const products = query.data?.products ?? initial.products;
@@ -84,7 +107,7 @@ export function useCatalogueListing({
   // The server renders CATALOGUE_PAGE_SIZE wide, so its totalPages is only
   // right at that size — re-derive against the responsive page size, or mobile
   // paginates half as far as it should.
-  const totalPages = query.data?.totalPages ?? Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = query.data?.totalPages ?? pageCount(total, pageSize);
   const loading = query.isFetching;
 
   // A key change (category, search, sort) means React Query exposes the

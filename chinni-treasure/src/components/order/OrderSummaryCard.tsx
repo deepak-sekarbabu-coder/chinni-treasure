@@ -22,7 +22,8 @@ interface CartItem {
 interface Props {
   items: CartItem[];
   total: number;
-  shippingCost: number;
+  /** `null` until the customer has picked a state, so shipping can be priced. */
+  shippingCost: number | null;
   grandTotal: number;
   onRemove: (id: string) => void;
   onUpdateQuantity: (id: string, delta: number) => void;
@@ -197,7 +198,7 @@ export default function OrderSummaryCard({ items, total, shippingCost, grandTota
                 <span>Shipping</span>
                 <span
                   className={shippingCost === 0 ? "order-summary-free-shipping" : undefined}
-                  style={shippingCost < 0 ? { color: "var(--text-muted)", fontSize: "0.8rem" } : undefined}
+                  style={shippingCost === null ? { color: "var(--text-muted)", fontSize: "0.8rem" } : undefined}
                 >
                   {formatShipping(shippingCost)}
                 </span>

@@ -1,27 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import Modal from "@/src/components/ui/Modal";
 import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
+import {
+  stepBox,
+  toggleBox as toggleGiftBox,
+  useGiftBoxes,
+  type GiftBox,
+  type SelectedGiftBox,
+} from "@/src/components/pages/gift-box-picker";
 
-interface GiftBox {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  stockQuantity: number;
-}
-
-export interface SelectedGiftBox {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
+/** A card add carries one product, and the modal's boxes are uncapped by
+ *  decision (`GiftBoxModal.test.tsx` pins quantity > 1). The inline picker on
+ *  the detail page is the one that caps at the parent quantity. */
+const BOX_CAP = Number.POSITIVE_INFINITY;
 
 export interface GiftBoxModalProduct {
   id: string;
@@ -40,75 +36,26 @@ interface Props {
 }
 
 export default function GiftBoxModal({ open, product, onConfirm, onSkip, onClose }: Props) {
-  const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { giftBoxes, loading } = useGiftBoxes(open);
   const [selected, setSelected] = useState<SelectedGiftBox[]>([]);
 
-// Reset selection and reload gift boxes each time the modal opens. React's
-  // documented "adjust state when a prop changes" render-phase pattern — avoids
-  // synchronous setState inside the fetch effect below.
+  // Reset the selection each time the modal opens. React's documented "adjust
+  // state when a prop changes" render-phase pattern — avoids synchronous
+  // setState inside the fetch effect.
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) {
-      setSelected([]);
-      setLoading(true);
-    }
+    if (open) setSelected([]);
   }
-
-  // Fetch gift boxes when modal opens
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    async function fetchGiftBoxes() {
-      try {
-        const res = await fetch("/api/gift-boxes");
-        if (res.ok && !cancelled) {
-          const data = await res.json();
-          setGiftBoxes(data);
-        }
-      } catch {
-        // ignore
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    fetchGiftBoxes();
-    return () => { cancelled = true; };
-  }, [open]);
 
   // Focus, Escape and the body scroll lock are the Modal module's job now.
 
   const toggleBox = useCallback((box: GiftBox) => {
-    setSelected((prev) => {
-      const existing = prev.find((s) => s.productId === box.id);
-      if (existing) {
-        return prev.filter((s) => s.productId !== box.id);
-      }
-      return [
-        ...prev,
-        {
-          productId: box.id,
-          name: box.name,
-          price: box.price,
-          image: box.imageUrl || "",
-          quantity: 1,
-        },
-      ];
-    });
+    setSelected((prev) => toggleGiftBox(prev, box, BOX_CAP));
   }, []);
 
   const updateBoxQuantity = useCallback((productId: string, delta: number) => {
-    setSelected((prev) =>
-      prev
-        .map((s) => {
-          if (s.productId !== productId) return s;
-          const newQty = s.quantity + delta;
-          if (newQty <= 0) return null;
-          return { ...s, quantity: newQty };
-        })
-        .filter(Boolean) as SelectedGiftBox[]
-    );
+    setSelected((prev) => stepBox(prev, productId, delta, BOX_CAP));
   }, []);
 
   const giftBoxTotal = selected.reduce((sum, s) => sum + s.price * s.quantity, 0);

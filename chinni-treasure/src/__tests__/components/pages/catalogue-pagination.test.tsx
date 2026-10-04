@@ -61,7 +61,6 @@ function renderCatalogue(initialProducts: unknown[], initialCategories: { id: nu
       <CatalogueContent
         initialProducts={initialProducts as never}
         initialTotal={12}
-        initialTotalPages={2}
         initialSearch=""
         initialCategories={initialCategories}
       />

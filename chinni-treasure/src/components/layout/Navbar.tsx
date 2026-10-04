@@ -91,13 +91,17 @@ export default function Navbar() {
               className="brand-logo-image"
             />
           </div>
-          <div className="brand-text-wrap" style={{ textAlign: "center" }}>
+          <div className="brand-text-wrap">
             {/* The wordmark's type lives in navbar.css (`.brand-wordmark`) —
                 it was an inline `fontWeight: bold`, a 700 the Three-Weight
-                Rule bans, on an element no stylesheet could reach. */}
+                Rule bans, on an element no stylesheet could reach. The
+                tagline row is `.brand-tagline-line` for the same reason: a
+                flex row keeps both hearts beside the words instead of letting
+                the trailing one wrap onto its own line on a narrow phone. */}
             <div className="brand-wordmark">Chinni Treasure</div>
-            <div style={{ fontSize: "1.08rem", textAlign: "center" }}>
-              <span className="brand-heart">❤</span> <span className="brand-tagline">Little Love</span>{" "}
+            <div className="brand-tagline-line">
+              <span className="brand-heart">❤</span>
+              <span className="brand-tagline">Little Love</span>
               <span className="brand-heart">❤</span>
             </div>
           </div>

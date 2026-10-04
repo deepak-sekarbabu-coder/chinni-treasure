@@ -12,7 +12,7 @@ import { CheckoutStep } from "@/src/components/order/checkout-steps";
 import { computePricing } from "@/src/lib/pricing";
 import { cartPricedLines } from "@/src/lib/cart-projections";
 import { useCheckoutForm, CHECKOUT_STEP_COUNT } from "@/src/lib/hooks/useCheckoutForm";
-import { usePlaceOrder } from "@/src/lib/hooks/useAdminMutations";
+import { usePlaceOrder } from "@/src/lib/hooks/usePlaceOrder";
 import { useCheckoutPayment } from "@/src/lib/hooks/useCheckoutPayment";
 import { getErrorMessage } from "@/src/lib/api/client";
 
@@ -34,7 +34,9 @@ export default function OrderPage() {
   // Parents plus their gift-box lines, projected through the shared cart seam.
   const pricedLines = cartPricedLines(items);
   const pricing = form.state ? computePricing(pricedLines, form.state) : null;
-  const shippingCost = pricing ? pricing.shippingCost : -1;
+  // Shipping is unknown until the customer picks a state — `null`, not a number
+  // the summary card has to recognise.
+  const shippingCost = pricing ? pricing.shippingCost : null;
   const grandTotal = pricing ? pricing.totalAmount : total;
 
   if (items.length === 0) {

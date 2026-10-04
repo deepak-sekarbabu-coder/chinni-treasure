@@ -1,26 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import FallbackImage from "@/src/components/ui/FallbackImage";
 import { GIFT_PLACEHOLDER } from "@/src/lib/images";
 import { stockHealth } from "@/src/lib/product-display";
 import { formatMoney } from "@/src/lib/format";
-
-interface GiftBox {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  stockQuantity: number;
-}
-
-export interface SelectedGiftBox {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
+import {
+  canAddBoxes,
+  selectedBoxCount,
+  stepBox,
+  toggleBox as toggleGiftBox,
+  useGiftBoxes,
+  type GiftBox,
+  type SelectedGiftBox,
+} from "@/src/components/pages/gift-box-picker";
 
 interface Props {
   parentQuantity: number;
@@ -29,54 +22,20 @@ interface Props {
 }
 
 export default function GiftBoxSelector({ parentQuantity, selected, onChange }: Props) {
-  const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { giftBoxes, loading } = useGiftBoxes(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchGiftBoxes() {
-      try {
-        const res = await fetch("/api/gift-boxes");
-        if (res.ok) {
-          const data = await res.json();
-          setGiftBoxes(data);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchGiftBoxes();
-  }, []);
-
-  const totalSelectedQty = selected.reduce((sum, s) => sum + s.quantity, 0);
-  const canAddMore = totalSelectedQty < parentQuantity;
+  const totalSelectedQty = selectedBoxCount(selected);
+  const canAddMore = canAddBoxes(selected, parentQuantity);
 
   function toggleBox(box: GiftBox) {
-    const existing = selected.find((s) => s.productId === box.id);
-    if (existing) {
-      onChange(selected.filter((s) => s.productId !== box.id));
-    } else if (canAddMore) {
-      onChange([
-        ...selected,
-        { productId: box.id, name: box.name, price: box.price, image: box.imageUrl || "", quantity: 1 },
-      ]);
-    }
+    // At the cap, an unselected box stays unselected — the hint below says why.
+    if (!selected.some((s) => s.productId === box.id) && !canAddMore) return;
+    onChange(toggleGiftBox(selected, box, parentQuantity));
   }
 
   function updateBoxQuantity(productId: string, delta: number) {
-    onChange(
-      selected
-        .map((s) => {
-          if (s.productId !== productId) return s;
-          const newQty = s.quantity + delta;
-          if (newQty <= 0) return null;
-          if (newQty > parentQuantity) return s;
-          return { ...s, quantity: newQty };
-        })
-        .filter(Boolean) as SelectedGiftBox[]
-    );
+    onChange(stepBox(selected, productId, delta, parentQuantity));
   }
 
   if (loading) return null;

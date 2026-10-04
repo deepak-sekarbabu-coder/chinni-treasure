@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/src/lib/query-keys";
 import {
   createCategory,
-  createOrder,
   createProduct,
   deleteCategory,
   deleteProduct,
@@ -18,7 +17,6 @@ import {
 import type {
   CategoryDetail,
   CreateCategoryInput,
-  CreateOrderRequest,
   Order,
   Product,
   ProductInput,
@@ -138,12 +136,6 @@ export function useLogout() {
 export function useExportToExcel() {
   return useMutation<Blob, Error, void>({
     mutationFn: () => exportToExcel(),
-  });
-}
-
-export function usePlaceOrder() {
-  return useMutation<Order, Error, CreateOrderRequest>({
-    mutationFn: (input) => createOrder(input),
   });
 }
 

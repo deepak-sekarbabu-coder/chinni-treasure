@@ -57,8 +57,10 @@ export const POST = withPublic(
     // claimed amount is never trusted: the Payment module applies the
     // acceptance policy (payment belongs to this order, captured/authorized)
     // and returns the snapshot, then the Order intake asserts paid == stored
-    // (ADR-0002) before persisting.
-    let resolvedPaidPaise: number | undefined;
+    // (ADR-0002) before persisting. A manual placement states `null` — there is
+    // no gateway charge to compare — so the assertion can never be skipped by
+    // forgetting the field.
+    let resolvedPaidPaise: number | null = null;
     if (input.paymentGateway === "razorpay") {
       const payment = await acceptPlacementPayment(input.transactionId, input.razorpayOrderId!);
       resolvedPaidPaise = payment.amount;

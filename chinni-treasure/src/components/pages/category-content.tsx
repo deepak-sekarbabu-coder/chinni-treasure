@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import ProductGrid from "@/src/components/pages/ProductGrid";
-import { ssrPageSlice, useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
+import { useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCategoryProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
-import type { CatalogueProduct, CategoryProductsResponse } from "@/src/lib/api/schemas";
+import type { CatalogueProduct } from "@/src/lib/api/schemas";
 import type { CategoryIdentity } from "@/src/lib/product-read";
 import {
   CATEGORY_SORT_KEYS,
@@ -35,33 +35,19 @@ export default function CategoryContent({
 
   const pageSize = useResponsivePageSize();
 
-  // The SSR payload is CATALOGUE_PAGE_SIZE wide; trim it to the responsive
-  // page size so the first paint matches the page it claims to be.
-  const initialData = useMemo<CategoryProductsResponse>(
-    () =>
-      ({
-        category,
-        products: ssrPageSlice(initialProducts as CategoryProductsResponse["products"], pageSize),
-        total: initialTotal,
-        page: currentPage,
-        limit: pageSize,
-        totalPages: Math.max(1, Math.ceil(initialTotal / pageSize)),
-      }) as CategoryProductsResponse,
-    [pageSize, initialProducts, initialTotal, currentPage, category],
-  );
-
   const categoryQuery = useCategoryProducts(
     category.slug,
     currentPage,
     pageSize,
     sort,
-    initialData,
+    { products: initialProducts, total: initialTotal, category },
   );
 
   const listing = useCatalogueListing({
     query: categoryQuery,
     initial: { products: initialProducts, total: initialTotal },
     setCurrentPage,
+    pageSize,
   });
 
   const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -5,7 +5,6 @@ import { SORT_OPTIONS, type SortKey } from "@/src/lib/sort-contract";
 import { domainFilterWhere } from "@/src/lib/domain-filter";
 import { revalidateTag } from "next/cache";
 import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
-import type { LatestCategorySection } from "@/src/lib/api/schemas";
 
 /**
  * The Catalogue cache module.
@@ -25,7 +24,8 @@ export const productsCache = createRedisCache(PUBLIC_TTL.products, "products");
 // this list in memory instead of querying Postgres per keystroke.
 const catIndexCache = createRedisCache(60_000, "catindex");
 export const categoriesCache = createRedisCache(PUBLIC_TTL.categories, "categories");
-const catLatestCache = createRedisCache(PUBLIC_TTL.latest, "catlatest");
+/** The cache behind `listLatestPerCategory` in the Catalogue read module. */
+export const catLatestCache = createRedisCache(PUBLIC_TTL.latest, "catlatest");
 export const catPageCache = createRedisCache(PUBLIC_TTL.categoryPage, "catpage");
 export const giftBoxCache = createRedisCache(PUBLIC_TTL.giftBoxes, "giftboxes");
 
@@ -66,80 +66,6 @@ export async function invalidateCatalogCaches(): Promise<void> {
   // expire: 0 purges both tagged data-cache entries immediately.
   revalidateTag("product-detail", { expire: 0 });
   revalidateTag("categories", { expire: 0 });
-}
-
-/**
- * Latest in-stock product per active category — the data behind both the
- * homepage block and GET /api/categories/latest. Owned here so the two
- * surfaces share one cached fetch instead of each hitting Postgres per
- * request. Purged with every catalogue mutation via invalidateCatalogCaches().
- * ponytail: the 60s cache is per-instance when Redis is off, so cold
- * serverless instances still pay one query per request; a CDN/ISR layer
- * needs the root-layout cookies() call removed first.
- * retrigger: if the prod boot warning in instrumentation.ts fires while
- * deployed (REDIS_URL would be set) — first set REDIS_URL, no code change;
- * only pursue the ISR path if Redis is in place and cold-start latency shows.
- */
-export async function loadLatestCategories(): Promise<LatestCategorySection[]> {
-  const cached = (await catLatestCache.get("latest")) as LatestCategorySection[] | null;
-  if (cached) return cached;
-
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { displayOrder: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      products: {
-        where: { isActive: true, deletedAt: null, stockQuantity: { gt: 0 } },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: {
-          id: true,
-          name: true,
-          price: true,
-          compareAtPrice: true,
-          imageUrl: true,
-          description: true,
-          stockQuantity: true,
-          badge: true,
-          images: {
-            orderBy: { displayOrder: "asc" },
-            select: { id: true, url: true, isPrimary: true, displayOrder: true },
-          },
-        },
-      },
-    },
-  });
-
-  const payload: LatestCategorySection[] = categories
-    .filter((c) => c.products.length > 0)
-    .map((c) => {
-      const [product] = c.products;
-      return {
-        category: { id: c.id, name: c.name, slug: c.slug },
-        product: {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
-          imageUrl: product.imageUrl ?? null,
-          description: product.description ?? null,
-          stockQuantity: product.stockQuantity,
-          badge: product.badge ?? null,
-          images: product.images.map((img) => ({
-            id: img.id,
-            url: img.url,
-            isPrimary: img.isPrimary,
-            displayOrder: img.displayOrder,
-          })),
-        },
-      };
-    });
-
-  await catLatestCache.set("latest", payload);
-  return payload;
 }
 
 // ---------------------------------------------------------------------------

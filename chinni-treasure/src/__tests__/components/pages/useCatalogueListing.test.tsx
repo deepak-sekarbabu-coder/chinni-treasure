@@ -1,14 +1,10 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { ssrPageSlice, useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
+import { listingSeed, useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
 import type { CatalogueProduct } from "@/src/lib/api/schemas";
 
 const product = (id: string) => ({ id, name: id }) as CatalogueProduct;
 const many = Array.from({ length: 12 }, (_, i) => product(`p${i}`));
-
-vi.mock("@/src/lib/hooks/useResponsivePageSize", () => ({
-  useResponsivePageSize: () => 6,
-}));
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -21,16 +17,32 @@ function setup(query: Partial<Parameters<typeof useCatalogueListing>[0]["query"]
       query: { isFetching: false, isPlaceholderData: false, isError: false, refetch, ...query },
       initial,
       setCurrentPage,
+      pageSize: 6,
     }),
   );
   return { result, refetch, setCurrentPage };
 }
 
-describe("ssrPageSlice", () => {
-  it("trims the SSR payload to the responsive page size", () => {
-    expect(ssrPageSlice(many, 6)).toHaveLength(6);
-    expect(ssrPageSlice(many, 3).map((p) => p.id)).toEqual(["p0", "p1", "p2"]);
-    expect(ssrPageSlice([], 6)).toEqual([]);
+describe("listingSeed", () => {
+  it("trims the SSR payload to the client page size and derives the count from it", () => {
+    expect(listingSeed({ products: many, total: 12 }, 1, 6, {}).products).toHaveLength(6);
+    expect(listingSeed({ products: many, total: 12 }, 1, 3, {}).products.map((p) => p.id)).toEqual([
+      "p0",
+      "p1",
+      "p2",
+    ]);
+    expect(listingSeed({ products: many, total: 12 }, 1, 3, {}).totalPages).toBe(4);
+    expect(listingSeed({ products: [], total: 0 }, 1, 6, {})).toMatchObject({
+      products: [],
+      total: 0,
+      limit: 6,
+      totalPages: 1,
+    });
+  });
+
+  it("carries the endpoint's own response fields through", () => {
+    const category = { id: 1, name: "Jewellery" };
+    expect(listingSeed({ products: many, total: 12 }, 1, 6, { category }).category).toBe(category);
   });
 });
 

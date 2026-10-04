@@ -104,20 +104,25 @@ export function assertPaidAmountMatchesTotal(paidPaise: number, totalAmountRupee
  * atomic stock decrements, pricing (ADR-0002 basis), persistence with
  * line-item snapshots and initial status history.
  *
- * The paid-amount invariant is enforced here, at the seam: when the caller
- * provides `resolvedPaidPaise` (the authoritative amount fetched from the
- * gateway — never a client-claimed value), it must equal the server-computed
- * total, or the order is not stored. Manual placements (bank transfer) carry
- * no gateway charge to compare, so the invariant does not apply.
+ * The paid-amount invariant is enforced here, at the seam, and cannot be
+ * switched off by omission: every caller must state what the gateway charged.
+ * `resolvedPaidPaise` is the authoritative amount fetched from the gateway —
+ * never a client-claimed value — and must equal the server-computed total, or
+ * the order is not stored. A manual placement (bank transfer) carries no
+ * gateway charge to compare, so it states that explicitly with `null` rather
+ * than leaving the field out.
  */
 export async function placeOrder(
   input: CreateOrderInput,
   options: {
-    /** Authoritative charged amount in integer paise, resolved from the gateway. */
-    resolvedPaidPaise?: number;
+    /**
+     * Authoritative charged amount in integer paise resolved from the gateway,
+     * or `null` for a manual placement with no gateway charge.
+     */
+    resolvedPaidPaise: number | null;
     /** Transaction-capable client; defaults to the shared Prisma instance. */
     db?: Pick<PrismaClient, "$transaction">;
-  } = {},
+  },
 ): Promise<Prisma.OrderGetPayload<{ include: { items: true } }>> {
   const {
     customerName,
@@ -235,7 +240,7 @@ export async function placeOrder(
 
       // ADR-0002 paid == stored, enforced at the seam before persistence.
       // The comparison is integer-paise on both sides.
-      if (resolvedPaidPaise !== undefined) {
+      if (resolvedPaidPaise !== null) {
         assertPaidAmountMatchesTotal(resolvedPaidPaise, totalAmount);
       }
 

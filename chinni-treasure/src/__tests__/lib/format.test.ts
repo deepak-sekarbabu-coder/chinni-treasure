@@ -62,7 +62,14 @@ describe("formatShipping", () => {
   });
 
   it("renders the em dash when shipping has not been computed", () => {
-    expect(formatShipping(-1)).toBe("—");
+    expect(formatShipping(null)).toBe("—");
+  });
+
+  // The sentinel used to be -1, which any surface could produce by accident and
+  // which read as "Free" the moment a caller forgot it. `null` is the only way
+  // to say "not computed", so a real negative is just money.
+  it("treats a negative value as money, not as the old sentinel", () => {
+    expect(formatShipping(-1)).toBe("₹0.00");
   });
 
   it("renders the money value otherwise", () => {

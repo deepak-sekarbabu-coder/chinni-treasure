@@ -88,6 +88,9 @@ describe("parseCreateOrderInput", () => {
   });
 });
 
+/** A manual bank-transfer placement: no gateway charge to compare. */
+const MANUAL = { resolvedPaidPaise: null };
+
 describe("placeOrder", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -99,7 +102,7 @@ describe("placeOrder", () => {
     vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
     withTx();
 
-    const order = await placeOrder(validInput);
+    const order = await placeOrder(validInput, MANUAL);
 
     expect(order).toBe(mockOrder);
     expect(mockTx.order.create).toHaveBeenCalledWith(
@@ -138,20 +141,38 @@ describe("placeOrder", () => {
     ).resolves.toBe(mockOrder);
   });
 
-  it("skips the invariant when no resolved amount is given (manual placement path)", async () => {
+  it("skips the invariant only when the caller states a manual placement (null)", async () => {
     vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
     vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
     vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
     withTx();
 
-    await expect(placeOrder(validInput)).resolves.toBe(mockOrder);
+    await expect(placeOrder(validInput, MANUAL)).resolves.toBe(mockOrder);
+  });
+
+  it("cannot skip the invariant by omission — an absent amount fails the check, it does not pass", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
+    vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
+    withTx();
+
+    // The type forbids omitting the field, and the old `!== undefined` guard let
+    // a slipped `undefined` through as "no gateway charge". It now fails the
+    // comparison instead, so the worst case is a 400 rather than an unverified
+    // order.
+    await expect(
+      placeOrder(validInput, { resolvedPaidPaise: undefined as unknown as number }),
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("does not match the order total"),
+    });
+    expect(mockTx.order.create).not.toHaveBeenCalled();
   });
 
   it("maps unknown product to OrderError/404", async () => {
     vi.mocked(mockTx.product.findMany).mockResolvedValue([]);
     withTx();
 
-    await expect(placeOrder(validInput)).rejects.toMatchObject({
+    await expect(placeOrder(validInput, MANUAL)).rejects.toMatchObject({
       statusCode: 404,
       message: expect.stringContaining("not found"),
     });
@@ -163,7 +184,7 @@ describe("placeOrder", () => {
     ]);
     withTx();
 
-    await expect(placeOrder(validInput)).rejects.toMatchObject({
+    await expect(placeOrder(validInput, MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("Insufficient stock"),
     });
@@ -180,7 +201,7 @@ describe("placeOrder", () => {
       ...validInput,
       items: [{ id: "p1", quantity: 1, giftBoxes: [{ id: "p2", quantity: 1 }] }],
     };
-    await expect(placeOrder(input)).rejects.toMatchObject({
+    await expect(placeOrder(input, MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("does not support gift box bundling"),
     });
@@ -223,7 +244,7 @@ describe("placeOrder — gift-box bundling rules", () => {
     vi.mocked(mockTx.product.update).mockResolvedValue({ ...parent, stockQuantity: 8 });
     withTx();
 
-    const order = await placeOrder(bundleInput(2));
+    const order = await placeOrder(bundleInput(2), MANUAL);
 
     // Boxes ride on the parent's own order item, not as loose rows.
     expect(mockTx.orderItem.createMany).toHaveBeenCalledWith({
@@ -245,7 +266,7 @@ describe("placeOrder — gift-box bundling rules", () => {
     vi.mocked(mockTx.product.findMany).mockResolvedValue([parent, box]);
     withTx();
 
-    await expect(placeOrder(bundleInput(3, 1))).rejects.toMatchObject({
+    await expect(placeOrder(bundleInput(3, 1), MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("cannot exceed"),
     });
@@ -259,7 +280,7 @@ describe("placeOrder — gift-box bundling rules", () => {
     ]);
     withTx();
 
-    await expect(placeOrder(bundleInput(1))).rejects.toMatchObject({
+    await expect(placeOrder(bundleInput(1), MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("is not a gift box"),
     });
@@ -272,7 +293,7 @@ describe("placeOrder — gift-box bundling rules", () => {
     ]);
     withTx();
 
-    await expect(placeOrder(bundleInput(5))).rejects.toMatchObject({
+    await expect(placeOrder(bundleInput(5), MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("Insufficient stock for gift box"),
     });
@@ -285,7 +306,7 @@ describe("placeOrder — gift-box bundling rules", () => {
     ]);
     withTx();
 
-    await expect(placeOrder(bundleInput(1))).rejects.toMatchObject({
+    await expect(placeOrder(bundleInput(1), MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("cannot be bundled onto"),
     });

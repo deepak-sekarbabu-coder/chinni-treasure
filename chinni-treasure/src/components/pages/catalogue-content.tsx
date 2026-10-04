@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ProductGrid from "@/src/components/pages/ProductGrid";
-import { ssrPageSlice, useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
+import { useCatalogueListing } from "@/src/components/pages/useCatalogueListing";
 import SectionHeader from "@/src/components/ui/SectionHeader";
 import { useCatalogueProducts } from "@/src/lib/hooks/useAdminData";
 import { useResponsivePageSize } from "@/src/lib/hooks/useResponsivePageSize";
-import type { CatalogueProduct, ProductsResponse } from "@/src/lib/api/schemas";
+import type { CatalogueProduct } from "@/src/lib/api/schemas";
 import type { ActiveCategoryOption } from "@/src/lib/product-read";
 
 interface Props {
@@ -47,24 +47,11 @@ export default function CatalogueContent({
 
   const pageSize = useResponsivePageSize();
 
-  // The SSR payload is CATALOGUE_PAGE_SIZE wide; trim it to the responsive
-  // page size so the first paint matches the page it claims to be.
-  const initialData = useMemo<ProductsResponse>(
-    () => ({
-      products: ssrPageSlice(initialProducts as ProductsResponse["products"], pageSize),
-      total: initialTotal,
-      page,
-      limit: pageSize,
-      totalPages: Math.max(1, Math.ceil(initialTotal / pageSize)),
-    }),
-    [pageSize, initialProducts, initialTotal, page],
-  );
-
   const catalogueQuery = useCatalogueProducts(
     page,
     pageSize,
     searchQuery || undefined,
-    initialData,
+    { products: initialProducts, total: initialTotal },
     selectedCategory,
   );
 
@@ -72,6 +59,7 @@ export default function CatalogueContent({
     query: catalogueQuery,
     initial: { products: initialProducts, total: initialTotal },
     setCurrentPage: setPage,
+    pageSize,
   });
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
