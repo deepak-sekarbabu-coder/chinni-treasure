@@ -2,7 +2,7 @@
 
 - **Status:** Accepted — implemented, and the paid==stored enforcement follow-up is closed (2026-09-06)
 - **Date:** 2026-09-05
-- **Related:** `CONTEXT.md` → *Pricing* (domain concept), *Pricing module — seam*, *Order intake module — seam*; ADR-0001 (cache ownership)
+- **Related:** `CONTEXT.md` → *Pricing* (domain concept); `docs/ARCHITECTURE.md` → *Pricing module — seam*, *Order intake module — seam*; ADR-0001 (cache ownership)
 
 ## Context
 

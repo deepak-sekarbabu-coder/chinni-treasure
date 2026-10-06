@@ -14,7 +14,10 @@ Use the repository as a Next.js App Router codebase with a deliberate server/cli
 
 Use `/graphify` for cross-module architecture questions, relationship tracing, and dependency discovery. Do not use it for a single-file lookup or a straightforward symbol search.
 
-`CONTEXT.md` is the domain and architecture glossary. In particular, use its cache-ownership rules and its list of open architecture seams when discussing refactoring opportunities.
+Two files carry the vocabulary, and you need both:
+
+- `CONTEXT.md` — the domain glossary. What each business word means, and which words to avoid. Read it before naming anything new, so you reuse the project's word rather than a second one for the same thing.
+- `docs/ARCHITECTURE.md` — the module seams, the cache-ownership rules, and the review history. In particular, use its cache-ownership rules and its list of open architecture seams when discussing refactoring opportunities, and check which candidates are already marked **Resolved** before proposing one.
 
 ## 2. Project Overview
 

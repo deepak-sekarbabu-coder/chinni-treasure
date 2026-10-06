@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * The skeleton stylesheet contract (CONTEXT.md → Skeleton & route-state
+ * The skeleton stylesheet contract (docs/ARCHITECTURE.md → Skeleton & route-state
  * module): loading.css is the ONE home for the skeleton vocabulary. These
  * assertions pin the drift classes the Sep 2026 review found in the wild —
  * a shadowed reversed `shimmer` in keyframes.css, `skeletonShimmer` pasted

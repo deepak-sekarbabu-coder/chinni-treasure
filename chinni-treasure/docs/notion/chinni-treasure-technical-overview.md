@@ -2,7 +2,7 @@
 
 Audience: engineers joining or reviewing this codebase.
 
-**Before you start:** read [`CONTEXT.md`](https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/CONTEXT.md). It is the domain glossary and the record of every architecture decision — including the ones already made, so you don't re-propose them. For workflow and guardrails, read [`AGENTS.md`](https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/AGENTS.md).
+**Before you start:** read [`CONTEXT.md`](https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/CONTEXT.md) — the domain glossary, the words this business uses and what they mean. Then read [`docs/ARCHITECTURE.md`](https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/docs/ARCHITECTURE.md) — the module seams and the record of every architecture decision, including the ones already made, so you don't re-propose them. For workflow and guardrails, read [`AGENTS.md`](https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/AGENTS.md).
 
 ## 1. What this is
 
@@ -199,7 +199,7 @@ Two details that bite people:
 
 ## 6. The architecture that matters
 
-This codebase is organised around **deep modules** — small interfaces hiding large implementations — and `CONTEXT.md` tracks each one as a *seam*. One rule explains most of the structure:
+This codebase is organised around **deep modules** — small interfaces hiding large implementations — and `docs/ARCHITECTURE.md` tracks each one as a *seam*. One rule explains most of the structure:
 
 <callout icon="🎯" color="green_bg">
 	<strong>A route handler is a thin adapter.</strong> It parses input, calls a module, and maps errors to HTTP. Business policy does not live in route handlers.
@@ -502,7 +502,7 @@ npm run fallow                   # code-quality analysis
 
 ## 10. Known residuals
 
-Two open items are recorded in `CONTEXT.md`, so you're not the first to see them:
+Two open items are recorded in `docs/ARCHITECTURE.md`, so you're not the first to see them:
 
 - `product-read.ts` still exports `ProductView` and `CatalogueProductView` as structural copies of the Zod schema types. They have no external importers, so this is a cleanup rather than a design question.
 - The categories admin panel is deliberately a client-sorted, unpaged table. It uses the shared card frame but not the shared `useAdminListTable` — an intentional exception, not an oversight.
@@ -516,7 +516,7 @@ Two open items are recorded in `CONTEXT.md`, so you're not the first to see them
 	</tr>
 	<tr>
 		<td>2</td>
-		<td><a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/CONTEXT.md">CONTEXT.md</a> — domain glossary and every architecture seam, with rationale</td>
+		<td><a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/CONTEXT.md">CONTEXT.md</a> — domain glossary; <a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a> — every seam, with rationale</td>
 	</tr>
 	<tr>
 		<td>3</td>

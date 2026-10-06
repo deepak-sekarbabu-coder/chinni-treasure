@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-26
-- **Related:** ADR-0002 (pricing basis); `CONTEXT.md` → *Pricing module — seam*, *Order view module — seam*
+- **Related:** ADR-0002 (pricing basis); `docs/ARCHITECTURE.md` → *Pricing module — seam*, *Order view module — seam*
 
 ## Context
 
@@ -28,7 +28,7 @@ An earlier drift in the same family — the order-detail modal, tracking
 projection, and PDF each projecting orders independently — produced `₹NaN`
 totals and flattened gift boxes on the track surface, and was fixed by the
 **Order view seam** (`toOrderView`) + `orderLineViews`
-(CONTEXT.md, *Order view module — seam*). The question: do the label and the
+(docs/ARCHITECTURE.md, *Order view module — seam*). The question: do the label and the
 Excel export represent "a slower repeat of that drift", or deliberate
 separate artifacts?
 

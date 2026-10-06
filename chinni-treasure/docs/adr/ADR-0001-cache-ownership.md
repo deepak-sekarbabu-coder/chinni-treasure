@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-14
-- **Related:** `CONTEXT.md` → *Architecture modules* and *Cache-ownership rule*
+- **Related:** `docs/ARCHITECTURE.md` → *Architecture modules* and *Cache-ownership rule*
 
 ## Context
 
@@ -40,7 +40,7 @@ and never invalidated by a central hardcoded list.
    cache (stats are order-derived).
 3. **`src/lib/stats-cache.ts`** owns the `stats` cache; its invalidation is
    delegated to the order cache module.
-4. **Cache-ownership rules** (codified in `CONTEXT.md`):
+4. **Cache-ownership rules** (codified in `docs/ARCHITECTURE.md`):
    - A route never creates a cache inline — it imports an owned cache.
    - Invalidation clears what the owning module owns — never a hardcoded list.
    - Mutating an Order invalidates Order caches **and** stats; mutating any

@@ -90,7 +90,7 @@ export function collectLabelCSS(
 
 export default function PrintShippingLabelModal({ order, isOpen, onClose }: Props) {
   // One draft, one state — init/reset/clear, the courier sync rule, the date
-  // defaults and the row invariants all live in ./label-draft.ts (CONTEXT.md →
+  // defaults and the row invariants all live in ./label-draft.ts (docs/ARCHITECTURE.md →
   // Packing label). The JSX only reads the draft and calls ops.
   const [draft, setDraft] = useState<LabelDraft>(() => draftFromOrder(order));
   const edit = (patch: LabelDraftPatch) => setDraft((d) => update(d, patch));

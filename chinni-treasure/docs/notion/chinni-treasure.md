@@ -87,7 +87,11 @@ The canonical documentation is in the GitHub repository, not in Notion. These pa
 	</tr>
 	<tr>
 		<td><a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/CONTEXT.md">CONTEXT.md</a></td>
-		<td>Domain glossary and every architecture seam, with rationale and review history</td>
+		<td>Domain glossary — what each business word means</td>
+	</tr>
+	<tr>
+		<td><a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a></td>
+		<td>Every architecture seam, with rationale and review history</td>
 	</tr>
 	<tr>
 		<td><a href="https://github.com/deepak-sekarbabu-coder/chinni-treasure/blob/main/prisma/schema.prisma">prisma/schema.prisma</a></td>
@@ -104,7 +108,7 @@ The canonical documentation is in the GitHub repository, not in Notion. These pa
 </table>
 
 <callout icon="📌" color="yellow_bg">
-	<strong>Read CONTEXT.md before proposing any refactor.</strong> It records which architecture questions have already been answered and why, so the same proposal doesn't get re-litigated.
+	<strong>Read CONTEXT.md and docs/ARCHITECTURE.md before proposing any refactor.</strong> The first gives you the vocabulary; the second records which architecture questions have already been answered and why, so the same proposal doesn't get re-litigated.
 </callout>
 
 ## The three decisions that explain most of the code
