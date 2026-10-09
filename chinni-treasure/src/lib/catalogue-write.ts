@@ -23,9 +23,12 @@ export type UpdateProductInput = z.infer<typeof UpdateProductInputSchema>;
 export type CreateCategoryInput = z.infer<typeof CreateCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>;
 
-/** The row shape both admin product write routes answer with. */
+/** The row shape both admin product write routes answer with. It must carry
+ *  `category.slug` — the client validates the response against `ProductSchema`
+ *  (which requires it, matching `product-read.ts`'s include), so dropping it
+ *  made every save 200-then-throw in the browser. */
 export const PRODUCT_WRITE_INCLUDE = {
-  category: { select: { name: true } },
+  category: { select: { name: true, slug: true } },
   images: { orderBy: { displayOrder: "asc" } },
 } as const;
 
@@ -220,15 +223,22 @@ export async function deleteCategory(id: number) {
 }
 
 // ponytail: atomic replace in one $transaction; two awaits left a window with zero images on crash.
+//
+// Interactive (callback) form, not the batch array: the app's `prisma` export
+// (src/lib/prisma.ts) wraps model methods in a retry proxy, and that proxy
+// returns a plain Promise where Prisma's batch `$transaction` requires an
+// untouched PrismaPromise — the array form threw "All elements of the array
+// need to be Prisma Client promises" and every product save 500'd. The
+// callback receives Prisma's own transaction client, so nothing is re-wrapped.
 export async function replaceProductImages(
   productId: string,
   images: readonly Partial<ImageSetEntry>[],
 ): Promise<void> {
   const imageSet = normalizeImageSet(images);
-  await prisma.$transaction([
-    prisma.productImage.deleteMany({ where: { productId } }),
-    ...(imageSet.length > 0
-      ? [prisma.productImage.createMany({ data: imageSet.map((img) => ({ productId, ...img })) })]
-      : []),
-  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.productImage.deleteMany({ where: { productId } });
+    if (imageSet.length > 0) {
+      await tx.productImage.createMany({ data: imageSet.map((img) => ({ productId, ...img })) });
+    }
+  });
 }

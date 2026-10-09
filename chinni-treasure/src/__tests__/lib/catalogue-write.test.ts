@@ -4,7 +4,13 @@ import { createMockPrisma } from "@/src/__tests__/mocks/prisma";
 vi.mock("@/src/lib/prisma", () => ({ prisma: createMockPrisma() }));
 
 import { prisma } from "@/src/lib/prisma";
-import { updateProduct, createCategory, deleteCategory } from "@/src/lib/catalogue-write";
+import {
+  PRODUCT_WRITE_INCLUDE,
+  updateProduct,
+  createCategory,
+  deleteCategory,
+} from "@/src/lib/catalogue-write";
+import { ProductSchema } from "@/src/lib/api/schemas";
 
 const parsed = (over: Record<string, unknown>) =>
   ({ name: "Wallet", ...over }) as never;
@@ -36,10 +42,19 @@ describe("updateProduct", () => {
     );
   });
 
+  // The batch array form of $transaction is rejected through this module's
+  // prisma proxy (retry-wrapped promises lose the PrismaPromise tag), so the
+  // replace runs interactively: one callback, delete + create inside it.
+  function withInteractiveTx() {
+    vi.mocked(prisma.$transaction).mockImplementation(async (cb) =>
+      (cb as (tx: typeof prisma) => unknown)(prisma),
+    );
+  }
+
   it("replaces the gallery in one transaction, normalized to one primary", async () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValue({ sku: null, categoryId: 2 } as never);
     vi.mocked(prisma.product.update).mockResolvedValue({ id: "p1" } as never);
-    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+    withInteractiveTx();
 
     await updateProduct("p1", parsed({
       images: [
@@ -48,10 +63,10 @@ describe("updateProduct", () => {
       ],
     }));
 
-    const batch = vi.mocked(prisma.$transaction).mock.calls[0][0] as unknown[];
-    // delete + create, in a single atomic batch — two awaits left a window with
-    // zero images on crash.
-    expect(batch).toHaveLength(2);
+    // delete + create, in a single atomic callback — two awaits left a window
+    // with zero images on crash.
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.productImage.deleteMany).toHaveBeenCalledWith({ where: { productId: "p1" } });
     expect(prisma.productImage.createMany).toHaveBeenCalledWith({
       data: [
         { productId: "p1", url: "a.jpg", isPrimary: true, displayOrder: 0 },
@@ -63,12 +78,12 @@ describe("updateProduct", () => {
   it("deletes every image row when the gallery is sent empty", async () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValue({ sku: null, categoryId: 2 } as never);
     vi.mocked(prisma.product.update).mockResolvedValue({ id: "p1" } as never);
-    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+    withInteractiveTx();
 
     await updateProduct("p1", parsed({ images: [] }));
 
-    const batch = vi.mocked(prisma.$transaction).mock.calls[0][0] as unknown[];
-    expect(batch).toHaveLength(1);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.productImage.deleteMany).toHaveBeenCalledWith({ where: { productId: "p1" } });
     expect(prisma.productImage.createMany).not.toHaveBeenCalled();
   });
 
@@ -89,6 +104,18 @@ describe("updateProduct", () => {
       updateProduct("p1", parsed({ allowGiftBoxBundling: true })),
     ).rejects.toMatchObject({ statusCode: 400 });
     expect(prisma.product.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("PRODUCT_WRITE_INCLUDE", () => {
+  // The browser validates the POST/PUT response against ProductSchema. A key
+  // required there but missing from this include 200s server-side and then
+  // throws in the client — the include and the schema must not drift.
+  it("selects every key ProductSchema requires on category", () => {
+    const required = Object.keys(ProductSchema.shape.category.unwrap().shape);
+    expect(Object.keys(PRODUCT_WRITE_INCLUDE.category.select)).toEqual(
+      expect.arrayContaining(required),
+    );
   });
 });
 
