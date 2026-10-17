@@ -77,6 +77,10 @@ function createPool() {
 // Two error modes are caught:
 //   1. pg Pool "timeout exceeded when trying to connect" (plain Error)
 //   2. Prisma P2010 with "query_wait_timeout" (Nhost pooler queue timeout)
+//
+// The retry only wraps reads (see RETRYABLE_MODEL_READS): in the dropped
+// -connection case below the statement may already have run, so replaying a
+// write would duplicate it.
 
 function isRetryableConnectionError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -136,10 +140,28 @@ export async function withDbRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Recursively wraps a Prisma model proxy (e.g. `prisma.order`) so every
- * query method (findMany, count, create, …) is automatically retried up to
- * 3 times with exponential backoff (1s, 2s) when a retryable connection
- * error occurs.
+ * Reads are safe to replay: they change nothing, so a second attempt is
+ * harmless. Writes are not. A connection that dies mid-query may have already
+ * committed on the server — Prisma raises the same "Connection terminated
+ * unexpectedly" error whether the statement ran or not — and a retry would
+ * then insert the order twice or decrement stock twice. So only the read
+ * methods below are wrapped.
+ */
+const RETRYABLE_MODEL_READS = new Set([
+  "findUnique",
+  "findUniqueOrThrow",
+  "findFirst",
+  "findFirstOrThrow",
+  "findMany",
+  "count",
+  "aggregate",
+  "groupBy",
+]);
+
+/**
+ * Wraps a Prisma model proxy (e.g. `prisma.order`) so its read methods retry
+ * up to 3 times with exponential backoff (1s, 2s) on a retryable connection
+ * error. Writes pass through untouched — see RETRYABLE_MODEL_READS.
  *
  * Depth is limited to 3 to avoid infinite recursion while covering the
  * model-proxy nesting pattern (e.g. `prisma.order.findMany`).
@@ -149,8 +171,11 @@ function wrapModelProxy<T extends Record<string, unknown>>(target: T, depth = 0)
     get(obj, prop: string | symbol) {
       const value = Reflect.get(obj, prop);
 
-      // Wrap query methods with retry logic
       if (typeof value === "function") {
+        // Keep the receiver: the delegate methods may rely on it.
+        if (!RETRYABLE_MODEL_READS.has(prop as string)) {
+          return (...args: unknown[]) => Reflect.apply(value, obj, args);
+        }
         return (...args: unknown[]) =>
           withDbRetry(() => Reflect.apply(value, obj, args) as Promise<unknown>);
       }
@@ -165,12 +190,6 @@ function wrapModelProxy<T extends Record<string, unknown>>(target: T, depth = 0)
   });
 }
 
-const RETRYABLE_TOP_LEVEL_FNS = new Set([
-  "$transaction",
-  "$queryRaw",
-  "$executeRaw",
-]);
-
 export const prisma = new Proxy({} as unknown as PrismaClient, {
   get(_target, prop: string | symbol) {
     if (!globalForPrisma.prisma) {
@@ -181,16 +200,16 @@ export const prisma = new Proxy({} as unknown as PrismaClient, {
 
     const value = (globalForPrisma.prisma as PrismaClient)[prop as keyof PrismaClient];
 
-    // Wrap top-level database functions ($transaction, $queryRaw, $executeRaw)
-    // so they also retry on connection timeouts.
-    if (typeof prop === "string" && RETRYABLE_TOP_LEVEL_FNS.has(prop)) {
+    // Top-level functions ($transaction, $queryRaw, …) are bound to the real
+    // client — otherwise `this` would be this proxy — and never retried: a
+    // raw statement or a whole transaction must not be replayed.
+    if (typeof value === "function") {
       const fn = value as (...args: unknown[]) => Promise<unknown>;
-      return (...args: unknown[]) =>
-        withDbRetry(() => fn.apply(globalForPrisma.prisma, args));
+      return (...args: unknown[]) => fn.apply(globalForPrisma.prisma, args);
     }
 
-    // Wrap model proxies (prisma.order, prisma.category, …) so every
-    // query method auto-retries on connection timeouts.
+    // Wrap model proxies (prisma.order, prisma.category, …) so their reads
+    // auto-retry on connection timeouts.
     if (typeof value === "object" && value !== null) {
       return wrapModelProxy(value as Record<string, unknown>);
     }

@@ -168,6 +168,30 @@ describe("placeOrder", () => {
     expect(mockTx.order.create).not.toHaveBeenCalled();
   });
 
+  it("blocks a verified gateway payment already used by another order", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
+    vi.mocked(mockTx.order.findFirst).mockResolvedValueOnce({ id: "other-order" });
+    withTx();
+
+    await expect(
+      placeOrder(validInput, { resolvedPaidPaise: 40000 }),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: expect.stringContaining("already been used"),
+    });
+    expect(mockTx.order.create).not.toHaveBeenCalled();
+  });
+
+  it("leaves the manual path unchecked — a bank reference can be re-submitted after a rejection", async () => {
+    vi.mocked(mockTx.product.findMany).mockResolvedValue(mockProducts);
+    vi.mocked(mockTx.order.create).mockResolvedValue(mockOrder);
+    vi.mocked(mockTx.product.update).mockResolvedValue({ ...mockProducts[0], stockQuantity: 8 });
+    withTx();
+
+    await expect(placeOrder(validInput, MANUAL)).resolves.toBe(mockOrder);
+    expect(mockTx.order.findFirst).not.toHaveBeenCalled();
+  });
+
   it("maps unknown product to OrderError/404", async () => {
     vi.mocked(mockTx.product.findMany).mockResolvedValue([]);
     withTx();
@@ -294,6 +318,48 @@ describe("placeOrder — gift-box bundling rules", () => {
     withTx();
 
     await expect(placeOrder(bundleInput(5), MANUAL)).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining("Insufficient stock for gift box"),
+    });
+  });
+
+  it("rejects a gift box two parents both claim from the same stale read", async () => {
+    const secondParent = {
+      ...mockProducts[0],
+      id: "p1b",
+      name: "Product 1b",
+      allowGiftBoxBundling: true,
+      category: null,
+    };
+    vi.mocked(mockTx.product.findMany).mockResolvedValue([
+      parent,
+      secondParent,
+      { ...box, stockQuantity: 1 },
+    ]);
+    // Both parents carry a box row, so the box is deducted twice.
+    vi.mocked(mockTx.order.create).mockResolvedValue({
+      ...mockOrder,
+      items: [
+        mockOrder.items[0],
+        { ...mockOrder.items[0], id: "item-2", productId: "p1b", productName: "Product 1b" },
+      ],
+    });
+    vi.mocked(mockTx.product.update)
+      .mockResolvedValueOnce({ ...parent, stockQuantity: 9 })
+      .mockResolvedValueOnce({ ...secondParent, stockQuantity: 9 })
+      .mockResolvedValueOnce({ ...box, stockQuantity: 0 })
+      .mockResolvedValueOnce({ ...box, stockQuantity: -1 });
+    withTx();
+
+    const input: CreateOrderInput = {
+      ...validInput,
+      items: [
+        { id: "p1", quantity: 1, giftBoxes: [{ id: "p2", quantity: 1 }] },
+        { id: "p1b", quantity: 1, giftBoxes: [{ id: "p2", quantity: 1 }] },
+      ],
+    };
+
+    await expect(placeOrder(input, MANUAL)).rejects.toMatchObject({
       statusCode: 400,
       message: expect.stringContaining("Insufficient stock for gift box"),
     });

@@ -40,7 +40,7 @@ describe("GET /api/stats", () => {
       _sum: { totalAmount: 5000 },
     } as never);
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
+    vi.mocked(prisma.orderItem.findMany).mockResolvedValue([]);
 
     const response = await GET(createNextRequest("/api/stats"));
     expect(response.status).toBe(200);
@@ -54,6 +54,30 @@ describe("GET /api/stats", () => {
     expect(body.productSalesData).toBeDefined();
   });
 
+  it("weighs product revenue by quantity and ranks on it", async () => {
+    vi.mocked(prisma.order.groupBy).mockResolvedValue([
+      { status: "delivered", _count: { _all: 1 }, _sum: { totalAmount: 500 } },
+    ] as never);
+    vi.mocked(prisma.order.aggregate).mockResolvedValue({
+      _count: { _all: 1 },
+      _sum: { totalAmount: 500 },
+    } as never);
+    vi.mocked(prisma.order.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.orderItem.findMany).mockResolvedValue([
+      { productName: "Bracelet", unitPrice: 100, quantity: 3 },
+      { productName: "Bracelet", unitPrice: 200, quantity: 1 },
+      { productName: "Necklace", unitPrice: 900, quantity: 1 },
+    ] as never);
+
+    const body = await (await GET(createNextRequest("/api/stats"))).json();
+
+    // Bracelet: 100×3 + 200×1 = 500, not 300 (the prices summed once each).
+    expect(body.productSalesData).toEqual([
+      { productName: "Necklace", quantity: 1, revenue: 900 },
+      { productName: "Bracelet", quantity: 4, revenue: 500 },
+    ]);
+  });
+
   it("reports zero for a status with no orders rather than omitting it", async () => {
     vi.mocked(prisma.order.groupBy).mockResolvedValue([
       { status: "pending", _count: { _all: 1 }, _sum: { totalAmount: 100 } },
@@ -63,7 +87,7 @@ describe("GET /api/stats", () => {
       _sum: { totalAmount: 100 },
     } as never);
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
+    vi.mocked(prisma.orderItem.findMany).mockResolvedValue([]);
 
     const body = await (await GET(createNextRequest("/api/stats"))).json();
 
@@ -82,7 +106,7 @@ describe("GET /api/stats", () => {
       _sum: { totalAmount: 0 },
     } as never);
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.orderItem.groupBy).mockResolvedValue([]);
+    vi.mocked(prisma.orderItem.findMany).mockResolvedValue([]);
 
     const response = await GET(createNextRequest("/api/stats"));
     const body = await response.json();

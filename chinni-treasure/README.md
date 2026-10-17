@@ -319,9 +319,7 @@ chinni-treasure/
 │   ├── export-to-excel.ts            # Excel export utility
 │   ├── generate-fallow-report.mjs    # Build the Fallow report markdown
 │   ├── generate-seed-from-excel.ts   # Generate seed data from Excel
-│   ├── import-production.ts          # Import production data
 │   ├── open-lighthouse-report.mjs    # Open the latest Lighthouse report
-│   ├── repro-catalogue.ts            # Reproduce catalogue issues
 │   ├── run-fallow-report.mjs         # Run Fallow analysis end to end
 │   └── run-lighthouse.mjs            # Programmatic Lighthouse audit runner
 ├── src/

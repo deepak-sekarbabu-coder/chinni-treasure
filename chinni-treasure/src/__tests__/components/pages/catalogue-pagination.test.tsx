@@ -104,7 +104,7 @@ describe("CatalogueContent pagination", () => {
     });
     expect(await screen.findByText("P Product 7")).toBeInTheDocument();
     expect(screen.getByText("P Product 12")).toBeInTheDocument();
-  }, 15000);
+  });
 
   it("shows a loading skeleton while category results are fetched", async () => {
     const all12 = makeProducts("P", 12);

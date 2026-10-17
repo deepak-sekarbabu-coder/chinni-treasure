@@ -242,6 +242,24 @@ export async function placeOrder(
       // The comparison is integer-paise on both sides.
       if (resolvedPaidPaise !== null) {
         assertPaidAmountMatchesTotal(resolvedPaidPaise, totalAmount);
+
+        // A verified gateway payment buys once — reusing the same payment id
+        // would let one charge pay for order after order. The manual path is
+        // deliberately unchecked: a bank reference may legitimately be
+        // re-submitted after an order was rejected and refunded.
+        // shortcut: no DB unique index on transactionId, so the guard rides on
+        // this transaction's Serializable isolation; add @@unique when a
+        // migration is next warranted.
+        const reused = await tx.order.findFirst({
+          where: { transactionId },
+          select: { id: true },
+        });
+        if (reused) {
+          throw new OrderError(
+            "This payment has already been used for another order",
+            409,
+          );
+        }
       }
 
       const created = await tx.order.create({
@@ -319,12 +337,21 @@ export async function placeOrder(
           );
         }
       }
-      // Deduct gift box stock
+      // Deduct gift box stock. Same guard as the parent loop: two parents can
+      // bundle the same box, and the pre-check above compares both against one
+      // stale read, so only this sees the second deduction go negative.
       for (const gbEntry of giftBoxEntries) {
-        await tx.product.update({
+        const updated = await tx.product.update({
           where: { id: gbEntry.productId },
           data: { stockQuantity: { decrement: gbEntry.quantity } },
         });
+
+        if (updated.stockQuantity < 0) {
+          throw new OrderError(
+            `Insufficient stock for gift box ${gbEntry.productName}`,
+            400,
+          );
+        }
       }
 
       // Re-fetch the order with all items

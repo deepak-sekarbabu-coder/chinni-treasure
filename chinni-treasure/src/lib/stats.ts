@@ -32,7 +32,7 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
   const now = Date.now();
   const thirtyDaysAgo = new Date(now - STATS_WINDOW_DAYS * DAY_MS);
 
-  const [byStatus, totals, recentOrders, salesByProduct] = await Promise.all([
+  const [byStatus, totals, recentOrders, itemLines] = await Promise.all([
     prisma.order.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -46,11 +46,8 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
       where: { createdAt: { gte: thirtyDaysAgo } },
       select: { totalAmount: true, createdAt: true },
     }),
-    prisma.orderItem.groupBy({
-      by: ["productName"],
-      _sum: { quantity: true, unitPrice: true },
-      _count: true,
-      orderBy: { _sum: { unitPrice: "desc" } },
+    prisma.orderItem.findMany({
+      select: { productName: true, unitPrice: true, quantity: true },
     }),
   ]);
 
@@ -88,11 +85,21 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, data]) => ({ date, ...data }));
 
-  const productSalesData = salesByProduct.map((item) => ({
-    productName: item.productName,
-    quantity: item._sum.quantity ?? 0,
-    revenue: Number(item._sum.unitPrice ?? 0),
-  }));
+  // Revenue is money taken, so each line weighs in by quantity. The grouped
+  // `_sum.unitPrice` this replaces added a product's price once per order line
+  // (and ranked on that figure), so a ₹100 item sold 3× beat a ₹250 item sold
+  // once. Top Products renders the first 10 rows, so the ranking matters.
+  const salesByProduct = new Map<string, { quantity: number; revenue: number }>();
+  for (const line of itemLines) {
+    const sales = salesByProduct.get(line.productName) ?? { quantity: 0, revenue: 0 };
+    sales.quantity += line.quantity;
+    sales.revenue += Number(line.unitPrice) * line.quantity;
+    salesByProduct.set(line.productName, sales);
+  }
+
+  const productSalesData = [...salesByProduct]
+    .map(([productName, sales]) => ({ productName, ...sales }))
+    .sort((a, b) => b.revenue - a.revenue);
 
   return { stats, chartData, productSalesData };
 }

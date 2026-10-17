@@ -2,9 +2,17 @@ import { describe, it, expect, vi } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+const modelStubs = vi.hoisted(() => ({
+  findMany: vi.fn(),
+  create: vi.fn(),
+}));
+
 vi.mock("@prisma/client", () => ({
   PrismaClient: vi.fn(function () {
-    return { $connect: vi.fn() };
+    return {
+      $connect: vi.fn(),
+      order: { findMany: modelStubs.findMany, create: modelStubs.create },
+    };
   }),
 }));
 
@@ -89,5 +97,42 @@ describe("withDbRetry", () => {
     expect(result.ok).toBe(false);
     expect(String((result as { error: Error }).error.message)).toMatch(/Unique constraint/);
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("model retry policy — reads only", () => {
+  // "Connection terminated unexpectedly" is on the retryable list: the
+  // connection died, but the query may already have committed on the server.
+  // Replaying it would duplicate the write, so a write must run once.
+  const midQueryDrop = () => new Error("Connection terminated unexpectedly");
+
+  it("replays a read but never a write", async () => {
+    const { prisma } = await import("../../lib/prisma");
+    const client = prisma as unknown as {
+      order: { findMany(): Promise<unknown>; create(): Promise<unknown> };
+    };
+
+    modelStubs.findMany.mockImplementation(async () => {
+      throw midQueryDrop();
+    });
+    modelStubs.create.mockImplementation(async () => {
+      throw midQueryDrop();
+    });
+
+    vi.useFakeTimers();
+    try {
+      const read = client.order.findMany().catch(() => "read-failed");
+      const write = client.order.create().catch(() => "write-failed");
+      // Flush the queued backoff timers so the read exhausts its attempts.
+      for (let i = 0; i < 5; i++) await vi.advanceTimersByTimeAsync(4_000);
+
+      await expect(read).resolves.toBe("read-failed");
+      await expect(write).resolves.toBe("write-failed");
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(modelStubs.findMany).toHaveBeenCalledTimes(3);
+    expect(modelStubs.create).toHaveBeenCalledTimes(1);
   });
 });
