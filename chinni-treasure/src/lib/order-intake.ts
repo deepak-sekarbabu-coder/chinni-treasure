@@ -263,6 +263,30 @@ export async function placeOrder(
         }
       }
 
+      // Deduct stock before persistence so a stock failure cannot leave a half-created order.
+      for (const item of orderItems) {
+        const updated = await tx.product.update({
+          where: { id: item.productId },
+          data: { stockQuantity: { decrement: item.quantity } },
+        });
+        if (updated.stockQuantity < 0) {
+          throw new OrderError(`Insufficient stock for product ${item.productName}`, 400);
+        }
+      }
+      for (const item of items) {
+        if (!item.giftBoxes) continue;
+        for (const gb of item.giftBoxes) {
+          const gbProduct = productMap.get(gb.id)!;
+          const updated = await tx.product.update({
+            where: { id: gbProduct.id },
+            data: { stockQuantity: { decrement: gb.quantity } },
+          });
+          if (updated.stockQuantity < 0) {
+            throw new OrderError(`Insufficient stock for gift box ${gbProduct.name}`, 400);
+          }
+        }
+      }
+
       const created = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
@@ -325,36 +349,6 @@ export async function placeOrder(
         await tx.orderItem.createMany({ data: giftBoxEntries });
       }
 
-      // Deduct stock atomically within the same transaction
-      for (const item of orderItems) {
-        const updated = await tx.product.update({
-          where: { id: item.productId },
-          data: { stockQuantity: { decrement: item.quantity } },
-        });
-
-        if (updated.stockQuantity < 0) {
-          throw new OrderError(
-            `Insufficient stock for product ${item.productName}`,
-            400,
-          );
-        }
-      }
-      // Deduct gift box stock. Same guard as the parent loop: two parents can
-      // bundle the same box, and the pre-check above compares both against one
-      // stale read, so only this sees the second deduction go negative.
-      for (const gbEntry of giftBoxEntries) {
-        const updated = await tx.product.update({
-          where: { id: gbEntry.productId },
-          data: { stockQuantity: { decrement: gbEntry.quantity } },
-        });
-
-        if (updated.stockQuantity < 0) {
-          throw new OrderError(
-            `Insufficient stock for gift box ${gbEntry.productName}`,
-            400,
-          );
-        }
-      }
 
       // Re-fetch the order with all items
       const finalOrder = await tx.order.findUnique({
@@ -546,10 +540,13 @@ export async function setTrackingId(
     );
   }
 
-  await db.order.update({
-    where: { id: orderId },
+  const result = await db.order.updateMany({
+    where: { id: orderId, version: expectedVersion },
     data: { trackingId, version: { increment: 1 } },
   });
+  if (result.count === 0) {
+    throw new OrderError("Order was modified by another request. Please refresh and try again.", 409);
+  }
 
   const updated = await db.order.findUnique({
     where: { id: orderId },
