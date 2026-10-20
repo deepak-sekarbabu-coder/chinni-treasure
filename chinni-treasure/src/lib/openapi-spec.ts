@@ -805,7 +805,8 @@ export const openApiSpec = {
             name: "orderId",
             in: "query",
             schema: { type: "string" },
-            description: "Partial order number search (case-insensitive)",
+            description:
+              "Full order number (ORD- plus 8 characters, case-insensitive). A fragment is rejected: it would match every order.",
           },
           {
             name: "phone",
@@ -824,7 +825,8 @@ export const openApiSpec = {
             },
           },
           "400": {
-            description: "Provide orderId or phone parameter",
+            description:
+              "Provide orderId or phone parameter, or an order number that is not the full ORD-XXXXXXXX form",
           },
         },
       },

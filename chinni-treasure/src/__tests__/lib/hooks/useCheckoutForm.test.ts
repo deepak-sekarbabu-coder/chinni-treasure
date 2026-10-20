@@ -30,3 +30,28 @@ describe("useCheckoutForm transactionId rule", () => {
     expect(result.current.validate().transactionId).toBeUndefined();
   });
 });
+
+describe("useCheckoutForm length rules", () => {
+  it("rejects a value longer than its column, so the payment is never started", () => {
+    const { result } = renderHook(() => useCheckoutForm([]));
+    act(() => {
+      result.current.setForm((f) => ({ ...f, ...valid, address: "a".repeat(256) }));
+    });
+    expect(result.current.validate().address).toBe("Address must be 255 characters or fewer");
+  });
+
+  it("rejects a too-long optional address line 2, but accepts a blank one", () => {
+    const { result } = renderHook(() => useCheckoutForm([]));
+    act(() => {
+      result.current.setForm((f) => ({ ...f, ...valid, addressLine2: "a".repeat(256) }));
+    });
+    expect(result.current.validate().addressLine2).toBe(
+      "Address line 2 must be 255 characters or fewer",
+    );
+
+    act(() => {
+      result.current.setForm((f) => ({ ...f, ...valid, addressLine2: "" }));
+    });
+    expect(result.current.validate().addressLine2).toBeUndefined();
+  });
+});

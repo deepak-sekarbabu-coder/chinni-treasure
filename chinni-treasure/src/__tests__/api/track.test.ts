@@ -20,7 +20,7 @@ import { GET } from "@/app/api/track/route";
 
 const mockOrder = {
   id: "order-uuid",
-  orderNumber: "ORD-ABCD",
+  orderNumber: "ORD-2C218F0A",
   customerName: "Test User",
   customerEmail: "test@test.com",
   customerPhone: "9999999999",
@@ -56,13 +56,13 @@ describe("GET /api/track", () => {
   it("searches by orderId", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder]);
 
-    const req = createNextRequest("/api/track?orderId=ORD-ABCD");
+    const req = createNextRequest("/api/track?orderId=ORD-2C218F0A");
     const response = await GET(req);
     expect(response.status).toBe(200);
 
     const body = await response.json();
     expect(body).toHaveLength(1);
-    expect(body[0].orderNumber).toBe("ORD-ABCD");
+    expect(body[0].orderNumber).toBe("ORD-2C218F0A");
     expect(body[0].itemCount).toBe(3);
   });
 
@@ -80,7 +80,7 @@ describe("GET /api/track", () => {
   it("returns the money fields the shared order modal renders", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder]);
 
-    const req = createNextRequest("/api/track?orderId=ORD-ABCD");
+    const req = createNextRequest("/api/track?orderId=ORD-2C218F0A");
     const body = await (await GET(req)).json();
 
     // Regression: the tracking projection dropped these, so the shared modal
@@ -93,7 +93,7 @@ describe("GET /api/track", () => {
   it("keeps the gift-box parent link so order lines nest", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder]);
 
-    const req = createNextRequest("/api/track?orderId=ORD-ABCD");
+    const req = createNextRequest("/api/track?orderId=ORD-2C218F0A");
     const body = await (await GET(req)).json();
 
     expect(body[0].items[1].parentOrderItemId).toBe("item-1");
@@ -102,7 +102,7 @@ describe("GET /api/track", () => {
   it("returns the persisted status history without admin notes", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder]);
 
-    const req = createNextRequest("/api/track?orderId=ORD-ABCD");
+    const req = createNextRequest("/api/track?orderId=ORD-2C218F0A");
     const body = await (await GET(req)).json();
 
     expect(body[0].statusHistory).toEqual([
@@ -123,7 +123,7 @@ describe("GET /api/track", () => {
   it("returns empty array when no matches", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([]);
 
-    const req = createNextRequest("/api/track?orderId=NONEXISTENT");
+    const req = createNextRequest("/api/track?orderId=ORD-DEADBEEF");
     const response = await GET(req);
     expect(response.status).toBe(200);
 
@@ -131,12 +131,25 @@ describe("GET /api/track", () => {
     expect(body).toEqual([]);
   });
 
-  it("includes Cache-Control header", async () => {
+  // Regression: the lookup used to match order numbers with `contains`, so one
+  // character ("O") returned every order the shop has ever taken — the whole
+  // customer list, from an unauthenticated route.
+  it("rejects a fragment of an order number without querying", async () => {
+    const req = createNextRequest("/api/track?orderId=O");
+    const response = await GET(req);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.error).toContain("full order number");
+    expect(prisma.order.findMany).not.toHaveBeenCalled();
+  });
+
+  it("keeps the PII body out of the shared edge cache", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder]);
 
-    const req = createNextRequest("/api/track?orderId=ORD-ABCD");
+    const req = createNextRequest("/api/track?orderId=ORD-2C218F0A");
     const response = await GET(req);
     const cacheControl = response.headers.get("Cache-Control");
-    expect(cacheControl).toContain("s-maxage=15");
+    expect(cacheControl).toBe("private, no-store");
   });
 });

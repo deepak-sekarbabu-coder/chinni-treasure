@@ -110,11 +110,11 @@ export default function TrackPage() {
                 <input
                   type="text"
                   id="track-order-id"
-                  placeholder="e.g. ORD-20260725-001"
+                  placeholder="e.g. ORD-2C218F0A"
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                 />
-                <span className="form-hint">Found in your order confirmation email or invoice</span>
+                <span className="form-hint">The full order number, from your order confirmation email or invoice</span>
               </div>
             ) : (
               <div className="form-group">

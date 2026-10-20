@@ -93,6 +93,13 @@ export function createOrderColumns(_meta: OrdersTableMeta): ColumnDef<Order>[] {
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
+      id: "payment",
+      accessorKey: "paymentGateway",
+      header: "Payment",
+      enableSorting: false,
+      cell: ({ row }) => row.original.paymentGateway ?? "—",
+    },
+    {
       id: "createdAt",
       accessorFn: (row) => new Date(row.createdAt).getTime(),
       header: "Date",

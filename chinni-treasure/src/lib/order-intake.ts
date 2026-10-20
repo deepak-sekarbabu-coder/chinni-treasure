@@ -136,6 +136,7 @@ export async function placeOrder(
     transactionId,
     customerNotes,
     items,
+    paymentGateway,
   } = input;
   const { resolvedPaidPaise, db = prisma } = options;
 
@@ -278,6 +279,7 @@ export async function placeOrder(
           shippingCost,
           totalAmount,
           transactionId: transactionId,
+          paymentGateway: paymentGateway ?? null,
           customerNotes: customerNotes ? sanitize(customerNotes) : null,
           items: {
             create: orderItems,

@@ -4,6 +4,7 @@ import type { StatsResponse } from "@/src/lib/api/schemas";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STATS_WINDOW_DAYS = 30;
+const DAY_KEY_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" });
 
 /**
  * The dashboard shape is the API contract, not a second declaration of it:
@@ -69,12 +70,12 @@ export async function computeDashboardStats(): Promise<DashboardStats> {
 
   for (let i = STATS_WINDOW_DAYS - 1; i >= 0; i--) {
     const d = new Date(now - i * DAY_MS);
-    const key = d.toISOString().split("T")[0];
+  const key = DAY_KEY_FORMATTER.format(d);
     chartDataMap[key] = { orders: 0, revenue: 0 };
   }
 
   for (const o of recentOrders) {
-    const key = new Date(o.createdAt).toISOString().split("T")[0];
+    const key = DAY_KEY_FORMATTER.format(new Date(o.createdAt));
     if (chartDataMap[key]) {
       chartDataMap[key].orders += 1;
       chartDataMap[key].revenue += Number(o.totalAmount);

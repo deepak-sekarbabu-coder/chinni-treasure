@@ -56,7 +56,8 @@ export function DeliveryDetailsStep({ checkout }: { checkout: CheckoutState }) {
       </div>
       <div className="form-group">
         <label htmlFor="addressLine2">Apartment, Suite, Landmark <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(Optional)</span></label>
-        <input type="text" name="addressLine2" id="addressLine2" value={form.addressLine2} onChange={handleChange} autoComplete="address-line2" />
+        <input type="text" name="addressLine2" value={form.addressLine2} onChange={handleChange} autoComplete="address-line2" {...fieldA11y("addressLine2", errors.addressLine2)} />
+        <CheckoutError id="addressLine2" error={errors.addressLine2} />
       </div>
       <div className="form-row">
         <div className="form-group">

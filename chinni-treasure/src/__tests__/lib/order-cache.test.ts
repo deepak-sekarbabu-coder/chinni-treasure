@@ -13,7 +13,7 @@ const mockRedis = redis as unknown as ReturnType<typeof createMockRedis>;
 
 const mockOrder = {
   id: "order-1",
-  orderNumber: "ORD-TEST",
+  orderNumber: "ORD-2C218F0A",
   customerName: "Test User",
   status: "pending",
   subtotal: 100,
@@ -76,12 +76,24 @@ describe("getTrackedOrders", () => {
   it("fills the tracking cache on a miss, then serves the next lookup from it", async () => {
     vi.mocked(prisma.order.findMany).mockResolvedValue([mockOrder] as never);
 
-    const first = await getTrackedOrders("ORD-TEST", null);
-    expect("orders" in first && first.orders[0].orderNumber).toBe("ORD-TEST");
+    const first = await getTrackedOrders("ORD-2C218F0A", null);
+    expect("orders" in first && first.orders[0].orderNumber).toBe("ORD-2C218F0A");
 
-    const second = await getTrackedOrders("ORD-TEST", null);
+    const second = await getTrackedOrders("ORD-2C218F0A", null);
     expect("orders" in second).toBe(true);
     expect(prisma.order.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  // Regression: a fragment used to be a wildcard over order numbers, so one
+  // character returned every order — and the wildcard was cached under its
+  // own key. The check runs before the cache, not after it.
+  it("rejects a fragment of an order number before the cache or prisma", async () => {
+    await expect(getTrackedOrders("O", null)).resolves.toEqual({
+      error: "Enter the full order number (e.g. ORD-2C218F0A)",
+      status: 400,
+    });
+    expect(prisma.order.findMany).not.toHaveBeenCalled();
+    expect(mockRedis.store.size).toBe(0);
   });
 });
 
@@ -104,7 +116,7 @@ describe("getOrderDetail", () => {
     vi.mocked(prisma.order.findUnique).mockResolvedValue({ ...mockOrder, createdAt: new Date() });
 
     const order = await getOrderDetail("order-1");
-    expect(order?.orderNumber).toBe("ORD-TEST");
+    expect(order?.orderNumber).toBe("ORD-2C218F0A");
     expect(mockRedis.store.has("order:order-1")).toBe(true);
 
     vi.mocked(prisma.order.findUnique).mockResolvedValue(null);

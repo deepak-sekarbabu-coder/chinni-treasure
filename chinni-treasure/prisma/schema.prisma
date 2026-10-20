@@ -105,6 +105,7 @@ model Order {
   shippingCost  Decimal             @default(0.00) @map("shipping_cost") @db.Decimal(10, 2)
   totalAmount   Decimal             @map("total_amount") @db.Decimal(10, 2)
   transactionId String?             @map("transaction_id") @db.VarChar(100)
+  paymentGateway String?             @map("payment_gateway") @db.VarChar(20)
   customerNotes String?             @map("customer_notes")
   adminNotes    String?             @map("admin_notes")
   version       Int                 @default(0)

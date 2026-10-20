@@ -86,6 +86,20 @@ describe("parseCreateOrderInput", () => {
       customerPhone: "9999999999",
     });
   });
+
+  // Regression: a field longer than its column was a P2000 at insert — a 500
+  // raised after the gateway had taken the money, with no order to go with it.
+  it("rejects a field longer than its column as OrderError/400, before anything is written", () => {
+    expect(() =>
+      parseCreateOrderInput({ ...validInput, addressLine1: "a".repeat(256) }),
+    ).toThrowError(OrderError);
+    try {
+      parseCreateOrderInput({ ...validInput, addressLine1: "a".repeat(256) });
+    } catch (err) {
+      expect((err as OrderError).statusCode).toBe(400);
+    }
+    expect(mockTx.order.create).not.toHaveBeenCalled();
+  });
 });
 
 /** A manual bank-transfer placement: no gateway charge to compare. */

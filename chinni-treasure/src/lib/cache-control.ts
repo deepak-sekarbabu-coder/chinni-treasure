@@ -24,7 +24,7 @@ export const PUBLIC_TTL = {
   giftBoxes: 60_000,
   /** GET /api/orders/{id} — mirrors `orderDetailCache`. */
   orderDetail: 30_000,
-  /** GET /api/track — mirrors `trackingCache`. */
+  /** GET /api/track — the tracking cache's own TTL (the response is private, no-store). */
   tracking: 15_000,
 } as const;
 

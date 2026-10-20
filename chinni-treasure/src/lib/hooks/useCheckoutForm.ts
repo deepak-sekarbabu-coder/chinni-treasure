@@ -26,12 +26,17 @@ const FORM_FIELD_RULES: Array<{
   field: keyof OrderForm;
   contractField: CheckoutFieldKey | null;
   step: number;
-  message: string;
+  /** Present for a required field: the message shown when it is blank. */
+  message?: string;
 }> = [
   { field: "fullName", contractField: "customerName", step: 1, message: "Full name is required" },
   { field: "email", contractField: "customerEmail", step: 1, message: "Email is required" },
   { field: "phone", contractField: "customerPhone", step: 1, message: "Phone is required" },
   { field: "address", contractField: "addressLine1", step: 2, message: "Address is required" },
+  // Optional field: blank is fine, but the contract's length limit still
+  // applies — a too-long address line would be refused by the server only
+  // after the gateway had taken the money.
+  { field: "addressLine2", contractField: "addressLine2", step: 2 },
   { field: "city", contractField: "city", step: 2, message: "City is required" },
   { field: "state", contractField: "stateCode", step: 2, message: "State/UT is required" },
   { field: "zipCode", contractField: "postalCode", step: 2, message: "PIN code is required" },
@@ -49,11 +54,15 @@ function runValidation(form: OrderForm, step?: number): Record<string, string> {
     if (rule.field === "transactionId" && form.paymentMethod !== "manual") continue;
     const value = form[rule.field];
     if (rule.contractField === null) {
-      if (typeof value === "string" ? !value.trim() : !value) errors[rule.field] = rule.message;
+      if (typeof value === "string" ? !value.trim() : !value) errors[rule.field] = rule.message!;
       continue;
     }
     if (typeof value !== "string") continue;
-    const message = value.trim() === "" ? rule.message : fieldIssue(rule.contractField, value);
+    if (value.trim() === "") {
+      if (rule.message) errors[rule.field] = rule.message;
+      continue;
+    }
+    const message = fieldIssue(rule.contractField, value);
     if (message) errors[rule.field] = message;
   }
   return errors;

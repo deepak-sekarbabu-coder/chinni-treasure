@@ -230,7 +230,6 @@ chinni-treasure/
 │   │   ├── docs/route.ts             # OpenAPI spec endpoint
 │   │   ├── export/route.ts           # Excel export endpoint (cursor-based batching)
 │   │   ├── gift-boxes/route.ts       # Active gift-box category products (cached, for checkout bundling)
-│   │   ├── health/db/route.ts        # Database health check
 │   │   ├── health/redis/route.ts     # Redis connectivity health check
 │   │   ├── orders/
 │   │   │   ├── route.ts              # Create order (public) + list (admin, paginated)
@@ -455,7 +454,7 @@ chinni-treasure/
 │   │   ├── razorpay.d.ts             # Razorpay response/constructor types
 │   │   └── index.ts                  # Re-exports
 │   └── __tests__/
-│       ├── api/                      # API route handler tests (15 files)
+│       ├── api/                      # API route handler tests (19 files)
 │       ├── components/               # Admin panel + table, cart, layout, order, pages, ui tests (23 files)
 │       ├── lib/                      # Lib module tests (36 files)
 │       │   └── hooks/                # Hook tests (9 files)
@@ -648,7 +647,6 @@ rejected (stock restored)
 | GET | `/api/track` | Track order by order number or phone (cached) | No |
 | GET | `/api/stats` | Dashboard statistics (cached, SQL aggregation) | Yes |
 | GET | `/api/export` | Export orders to Excel (.xlsx, cursor-based batching) | Yes |
-| GET | `/api/health/db` | Database connectivity health check | No |
 | GET | `/api/health/redis` | Redis connectivity health check (not_configured/connected/unreachable) | No |
 | GET | `/api/cron/db-health` | Daily keep-alive ping from Vercel cron (`Authorization: Bearer <CRON_SECRET>` when set) | Cron secret |
 | GET | `/api/docs` | OpenAPI 3.0 specification JSON | No |
@@ -673,7 +671,7 @@ npm run test:coverage # With coverage report
 
 **Test locations** (every test lives under `src/__tests__/`):
 
-- `src/__tests__/api/` — API route handler tests (16 files)
+- `src/__tests__/api/` — API route handler tests (19 files)
 - `src/__tests__/components/` — Component tests: admin panels + table kit, cart, layout, order, pages, ui (26 files)
 - `src/__tests__/lib/` — Lib module tests, incl. the deep-module interface tests (route-guard, rate-limiter, checkout-fields, order-intake, order-fulfilment, excel-export, order-view, cart-projections, pricing — 45 files)
 - `src/__tests__/lib/hooks/` — Hook tests (9 files)
@@ -681,7 +679,7 @@ npm run test:coverage # With coverage report
 - `src/__tests__/mocks/` — Shared mock implementations (Prisma, Redis)
 - `src/__tests__/utils/` — Test helper utilities (API test harness)
 
-**Total: 87 test files / 727 tests** (Vitest single run, Sep 2026).
+**Total: 106 test files / 859 tests** (Vitest single run, Oct 2026).
 
 ---
 

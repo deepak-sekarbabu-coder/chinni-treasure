@@ -54,7 +54,7 @@ describe("queryCatalogueIndex", () => {
     );
   });
 
-  it("sorts by stockQuantity first, the chosen field next, nulls last, id desc on ties", async () => {
+  it("sorts by the chosen field first, stockQuantity desc next, nulls last, id desc on ties", async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([
       row({ id: "p-low", name: "b", sku: null, price: 99, stockQuantity: 1 }),
       row({ id: "p-high-a", name: "z", sku: "A-1", price: 10, stockQuantity: 9 }),
@@ -67,7 +67,7 @@ describe("queryCatalogueIndex", () => {
       );
 
     expect(await ids("price-asc")).toEqual(["p-high-a", "p-high-b", "p-low"]);
-    expect(await ids("name-asc")).toEqual(["p-high-b", "p-high-a", "p-low"]);
+    expect(await ids("name-asc")).toEqual(["p-high-b", "p-low", "p-high-a"]);
     expect(await ids("sku-asc")).toEqual(["p-high-a", "p-high-b", "p-low"]);
     expect(await ids("sku-desc")).toEqual(["p-high-a", "p-high-b", "p-low"]);
     // Unknown keys fall back to newest ordering (id desc within equal stock).
@@ -106,9 +106,9 @@ describe("queryCatalogueIndex", () => {
     }
   });
 
-  it("declares every sort key as in-stock-first with an id-desc tiebreak", () => {
+  it("declares every sort key with a stockQuantity-desc tiebreak and an id-desc tiebreak", () => {
     for (const entries of Object.values(SORT_OPTIONS)) {
-      expect(entries[0]).toEqual({ stockQuantity: "desc" });
+      expect(entries[entries.length - 2]).toEqual({ stockQuantity: "desc" });
       expect(entries[entries.length - 1]).toEqual({ id: "desc" });
     }
   });

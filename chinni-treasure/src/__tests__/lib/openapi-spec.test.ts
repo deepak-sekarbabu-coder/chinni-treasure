@@ -95,7 +95,6 @@ const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 const OPERATIONAL_ROUTES = new Set([
   "GET /api/docs",
   "GET /api/cron/db-health",
-  "GET /api/health/db",
   "GET /api/health/redis",
   "GET /api/export",
 ]);

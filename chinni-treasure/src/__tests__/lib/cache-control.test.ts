@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
+import { publicCacheControl } from "@/src/lib/cache-control";
 import { CATALOGUE_CACHE_CONTROL, productsCache, categoriesCache } from "@/src/lib/catalogue-cache";
-import { TRACK_CACHE_CONTROL } from "@/src/lib/order-cache";
 
 describe("public cache control", () => {
   it("derives s-maxage from the TTL and doubles it for swr", () => {
@@ -14,10 +13,11 @@ describe("public cache control", () => {
   });
 
   // The whole point: the number a route sends to the edge is the number the
-  // owning cache was actually built with, so the two cannot drift.
+  // owning cache was actually built with, so the two cannot drift. `/api/track`
+  // is not in this list — its body is customer PII, so it answers
+  // `private, no-store` and has no edge TTL to derive.
   it("each route's header derives from its own cache's TTL, not a copy of it", () => {
     expect(CATALOGUE_CACHE_CONTROL.products).toBe(publicCacheControl(productsCache.ttlMs));
     expect(CATALOGUE_CACHE_CONTROL.categories).toBe(publicCacheControl(categoriesCache.ttlMs));
-    expect(TRACK_CACHE_CONTROL).toBe(publicCacheControl(PUBLIC_TTL.tracking));
   });
 });

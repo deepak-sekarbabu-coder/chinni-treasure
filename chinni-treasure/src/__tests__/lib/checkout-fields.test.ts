@@ -6,6 +6,7 @@ import {
   EmailSchema,
   PhoneSchema,
   AddressLine1Schema,
+  AddressLine2Schema,
   CitySchema,
   StateCodeSchema,
   PostalCodeSchema,
@@ -101,10 +102,52 @@ describe("checkout-fields — the shared contract", () => {
     });
   });
 
+  // The maxima mirror the Order columns. Without them a too-long value is a
+  // P2000 at insert — a 500 raised after the gateway took the money.
+  describe("column limits", () => {
+    it("rejects a name, email or address over the 255-character column", () => {
+      const long = "a".repeat(256);
+      expect(CustomerNameSchema.safeParse(long).error?.issues[0]?.message).toBe(
+        "Full name must be 255 characters or fewer",
+      );
+      expect(
+        EmailSchema.safeParse(`${"a".repeat(250)}@example.com`).error?.issues.map((i) => i.message),
+      ).toContain("Email must be 255 characters or fewer");
+      expect(AddressLine1Schema.safeParse(long).error?.issues[0]?.message).toBe(
+        "Address must be 255 characters or fewer",
+      );
+      expect(AddressLine2Schema.safeParse(long).error?.issues[0]?.message).toBe(
+        "Address line 2 must be 255 characters or fewer",
+      );
+    });
+
+    it("accepts a value at the limit", () => {
+      const atLimit = "a".repeat(255);
+      expect(CustomerNameSchema.safeParse(atLimit).success).toBe(true);
+      expect(AddressLine1Schema.safeParse(atLimit).success).toBe(true);
+      expect(AddressLine2Schema.safeParse(atLimit).success).toBe(true);
+    });
+
+    it("rejects a city or transaction reference over the 100-character column", () => {
+      const long = "a".repeat(101);
+      expect(CitySchema.safeParse(long).error?.issues[0]?.message).toBe(
+        "City must be 100 characters or fewer",
+      );
+      expect(TransactionIdSchema.safeParse(long).error?.issues[0]?.message).toBe(
+        "Transaction ID must be 100 characters or fewer",
+      );
+    });
+
+    it("leaves the optional address line 2 optional", () => {
+      expect(AddressLine2Schema.safeParse(undefined).success).toBe(true);
+      expect(AddressLine2Schema.safeParse("").success).toBe(true);
+    });
+  });
+
   describe("CheckoutFields map", () => {
-    it("exposes exactly the eight contract fields", () => {
+    it("exposes exactly the nine contract fields", () => {
       expect(Object.keys(CheckoutFields).sort()).toEqual(
-        ["addressLine1", "city", "customerEmail", "customerName", "customerPhone", "postalCode", "stateCode", "transactionId"].sort(),
+        ["addressLine1", "addressLine2", "city", "customerEmail", "customerName", "customerPhone", "postalCode", "stateCode", "transactionId"].sort(),
       );
     });
   });

@@ -2,12 +2,14 @@ import { createRedisCache } from "@/src/lib/redis-cache";
 import { statsCache } from "@/src/lib/stats-cache";
 import { prisma } from "@/src/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { PUBLIC_TTL, publicCacheControl } from "@/src/lib/cache-control";
+import { PUBLIC_TTL } from "@/src/lib/cache-control";
 import { fieldIssue, normalizePhone } from "@/src/lib/checkout-fields";
 import type { OrderView } from "@/src/lib/order-view";
 import {
   buildTrackCacheKey,
   formatOrderResults,
+  INVALID_ORDER_NUMBER,
+  isOrderNumber,
   queryOrdersByOrderId,
   queryOrdersByPhone,
 } from "@/src/lib/order-read";
@@ -22,9 +24,6 @@ import {
  */
 const orderDetailCache = createRedisCache(PUBLIC_TTL.orderDetail, "order");
 export const trackingCache = createRedisCache(PUBLIC_TTL.tracking, "track");
-
-/** The public `Cache-Control` for `/api/track`, derived from the TTL above. */
-export const TRACK_CACHE_CONTROL = publicCacheControl(PUBLIC_TTL.tracking);
 
 export type DetailedOrder = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } }; statusHistory: true };
@@ -98,6 +97,13 @@ export async function getTrackedOrders(
 ): Promise<TrackResult> {
   const cacheKey = buildTrackCacheKey(orderId, phone);
   if (!cacheKey) return { error: "Provide orderId or phone parameter", status: 400 };
+
+  // The order number must be the whole one, and the check runs before the
+  // cache: a fragment is a wildcard over order numbers, and the order number
+  // is the only credential this unauthenticated route has.
+  if (orderId && !isOrderNumber(orderId)) {
+    return { error: INVALID_ORDER_NUMBER, status: 400 };
+  }
 
   const cached = (await trackingCache.get(cacheKey)) as OrderView[] | null;
   if (cached) return { orders: cached };

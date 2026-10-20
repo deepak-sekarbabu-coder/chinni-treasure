@@ -13,22 +13,22 @@
  * company.
  */
 
-// Sort vocabulary — every entry is a complete orderBy: in-stock first, then
-// the chosen field, then id desc. The /api/products DB branch
-// (listProductsForQuery, in product-read), the category pages (product-read)
+// Sort vocabulary — every entry is a complete orderBy: the chosen field first,
+// then stockQuantity desc as a tiebreaker, then id desc. The /api/products DB
+// branch (listProductsForQuery, in product-read), the category pages (product-read)
 // and the in-memory catIndex comparator (catalogue-cache) all derive from these
 // exact arrays, so changing the rule means editing this table.
 export const SORT_OPTIONS = {
-  newest: [{ stockQuantity: "desc" as const }, { createdAt: "desc" as const }, { id: "desc" as const }],
-  oldest: [{ stockQuantity: "desc" as const }, { createdAt: "asc" as const }, { id: "desc" as const }],
-  "name-asc": [{ stockQuantity: "desc" as const }, { name: "asc" as const }, { id: "desc" as const }],
-  "name-desc": [{ stockQuantity: "desc" as const }, { name: "desc" as const }, { id: "desc" as const }],
-  "price-asc": [{ stockQuantity: "desc" as const }, { price: "asc" as const }, { id: "desc" as const }],
-  "price-desc": [{ stockQuantity: "desc" as const }, { price: "desc" as const }, { id: "desc" as const }],
-  "stock-desc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
-  "stock-asc": [{ stockQuantity: "desc" as const }, { stockQuantity: "asc" as const }, { id: "desc" as const }],
-  "sku-asc": [{ stockQuantity: "desc" as const }, { sku: "asc" as const }, { id: "desc" as const }],
-  "sku-desc": [{ stockQuantity: "desc" as const }, { sku: "desc" as const }, { id: "desc" as const }],
+  newest: [{ createdAt: "desc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  oldest: [{ createdAt: "asc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "name-asc": [{ name: "asc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "name-desc": [{ name: "desc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "price-asc": [{ price: "asc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "price-desc": [{ price: "desc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "stock-desc": [{ stockQuantity: "desc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "stock-asc": [{ stockQuantity: "asc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "sku-asc": [{ sku: "asc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
+  "sku-desc": [{ sku: "desc" as const }, { stockQuantity: "desc" as const }, { id: "desc" as const }],
 } as const;
 
 export type SortKey = keyof typeof SORT_OPTIONS;

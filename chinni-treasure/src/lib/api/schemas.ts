@@ -46,6 +46,7 @@ export const OrderSchema = z.object({
   shippingCost: z.coerce.number(),
   createdAt: z.string(),
   transactionId: z.string().nullable().optional(),
+  paymentGateway: z.string().nullable().optional(),
   customerNotes: z.string().nullable().optional(),
   items: z.array(OrderItemSchema),
   addressLine1: z.string(),
@@ -189,7 +190,7 @@ export const CreateOrderInputSchema = z.object({
   customerEmail: CheckoutFields.customerEmail,
   customerPhone: CheckoutFields.customerPhone,
   addressLine1: CheckoutFields.addressLine1,
-  addressLine2: z.string().optional(),
+  addressLine2: CheckoutFields.addressLine2,
   city: CheckoutFields.city,
   stateCode: CheckoutFields.stateCode,
   postalCode: CheckoutFields.postalCode,
@@ -208,7 +209,8 @@ export const CreateOrderInputSchema = z.object({
           .optional(),
       }),
     )
-    .min(1, "At least one item is required"),
+    .min(1, "At least one item is required")
+    .max(10, "Too many items in a single order"),
   transactionId: CheckoutFields.transactionId,
   /** Which channel recorded `transactionId`. Drives the server-side paid==stored check. */
   paymentGateway: z.enum(["razorpay", "manual"]).default("razorpay"),

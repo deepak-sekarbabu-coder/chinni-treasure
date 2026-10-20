@@ -2,7 +2,7 @@
 
 import type { ChartPoint, ProductSales } from "@/src/lib/api/schemas";
 
-const fmtDate = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" });
+const fmtDate = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 
 interface Props {
   loading: boolean;

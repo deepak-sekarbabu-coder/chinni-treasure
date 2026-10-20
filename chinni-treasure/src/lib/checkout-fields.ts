@@ -32,17 +32,23 @@ import { INDIAN_STATES } from "@/src/lib/constants";
 export const TransactionIdSchema = z
   .string()
   .trim()
-  .min(1, "Transaction ID is required");
+  .min(1, "Transaction ID is required")
+  .max(100, "Transaction ID must be 100 characters or fewer");
 
 /** Full name — non-blank. */
-export const CustomerNameSchema = z.string().trim().min(1, "Full name is required");
+export const CustomerNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Full name is required")
+  .max(255, "Full name must be 255 characters or fewer");
 
 /** Email — non-blank, valid shape. */
 export const EmailSchema = z
   .string()
   .trim()
   .min(1, "Email is required")
-  .email("Invalid email address");
+  .email("Invalid email address")
+  .max(255, "Email must be 255 characters or fewer");
 
 /** Indian phone — exactly 10 digits. */
 export const PhoneSchema = z
@@ -52,10 +58,25 @@ export const PhoneSchema = z
   .regex(/^\d{10}$/, "Phone must be exactly 10 digits");
 
 /** Address line 1 — non-blank. */
-export const AddressLine1Schema = z.string().trim().min(1, "Address is required");
+export const AddressLine1Schema = z
+  .string()
+  .trim()
+  .min(1, "Address is required")
+  .max(255, "Address must be 255 characters or fewer");
+
+/** Address line 2 — optional, but the same column limit as line 1. */
+export const AddressLine2Schema = z
+  .string()
+  .trim()
+  .max(255, "Address line 2 must be 255 characters or fewer")
+  .optional();
 
 /** City — non-blank. */
-export const CitySchema = z.string().trim().min(1, "City is required");
+export const CitySchema = z
+  .string()
+  .trim()
+  .min(1, "City is required")
+  .max(100, "City must be 100 characters or fewer");
 
 /** Indian state/UT — a 2-letter code from the INDIAN_STATES list. */
 export const StateCodeSchema = z
@@ -76,12 +97,20 @@ export const PostalCodeSchema = z
  * The checkout field contract, keyed by the order-payload field names.
  * Consumers spread these into their object schemas or validate one field
  * at a time via `fieldIssue`.
+ *
+ * The maxima mirror the Order columns (`prisma/schema.prisma`): VarChar(255)
+ * for the name, the email and both address lines, VarChar(100) for the city
+ * and the transaction reference. A longer value is not a bad request the
+ * database can absorb — it is a P2000 at insert, i.e. a 500 raised *after* the
+ * gateway already took the money, with no order to go with it. The contract
+ * rejects it while the customer is still on the form.
  */
 export const CheckoutFields = {
   customerName: CustomerNameSchema,
   customerEmail: EmailSchema,
   customerPhone: PhoneSchema,
   addressLine1: AddressLine1Schema,
+  addressLine2: AddressLine2Schema,
   city: CitySchema,
   stateCode: StateCodeSchema,
   postalCode: PostalCodeSchema,

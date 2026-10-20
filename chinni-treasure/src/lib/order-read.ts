@@ -13,6 +13,22 @@ export type TrackQueryResult =
   | { error: string; status: number }
   | { orders: OrderWithTimeline[] };
 
+/**
+ * The order-number format the public lookup accepts: `ORD-` plus the eight
+ * characters `generateOrderNumber` writes (`src/lib/utils.ts`). A fragment is
+ * a wildcard, and a wildcard over order numbers is the whole customer list —
+ * so the lookup takes the whole number or nothing.
+ */
+const ORDER_NUMBER_PATTERN = /^ORD-[A-Z0-9]{8}$/i;
+
+/** The one message for a rejected order number. */
+export const INVALID_ORDER_NUMBER = "Enter the full order number (e.g. ORD-2C218F0A)";
+
+/** True for the exact order-number shape, false for any fragment of one. */
+export function isOrderNumber(value: string): boolean {
+  return ORDER_NUMBER_PATTERN.test(value);
+}
+
 /** Cache keys for order tracking: by order id, or by digits-only phone. */
 export function buildTrackCacheKey(orderId: string | null, phone: string | null): string | null {
   if (orderId) return `o:${orderId}`;
@@ -20,13 +36,13 @@ export function buildTrackCacheKey(orderId: string | null, phone: string | null)
   return null;
 }
 
-/** Look up orders matching an order id/number fragment. */
+/** Look up the one order with this full order number. */
 export async function queryOrdersByOrderId(orderId: string): Promise<TrackQueryResult> {
-  if (orderId.length > 36 || !/^[a-zA-Z0-9-]+$/.test(orderId)) {
-    return { error: "Invalid order ID format", status: 400 };
+  if (!isOrderNumber(orderId)) {
+    return { error: INVALID_ORDER_NUMBER, status: 400 };
   }
   const orders = await prisma.order.findMany({
-    where: { orderNumber: { contains: orderId, mode: "insensitive" } },
+    where: { orderNumber: { equals: orderId, mode: "insensitive" } },
     include: { items: true, statusHistory: true },
     orderBy: { createdAt: "desc" },
   });

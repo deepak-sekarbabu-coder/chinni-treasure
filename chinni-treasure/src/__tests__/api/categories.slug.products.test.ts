@@ -92,7 +92,7 @@ describe("GET /api/category/[slug]/products", () => {
       { params: Promise.resolve({ slug: "rings" }) },
     );
     expect(prisma.product.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: [{ stockQuantity: "desc" }, { price: "asc" }, { id: "desc" }] }),
+      expect.objectContaining({ orderBy: [{ price: "asc" }, { stockQuantity: "desc" }, { id: "desc" }] }),
     );
   });
 });
